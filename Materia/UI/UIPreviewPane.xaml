@@ -1,0 +1,116 @@
+﻿<UserControl x:Class="Materia.UIPreviewPane"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Materia"
+             xmlns:components="clr-namespace:Materia.UI.Components"
+             mc:Ignorable="d" 
+             d:DesignHeight="512" d:DesignWidth="512" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged">
+    <Grid Background="#FF2b2b2b">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="32" />
+        </Grid.RowDefinitions>
+        <Border Background="#FF202020" Grid.Row="1" />
+        
+        <Canvas Grid.Row="0" Name="ZoomHandler" MouseWheel="ZoomHandler_MouseWheel" MouseDown="ZoomHandler_MouseDown" MouseMove="ZoomHandler_MouseMove" ClipToBounds="True" Background="#222">
+            <Grid Name="TransformArea" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0" Width="512" Height="512">
+                <Grid.Background>
+                    <VisualBrush TileMode="Tile" 
+                             Viewport="0,0,16,16" ViewportUnits="Absolute" 
+                             Viewbox="0,0,16,16"  ViewboxUnits="Absolute">
+                        <VisualBrush.Visual>
+                            <Grid Height="16">
+                                <Rectangle Fill="White" Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0" />
+                                <Rectangle Fill="LightGray" Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8,0,0,0" />
+                                <Rectangle Fill="LightGray" Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,8,0,0" />
+                                <Rectangle Fill="White" Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8,8,0,0" />
+                            </Grid>
+                        </VisualBrush.Visual>
+                    </VisualBrush>
+                </Grid.Background>
+                <Image Name="PreviewView" Margin="0" />
+            </Grid>
+            <Grid Name="UVArea" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0" Width="512" Height="512" Visibility="Collapsed">
+                <components:UVDisplay x:Name="UVs" />
+            </Grid>
+        </Canvas>
+
+        <Grid Grid.Row="0" VerticalAlignment="Bottom" Height="128" Background="#222" Name="HistogramArea" Visibility="Collapsed">
+            <components:Histogram Margin="5,5,72,5" x:Name="Histogram" />
+            <ComboBox Foreground="LightGray" Name="HistMode" SelectedValue="RGB" Text="RGB" Margin="5"  Style="{StaticResource ComboBoxFlatStyle}" VerticalAlignment="Top" HorizontalAlignment="Right" Width="64" SelectionChanged="HistMode_SelectionChanged">
+                <ComboBox.Items>
+                    <ComboBoxItem Content="RGB" />
+                    <ComboBoxItem Content="Red" />
+                    <ComboBoxItem Content="Green" />
+                    <ComboBoxItem Content="Blue" />
+                </ComboBox.Items>
+            </ComboBox>
+        </Grid>
+        
+        <Grid Grid.Row="1">
+            <StackPanel Orientation="Horizontal" Width="233" HorizontalAlignment="Left" >
+                <ToggleButton Width="32" Name="ToggleHistogram" BorderThickness="0" Background="#444" IsChecked="False" Foreground="LightGray" Click="ToggleHistogram_Click" ToolTip="Toggle histogram view" >
+                    <Image Source="/Materia;component/Images/levels.png" Margin="5"  />
+                    <ToggleButton.Style>
+                        <Style TargetType="{x:Type ToggleButton}">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
+                                        Background="{TemplateBinding Background}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsChecked" Value="False">
+                                                <Setter Property="Background" TargetName="border" Value="Transparent" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+                <ToggleButton Width="32" Name="ToggleUV" BorderThickness="0" Background="#444" IsChecked="False" Foreground="LightGray" Click="ToggleUV_Click"  ToolTip="Toggle UV view" >
+                    <TextBlock Text="UV" FontWeight="Bold" />
+                    <ToggleButton.Style>
+                        <Style TargetType="{x:Type ToggleButton}">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
+                                        Background="{TemplateBinding Background}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsChecked" Value="False">
+                                                <Setter Property="Background" TargetName="border" Value="Transparent" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Width="223" HorizontalAlignment="Right" FlowDirection="RightToLeft">
+                <Button Name="ZoomIn" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomIn_Click" ToolTip="Zoom in">
+                    <Image Source="/Materia;component/Images/add.png" />
+                </Button>
+                <TextBlock Name="ZoomLevel" Width="54" VerticalAlignment="Center" FlowDirection="LeftToRight" Text="50%" TextAlignment="Center" Foreground="LightGray" />
+                <Button Name="ZoomOut" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomOut_Click" ToolTip="Zoom out">
+                    <Image Source="/Materia;component/Images/minus.png" />
+                </Button>
+                <Button Name="Ratio1" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="Ratio1_Click" ToolTip="Reset zoom to 100%">
+                    <Image Source="/Materia;component/Images/1x1.png" />
+                </Button>
+                <Button Name="FitIntoView" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="FitIntoView_Click" ToolTip="Fit image into view">
+                    <Image Source="/Materia;component/Images/aspect.png" />
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

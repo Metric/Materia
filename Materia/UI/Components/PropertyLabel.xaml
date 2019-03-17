@@ -1,0 +1,12 @@
+﻿<UserControl x:Class="Materia.UI.Components.PropertyLabel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Materia.UI.Components"
+             mc:Ignorable="d" 
+             d:DesignHeight="24" d:DesignWidth="256">
+    <Grid Height="24">
+        <TextBlock Name="LabelContent" TextAlignment="Left" Foreground="LightGray" FontSize="12" Margin="5" />
+    </Grid>
+</UserControl>

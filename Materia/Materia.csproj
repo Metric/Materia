@@ -8,15 +8,18 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>Materia</RootNamespace>
     <AssemblyName>Materia</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -24,6 +27,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -34,27 +39,316 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <GenerateSerializationAssemblies>On</GenerateSerializationAssemblies>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenTK, Version=3.0.1.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenTK.3.0.1\lib\net20\OpenTK.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenTK.GLControl, Version=3.0.1.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenTK.GLControl.3.0.1\lib\net20\OpenTK.GLControl.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Xml.Serialization" />
+    <Reference Include="UIAutomationProvider" />
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Buffers\GLArrayBuffer.cs" />
+    <Compile Include="Buffers\GLElementBuffer.cs" />
+    <Compile Include="Buffers\GLFrameBuffer.cs" />
+    <Compile Include="Buffers\GLUniformBuffer.cs" />
+    <Compile Include="Buffers\GLVertexArray.cs" />
+    <Compile Include="Buffers\GLRenderBuffer.cs" />
+    <Compile Include="Geometry\Geometry.cs" />
+    <Compile Include="Geometry\FullScreenQuad.cs" />
+    <Compile Include="Geometry\MeshRenderer.cs" />
+    <Compile Include="Imaging\FloatBitmap.cs" />
+    <Compile Include="Imaging\GLProcessing\BasicImageRenderer.cs" />
+    <Compile Include="Imaging\GLProcessing\BlendProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\BlurProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\ChannelSwitchProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\CircleProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\CurvesProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\MeshDepthProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\MeshProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\EmbossProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\GrayscaleConvProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\ImageProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\InvertProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\LevelsProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\MotionBlurProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\NormalsProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\OcclusionProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\PixelShaderProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\TransformProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\UniformColorProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\WarpProcessor.cs" />
+    <Compile Include="Material\PBRDepth.cs" />
+    <Compile Include="MathHelpers\MVector.cs" />
+    <Compile Include="Nodes\Atomic\BitmapNode.cs" />
+    <Compile Include="Nodes\Atomic\ChannelSwitchNode.cs" />
+    <Compile Include="Nodes\Atomic\EmbossNode.cs" />
+    <Compile Include="Nodes\Atomic\GraphInstanceNode.cs" />
+    <Compile Include="Nodes\Atomic\GrayscaleConversionNode.cs" />
+    <Compile Include="Nodes\Atomic\InputNode.cs" />
+    <Compile Include="Nodes\Atomic\InvertNode.cs" />
+    <Compile Include="Nodes\Atomic\MeshDepthNode.cs" />
+    <Compile Include="Nodes\Atomic\MeshNode.cs" />
+    <Compile Include="Nodes\Atomic\MotionBlurNode.cs" />
+    <Compile Include="Nodes\Atomic\OutputNode.cs" />
+    <Compile Include="Nodes\Atomic\PixelProcessorNode.cs" />
+    <Compile Include="Nodes\Atomic\UniformColorNode.cs" />
+    <Compile Include="Nodes\Atomic\WarpNode.cs" />
+    <Compile Include="Nodes\Attributes\ColorPickerAttribute.cs" />
+    <Compile Include="Nodes\Attributes\FileSelectorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\HidePropertyAttribute.cs" />
+    <Compile Include="Nodes\Attributes\SectionAttribute.cs" />
+    <Compile Include="Nodes\Attributes\TextInputAttribute.cs" />
+    <Compile Include="Nodes\Attributes\TitleAttribute.cs" />
+    <Compile Include="Nodes\ImageGraph.cs" />
+    <Compile Include="Nodes\ImageNode.cs" />
+    <Compile Include="Nodes\FunctionGraph.cs" />
+    <Compile Include="Nodes\MathNode.cs" />
+    <Compile Include="Nodes\MathNodes\AbsoluteNode.cs" />
+    <Compile Include="Nodes\MathNodes\AddNode.cs" />
+    <Compile Include="Nodes\MathNodes\AndNode.cs" />
+    <Compile Include="Nodes\MathNodes\ArcTangentNode.cs" />
+    <Compile Include="Nodes\MathNodes\BooleanConstantNode.cs" />
+    <Compile Include="Nodes\MathNodes\BreakFloat2Node.cs" />
+    <Compile Include="Nodes\MathNodes\BreakFloat3Node.cs" />
+    <Compile Include="Nodes\MathNodes\BreakFloat4Node.cs" />
+    <Compile Include="Nodes\MathNodes\CartesianNode.cs" />
+    <Compile Include="Nodes\MathNodes\CeilNode.cs" />
+    <Compile Include="Nodes\MathNodes\CosineNode.cs" />
+    <Compile Include="Nodes\MathNodes\DivideNode.cs" />
+    <Compile Include="Nodes\MathNodes\DotProductNode.cs" />
+    <Compile Include="Nodes\MathNodes\EqualNode.cs" />
+    <Compile Include="Nodes\MathNodes\ExponentialNode.cs" />
+    <Compile Include="Nodes\MathNodes\Float2ConstantNode.cs" />
+    <Compile Include="Nodes\MathNodes\Float3ConstantNode.cs" />
+    <Compile Include="Nodes\MathNodes\Float4ConstantNode.cs" />
+    <Compile Include="Nodes\MathNodes\FloatConstantNode.cs" />
+    <Compile Include="Nodes\MathNodes\FloorNode.cs" />
+    <Compile Include="Nodes\MathNodes\GetFloat2VarNode.cs" />
+    <Compile Include="Nodes\MathNodes\GetFloat3VarNode.cs" />
+    <Compile Include="Nodes\MathNodes\GetFloat4VarNode.cs" />
+    <Compile Include="Nodes\MathNodes\GetFloatVarNode.cs" />
+    <Compile Include="Nodes\MathNodes\GetVarNode.cs" />
+    <Compile Include="Nodes\MathNodes\GreaterThanEqualNode.cs" />
+    <Compile Include="Nodes\MathNodes\GreaterThanNode.cs" />
+    <Compile Include="Nodes\MathNodes\IfElseNode.cs" />
+    <Compile Include="Nodes\MathNodes\LerpNode.cs" />
+    <Compile Include="Nodes\MathNodes\LessThanEqualNode.cs" />
+    <Compile Include="Nodes\MathNodes\LessThanNode.cs" />
+    <Compile Include="Nodes\MathNodes\Log2Node.cs" />
+    <Compile Include="Nodes\MathNodes\LogNode.cs" />
+    <Compile Include="Nodes\MathNodes\MakeFloat4Node.cs" />
+    <Compile Include="Nodes\MathNodes\MakeFloat2Node.cs" />
+    <Compile Include="Nodes\MathNodes\MakeFloat3Node.cs" />
+    <Compile Include="Nodes\MathNodes\MaxNode.cs" />
+    <Compile Include="Nodes\MathNodes\MinNode.cs" />
+    <Compile Include="Nodes\MathNodes\ModuloNode.cs" />
+    <Compile Include="Nodes\MathNodes\MultiplyNode.cs" />
+    <Compile Include="Nodes\MathNodes\NegateNode.cs" />
+    <Compile Include="Nodes\MathNodes\NotEqualNode.cs" />
+    <Compile Include="Nodes\MathNodes\NotNode.cs" />
+    <Compile Include="Nodes\MathNodes\OrNode.cs" />
+    <Compile Include="Nodes\MathNodes\Pow2Node.cs" />
+    <Compile Include="Nodes\MathNodes\RandomNode.cs" />
+    <Compile Include="Nodes\MathNodes\RoundNode.cs" />
+    <Compile Include="Nodes\Atomic\SequenceNode.cs" />
+    <Compile Include="Nodes\MathNodes\SamplerNode.cs" />
+    <Compile Include="Nodes\MathNodes\SetVarNode.cs" />
+    <Compile Include="Nodes\MathNodes\SineNode.cs" />
+    <Compile Include="Nodes\MathNodes\SqrtNode.cs" />
+    <Compile Include="Nodes\MathNodes\SubtractNode.cs" />
+    <Compile Include="Nodes\MathNodes\TangentNode.cs" />
+    <Compile Include="UI\Components\BreadCrumb.xaml.cs">
+      <DependentUpon>BreadCrumb.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\BreadCrumbs.xaml.cs">
+      <DependentUpon>BreadCrumbs.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\ColorPicker.xaml.cs">
+      <DependentUpon>ColorPicker.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\ColorSelect.xaml.cs">
+      <DependentUpon>ColorSelect.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\DropDown.xaml.cs">
+      <DependentUpon>DropDown.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Imaging\DirectBitmap.cs" />
+    <Compile Include="Imaging\RawBitmap.cs" />
+    <Compile Include="UI\Components\FileSelector.xaml.cs">
+      <DependentUpon>FileSelector.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\Histogram.xaml.cs">
+      <DependentUpon>Histogram.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\Magnifier.xaml.cs">
+      <DependentUpon>Magnifier.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\PropertyInput.xaml.cs">
+      <DependentUpon>PropertyInput.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\PropertyLabel.xaml.cs">
+      <DependentUpon>PropertyLabel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\PropertySection.xaml.cs">
+      <DependentUpon>PropertySection.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\ToggleControl.xaml.cs">
+      <DependentUpon>ToggleControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\UVDisplay.xaml.cs">
+      <DependentUpon>UVDisplay.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Helpers\CatmullRomSpline.cs" />
+    <Compile Include="UI\Helpers\CurvePoint.xaml.cs">
+      <DependentUpon>CurvePoint.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Helpers\MenuItemExtensions.cs" />
+    <Compile Include="UI\Helpers\VisualExtensions.cs" />
+    <Compile Include="UI\IParameter.cs" />
+    <Compile Include="Material\Material.cs" />
+    <Compile Include="Material\PBRMaterial.cs" />
+    <Compile Include="UI\Components\MultiRangeSlider.xaml.cs">
+      <DependentUpon>MultiRangeSlider.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\NodeResource.xaml.cs">
+      <DependentUpon>NodeResource.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Nodes\Atomic\AONode.cs" />
+    <Compile Include="Nodes\Atomic\BlendNode.cs" />
+    <Compile Include="Nodes\Atomic\BlurNode.cs" />
+    <Compile Include="Nodes\Atomic\CircleNode.cs" />
+    <Compile Include="Nodes\Atomic\CurvesNode.cs" />
+    <Compile Include="Nodes\Atomic\LevelsNode.cs" />
+    <Compile Include="Nodes\Atomic\NormalNode.cs" />
+    <Compile Include="Nodes\Atomic\TransformNode.cs" />
+    <Compile Include="Nodes\Attributes\CurveEditorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\DropdownAttribute.cs" />
+    <Compile Include="Nodes\Attributes\LevelEditorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\SliderAttribute.cs" />
+    <Compile Include="Nodes\Containers\MultiRange.cs" />
+    <Compile Include="Nodes\Helpers\Curves.cs" />
+    <Compile Include="Nodes\Helpers\Blur.cs" />
+    <Compile Include="Nodes\Helpers\Utils.cs" />
+    <Compile Include="Nodes\Graph.cs" />
+    <Compile Include="Nodes\Node.cs" />
+    <Compile Include="Nodes\NodeOutput.cs" />
+    <Compile Include="Nodes\NodeInput.cs" />
+    <Compile Include="UI\Components\NumberInput.xaml.cs">
+      <DependentUpon>NumberInput.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\NumberSlider.xaml.cs">
+      <DependentUpon>NumberSlider.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Shaders\GLGeometryShader.cs" />
+    <Compile Include="Shaders\GLFragmentShader.cs" />
+    <Compile Include="Shaders\GLShader.cs" />
+    <Compile Include="Shaders\GLShaderProgram.cs" />
+    <Compile Include="Shaders\GLVertexShader.cs" />
+    <Compile Include="Textures\GLTextuer2D.cs" />
+    <Compile Include="Textures\GLTexture.cs" />
+    <Compile Include="Textures\GLTextureCube.cs" />
+    <Compile Include="UI\UI3DPreview.xaml.cs">
+      <DependentUpon>UI3DPreview.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\UICurves.xaml.cs">
+      <DependentUpon>UICurves.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\UIGraph.xaml.cs">
+      <DependentUpon>UIGraph.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\UILevels.xaml.cs">
+      <DependentUpon>UILevels.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\UINode.xaml.cs">
+      <DependentUpon>UINode.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\UINodeParameters.xaml.cs">
+      <DependentUpon>UINodeParameters.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\UINodePoint.xaml.cs">
+      <DependentUpon>UINodePoint.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\UIPreviewPane.xaml.cs">
+      <DependentUpon>UIPreviewPane.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\UIShelf.xaml.cs">
+      <DependentUpon>UIShelf.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Undo\UndoObject.cs" />
+    <Compile Include="Undo\UndoRedoManager.cs" />
+    <Compile Include="WinApi\MouseHook.cs" />
+    <Compile Include="WinApi\Win32Api.cs" />
+    <Compile Include="WinApi\WpfScreen.cs" />
+    <Page Include="UI\Components\BreadCrumb.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\BreadCrumbs.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\ColorPicker.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\ColorSelect.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\DropDown.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -67,6 +361,98 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="UI\Components\FileSelector.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\Histogram.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\Magnifier.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\MultiRangeSlider.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\NodeResource.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\NumberInput.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\NumberSlider.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="StyleResources.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\PropertyInput.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\PropertyLabel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\PropertySection.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\ToggleControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\UVDisplay.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Helpers\CurvePoint.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UI3DPreview.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UICurves.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UIGraph.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UILevels.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UINode.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UINodeParameters.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UINodePoint.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UIPreviewPane.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UIShelf.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -86,6 +472,8 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="OpenTK.dll.config" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -93,6 +481,67 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\node-icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DDSReader\DDSReader.csproj">
+      <Project>{d74a367a-7311-4e21-abab-d065442ff603}</Project>
+      <Name>DDSReader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RSMI\RSMI.csproj">
+      <Project>{5ca5390f-3dc6-4e00-9cd3-c0262c40afc1}</Project>
+      <Name>RSMI</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\wpftoolkit-master\wpftoolkit-master\ExtendedWPFToolkitSolution\Src\Xceed.Wpf.AvalonDock.Themes.Metro\Xceed.Wpf.AvalonDock.Themes.Metro.csproj">
+      <Project>{89286eb4-b4a1-418c-839a-067b00f442d8}</Project>
+      <Name>Xceed.Wpf.AvalonDock.Themes.Metro</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\wpftoolkit-master\wpftoolkit-master\ExtendedWPFToolkitSolution\Src\Xceed.Wpf.AvalonDock\Xceed.Wpf.AvalonDock.csproj">
+      <Project>{db81988f-e0f2-45a0-a1fd-8c37f3d35244}</Project>
+      <Name>Xceed.Wpf.AvalonDock</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\wpftoolkit-master\wpftoolkit-master\ExtendedWPFToolkitSolution\Src\Xceed.Wpf.Toolkit\Xceed.Wpf.Toolkit.csproj">
+      <Project>{72e591d6-8f83-4d8c-8f67-9c325e623234}</Project>
+      <Name>Xceed.Wpf.Toolkit</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\dropper.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\add.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\minus.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\fitintoview.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\aspect.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\1x1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\levels.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\close.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\align-horiz.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\align-vert.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Nodes\Functions\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\chevron_right.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

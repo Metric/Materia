@@ -1,0 +1,47 @@
+﻿<UserControl x:Class="Materia.UINode"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Materia"
+             mc:Ignorable="d" 
+             d:DesignHeight="100" d:DesignWidth="100" MouseLeave="UserControl_MouseLeave" ClipToBounds="False" Loaded="UserControl_Loaded">
+    <UserControl.Resources>
+        <ContextMenu x:Key="ImageContext">
+            <MenuItem Header="_Preview As">
+                <MenuItem Header="_Albedo" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Height" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Normal" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Metallic" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Roughness" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Occlusion" Click="MenuItem_Click"></MenuItem>
+            </MenuItem>
+        </ContextMenu>
+        <ContextMenu x:Key="MathContext">
+            <MenuItem Header="Set as output" Click="MenuItem_Click" />
+        </ContextMenu>
+        <ContextMenu x:Key="PixelProcContext">
+            <MenuItem Header="_Preview As">
+                <MenuItem Header="_Albedo" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Height" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Normal" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Metallic" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Roughness" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Occlusion" Click="MenuItem_Click"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Edit" Click="MenuItem_Click" />
+        </ContextMenu>
+    </UserControl.Resources>
+    <Grid Background="#FF0a0a0a" ClipToBounds="False" MouseUp="Grid_MouseUp" MouseDown="Preview_MouseDown" MouseMove="Preview_MouseMove">
+        <Grid Margin="2,2,2,2">
+            <Image Name="Preview" Margin="0,17,0,0" />
+            <StackPanel Name="InputStack"  VerticalAlignment="Center" ClipToBounds="False" Margin="-8,0,0,0" HorizontalAlignment="Left" Width="16" />
+            <StackPanel Name="OutputStack" HorizontalAlignment="Right"  VerticalAlignment="Center" Width="16" ClipToBounds="False" Margin="0,0,-8,0" />
+            <Grid VerticalAlignment="Top" Height="16">
+                <Border Background="DarkRed">
+                    <TextBlock Name="NodeName" Text="" Foreground="LightGray" TextAlignment="Center"></TextBlock>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

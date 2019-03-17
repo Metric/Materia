@@ -4,9 +4,90 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Materia"
+        xmlns:localui = "clr-namespace:Materia.UI"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
+        xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
+        Title="Materia" Height="720" Width="1280" Closing="Window_Closing" Loaded="Window_Loaded" WindowState="Maximized">
+    <Grid Background="#FF202020">
+        <DockPanel Height="20" VerticalAlignment="Top" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
+            <Menu Background="#FF333333" DockPanel.Dock="Top" >
+                <MenuItem Foreground="LightGray" Header="_File">
+                    <MenuItem Foreground="Black" Header="_New" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="_Open" Click="MenuItem_Click" />
+                    <Separator />
+                    <MenuItem Foreground="Black" Header="_Save" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="_Save As" Click="MenuItem_Click" />
+                    <MenuItem Name="RecentMenu" Foreground="Black" Header="_Recent" />
+                </MenuItem>
+                <MenuItem Foreground="LightGray" Header="_Edit">
+                    <MenuItem Foreground="Black" Header="_Undo" Name="mnuUndo" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="_Redo" Name="mnuRedo" Click="MenuItem_Click" />
+                    <Separator />
+                    <MenuItem Name="mnuGraphSettings" Foreground="Black" Header="_Graph Settings" Click="MenuItem_Click" />
+                </MenuItem>
+                <MenuItem Foreground="LightGray" Header="_Windows">
+                    <MenuItem Foreground="Black" Header="_2D Preview" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="_3D Preview" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="_Shelf" Click="MenuItem_Click"/>
+                    <MenuItem Foreground="Black" Header="_Parameters" Click="MenuItem_Click" />
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+        <Grid Margin="0,20,0,0">
+            <xcad:DockingManager x:Name="Docker" AllowMixedOrientation="True" GridSplitterHeight="3" GridSplitterWidth="3" Background="#111" BorderBrush="#333" BorderThickness="0">
+                <xcad:DockingManager.Theme>
+                    <xcad:MetroTheme />
+                </xcad:DockingManager.Theme>
+                <xcad:DockingManager.DocumentHeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding IconSource}" Margin="0,0,4,0"/>
+                            <TextBlock Foreground="LightGray" Text="{Binding Title}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </xcad:DockingManager.DocumentHeaderTemplate>
+                <xcad:DockingManager.AnchorableTitleTemplate>
+                    <DataTemplate>
+                        <Label>
+                            <TextBlock Foreground="LightGray" Text="{Binding Title}" Margin="5,0,5,2" />
+                        </Label>
+                    </DataTemplate>
+                </xcad:DockingManager.AnchorableTitleTemplate>
+
+                <xcad:LayoutRoot x:Name="DockRoot">
+                    <xcad:LayoutPanel Orientation="Vertical">
+                        <xcad:LayoutPanel Orientation="Horizontal" DockHeight="0.5*">
+                            <xcad:LayoutDocumentPaneGroup x:Name="DocumentGroup">
+                                <xcad:LayoutDocumentPane x:Name="GraphDocuments">
+
+                                </xcad:LayoutDocumentPane>
+                            </xcad:LayoutDocumentPaneGroup>
+                            <xcad:LayoutAnchorablePane DockMinWidth="280">
+                                <xcad:LayoutAnchorable ContentId="parameters" x:Name="ParametersPane" Title="Parameters" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                                    <local:UINodeParameters />
+                                </xcad:LayoutAnchorable>
+                            </xcad:LayoutAnchorablePane>
+                        </xcad:LayoutPanel>
+                        <xcad:LayoutPanel Orientation="Horizontal" DockHeight="0.5*" DockMinHeight="256">
+                            <xcad:LayoutAnchorablePane DockWidth="0.33*">
+                                <xcad:LayoutAnchorable ContentId="shelf" x:Name="ShelfPane" Title="Shelf" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                                    <localui:UIShelf />
+                                </xcad:LayoutAnchorable>
+                            </xcad:LayoutAnchorablePane>
+                            <xcad:LayoutAnchorablePane DockWidth="0.33*">
+                                <xcad:LayoutAnchorable ContentId="3dpreview" x:Name="Preview3DPane" Title="3D Preview" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                                    <localui:UI3DPreview />
+                                </xcad:LayoutAnchorable>
+                            </xcad:LayoutAnchorablePane>
+                            <xcad:LayoutAnchorablePane DockWidth="0.33*">
+                                <xcad:LayoutAnchorable ContentId="2dpreview" x:Name="Preview2DPane" Title="2D Preview" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                                    <local:UIPreviewPane />
+                                </xcad:LayoutAnchorable>
+                            </xcad:LayoutAnchorablePane>
+                        </xcad:LayoutPanel>
+                    </xcad:LayoutPanel>
+                </xcad:LayoutRoot>
+            </xcad:DockingManager>
+        </Grid>
     </Grid>
 </Window>

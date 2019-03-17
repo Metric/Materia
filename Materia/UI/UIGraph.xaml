@@ -1,0 +1,35 @@
+﻿<UserControl x:Class="Materia.UIGraph"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Materia.UI.Components"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" AllowDrop="True" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged" Unloaded="UserControl_Unloaded">
+    <Grid ClipToBounds="True" MouseWheel="ViewPort_MouseWheel" MouseDown="ViewPort_MouseDown" Background="#333" MouseUp="ViewPort_MouseUp" MouseMove="ViewPort_MouseMove">
+        <Canvas Name="ViewPort" ClipToBounds="True" Margin="0,0,0,0">
+        </Canvas>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" FlowDirection="RightToLeft">
+            <Button Name="ZoomIn" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomIn_Click" ToolTip="Zoom in">
+                <Image Source="/Materia;component/Images/add.png" />
+            </Button>
+            <TextBlock Name="ZoomLevel" Width="54" VerticalAlignment="Center" FlowDirection="LeftToRight" Text="100%" TextAlignment="Center" Foreground="LightGray" />
+            <Button Name="ZoomOut" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomOut_Click" ToolTip="Zoom out">
+                <Image Source="/Materia;component/Images/minus.png" />
+            </Button>
+            <Button Name="Ratio1" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="Ratio1_Click" ToolTip="Reset zoom to 100%">
+                <Image Source="/Materia;component/Images/1x1.png" />
+            </Button>
+            <Button Name="FitIntoView" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="FitIntoView_Click" ToolTip="Fit nodes into view">
+                <Image Source="/Materia;component/Images/aspect.png" />
+            </Button>
+            <Button Name="AlignVert" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="AlignVert_Click" ToolTip="Align Nodes Vertically">
+                <Image Source="/Materia;component/Images/align-vert.png" />
+            </Button>
+            <Button Name="AlignHoriz" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="AlignHoriz_Click" ToolTip="Align Nodes Horizontally">
+                <Image Source="/Materia;component/Images/align-horiz.png" />
+            </Button>
+        </StackPanel>
+        <local:BreadCrumbs x:Name="Crumbs" VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="32" />
+    </Grid>
+</UserControl>

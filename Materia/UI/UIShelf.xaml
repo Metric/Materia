@@ -1,0 +1,105 @@
+﻿<UserControl x:Class="Materia.UI.UIShelf"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Materia"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" AllowDrop="True" Drop="UserControl_Drop">
+    <Grid Background="#222" AllowDrop="True">
+        <TreeView Background="Transparent" Margin="2" Name="TreeList">
+            <TreeViewItem Foreground="LightGray" Header="Atomic">
+                <local:NodeResource Margin="1" Title="Input" Type="Materia.Nodes.Atomic.InputNode" />
+                <local:NodeResource Margin="1" Title="Output" Type="Materia.Nodes.Atomic.OutputNode" />
+                <local:NodeResource Margin="1" Title="AO" Type="Materia.Nodes.Atomic.AONode" />
+                <local:NodeResource Margin="1" Title="Blend" Type="Materia.Nodes.Atomic.BlendNode" />
+                <local:NodeResource Margin="1" Title="Blur" Type="Materia.Nodes.Atomic.BlurNode" />
+                <local:NodeResource Margin="1" Title="Bitmap" Type="Materia.Nodes.Atomic.BitmapNode" />
+                <local:NodeResource Margin="1" Title="Circle" Type="Materia.Nodes.Atomic.CircleNode" />
+                <local:NodeResource Margin="1" Title="Channel Switch" Type="Materia.Nodes.Atomic.ChannelSwitchNode" />
+                <local:NodeResource Margin="1" Title="Curves" Type="Materia.Nodes.Atomic.CurvesNode" />
+                <local:NodeResource Margin="1" Title="Emboss" Type="Materia.Nodes.Atomic.EmbossNode" />
+                <local:NodeResource Margin="1" Title="Grayscale Conversion" Type="Materia.Nodes.Atomic.GrayscaleConversionNode" />
+                <local:NodeResource Margin="1" Title="Invert" Type="Materia.Nodes.Atomic.InvertNode" />
+                <local:NodeResource Margin="1" Title="Levels" Type="Materia.Nodes.Atomic.LevelsNode" />
+                <local:NodeResource Margin="1" Title="Mesh" Type="Materia.Nodes.Atomic.MeshNode" />
+                <local:NodeResource Margin="1" Title="Mesh Depth" Type="Materia.Nodes.Atomic.MeshDepthNode" />
+                <local:NodeResource Margin="1" Title="Motion Blur" Type="Materia.Nodes.Atomic.MotionBlurNode" />
+                <local:NodeResource Margin="1" Title="Normal" Type="Materia.Nodes.Atomic.NormalNode" />
+                <local:NodeResource Margin="1" Title="Pixel Processor" Type="Materia.Nodes.Atomic.PixelProcessorNode" />
+                <local:NodeResource Margin="1" Title="Sequence" Type="Materia.Nodes.Atomic.SequenceNode" />
+                <local:NodeResource Margin="1" Title="Transform" Type="Materia.Nodes.Atomic.TransformNode" />
+                <local:NodeResource Margin="1" Title="Uniform Color" Type="Materia.Nodes.Atomic.UniformColorNode" />
+                <local:NodeResource Margin="1" Title="Warp" Type="Materia.Nodes.Atomic.WarpNode" />
+            </TreeViewItem>
+            <TreeViewItem Foreground="LightGray" Header="Function Nodes">
+                <TreeViewItem Foreground="LightGray" Header="Comparison">
+                    <local:NodeResource Margin="1" Title="Equals" Type="Materia.Nodes.MathNodes.EqualsNode" />
+                    <local:NodeResource Margin="1" Title="Greater Than" Type="Materia.Nodes.MathNodes.GreaterThanNode" />
+                    <local:NodeResource Margin="1" Title="Greater Than Equal" Type="Materia.Nodes.MathNodes.GreaterThanEqualNode" />
+                    <local:NodeResource Margin="1" Title="Less Than" Type="Materia.Nodes.MathNodes.LessThanNode" />
+                    <local:NodeResource Margin="1" Title="Less Than Equal" Type="Materia.Nodes.MathNodes.LessThanEqualNode" />
+                    <local:NodeResource Margin="1" Title="Not Equal" Type="Materia.Nodes.MathNodes.NotEqualNode" />
+                </TreeViewItem>
+                <TreeViewItem Foreground="LightGray" Header="Constant">
+                    <local:NodeResource Margin="1" Title="Bool" Type="Materia.Nodes.MathNodes.BooleanConstantNode" />
+                    <local:NodeResource Margin="1" Title="Float" Type="Materia.Nodes.MathNodes.FloatConstantNode" />
+                    <local:NodeResource Margin="1" Title="Float2" Type="Materia.Nodes.MathNodes.Float2ConstantNode" />
+                    <local:NodeResource Margin="1" Title="Float3" Type="Materia.Nodes.MathNodes.Float3ConstantNode" />
+                    <local:NodeResource Margin="1" Title="Float4" Type="Materia.Nodes.MathNodes.Float4ConstantNode" />
+                </TreeViewItem>
+                <TreeViewItem Foreground="LightGray" Header="Function">
+                    <local:NodeResource Margin="1" Title="Absolute" Type="Materia.Nodes.MathNodes.AbsoluteNode" />
+                    <local:NodeResource Margin="1" Title="Arc Tangent 2" Type="Materia.Nodes.MathNodes.ArcTangentNode" />
+                    <local:NodeResource Margin="1" Title="Cartesian" Type="Materia.Nodes.MathNodes.CartesianNode" />
+                    <local:NodeResource Margin="1" Title="Ceil" Type="Materia.Nodes.MathNodes.CeilNode" />
+                    <local:NodeResource Margin="1" Title="Cosine" Type="Materia.Nodes.MathNodes.CosineNode" />
+                    <local:NodeResource Margin="1" Title="Exponential" Type="Materia.Nodes.MathNodes.ExponentialNode" />
+                    <local:NodeResource Margin="1" Title="Floor" Type="Materia.Nodes.MathNodes.FloorNode" />
+                    <local:NodeResource Margin="1" Title="Linear Interpolation" Type="Materia.Nodes.MathNodes.LerpNode" />
+                    <local:NodeResource Margin="1" Title="Log" Type="Materia.Nodes.MathNodes.LogNode" />
+                    <local:NodeResource Margin="1" Title="Log2" Type="Materia.Nodes.MathNodes.Log2Node" />
+                    <local:NodeResource Margin="1" Title="Max" Type="Materia.Nodes.MathNodes.MaxNode" />
+                    <local:NodeResource Margin="1" Title="Min" Type="Materia.Nodes.MathNodes.MinNode" />
+                    <local:NodeResource Margin="1" Title="Pow2" Type="Materia.Nodes.MathNodes.Pow2Node" />
+                    <local:NodeResource Margin="1" Title="Random" Type="Materia.Nodes.MathNodes.RandomNode" />
+                    <local:NodeResource Margin="1" Title="Round" Type="Materia.Nodes.MathNodes.RoundNode" />
+                    <local:NodeResource Margin="1" Title="Sine" Type="Materia.Nodes.MathNodes.SineNode" />
+                    <local:NodeResource Margin="1" Title="Square Root" Type="Materia.Nodes.MathNodes.SqrtNode" />
+                    <local:NodeResource Margin="1" Title="Tangent" Type="Materia.Nodes.MathNodes.TangentNode" />
+                </TreeViewItem>
+                <TreeViewItem Foreground="LightGray" Header="Logical">
+                    <local:NodeResource Margin="1" Title="And" Type="Materia.Nodes.MathNodes.AndNode" />
+                    <local:NodeResource Margin="1" Title="Not" Type="Materia.Nodes.MathNodes.NotNode" />
+                    <local:NodeResource Margin="1" Title="Or" Type="Materia.Nodes.MathNodes.OrNode" />
+                    <local:NodeResource Margin="1" Title="If Else" Type="Materia.Nodes.MathNodes.IfElseNode" />
+                </TreeViewItem>
+                <TreeViewItem Foreground="LightGray" Header="Operator">
+                    <local:NodeResource Margin="1" Title="Add" Type="Materia.Nodes.MathNodes.AddNode" />
+                    <local:NodeResource Margin="1" Title="Divide" Type="Materia.Nodes.MathNodes.DivideNode" />
+                    <local:NodeResource Margin="1" Title="Dot Product" Type="Materia.Nodes.MathNodes.DotProductNode" />
+                    <local:NodeResource Margin="1" Title="Multiply" Type="Materia.Nodes.MathNodes.MultiplyNode" />
+                    <local:NodeResource Margin="1" Title="Modulo" Type="Materia.Nodes.MathNodes.ModuloNode" />
+                    <local:NodeResource Margin="1" Title="Negate" Type="Materia.Nodes.MathNodes.NegateNode" />
+                    <local:NodeResource Margin="1" Title="Subtract" Type="Materia.Nodes.MathNodes.SubtractNode" />
+                </TreeViewItem>
+                <TreeViewItem Foreground="LightGray" Header="Variables">
+                    <local:NodeResource Margin="1" Title="Set" Type="Materia.Nodes.MathNodes.SetVarNode" />
+                    <local:NodeResource Margin="1" Title="Get Float" Type="Materia.Nodes.MathNodes.GetFloatVarNode" />
+                    <local:NodeResource Margin="1" Title="Get Float2" Type="Materia.Nodes.MathNodes.GetFloat2VarNode" />
+                    <local:NodeResource Margin="1" Title="Get Float3" Type="Materia.Nodes.MathNodes.GetFloat3VarNode" />
+                    <local:NodeResource Margin="1" Title="Get Float4" Type="Materia.Nodes.MathNodes.GetFloat4VarNode" />
+                    <local:NodeResource Margin="1" Title="Sampler" Type="Materia.Nodes.MathNodes.SamplerNode" />
+                </TreeViewItem>
+                <TreeViewItem Foreground="LightGray" Header="Vector">
+                    <local:NodeResource Margin="1" Title="Make Float2" Type="Materia.Nodes.MathNodes.MakeFloat2Node" />
+                    <local:NodeResource Margin="1" Title="Make Float3" Type="Materia.Nodes.MathNodes.MakeFloat3Node" />
+                    <local:NodeResource Margin="1" Title="Make Float4" Type="Materia.Nodes.MathNodes.MakeFloat4Node" />
+                    <local:NodeResource Margin="1" Title="Break Float2" Type="Materia.Nodes.MathNodes.BreakFloat2Node" />
+                    <local:NodeResource Margin="1" Title="Break Float3" Type="Materia.Nodes.MathNodes.BreakFloat3Node" />
+                    <local:NodeResource Margin="1" Title="Break Float4" Type="Materia.Nodes.MathNodes.BreakFloat4Node" />
+                </TreeViewItem>
+            </TreeViewItem>
+        </TreeView>
+    </Grid>
+</UserControl>

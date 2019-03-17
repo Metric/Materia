@@ -1,0 +1,45 @@
+﻿<UserControl x:Class="Materia.UICurves"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Materia"
+             mc:Ignorable="d" 
+             d:DesignHeight="200" d:DesignWidth="256" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged">
+    <Grid MinWidth="256" Height="200">
+        <ComboBox Foreground="LightGray" SelectedValue="RGB" Text="RGB" Margin="5" Style="{StaticResource ComboBoxFlatStyle}" VerticalAlignment="Top" HorizontalAlignment="Left" Width="64" Name="Channels" SelectionChanged="ComboBox_SelectionChanged">
+            <ComboBox.Items>
+                <ComboBoxItem Content="RGB" />
+                <ComboBoxItem Content="Red" />
+                <ComboBoxItem Content="Green" />
+                <ComboBoxItem Content="Blue" />
+            </ComboBox.Items>
+        </ComboBox>
+        <Button Name="ResetButton" Click="ResetButton_Click" Background="#444" Foreground="LightGray" Content="RESET" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="42" Height="20" Margin="5" BorderThickness="0" />
+
+        <ToggleButton Name="ToggleAll" Width="42" BorderThickness="0" Background="#444" Foreground="LightGray" Content="ALL" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Top" Height="20" Margin="5,5,50,5" Click="ToggleAll_Click">
+            <ToggleButton.Style>
+                <Style TargetType="{x:Type ToggleButton}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ToggleButton">
+                                <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
+                                        Background="{TemplateBinding Background}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter Property="Background" TargetName="border" Value="#222" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ToggleButton.Style>
+        </ToggleButton>
+        <Grid ClipToBounds="True" Background="#222" Name="CurveView" Margin="0,32,0,0" MouseLeave="CurveView_MouseLeave" MouseDown="CurveView_MouseDown" MouseMove="CurveView_MouseMove"  MouseUp="CurveView_MouseUp">
+            <Image Name="CurvePixels" />
+        </Grid>
+    </Grid>
+</UserControl>

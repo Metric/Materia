@@ -1,0 +1,38 @@
+﻿<UserControl x:Class="Materia.UI.UI3DPreview"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Materia.UI"
+             xmlns:h="clr-namespace:Materia.UI.Helpers"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" SizeChanged="UserControl_SizeChanged" Unloaded="UserControl_Unloaded" Loaded="UserControl_Loaded">
+    <Grid>
+        <WindowsFormsHost Name="FHost" Margin="0,24,0,0" />
+        <Menu VerticalAlignment="Top" Margin="0,0,0,0" Background="#333" BorderThickness="0">
+            <MenuItem Foreground="LightGray" Header="Scene" Height="25">
+                <MenuItem Header="_Cube" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="True" IsCheckable="True" />
+                <MenuItem Header="_Sphere" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Rounded Cube" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Plane" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Cylinder" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <Separator />
+                <MenuItem Header="_Reset" Foreground="#555" Click="ResetScene_Click" />
+            </MenuItem>
+            <MenuItem Foreground="LightGray" Header="Camera" Height="25">
+                <MenuItem Header="_Top" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Bottom" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Left" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Right" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Front" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Back" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Perspective" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="True" IsCheckable="True" />
+                <Separator />
+                <MenuItem Header="_Orthographic" h:MenuItemExtensions.GroupName="cameraMode" Click="CameraMode_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Perspective" h:MenuItemExtensions.GroupName="cameraMode" Click="CameraMode_Click" Foreground="#555" IsChecked="True" IsCheckable="True" />
+                <Separator />
+                <MenuItem Header="_Settings" Foreground="#555" />
+            </MenuItem>
+        </Menu>
+    </Grid>
+</UserControl>

@@ -1,0 +1,16 @@
+﻿<UserControl x:Class="Materia.UINodePoint"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Materia"
+             mc:Ignorable="d" 
+             d:DesignHeight="16" d:DesignWidth="64" MouseDown="UserControl_MouseDown" ClipToBounds="False">
+    <Canvas Width="16" Height="16" ClipToBounds="False">
+        <Border Width="16" Height="16" Name="node" MouseEnter="Node_MouseEnter" MouseLeave="Node_MouseLeave"  Background="DarkGray" CornerRadius="{Binding Path=ActualHeight, ElementName=node}" ClipToBounds="False">
+            <Border Name="insideBorder" BorderThickness="2" BorderBrush="Black" CornerRadius="{Binding Path=ActualHeight, ElementName=insideBorder}"></Border>
+        </Border>
+        <TextBlock Name="OutputName" Foreground="LightGray" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="18" />
+        <TextBlock Name="InputName" Foreground="LightGray" HorizontalAlignment="Right" VerticalAlignment="Center" Canvas.Right="18" />
+    </Canvas>
+</UserControl>
