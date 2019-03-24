@@ -17,12 +17,11 @@ Computer Requirements
  * OpenGL 3.3 compatible video card with as much vram as possible.
  * Windows 7, 8, or 10 64-Bit
  * Approx Hard Drive Space Needed: 300MB (Not Including .Net 4.6.1 Runtime)
+ * Approx system memory required: 1GB+
 
 Currently only runs on Windows as some Win32Api is used.
 
 .mtg file format for graphs and nodes may change during these initial phases.
-
-No method to export textures from a graph exist yet. So, right now it is sort of useless for artists. But you can play around with it and give feedback.
 
 Major TODO
 ============== 
@@ -50,6 +49,7 @@ Major TODO
   * Importing custom geometry for 3D preview
   * SSS PBR Shader
   * Option to modify 3D Camera Settings etc.
+  * Multi node texture resize capability
 
 Known Bugs
 ====================
