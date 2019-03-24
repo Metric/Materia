@@ -9,9 +9,15 @@ uniform float intensity = 1.0;
 void main() {
     vec2 uv = UV;
 
-    float w = texture(Warp, UV).r;
+    vec2 offset = 1.0 / textureSize(Warp, 0);
 
-    uv += vec2(w) * intensity;
+    float grad1 = texture(Warp, UV - vec2(0,offset.y)).r * 2.0 - 1.0;
+    float grad2 = texture(Warp, UV - vec2(offset.x,0)).r * 2.0 - 1.0;
+    float grad3 = texture(Warp, UV + vec2(0,offset.y)).r * 2.0 - 1.0;
+    float grad4 = texture(Warp, UV + vec2(offset.x, 0)).r * 2.0 - 1.0;
+
+    uv.x += (grad2 - grad4) * intensity;
+    uv.y += (grad1 - grad3) * intensity;
 
     vec4 c = texture(MainTex, uv);
     FragColor = c;
