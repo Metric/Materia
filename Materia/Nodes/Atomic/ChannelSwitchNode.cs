@@ -20,6 +20,7 @@ namespace Materia.Nodes.Atomic
 
         protected int redChannel;
 
+        [Promote(NodeType.Float)]
         [Title(Title = "Red Channel")]
         [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
         public int RedChannel
@@ -37,6 +38,7 @@ namespace Materia.Nodes.Atomic
 
         protected int greenChannel;
 
+        [Promote(NodeType.Float)]
         [Title(Title = "Green Channel")]
         [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
         public int GreenChannel
@@ -54,6 +56,7 @@ namespace Materia.Nodes.Atomic
 
         protected int blueChannel;
 
+        [Promote(NodeType.Float)]
         [Title(Title = "Blue Channel")]
         [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
         public int BlueChannel
@@ -71,6 +74,7 @@ namespace Materia.Nodes.Atomic
 
         protected int alphaChannel;
 
+        [Promote(NodeType.Float)]
         [Title(Title = "Alpha Channel")]
         [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
         public int AlphaChannel
@@ -164,10 +168,38 @@ namespace Materia.Nodes.Atomic
             processor.TileX = tileX;
             processor.TileY = TileY;
 
-            processor.RedChannel = redChannel;
-            processor.GreenChannel = greenChannel;
-            processor.BlueChannel = blueChannel;
-            processor.AlphaChannel = alphaChannel;
+            int predChannel = redChannel;
+            int pgreenChannel = greenChannel;
+            int pblueChannel = blueChannel;
+            int palphaChannel = alphaChannel;
+
+            if(ParentGraph != null)
+            {
+                if(ParentGraph.HasParameterValue(Id, "RedChannel"))
+                {
+                    predChannel = ParentGraph.GetParameterValue<int>(Id, "RedChannel");
+                }
+
+                if(ParentGraph.HasParameterValue(Id, "GreenChannel"))
+                {
+                    pgreenChannel = ParentGraph.GetParameterValue<int>(Id, "GreenChannel");
+                }
+
+                if(ParentGraph.HasParameterValue(Id, "BlueChannel"))
+                {
+                    pblueChannel = ParentGraph.GetParameterValue<int>(Id, "BlueChannel");
+                }
+
+                if(ParentGraph.HasParameterValue(Id, "AlphaChannel"))
+                {
+                    palphaChannel = ParentGraph.GetParameterValue<int>(Id, "AlphaChannel");
+                }
+            }
+
+            processor.RedChannel = predChannel;
+            processor.GreenChannel = pgreenChannel;
+            processor.BlueChannel = pblueChannel;
+            processor.AlphaChannel = palphaChannel;
             processor.Process(width, height, i1, i2, buffer);
             processor.Complete();
 

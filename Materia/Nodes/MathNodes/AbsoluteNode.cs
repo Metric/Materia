@@ -30,9 +30,15 @@ namespace Materia.Nodes.MathNodes
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
+            input.OnInputRemoved += Input_OnInputRemoved;
 
             Outputs = new List<NodeOutput>();
             Outputs.Add(output);
+        }
+
+        private void Input_OnInputRemoved(NodeInput n)
+        {
+            Updated();
         }
 
         private void Input_OnInputChanged(NodeInput n)
@@ -42,7 +48,7 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
-            TryAndProcess();
+            Updated();
         }
 
         public override void TryAndProcess()

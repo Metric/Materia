@@ -21,6 +21,7 @@ namespace Materia.Nodes.Atomic
 
         NodeOutput Output;
 
+        [Promote(NodeType.Float)]
         [Slider(IsInt = false, Max = 1, Min = 0.001f, Snap = false, Ticks = new float[0])]
         public float Radius
         {
@@ -37,6 +38,7 @@ namespace Materia.Nodes.Atomic
 
         protected float outline;
 
+        [Promote(NodeType.Float)]
         [Slider(IsInt = false, Max = 1, Min = 0, Snap = false, Ticks = new float[0])]
         public float Outline
         {
@@ -96,10 +98,22 @@ namespace Materia.Nodes.Atomic
         {
             CreateBufferIfNeeded();
 
+            float pradius = radius;
+            float poutline = outline;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Radius"))
+            {
+                pradius = ParentGraph.GetParameterValue<float>(Id, "Radius");
+            }
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Outline"))
+            {
+                poutline = ParentGraph.GetParameterValue<float>(Id, "Outline");
+            }
+
             processor.TileX = 1;
             processor.TileY = 1;
-            processor.Radius = radius;
-            processor.Outline = outline;
+            processor.Radius = pradius;
+            processor.Outline = poutline;
 
             processor.Process(width, height, null, buffer);
             processor.Complete();

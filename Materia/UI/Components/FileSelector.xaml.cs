@@ -64,20 +64,14 @@ namespace Materia.UI.Components
 
                 PathLabel.Text = System.IO.Path.GetFileName(path);
 
-                App.Current.Dispatcher.Invoke(() =>
-                {
-                    property.SetValue(propertyOwner, path);
-                });
+                property.SetValue(propertyOwner, path);
             }
         }
 
         private void ClearFile_Click(object sender, RoutedEventArgs e)
         {
             PathLabel.Text = "";
-            App.Current.Dispatcher.Invoke(() =>
-            {
-                property.SetValue(propertyOwner, "");
-            });
+            property.SetValue(propertyOwner, "");
         }
     }
 }

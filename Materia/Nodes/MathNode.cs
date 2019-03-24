@@ -10,6 +10,11 @@ namespace Materia.Nodes
 {
     public class MathNode : Node
     {
+        public Node ParentNode
+        {
+            get; set;
+        }
+
         protected string shaderId;
         public string ShaderId
         {

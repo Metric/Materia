@@ -50,9 +50,10 @@ namespace Materia.Nodes
         {
             if (To != null && To.Count > 0)
             {
-                foreach (NodeInput n in To)
+                int c = To.Count;
+                for(int i = 0; i < c; i++)
                 {
-                    n.InputDataChanged();
+                    To[i].InputDataChanged();
                 }
             }
         }

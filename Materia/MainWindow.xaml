@@ -17,7 +17,10 @@
                     <Separator />
                     <MenuItem Foreground="Black" Header="_Save" Click="MenuItem_Click" />
                     <MenuItem Foreground="Black" Header="_Save As" Click="MenuItem_Click" />
+                    <Separator />
                     <MenuItem Name="RecentMenu" Foreground="Black" Header="_Recent" />
+                    <Separator />
+                    <MenuItem Header="_Export Outputs" Foreground="Black" Click="MenuItem_Click" />
                 </MenuItem>
                 <MenuItem Foreground="LightGray" Header="_Edit">
                     <MenuItem Foreground="Black" Header="_Undo" Name="mnuUndo" Click="MenuItem_Click" />

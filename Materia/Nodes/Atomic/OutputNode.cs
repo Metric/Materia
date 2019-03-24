@@ -14,6 +14,16 @@ using Materia.Imaging.GLProcessing;
 
 namespace Materia.Nodes.Atomic
 {
+    public enum OutputType
+    {
+        basecolor,
+        height,
+        occlusion,
+        roughness,
+        metallic,
+        normal
+    }
+
     /// <summary>
     /// An output node simply takes in 
     /// an input to distribute to other graphs
@@ -21,14 +31,14 @@ namespace Materia.Nodes.Atomic
     /// they can only have one input
     /// and no actual outputs
     /// </summary>
-    public class OutputNode : Node
+    public class OutputNode : ImageNode
     {
         NodeInput input;
 
-        NodeType outtype;
+        OutputType outtype;
         [Title(Title = "Type")]
         [Dropdown(null)]
-        public NodeType OutType
+        public OutputType OutType
         {
             get
             {
@@ -96,7 +106,7 @@ namespace Materia.Nodes.Atomic
 
         public OutputNode(GraphPixelType p = GraphPixelType.RGBA)
         {
-            OutType = NodeType.Color;
+            OutType = OutputType.basecolor;
 
             Name = "Output";
 
@@ -185,7 +195,7 @@ namespace Materia.Nodes.Atomic
 
         public class OutputNodeData : NodeData
         {
-            public NodeType outType;
+            public OutputType outType;
         }
 
         public override void FromJson(Dictionary<string, Node> nodes, string data)
@@ -193,8 +203,8 @@ namespace Materia.Nodes.Atomic
             OutputNodeData d = JsonConvert.DeserializeObject<OutputNodeData>(data);
             SetBaseNodeDate(d);
             outtype = d.outType;
-          
-            Updated();
+
+            TryAndProcess();
         }
 
         public override string GetJson()

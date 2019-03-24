@@ -97,9 +97,58 @@ namespace Materia.Nodes.MathNodes
 
         void Process()
         {
-            //we do not process anything on the cpu with the sampler
-            //it is specifically meant for the PixelProcessor
-            //to use on the GPU
+            object inp = input.Input.Data;
+
+            if (inp == null) return;
+
+            /// This is to support FXMap cpu based
+            /// samplers for properties
+            if (ParentNode != null)
+            {
+                if(SampleIndex < ParentNode.Inputs.Count)
+                {
+                    var p = ParentNode.Inputs[SampleIndex];
+
+                    if(p.HasInput)
+                    {
+                        GLTextuer2D i1 = (GLTextuer2D)p.Input.Data;
+
+                        if (i1 == null || i1.Id == 0) return;
+
+                        FloatBitmap bitmap = null;
+                        
+                        if(previewProcessor == null)
+                        {
+                            previewProcessor = new BasicImageRenderer();
+                        }
+
+
+                        MVector pos = (MVector)inp;
+
+                        int dx = (int)Math.Abs(pos.X * i1.Width) % i1.Width;
+                        int dy = (int)Math.Abs(pos.Y * i1.Height) % i1.Height;
+
+                        previewProcessor.Process(i1.Width, i1.Height, i1);
+                        float[] bits = previewProcessor.ReadFloat(dx, dy, 1, 1);
+                        bitmap = new FloatBitmap(1, 1, bits);
+                        previewProcessor.Complete();
+
+                        float r, g, b, a;
+
+                        bitmap.GetPixel(0, 0, out r, out g, out b, out a);
+
+                        System.GC.Collect();
+
+                        output.Data = new MVector(r, g, b, a);
+                        output.Changed();
+
+                        return;
+                    }
+                }
+            }
+
+            output.Data = new MVector();
+            output.Changed();
         }
 
         public class SamplerNodeData : NodeData

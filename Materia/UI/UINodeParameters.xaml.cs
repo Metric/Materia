@@ -19,6 +19,7 @@ using Materia.Nodes.Containers;
 using Materia.Imaging;
 using Materia.UI.Components;
 using OpenTK;
+using Materia.Nodes.Atomic;
 
 namespace Materia
 {
@@ -257,6 +258,34 @@ namespace Materia
             ColorPickerAttribute cp = p.GetCustomAttribute<ColorPickerAttribute>();
             TitleAttribute ti = p.GetCustomAttribute<TitleAttribute>();
             TextInputAttribute tinp = p.GetCustomAttribute<TextInputAttribute>();
+            GraphParameterEditorAttribute gpe = p.GetCustomAttribute<GraphParameterEditorAttribute>();
+            ParameterMapEditorAttribute pme = p.GetCustomAttribute<ParameterMapEditorAttribute>();
+            PromoteAttribute pro = p.GetCustomAttribute<PromoteAttribute>();
+
+            //handle very special stuff
+            //exposed constant parameter variable names
+            if(gpe != null)
+            {
+                if(node is Graph)
+                {
+                    Graph g = node as Graph;
+
+                    GraphParameterEditor inp = new GraphParameterEditor(g, g.Parameters);
+                    Stack.Children.Add(inp);
+                    elementLookup[name] = inp;
+                }
+            }
+            //for graph instance exposed parameters from underlying graph
+            else if(pme != null)
+            {
+                if(node is GraphInstanceNode)
+                {
+                    GraphInstanceNode gin = node as GraphInstanceNode;
+                    ParameterMap pm = new ParameterMap(gin.GraphInst, gin.Parameters);
+                    Stack.Children.Add(pm);
+                    elementLookup[name] = pm;
+                }
+            }
 
             string title = name;
 
@@ -290,8 +319,17 @@ namespace Materia
             {
                 if(cp != null)
                 {
-                    PropertyLabel l = new PropertyLabel();
-                    l.Title = title;
+                    PropertyLabel l = null;
+                    if(pro != null && node is Node)
+                    {
+                        l = new PropertyLabel(title, node as Node, name);
+                    }
+                    else
+                    {
+                        l = new PropertyLabel();
+                        l.Title = title;
+                    }
+
                     labels.Add(l);
                     Stack.Children.Add(l);
 
@@ -316,6 +354,20 @@ namespace Materia
             }
             else if(t.Equals(typeof(bool)))
             {
+                PropertyLabel l = null;
+                if (pro != null && node is Node)
+                {
+                    l = new PropertyLabel(title, node as Node, name);
+                }
+                else
+                {
+                    l = new PropertyLabel();
+                    l.Title = title;
+                }
+
+                labels.Add(l);
+                Stack.Children.Add(l);
+
                 ToggleControl tg = new ToggleControl(name, p, node);
                 Stack.Children.Add(tg);
                 elementLookup[name] = tg;
@@ -361,8 +413,17 @@ namespace Materia
             {
                 if (sl != null)
                 {
-                    PropertyLabel l = new PropertyLabel();
-                    l.Title = title;
+                    PropertyLabel l = null;
+                    if (pro != null && node is Node)
+                    {
+                        l = new PropertyLabel(title, node as Node, name);
+                    }
+                    else
+                    {
+                        l = new PropertyLabel();
+                        l.Title = title;
+                    }
+
                     labels.Add(l);
                     Stack.Children.Add(l);
 
@@ -372,8 +433,17 @@ namespace Materia
                 }
                 else
                 {
-                    PropertyLabel l = new PropertyLabel();
-                    l.Title = title;
+                    PropertyLabel l = null;
+                    if (pro != null && node is Node)
+                    {
+                        l = new PropertyLabel(title, node as Node, name);
+                    }
+                    else
+                    {
+                        l = new PropertyLabel();
+                        l.Title = title;
+                    }
+
                     labels.Add(l);
                     Stack.Children.Add(l);
 
@@ -399,8 +469,17 @@ namespace Materia
                 }
                 else if(sl != null)
                 {
-                    PropertyLabel l = new PropertyLabel();
-                    l.Title = title;
+                    PropertyLabel l = null;
+                    if (pro != null && node is Node)
+                    {
+                        l = new PropertyLabel(title, node as Node, name);
+                    }
+                    else
+                    {
+                        l = new PropertyLabel();
+                        l.Title = title;
+                    }
+
                     labels.Add(l);
                     Stack.Children.Add(l);
 
@@ -410,8 +489,17 @@ namespace Materia
                 }
                 else
                 {
-                    PropertyLabel l = new PropertyLabel();
-                    l.Title = title;
+                    PropertyLabel l = null;
+                    if (pro != null && node is Node)
+                    {
+                        l = new PropertyLabel(title, node as Node, name);
+                    }
+                    else
+                    {
+                        l = new PropertyLabel();
+                        l.Title = title;
+                    }
+
                     labels.Add(l);
                     Stack.Children.Add(l);
 

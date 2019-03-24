@@ -49,6 +49,7 @@ namespace Materia.Nodes.Atomic
         BlendProcessor processor;
 
         float alpha;
+        [Promote(NodeType.Float)]
         [Slider(IsInt = false, Max = 1, Min = 0, Snap = false, Ticks = new float[0])]
         public float Alpha
         {
@@ -67,6 +68,7 @@ namespace Materia.Nodes.Atomic
         }
 
         BlendType mode;
+        [Promote(NodeType.Float)]
         [Title(Title = "Blend Mode")]
         public BlendType Mode
         {
@@ -160,10 +162,22 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            int pmode = (int)mode;
+            float palpha = alpha;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Mode"))
+            {
+                pmode = ParentGraph.GetParameterValue<int>(Id, "Mode");
+            }
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alpha"))
+            {
+                palpha = ParentGraph.GetParameterValue<float>(Id, "Alpha");
+            }
+
             processor.TileX = tileX;
             processor.TileY = tileY;
-            processor.Alpha = alpha;
-            processor.BlendMode = (int)mode;
+            processor.Alpha = palpha;
+            processor.BlendMode = pmode;
             processor.Process(width, height, i1, i2, i3, buffer);
             processor.Complete();
 

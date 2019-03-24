@@ -15,6 +15,7 @@ using Materia.Imaging;
 using static Materia.UILevels;
 using OpenTK;
 using Materia.UI.Helpers;
+using System.Threading;
 
 namespace Materia.UI.Components
 {
@@ -23,6 +24,8 @@ namespace Materia.UI.Components
     /// </summary>
     public partial class Histogram : UserControl
     {
+        CancellationTokenSource ctk;
+
         LevelMode mode;
 
         bool isLoaded;
@@ -70,46 +73,78 @@ namespace Materia.UI.Components
 
             int[,] hist = new int[3, 256];
 
-            for (int y = 0; y < fromBitmap.Height; y++)
+            if(ctk != null)
             {
-                byte r = 0, g = 0, b = 0, a = 0;
-                for (int x = 0; x < fromBitmap.Width; x++)
-                {
-                    fromBitmap.GetPixel(x, y, out r, out g, out b, out a);
-
-                    hist[0, r]++;
-                    hist[1, g]++;
-                    hist[2, b]++;
-                }
+                ctk.Cancel();
             }
 
-            Histograph = hist;
+            ctk = new CancellationTokenSource();
+
+            Task.Run(() =>
+            {
+                for (int y = 0; y < fromBitmap.Height; y++)
+                {
+                    byte r = 0, g = 0, b = 0, a = 0;
+                    for (int x = 0; x < fromBitmap.Width; x++)
+                    {
+                        fromBitmap.GetPixel(x, y, out r, out g, out b, out a);
+
+                        hist[0, r]++;
+                        hist[1, g]++;
+                        hist[2, b]++;
+                    }
+                }
+
+            }, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    Histograph = hist;
+                });
+            });
         }
 
         public void GenerateHistograph(FloatBitmap fromBitmap)
         {
             if (fromBitmap == null) return;
-
             int[,] hist = new int[3, 256];
 
-            for (int y = 0; y < fromBitmap.Height; y++)
+            if(ctk != null)
             {
-                float r = 0, g = 0, b = 0, a = 0;
-                for (int x = 0; x < fromBitmap.Width; x++)
-                {
-                    fromBitmap.GetPixel(x, y, out r, out g, out b, out a);
-
-                    int rb = (int)Math.Min(255, Math.Max(0, r * 255));
-                    int gb = (int)Math.Min(255, Math.Max(0, g * 255));
-                    int bb = (int)Math.Min(255, Math.Max(0, b * 255));
-
-                    hist[0, rb]++;
-                    hist[1, gb]++;
-                    hist[2, bb]++;
-                }
+                ctk.Cancel();
             }
 
-            Histograph = hist;
+            ctk = new CancellationTokenSource();
+
+            Task.Run(() =>
+            {
+                for (int y = 0; y < fromBitmap.Height; y++)
+                {
+                    float r = 0, g = 0, b = 0, a = 0;
+                    for (int x = 0; x < fromBitmap.Width; x++)
+                    {
+                        fromBitmap.GetPixel(x, y, out r, out g, out b, out a);
+
+                        int rb = (int)Math.Min(255, Math.Max(0, r * 255));
+                        int gb = (int)Math.Min(255, Math.Max(0, g * 255));
+                        int bb = (int)Math.Min(255, Math.Max(0, b * 255));
+
+                        hist[0, rb]++;
+                        hist[1, gb]++;
+                        hist[2, bb]++;
+                    }
+                }
+            }, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    Histograph = hist;
+                });
+            });
         }
 
         public void BuildHistogramImage()
@@ -145,15 +180,15 @@ namespace Materia.UI.Components
 
                             List<Vector2> spline = CatmullRomSpline.GetSpline(points, 8);
 
-                            for(int i = 0; i < spline.Count; i++)
+                            Parallel.For(0, spline.Count, i =>
                             {
                                 Vector2 p = spline[i];
 
-                                for(int k = 0; k < p.Y; k++)
+                                for (int k = 0; k < p.Y; k++)
                                 {
                                     bmp.SetPixel((int)p.X, bmp.Height - 1 - k, 175, 175, 175, 255);
                                 }
-                            }
+                            });
                         }
                     }
                 }
@@ -180,15 +215,14 @@ namespace Materia.UI.Components
 
                         List<Vector2> spline = CatmullRomSpline.GetSpline(points, 8);
 
-                        for (int i = 0; i < spline.Count; i++)
-                        {
+                        Parallel.For(0, spline.Count, i => {
                             Vector2 p = spline[i];
 
                             for (int k = 0; k < p.Y; k++)
                             {
                                 bmp.SetPixel((int)p.X, bmp.Height - 1 - k, 175, 175, 175, 255);
                             }
-                        }
+                        });
                     }
                 }
             }

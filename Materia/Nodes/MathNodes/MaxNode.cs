@@ -63,12 +63,7 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
-            TryAndProcess();
-
-            //if (!HasEmptyInput)
-            //{
-            //    AddPlaceholderInput();
-            //}
+            Updated();
         }
 
         protected override void AddPlaceholderInput()

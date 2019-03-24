@@ -55,6 +55,8 @@ namespace Materia.Nodes.MathNodes
                 Inputs.Remove(inp);
                 RemovedInput(inp);
             }
+
+            Updated();
         }
 
         private void Input_OnInputChanged(NodeInput n)
@@ -64,12 +66,7 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
-            TryAndProcess();
-
-            //if (!HasEmptyInput)
-            //{
-            //    AddPlaceholderInput();
-            //}
+            Updated();
         }
 
         protected override void AddPlaceholderInput()

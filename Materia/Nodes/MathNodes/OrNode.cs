@@ -63,7 +63,7 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
-            TryAndProcess();
+            Updated();
 
             if (!HasEmptyInput)
             {

@@ -117,65 +117,53 @@ namespace Materia
 
             if (property.PropertyType.IsEnum)
             {
-                App.Current.Dispatcher.Invoke(() =>
+                try
                 {
-                    try
-                    {
-                        property.SetValue(propertyOwner, Enum.Parse(property.PropertyType, (string)s));
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.StackTrace);
-                    }
-                });
+                    property.SetValue(propertyOwner, Enum.Parse(property.PropertyType, (string)s));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.StackTrace);
+                }
             }
             else if(property.PropertyType.Equals(typeof(float)))
             {
                 if (s.GetType().Equals(typeof(float)))
                 {
-                    App.Current.Dispatcher.Invoke(() =>
+                    try
                     {
-                        try
-                        {
-                            property.SetValue(propertyOwner, s);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.StackTrace);
-                        }
-                    });
+                        property.SetValue(propertyOwner, s);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.StackTrace);
+                    }
                 }
                 else
                 {
                     float v = 0;
                     if (float.TryParse(s.ToString(), out v))
                     {
-                        App.Current.Dispatcher.Invoke(() =>
+                        try
                         {
-                            try
-                            {
-                                property.SetValue(propertyOwner, v);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.StackTrace);
-                            }
-                        });
+                            property.SetValue(propertyOwner, v);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.StackTrace);
+                        }
                     }
                     else
                     {
-                        App.Current.Dispatcher.Invoke(() =>
+                        try
                         {
-                            try
-                            {
-                                var index = Dropdown.SelectedIndex;
-                                property.SetValue(propertyOwner, (float)index);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.StackTrace);
-                            }
-                        });
+                            var index = Dropdown.SelectedIndex;
+                            property.SetValue(propertyOwner, (float)index);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.StackTrace);
+                        }
                     }
                 }
             }
@@ -183,49 +171,40 @@ namespace Materia
             {
                 if (s.GetType().Equals(typeof(int)))
                 {
-                    App.Current.Dispatcher.Invoke(() =>
+                    try
                     {
-                        try
-                        {
-                            property.SetValue(propertyOwner, s);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.StackTrace);
-                        }
-                    });
+                        property.SetValue(propertyOwner, s);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.StackTrace);
+                    }
                 }
                 else
                 {
                     int t = 0;
                     if (int.TryParse(s.ToString(), out t))
                     { 
-                        App.Current.Dispatcher.Invoke(() =>
+                        try
                         {
-                            try
-                            {
-                                property.SetValue(propertyOwner, t);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.StackTrace);
-                            }
-                        });
+                            property.SetValue(propertyOwner, t);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.StackTrace);
+                        }
                     }
                     else
                     {
-                        App.Current.Dispatcher.Invoke(() =>
+                        try
                         {
-                            try
-                            {
-                                var index = Dropdown.SelectedIndex;
-                                property.SetValue(propertyOwner, index);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.StackTrace);
-                            }
-                        });
+                            var index = Dropdown.SelectedIndex;
+                            property.SetValue(propertyOwner, index);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.StackTrace);
+                        }
                     }
                 }
             }
@@ -234,23 +213,20 @@ namespace Materia
                 if(!string.IsNullOrEmpty(output))
                 {
 
-                    App.Current.Dispatcher.Invoke(() =>
+                    try
                     {
-                        try
+                        var index = Dropdown.SelectedIndex;
+                        var prop = propertyOwner.GetType().GetProperty(output);
+                        if (prop == null) return;
+                        if (prop.PropertyType.Equals(typeof(int)) || prop.PropertyType.Equals(typeof(float)))
                         {
-                            var index = Dropdown.SelectedIndex;
-                            var prop = propertyOwner.GetType().GetProperty(output);
-                            if (prop == null) return;
-                            if (prop.PropertyType.Equals(typeof(int)) || prop.PropertyType.Equals(typeof(float)))
-                            {
-                                prop.SetValue(propertyOwner, index);
-                            }
+                            prop.SetValue(propertyOwner, index);
                         }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.StackTrace);
-                        }
-                    });
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.StackTrace);
+                    }
 
                 }
             }

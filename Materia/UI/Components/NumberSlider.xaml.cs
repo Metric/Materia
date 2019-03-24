@@ -23,6 +23,8 @@ namespace Materia
     /// </summary>
     public partial class NumberSlider : UserControl
     {
+        CancellationTokenSource ctk;
+
         PropertyInfo property;
         object propertyOwner;
         SliderAttribute attributes;
@@ -62,12 +64,12 @@ namespace Materia
             if (attributes.IsInt)
             {
                 SlideInput.Value = (int)p.GetValue(owner);
-                InputValue.Text = ((int)SlideInput.Value).ToString();
+                InputValue.Text = SlideInput.Value > 0 ? String.Format("{0:0}", SlideInput.Value) : "0";
             }
             else
             {
                 SlideInput.Value = (float)p.GetValue(owner);
-                InputValue.Text = SlideInput.Value.ToString("#.##");
+                InputValue.Text = SlideInput.Value >= 0.01 ? String.Format("{0:0.00}", SlideInput.Value) : "0";
             }
         }
 
@@ -80,18 +82,45 @@ namespace Materia
                 {
                     InputValue.Text = SlideInput.Value > 0 ? String.Format("{0:0}", SlideInput.Value) : "0";
                     int v = (int)SlideInput.Value;
-                    Application.Current.Dispatcher.Invoke(() =>
+
+                    if(ctk != null)
                     {
-                        property.SetValue(propertyOwner, v);
+                        ctk.Cancel();
+                    }
+
+                    ctk = new CancellationTokenSource();
+
+                    Task.Delay(250, ctk.Token).ContinueWith(t =>
+                    {
+                        if (t.IsCanceled) return;
+
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            property.SetValue(propertyOwner, v);
+                        });
                     });
+                    
                 }
                 else
                 {
                     InputValue.Text = SlideInput.Value >= 0.01 ? String.Format("{0:0.00}", SlideInput.Value) : "0";
                     float v = (float)SlideInput.Value;
-                    Application.Current.Dispatcher.Invoke(() =>
+
+                    if (ctk != null)
                     {
-                        property.SetValue(propertyOwner, v);
+                        ctk.Cancel();
+                    }
+
+                    ctk = new CancellationTokenSource();
+
+                    Task.Delay(250, ctk.Token).ContinueWith(t =>
+                    {
+                        if (t.IsCanceled) return;
+
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            property.SetValue(propertyOwner, v);
+                        });
                     });
                 }
             }

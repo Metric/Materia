@@ -5,10 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
+using Materia.Textures;
 
 namespace Materia.Nodes.Atomic
 { 
-    public class SequenceNode : Node
+    public class SequenceNode : ImageNode
     {
         [HideProperty]
         public new int Height
@@ -163,11 +164,43 @@ namespace Materia.Nodes.Atomic
         {
             if (input.Input.Data == null) return;
 
-            foreach(var op in Outputs)
+            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+
+            if (i1 == null) return;
+            if (i1.Id == 0) return;
+
+            width = i1.Width;
+            height = i1.Height;
+
+            int c = Outputs.Count;
+
+            for(int i = 0; i < c; i++)
             {
-                op.Data = input.Input.Data;
-                op.Changed();
+                Outputs[i].Data = i1;
+                Outputs[i].Changed();
             }
+
+            Updated();
+        }
+
+        public override GLTextuer2D GetActiveBuffer()
+        {
+            if(input.HasInput)
+            {
+                return input.Input.Node.GetActiveBuffer();
+            }
+
+            return null;
+        }
+
+        public override byte[] GetPreview(int width, int height)
+        {
+            if(input.HasInput)
+            {
+                return input.Input.Node.GetPreview(width, height);
+            }
+
+            return null;
         }
 
         protected override void OnWidthHeightSet()

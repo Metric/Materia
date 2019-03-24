@@ -23,6 +23,7 @@ namespace Materia.Nodes.Atomic
 
         BlurProcessor processor;
 
+        [Promote(NodeType.Float)]
         [Slider(IsInt = true, Max = 128, Min = 1, Snap = false, Ticks = new float[0])]
         public int Intensity
         {
@@ -113,7 +114,14 @@ namespace Materia.Nodes.Atomic
             processor.TileX = 1;
             processor.TileY = 1;
 
-            processor.Intensity = intensity;
+            int pintensity = intensity;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
+            {
+                pintensity = ParentGraph.GetParameterValue<int>(Id, "Intensity");
+            }
+
+            processor.Intensity = pintensity;
             processor.Process(width, height, i1, buffer);
             processor.Complete();
 

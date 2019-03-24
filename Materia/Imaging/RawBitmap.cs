@@ -61,6 +61,61 @@ namespace Materia.Imaging
             }
         }
 
+        public void CopyRedToGreen(RawBitmap src)
+        {
+            Parallel.For(0, Height, y =>
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * 4;
+                    int idx = (x + y * Width) * 4;
+
+                    Image[idx + 1] = src.Image[idxsrc + 2];
+                }
+            });
+        }
+
+        public void CopyRedToBlue(RawBitmap src)
+        {
+            Parallel.For(0, Height, y =>
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * 4;
+                    int idx = (x + y * Width) * 4;
+
+                    Image[idx] = src.Image[idxsrc + 2];
+                }
+            });
+        }
+
+        public void CopyRedToRed(RawBitmap src)
+        {
+            Parallel.For(0, Height, y => { 
+                for (int x = 0; x < Width; x++)
+                {
+                    int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * 4;
+                    int idx = (x + y * Width) * 4;
+
+                    Image[idx + 2] = src.Image[idxsrc + 2];
+                }
+            });
+        }
+
+        public void CopyRedToAlpha(RawBitmap src)
+        {
+            Parallel.For(0, Height, y =>
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * 4;
+                    int idx = (x + y * Width) * 4;
+
+                    Image[idx + 3] = src.Image[idxsrc + 2];
+                }
+            });
+        }
+
         public void GetPixelBilinear(float x, float y, out byte r, out byte g, out byte b, out byte a)
         {
             r = g = b = 0;

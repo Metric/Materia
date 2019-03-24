@@ -12,6 +12,66 @@ using OpenTK.Graphics.OpenGL;
 
 namespace Materia.Nodes
 {
+    public class GraphParameterValue
+    {
+        public string Name { get; set; }
+        public object Value { get; set; }
+
+        public class GraphParameterValueData
+        {
+            public string name;
+            public object value;
+            public bool isFunction;
+        }
+
+        public GraphParameterValue(string name, object value)
+        {
+            Name = name;
+            Value = value;
+        }
+
+        public bool IsFunction()
+        {
+            if (Value == null) return false;
+            return Value is FunctionGraph;
+        }
+
+        public string GetJson()
+        {
+            GraphParameterValueData d = new GraphParameterValueData();
+            d.name = Name;
+            d.isFunction = IsFunction();
+
+            if (d.isFunction)
+            {
+                FunctionGraph g = Value as FunctionGraph;
+
+                d.value = g.GetJson();
+            }
+            else
+            {
+                d.value = Value;
+            }
+
+            return JsonConvert.SerializeObject(d);
+        }
+
+        public static GraphParameterValue FromJson(string data)
+        {
+            GraphParameterValueData d = JsonConvert.DeserializeObject<GraphParameterValueData>(data);
+
+            if (d.isFunction)
+            {
+                FunctionGraph t = new FunctionGraph("temp");
+                t.FromJson((string)d.value);
+                return new GraphParameterValue(d.name, t);
+            }
+
+
+            return new GraphParameterValue(d.name, d.value);
+        }
+    }
+
     public enum GraphPixelType
     {
         RGBA = PixelInternalFormat.Rgba8,
@@ -39,11 +99,25 @@ namespace Materia.Nodes
         public List<string> InputNodes { get; protected set; }
 
         protected Dictionary<string, object> Variables { get; set; }
-
         protected Dictionary<string, Point> OriginSizes;
+
+        /// <summary>
+        /// Parameters are only available for image graphs and fx graphs
+        /// </summary>
+        [GraphParameterEditor]
+        public Dictionary<string, GraphParameterValue> Parameters { get; protected set; }
 
         [HideProperty]
         public string Name { get; set; }
+
+        [HideProperty]
+        public double ShiftX { get; set; }
+
+        [HideProperty]
+        public double ShiftY { get; set; }
+
+        [HideProperty]
+        public float Zoom { get; set; }
 
         protected GraphPixelType defaultTextureType;
 
@@ -76,6 +150,14 @@ namespace Materia.Nodes
             set
             {
                 randomSeed = value;
+
+                if(this is FunctionGraph)
+                {
+                    Updated();
+                    return;
+                }
+
+                Updated();
                 TryAndProcess();
             }
         }
@@ -124,6 +206,7 @@ namespace Materia.Nodes
                     width = value;
             }
         }
+
         [Slider(IsInt = true, Max = 4096, Min = 16, Snap = true, Ticks = new float[] { 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
         [Section(Section = "Standard")]
         public int Height
@@ -142,6 +225,8 @@ namespace Materia.Nodes
         public Graph(string name, int w = 256, int h = 256)
         {
             Name = name;
+            Zoom = 1;
+            ShiftX = ShiftY = 0;
             width = w;
             height = h;
             Variables = new Dictionary<string, object>();
@@ -151,6 +236,7 @@ namespace Materia.Nodes
             OutputNodes = new List<string>();
             InputNodes = new List<string>();
             OriginSizes = new Dictionary<string, Point>();
+            Parameters = new Dictionary<string, GraphParameterValue>();
         }
 
         public virtual T GetVar<T>(string k)
@@ -182,12 +268,21 @@ namespace Materia.Nodes
             public List<string> outputs;
             public List<string> inputs;
             public GraphPixelType defaultTextureType;
+
+            public double shiftX;
+            public double shiftY;
+            public float zoom;
+
+            public Dictionary<string, string> parameters;
         }
 
         public virtual void TryAndProcess()
         {
-            foreach (Node n in Nodes)
+            int c = Nodes.Count;
+            for(int i = 0; i < c; i++)
             {
+                Node n = Nodes[i];
+
                 if (OutputNodes.Contains(n.Id))
                 {
                     continue;
@@ -200,11 +295,12 @@ namespace Materia.Nodes
                 n.TryAndProcess();
             }
 
-            //gather inputs
-            foreach (string iid in InputNodes)
+            c = InputNodes.Count;
+
+            for(int i = 0; i < c; i++)
             {
                 Node n;
-                if (NodeLookup.TryGetValue(iid, out n))
+                if (NodeLookup.TryGetValue(InputNodes[i], out n))
                 {
                     InputNode inp = (InputNode)n;
                     inp.TryAndProcess();
@@ -223,13 +319,17 @@ namespace Materia.Nodes
             this.width = width;
             this.height = height;
 
-            foreach(Node n in Nodes)
+            int c = Nodes.Count;
+
+            for(int i = 0; i < c; i++)
             {
-                if(OutputNodes.Contains(n.Id))
+                Node n = Nodes[i];
+
+                if (OutputNodes.Contains(n.Id))
                 {
                     continue;
                 }
-                if(InputNodes.Contains(n.Id))
+                if (InputNodes.Contains(n.Id))
                 {
                     continue;
                 }
@@ -257,11 +357,12 @@ namespace Materia.Nodes
                 }
             }
 
-            //gather inputs
-            foreach (string iid in InputNodes)
+            c = InputNodes.Count;
+
+            for(int i = 0; i < c; i++)
             {
                 Node n;
-                if (NodeLookup.TryGetValue(iid, out n))
+                if (NodeLookup.TryGetValue(InputNodes[i], out n))
                 {
                     InputNode inp = (InputNode)n;
                     inp.TryAndProcess();
@@ -284,6 +385,18 @@ namespace Materia.Nodes
             d.outputs = OutputNodes;
             d.inputs = InputNodes;
             d.defaultTextureType = defaultTextureType;
+            d.shiftX = ShiftX;
+            d.shiftY = ShiftY;
+            d.zoom = Zoom;
+
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+
+            foreach(var k in Parameters.Keys)
+            {
+                parameters[k] = Parameters[k].GetJson();
+            }
+
+            d.parameters = parameters;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -423,6 +536,16 @@ namespace Materia.Nodes
                 OutputNodes = d.outputs;
                 InputNodes = d.inputs;
                 defaultTextureType = d.defaultTextureType;
+                ShiftX = d.shiftX;
+                ShiftY = d.shiftY;
+                Zoom = d.zoom;
+
+                Parameters = new Dictionary<string, GraphParameterValue>();
+
+                foreach(var k in d.parameters.Keys)
+                {
+                    Parameters[k] = GraphParameterValue.FromJson(d.parameters[k]);
+                }
 
                 //parse node data
                 //setup initial object instances
@@ -497,6 +620,7 @@ namespace Materia.Nodes
                     {
                         n.FromJson(lookup, ndata);
 
+                        n.OnUpdate += N_OnUpdate;
                         //origin sizes are only for graph instances
                         //not actually used in the current one being edited
                         //it is used in the ResizeWith
@@ -536,6 +660,133 @@ namespace Materia.Nodes
             if(OnGraphUpdated != null)
             {
                 OnGraphUpdated.Invoke(this);
+            }
+        }
+
+        public bool IsParameterValueFunction(string id, string parameter)
+        {
+            string cid = id + "." + parameter;
+
+            GraphParameterValue v = null;
+
+            if (Parameters.TryGetValue(cid, out v))
+            {
+                return v.IsFunction();
+            }
+
+            return false;
+        }
+
+        public bool HasParameterValue(string id, string parameter)
+        {
+            string cid = id + "." + parameter;
+
+            return Parameters.ContainsKey(cid);
+        }
+
+        public GraphParameterValue GetParameterRaw(string id, string parameter)
+        {
+            GraphParameterValue p = null;
+
+            string cid = id + "." + parameter;
+
+            Parameters.TryGetValue(cid, out p);
+
+            return p;
+        }
+
+        public T GetParameterValue<T>(string id, string parameter)
+        {
+
+            string cid = id + "." + parameter;
+
+            GraphParameterValue p = null;
+
+            if(Parameters.TryGetValue(cid, out p))
+            {
+                if(p.IsFunction())
+                {
+                    FunctionGraph g = p.Value as FunctionGraph;
+
+                    g.TryAndProcess();
+
+                    if(g.Result == null)
+                    {
+                        return default(T);
+                    }
+
+                    return (T)g.Result;
+                }
+                else
+                {
+                    return (T)p.Value;
+                }
+            }
+
+            return default(T);
+        }
+
+        public void RemoveParameterValue(string id, string parameter)
+        {
+            string cid = id + "." + parameter;
+
+            GraphParameterValue p = null;
+
+            if (Parameters.TryGetValue(cid, out p))
+            {
+                if (p.IsFunction())
+                {
+                    FunctionGraph g = p.Value as FunctionGraph;
+                    g.OnGraphUpdated -= Graph_OnGraphUpdated;
+                    g.Dispose();
+                }
+            }
+
+            Parameters.Remove(cid);
+
+            Updated();
+        }
+
+        public void SetParameterValue(string id, string parameter, object v)
+        {
+            string cid = id + "." + parameter;
+
+            GraphParameterValue p = null;
+
+            if (Parameters.TryGetValue(cid, out p))
+            {
+                if (p.IsFunction())
+                {
+                    FunctionGraph g = p.Value as FunctionGraph;
+                    g.OnGraphUpdated -= Graph_OnGraphUpdated;
+                    g.Dispose();
+                }
+
+                p.Value = v;
+            }
+            else
+            {
+                Parameters[cid] = new GraphParameterValue(parameter, v);
+            }
+
+            if (v is FunctionGraph)
+            {
+                (v as FunctionGraph).OnGraphUpdated += Graph_OnGraphUpdated;
+            }
+
+            Updated();
+        }
+
+        private void Graph_OnGraphUpdated(Graph g)
+        {
+            if(g is FunctionGraph)
+            {
+                FunctionGraph fg = g as FunctionGraph;
+
+                if(fg.ParentNode != null)
+                {
+                    fg.ParentNode.TryAndProcess();
+                }
             }
         }
     }

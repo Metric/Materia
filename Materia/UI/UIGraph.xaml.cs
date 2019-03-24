@@ -23,6 +23,12 @@ using Materia.UI.Components;
 
 namespace Materia
 {
+    public enum GraphStackType
+    {
+        Parameter,
+        Pixel,
+        FX
+    }
     /// <summary>
     /// Interaction logic for UIGraph.xaml
     /// </summary>
@@ -59,6 +65,10 @@ namespace Materia
 
         public string FilePath { get; protected set; }
 
+        public string StoredGraph { get; protected set; }
+        public string StoredGraphCWD { get; protected set; }
+        public string[] StoredGraphStack { get; protected set; }
+
         public float ScaledGridSnap
         {
             get
@@ -67,12 +77,73 @@ namespace Materia
             }
         }
 
+
+        protected Path ConnectionPathPreview = new Path();
+        protected Rectangle ConnectionPointPreview = new Rectangle();
+
+        protected Stack<GraphStackItem> GraphStack;
+
+        public class GraphStackItem
+        {
+            public string parameter;
+            public Graph graph;
+            public Node node;
+            public string id;
+            public GraphStackType type;
+
+            public class GraphStackItemData
+            {
+                public string id;
+                public string parameter;
+                public GraphStackType type;
+            }
+
+            public string GetJson()
+            {
+                GraphStackItemData d = new GraphStackItemData();
+                d.type = type;
+                d.id = id;
+                d.parameter = parameter;
+
+                return JsonConvert.SerializeObject(d);
+            }
+
+            public static GraphStackItem FromJson(string data)
+            {
+                GraphStackItemData d = JsonConvert.DeserializeObject<GraphStackItemData>(data);
+
+                GraphStackItem i = new GraphStackItem();
+                i.id = d.id;
+                i.parameter = d.parameter;
+                i.type = d.type;
+
+                return i;
+            }
+
+            public override bool Equals(object obj)
+            {
+                if(obj is GraphStackItem)
+                {
+                    GraphStackItem s = obj as GraphStackItem;
+                    return s.id == id && s.type == type && s.parameter == parameter;
+                }
+
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                return parameter.GetHashCode() ^ id.GetHashCode() ^ type.GetHashCode();
+            }
+        }
+
         public UIGraph()
         {
             InitializeComponent();
 
             Id = Guid.NewGuid().ToString();
-  
+
+            GraphStack = new Stack<GraphStackItem>();
             SelectedNodes = new List<UINode>();
 
             selectionRect = new Rectangle();
@@ -100,10 +171,31 @@ namespace Materia
 
             Crumbs.Clear();
 
-            BreadCrumb cb = new BreadCrumb(Crumbs, "Root", () =>
-            {
-                LoadGraph(Original);
-            });
+            ConnectionPointPreview.RadiusX = 8;
+            ConnectionPointPreview.RadiusY = 8;
+
+            ConnectionPointPreview.Width = 16;
+            ConnectionPointPreview.Height = 16;
+
+            ConnectionPointPreview.Fill = new SolidColorBrush(Colors.DarkRed);
+
+            ConnectionPointPreview.HorizontalAlignment = HorizontalAlignment.Left;
+            ConnectionPointPreview.VerticalAlignment = VerticalAlignment.Top;
+
+            ConnectionPathPreview.HorizontalAlignment = HorizontalAlignment.Left;
+            ConnectionPathPreview.VerticalAlignment = VerticalAlignment.Top;
+
+            ConnectionPathPreview.Stroke = new SolidColorBrush(Colors.DarkRed);
+
+            ConnectionPointPreview.IsHitTestVisible = false;
+            ConnectionPathPreview.IsHitTestVisible = false;
+
+            BreadCrumb cb = new BreadCrumb(Crumbs, "Root", this, null);
+        }
+
+        public void MarkModified()
+        {
+            Modified = true;
         }
 
         public struct GraphCopyData
@@ -177,6 +269,7 @@ namespace Materia
                 List<UINode> added = new List<UINode>();
                 Dictionary<string, string> jsonContent = new Dictionary<string, string>();
                 Dictionary<string, Node> realLookup = new Dictionary<string, Node>();
+
                 for (int i = 0; i < cd.nodes.Count; i++)
                 {
                     string json = cd.nodes[i];
@@ -188,6 +281,9 @@ namespace Materia
                     }
                 }
 
+                double minX = float.MaxValue;
+                double minY = float.MaxValue;
+
                 //apply copied data to new nodes
                 foreach (UINode n in added)
                 {
@@ -195,8 +291,25 @@ namespace Materia
                     if (jsonContent.TryGetValue(n.Node.Id, out json))
                     {
                         n.Node.FromJson(realLookup, json);
-                        n.OffsetTo(n.Node.ViewOriginX, n.Node.ViewOriginY);
+                        
+                        if(minX > n.Node.ViewOriginX)
+                        {
+                            minX = n.Node.ViewOriginX;
+                        }
+                        if(minY > n.Node.ViewOriginY)
+                        {
+                            minY = n.Node.ViewOriginY;
+                        }
                     }
+                }
+
+                //offset nodes origin by mouse point position
+                foreach(UINode n in added)
+                {
+                    double dx = n.Node.ViewOriginX - minX;
+                    double dy = n.Node.ViewOriginY - minY;
+
+                    n.OffsetTo(mp.X + dx, mp.Y + dy);
                 }
 
                 Task.Delay(250).ContinueWith((Task t) =>
@@ -236,18 +349,235 @@ namespace Materia
             LoadGraph(data, directory);
         }
 
-        public void LoadGraph(Graph graph)
+        protected void LoadGraph(Graph g)
         {
+            //no need to reload if it is the same graph already
+            if (g == Graph) return;
+            if (g == null) return;
+
+            Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
+
+            ClearView();
+
+            Graph = g;
+
+            Scale = Graph.Zoom;
+            XShift = Graph.ShiftX;
+            YShift = Graph.ShiftY;
+
+            ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
+
+            Graph.OnGraphUpdated += Graph_OnGraphUpdated;
+
+            ReadOnly = Graph.ReadOnly;
+            Graph.ReadOnly = false;
+            LoadGraphUI();
+        }
+
+        private void Graph_OnGraphUpdated(Graph g)
+        {
+            Modified = true;
+        }
+
+        public void Push(Node n, GraphStackType type = GraphStackType.Pixel)
+        {
+            Graph graph = null;
+
+            if (type == GraphStackType.Pixel)
+            {
+                if (n is PixelProcessorNode)
+                {
+                    graph = (n as PixelProcessorNode).Function;
+                }
+            }
+            else if(type == GraphStackType.FX)
+            {
+
+            }
+
+            Push(n, graph, type);
+        }
+
+        public void Push(Node n, Graph graph, GraphStackType type, string param = null)
+        {
+            if (graph != null)
+            {
+                GraphStackItem item = new GraphStackItem();
+                item.id = n.Id;
+                item.node = n;
+                item.graph = graph;
+                item.type = type;
+                item.parameter = param;
+
+
+                if (!GraphStack.Contains(item))
+                {
+                    GraphStack.Push(item);
+                    if (!Crumbs.Contains(n.Id))
+                    {
+                        BreadCrumb c = new BreadCrumb(Crumbs, graph.Name, this, n.Id);
+                    }
+                }
+            }
+
             //no need to reload if it is the same graph already
             if (graph == Graph) return;
             if (graph == null) return;
 
+            Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
+
             ClearView();
 
             Graph = graph;
+
+            Scale = Graph.Zoom;
+            XShift = Graph.ShiftX;
+            YShift = Graph.ShiftY;
+
+            ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
+
+            Graph.OnGraphUpdated += Graph_OnGraphUpdated;
+
             ReadOnly = Graph.ReadOnly;
             Graph.ReadOnly = false;
             LoadGraphUI();
+        }
+
+        protected void RestoreStack()
+        {
+            if(StoredGraphStack != null)
+            {
+                var graph = Original;
+                Node n;
+                for(int i = 0; i < StoredGraphStack.Length; i++)
+                {
+                    GraphStackItem item = GraphStackItem.FromJson(StoredGraphStack[i]);
+                    if (graph.NodeLookup.TryGetValue(item.id, out n))
+                    {
+                        item.node = n;
+
+                        if(item.type == GraphStackType.Pixel)
+                        {
+                            if(n is PixelProcessorNode)
+                            {
+                                graph = (n as PixelProcessorNode).Function;
+                                item.graph = graph;
+
+                                if(!GraphStack.Contains(item))
+                                {
+                                    GraphStack.Push(item);
+
+                                    if(!Crumbs.Contains(n.Id))
+                                    {
+                                        BreadCrumb c = new BreadCrumb(Crumbs, graph.Name, this, n.Id);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                //we return as the stack does not match
+                                StoredGraphStack = null;
+                                return;
+                            }
+                        }
+                        else if(item.type == GraphStackType.Parameter && !string.IsNullOrEmpty(item.parameter))
+                        {
+                            if(graph.HasParameterValue(item.id, item.parameter))
+                            {
+                                if(graph.IsParameterValueFunction(item.id, item.parameter))
+                                {
+                                    var v = graph.GetParameterRaw(item.id, item.parameter);
+                                    item.graph = v.Value as Graph;
+
+                                    if (!GraphStack.Contains(item))
+                                    {
+                                        GraphStack.Push(item);
+
+                                        if (!Crumbs.Contains(n.Id))
+                                        {
+                                            BreadCrumb c = new BreadCrumb(Crumbs, graph.Name, this, n.Id);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    StoredGraphStack = null;
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                StoredGraphStack = null;
+                                return;
+                            }
+                        }
+                        else if(item.type == GraphStackType.FX)
+                        {
+                            //do same as pixel basically
+                        }
+                    }
+                    else
+                    {
+                        StoredGraphStack = null;
+                        return;
+                    }
+                }
+
+                if(graph != null)
+                {
+                    LoadGraph(graph);
+                }
+
+                StoredGraphStack = null;
+            }
+        }
+
+        protected void CaptureStack()
+        {
+            StoredGraphStack = new string[GraphStack.Count];
+            GraphStackItem[] stack = GraphStack.ToArray();
+
+            for(int i = 0; i < stack.Length; i++)
+            {
+                StoredGraphStack[i] = stack[i].GetJson();
+            }
+        }
+
+        public void PopTo(string id)
+        {
+            //if null then we just load the original root
+            if(string.IsNullOrEmpty(id))
+            {
+                GraphStack.Clear();
+                LoadGraph(Original);
+            }
+
+            if (GraphStack.Count > 0)
+            {
+                var found = GraphStack.FirstOrDefault(m => m.id.Equals(id));
+
+                if (found != null)
+                {
+                    var peek = GraphStack.Peek();
+
+                    //already last one so ignore
+                    if(peek.id.Equals(id))
+                    {
+                        return;
+                    }
+
+                    var g = GraphStack.Pop();
+
+                    while (GraphStack.Count > 0 && !g.id.Equals(id))
+                    {
+                        g = GraphStack.Pop();
+                    }
+
+                    //since we popped it out
+                    //we push it back
+                    Push(g.node, g.graph, g.type, g.parameter);
+                }
+            }
         }
 
         public void LoadGraph(string data, string CWD, bool readOnly = false)
@@ -265,19 +595,30 @@ namespace Materia
 
             Graph.CWD = CWD;
             Graph.FromJson(data);
+
+            Graph.OnGraphUpdated += Graph_OnGraphUpdated;
+
+            Scale = Graph.Zoom;
+            XShift = Graph.ShiftX;
+            YShift = Graph.ShiftY;
+
+            ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
+
             LoadGraphUI();
             ReadOnly = readOnly;
 
             Crumbs.Clear();
 
-            BreadCrumb cb = new BreadCrumb(Crumbs, "Root", () =>
-            {
-                LoadGraph(Original);
-            });
+            BreadCrumb cb = new BreadCrumb(Crumbs, "Root", this, null);
         }
 
         public string GetGraphData()
         {
+            if(!string.IsNullOrEmpty(StoredGraph))
+            {
+                return StoredGraph;
+            }
+
             return Original.GetJson();
         }
 
@@ -312,6 +653,19 @@ namespace Materia
 
         public void Save(string f)
         {
+            if(Original == null)
+            {
+                if (!string.IsNullOrEmpty(StoredGraph))
+                {
+                    Original = new Graph("temp");
+                    Original.FromJson(StoredGraph);
+                }
+                else
+                {
+                    return;
+                }
+            }
+
             string cwd = System.IO.Path.GetDirectoryName(f);
             string name = System.IO.Path.GetFileNameWithoutExtension(f);
 
@@ -335,6 +689,8 @@ namespace Materia
 
         public void SaveAs(string f)
         {
+            if (Original == null) return;
+
             string cwd = System.IO.Path.GetDirectoryName(f);
             string name = System.IO.Path.GetFileNameWithoutExtension(f);
 
@@ -378,8 +734,16 @@ namespace Materia
 
             if (Graph != null)
             {
+                Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
+
                 Graph.Dispose();
                 Graph = null;
+            }
+
+            if(Original != null)
+            {
+                Original.Dispose();
+                Original = null;
             }
 
             ViewPort.Children.Clear();
@@ -610,7 +974,16 @@ namespace Materia
             }
         }
 
-        protected void ToWorld(ref Point p)
+        public void ToLocal(ref Point p)
+        {
+            double w3 = ViewPort.ActualWidth * 0.5;
+            double h3 = ViewPort.ActualHeight * 0.5;
+
+            p.X = (p.X - w3) * Scale + w3 + XShift;
+            p.Y = (p.Y - h3) * Scale + h3 + YShift;
+        }
+
+        public void ToWorld(ref Point p)
         {
             //convert to proper space
             //which is the reverse shift and reverse scale
@@ -626,6 +999,94 @@ namespace Materia
             p.Y = (p.Y - h3) / Scale + h3 - YShift / Scale;
         }
 
+        private void UpdateConnectionPreview()
+        {
+            if(UINodePoint.SelectOrigin != null)
+            {
+                //catch for when the node is removed and layout update is still triggered
+                try
+                {
+                    UINodePoint origin = UINodePoint.SelectOrigin;
+                    UINodePoint dest = UINodePoint.SelectOver;
+
+                    Point r1 = new Point();
+
+                    if (origin.Output != null)
+                    {
+                        r1 = origin.TransformToAncestor(ViewPort).Transform(new Point(origin.ActualWidth, 8f));
+                    }
+                    else if (origin.Input != null)
+                    {
+                        r1 = origin.TransformToAncestor(ViewPort).Transform(new Point(0f, 8f));
+                    }
+
+                    Point r2 = Mouse.GetPosition(ViewPort);
+
+                    if (dest != null)
+                    {
+                        if (origin.Output != null)
+                        {
+                            r2 = dest.TransformToAncestor(ViewPort).Transform(new Point(dest.ActualWidth, 8f));
+                        }
+                        else if (origin.Input != null)
+                        {
+                            r2 = dest.TransformToAncestor(ViewPort).Transform(new Point(0f, 8f));
+                        }
+                    }
+
+                    Path path = ConnectionPathPreview;
+
+                    double dy = r2.Y - r1.Y;
+
+                    Point mid = new Point((r2.X + r1.X) * 0.5f, (r2.Y + r1.Y) * 0.5f + dy * 0.5f);
+
+                    if (path != null)
+                    {
+                        if (path.Data == null)
+                        {
+                            path.VerticalAlignment = VerticalAlignment.Top;
+                            path.HorizontalAlignment = HorizontalAlignment.Left;
+                            PathGeometry p = new PathGeometry();
+                            PathFigure pf = new PathFigure();
+                            pf.IsClosed = false;
+                            pf.StartPoint = r1;
+
+                            BezierSegment seg = new BezierSegment(r1, mid, r2, true);
+                            pf.Segments.Add(seg);
+                            p.Figures.Add(pf);
+                            path.Data = p;
+                        }
+                        else
+                        {
+                            PathGeometry p = (PathGeometry)path.Data;
+                            PathFigure pf = p.Figures[0];
+                            pf.StartPoint = r1;
+                            BezierSegment seg = (BezierSegment)pf.Segments[0];
+                            seg.Point1 = r1;
+                            seg.Point2 = mid;
+                            seg.Point3 = r2;
+                        }
+                    }
+
+                    ConnectionPathPreview = path;
+
+                    if(dest != null)
+                    {
+                        r2 = dest.TransformToAncestor(ViewPort).Transform(new Point());
+                    }
+                    else
+                    {
+                        r2.X -= 8;
+                        r2.Y -= 8;
+                    }
+
+                    Canvas.SetLeft(ConnectionPointPreview, r2.X);
+                    Canvas.SetTop(ConnectionPointPreview, r2.Y);
+                }
+                catch { }
+            }
+        }
+
         private void ViewPort_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.MiddleButton == MouseButtonState.Pressed)
@@ -636,6 +1097,8 @@ namespace Materia
             }
             else if (e.LeftButton == MouseButtonState.Pressed)
             {
+                UINodePoint.SelectOrigin = null;
+
                 Grid g = sender as Grid;
                 Point p = e.GetPosition(g);
 
@@ -680,6 +1143,34 @@ namespace Materia
 
         private void ViewPort_MouseMove(object sender, MouseEventArgs e)
         {
+            //handle preview of node point selection
+            if(UINodePoint.SelectOrigin != null)
+            {
+                if(ConnectionPointPreview.Parent == null)
+                {
+                    ViewPort.Children.Add(ConnectionPointPreview);
+                }
+
+                if(ConnectionPathPreview.Parent == null)
+                {
+                    ViewPort.Children.Add(ConnectionPathPreview);
+                }
+
+                UpdateConnectionPreview();
+            }
+            else
+            {
+                if(ConnectionPathPreview.Parent != null)
+                {
+                    ViewPort.Children.Remove(ConnectionPathPreview);
+                }
+
+                if(ConnectionPointPreview.Parent != null)
+                {
+                    ViewPort.Children.Remove(ConnectionPointPreview);
+                }
+            }
+
             if(moving)
             {
                 Grid g = sender as Grid;
@@ -689,6 +1180,9 @@ namespace Materia
 
                 XShift += diff.X;
                 YShift += diff.Y;
+
+                Graph.ShiftX = XShift;
+                Graph.ShiftY = YShift;
 
                 foreach (UINode n in GraphNodes)
                 {
@@ -740,6 +1234,10 @@ namespace Materia
             XShift = 0;
             YShift = 0;
             Scale = 1;
+
+            Graph.ShiftX = XShift;
+            Graph.ShiftY = YShift;
+            Graph.Zoom = Scale;
 
             foreach (UINode n in GraphNodes)
             {
@@ -826,6 +1324,10 @@ namespace Materia
                 n.MoveTo(XShift, YShift);
                 n.UpdateScale(Scale);
             }
+
+            Graph.ShiftX = XShift;
+            Graph.ShiftY = YShift;
+            Graph.Zoom = Scale;
 
             ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
 
@@ -954,7 +1456,11 @@ namespace Materia
                 n.UpdateScale(Scale);
             }
 
+            Graph.Zoom = Scale;
+
             UpdateGrid();
+
+            UpdateConnectionPreview();
         }
 
         void ZoomNodesIn()
@@ -972,7 +1478,11 @@ namespace Materia
                 n.UpdateScale(Scale);
             }
 
+            Graph.Zoom = Scale;
+
             UpdateGrid();
+
+            UpdateConnectionPreview();
         }
 
         void UpdateGrid()
@@ -991,7 +1501,13 @@ namespace Materia
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            
+            if(!string.IsNullOrEmpty(StoredGraph))
+            {
+                LoadGraph(StoredGraph, StoredGraphCWD);
+                StoredGraph = null;
+
+                RestoreStack();
+            }
         }
 
         private void UserControl_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -1001,7 +1517,15 @@ namespace Materia
 
         private void UserControl_Unloaded(object sender, RoutedEventArgs e)
         {
+            if (Original != null)
+            {
+                CaptureStack();
 
+                StoredGraph = Original.GetJson();
+                StoredGraphCWD = Original.CWD;
+
+                Release();
+            }
         }
 
         private void Ratio1_Click(object sender, RoutedEventArgs e)

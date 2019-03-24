@@ -86,7 +86,7 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
-            TryAndProcess();
+            Updated();
         }
 
         public override void TryAndProcess()

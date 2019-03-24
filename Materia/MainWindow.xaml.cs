@@ -24,6 +24,8 @@ using Xceed.Wpf.AvalonDock.Layout;
 using Xceed.Wpf.AvalonDock;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
 using Materia.Undo;
+using Materia.Nodes;
+using Materia.UI;
 
 namespace Materia
 {
@@ -35,8 +37,6 @@ namespace Materia
     {
         public static MainWindow Instance { get; protected set; }
 
-        //this will be moved into the graph tab manager
-        //just here for testing ...
         protected List<UIGraph> graphs;
 
         protected List<LayoutDocument> documents;
@@ -58,6 +58,9 @@ namespace Materia
             UndoRedoManager.OnRedoAdded += UndoRedoManager_OnRedoAdded;
             UndoRedoManager.OnUndoAdded += UndoRedoManager_OnUndoAdded;
 
+            mnuRedo.IsEnabled = false;
+            mnuUndo.IsEnabled = false;
+
             KeyDown += MainWindow_KeyDown;
         }
 
@@ -77,6 +80,10 @@ namespace Materia
                 else if (e.Key == Key.V && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
                 {
                     g.TryAndPaste();
+                }
+                else if(e.Key == Key.Escape)
+                {
+                    UINodePoint.SelectOrigin = null;
                 }
             }
         }
@@ -151,7 +158,7 @@ namespace Materia
         {
             if(e.PropertyName.Equals("SelectedContentIndex"))
             {
-                if(graphs.Count > 0)
+                if(graphs.Count > 0 && GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
                     var g = graphs[GraphDocuments.SelectedContentIndex];
 
@@ -172,7 +179,30 @@ namespace Materia
                     {
                         mnuRedo.IsEnabled = false;
                     }
+
+                    if(UINodeParameters.Instance != null)
+                    {
+                        UINodeParameters.Instance.ClearView();
+                    }
                 }
+            }
+        }
+
+        public void MarkModified()
+        {
+            if(GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+            {
+                UIGraph ugraph = graphs[GraphDocuments.SelectedContentIndex];
+                ugraph.MarkModified();
+            }
+        }
+
+        public void Push(Node n, Graph g, string param = null, GraphStackType type = GraphStackType.Parameter)
+        {
+            if(GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+            {
+                UIGraph ugraph = graphs[GraphDocuments.SelectedContentIndex];
+                ugraph.Push(n, g, type, param);
             }
         }
 
@@ -248,15 +278,6 @@ namespace Materia
 
                     if (svf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                     {
-                        /*UIGraph g = graphs[GraphTabs.SelectedIndex];
-                        if (g != null)
-                        {
-                            g.SaveAs(svf.FileName);
-
-                            TabItem tb = (TabItem)GraphTabs.Items[GraphTabs.SelectedIndex];
-                            tb.Header = g.Graph.Name;
-                        }*/
-
                         UIGraph g = graphs[GraphDocuments.SelectedContentIndex];
                         if (g != null)
                         {
@@ -272,13 +293,6 @@ namespace Materia
             {
                 if (graphs.Count > 0)
                 {
-                    /*UIGraph g = graphs[GraphTabs.SelectedIndex];
-
-                    HandleSave(g);
-
-                    TabItem tb = (TabItem)GraphTabs.Items[GraphTabs.SelectedIndex];
-                    tb.Header = g.Graph.Name;*/
-
                     UIGraph g = graphs[GraphDocuments.SelectedContentIndex];
                     HandleSave(g);
                     var doc = documents[GraphDocuments.SelectedContentIndex];
@@ -301,6 +315,15 @@ namespace Materia
             else if(item.Header.ToString().ToLower().Contains("new"))
             {
                 NewGraph();
+            }
+            else if(item.Header.ToString().ToLower().Contains("export output"))
+            {
+                if(graphs.Count > 0 && GraphDocuments.SelectedContentIndex > -1 
+                    && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    UIExportOutputs exportdialog = new UIExportOutputs(graphs[GraphDocuments.SelectedContentIndex]);
+                    exportdialog.ShowDialog();
+                }
             }
         }
 
@@ -441,10 +464,17 @@ namespace Materia
             Material.Material.ReleaseAll();
 
             //release gl view
-            if (UI.UI3DPreview.Instance != null)
+            if (UI3DPreview.Instance != null)
             {
-                UI.UI3DPreview.Instance.Release();
+                UI3DPreview.Instance.Release();
             }
+
+            if(UIPreviewPane.Instance != null)
+            {
+                UIPreviewPane.Instance.Release();
+            }
+
+            ViewContext.Dispose();
 
             //save layout
             SaveLayout();

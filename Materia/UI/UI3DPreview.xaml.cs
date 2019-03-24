@@ -514,7 +514,7 @@ namespace Materia.UI
 
                     if (UIPreviewPane.Instance != null)
                     {
-                        UIPreviewPane.Instance.SetMesh(cubeMesh);
+                        UIPreviewPane.Instance.SetMesh(cube);
                     }
                 }
 
@@ -609,6 +609,9 @@ namespace Materia.UI
         private void Glview_Paint(object sender, System.Windows.Forms.PaintEventArgs e)
         {
             if (glview == null) return;
+
+            ViewContext.VerifyContext(glview);
+            ViewContext.Context.MakeCurrent(glview.WindowInfo);
 
             GL.Viewport(0, 0, glview.Width, glview.Height);
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1);
@@ -712,6 +715,9 @@ namespace Materia.UI
 
         private void Glview_Load(object sender, EventArgs e)
         {
+            ViewContext.VerifyContext(glview);
+            ViewContext.Context.MakeCurrent(glview.WindowInfo);
+
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             GL.DepthFunc(DepthFunction.Lequal);
@@ -887,19 +893,19 @@ namespace Materia.UI
                 switch (gtype)
                 {
                     case PreviewGeometryType.Cube:
-                        pane.SetMesh(cubeMesh);
+                        pane.SetMesh(cube);
                         break;
                     case PreviewGeometryType.Cylinder:
-                        pane.SetMesh(cylinderMesh);
+                        pane.SetMesh(cylinder);
                         break;
                     case PreviewGeometryType.Plane:
-                        pane.SetMesh(planeMesh);
+                        pane.SetMesh(plane);
                         break;
                     case PreviewGeometryType.RoundedCube:
-                        pane.SetMesh(cubeRoundedMesh);
+                        pane.SetMesh(cubeRounded);
                         break;
                     case PreviewGeometryType.Sphere:
-                        pane.SetMesh(sphereMesh);
+                        pane.SetMesh(sphere);
                         break;
                 }
             }

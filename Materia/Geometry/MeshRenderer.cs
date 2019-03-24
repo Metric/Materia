@@ -35,6 +35,14 @@ namespace Materia.Geometry
 
         protected int indicesCount;
 
+        public int IndicesCount
+        {
+            get
+            {
+                return indicesCount;
+            }
+        }
+
         public MeshRenderer(Mesh model)
         {
             Tiling = new Vector2(1, 1);
@@ -65,6 +73,14 @@ namespace Materia.Geometry
             GLVertexArray.Unbind();
 
             GLElementBuffer.Unbind();
+        }
+
+        public void Bind()
+        {
+            if (vao != null)
+            {
+                vao.Bind();
+            }
         }
 
         public virtual void DrawForDepth()

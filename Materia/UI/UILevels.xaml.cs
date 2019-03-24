@@ -75,11 +75,11 @@ namespace Materia
 
                 if (n != null)
                 {
-                    byte[] result = n.GetPreview(n.Width, n.Height);
+                    byte[] result = n.GetPreview(512, 512);
 
                     if(result != null)
                     {
-                        fromBit = new RawBitmap(n.Width, n.Height, result);
+                        fromBit = new RawBitmap(512, 512, result);
                         
                         Histogram.GenerateHistograph(fromBit);
                     }

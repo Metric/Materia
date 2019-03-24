@@ -26,21 +26,19 @@ No method to export textures from a graph exist yet. So, right now it is sort of
 
 Major TODO
 ============== 
-  * Add export options for textures
-  * Unload graphs when switching tabs and reloading when going back into the tab. This will help optimize vram usage. Currently all graphs are kept in vram. 
-  * Various UI tweeks and UI feedback mechanisms need adding.
+  * Unload graphs when switching tabs and reloading when going back into the tab. This will help optimize vram usage. Currently all graphs are kept in vram. (Still testing changes)
+  * Various UI tweeks and UI feedback mechanisms need adding (Some have been implemented).
   * More keyboard shortcuts.
   * Popup node explorer via space bar with context sensitivity & searching.
   * Search for shelf
   * FxMap style nodes & graph.
   * Various shape nodes.
-  * Graph instance node parameter exposure.
-  * Function creation for node parameters.
+  * Graph instance node parameter exposure. (Still testing changes)
+  * Function creation for node parameters. (Still testing changes)
   * Function graph export & import for sharing.
   * Re-creation of various substance graph instances.
   * Need to add Cartesian to Polar math node.
   * Need to add gradient and gradient mapping nodes
-  * Fix graph node connection lines not updating correctly when zooming in and out.
   * New Graph Dialog for setting some initial settings of the graph.
   * Splash screen - because why not.
   * More Undo and Redo tracking operations - currently only handles undo and redo of creating and deleting nodes.

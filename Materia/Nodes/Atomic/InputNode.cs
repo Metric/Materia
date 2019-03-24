@@ -10,23 +10,8 @@ using Materia.Textures;
 
 namespace Materia.Nodes.Atomic
 {
-    public class InputNode : Node
+    public class InputNode : ImageNode
     {
-        NodeType intype;
-        [Dropdown(null)]
-        [Title(Title = "Type")]
-        public NodeType InType
-        {
-            get
-            {
-                return intype;
-            }
-            set
-            {
-                intype = value;
-            }
-        }
-
         [HideProperty]
         public new int Height
         {
@@ -84,7 +69,6 @@ namespace Materia.Nodes.Atomic
 
         public InputNode(GraphPixelType p = GraphPixelType.RGBA)
         {
-            intype = NodeType.Color;
             Id = Guid.NewGuid().ToString();
 
             Name = "Input";
@@ -99,7 +83,7 @@ namespace Materia.Nodes.Atomic
             previewProcessor = new BasicImageRenderer();
 
             //only an output is present
-            Output = new NodeOutput(InType, this);
+            Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
 
             //no actual inputs are present
             Inputs = new List<NodeInput>();
@@ -174,29 +158,27 @@ namespace Materia.Nodes.Atomic
 
         public class InputNodeData : NodeData
         {
-            public NodeType inType;
+            
         }
 
         public override void FromJson(Dictionary<string, Node> nodes, string data)
         {
             InputNodeData d = JsonConvert.DeserializeObject<InputNodeData>(data);
             SetBaseNodeDate(d);
-            intype = d.inType;
 
-            Output = new NodeOutput(InType, this);
+            Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
             Outputs.Clear();
             Outputs.Add(Output);
 
             SetConnections(nodes, d.outputs);
 
-            Updated();
+            TryAndProcess();
         }
 
         public override string GetJson()
         {
             InputNodeData d = new InputNodeData();
             FillBaseNodeData(d);
-            d.inType = InType;
 
             return JsonConvert.SerializeObject(d);
         }

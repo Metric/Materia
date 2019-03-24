@@ -15,7 +15,6 @@ namespace Materia.Nodes.Atomic
 {
     public class PixelProcessorNode : ImageNode
     {
-        CancellationTokenSource ctk;
         protected NodeOutput output;
 
         protected FloatBitmap bmp;
@@ -42,6 +41,7 @@ namespace Materia.Nodes.Atomic
             tileX = tileY = 1;
 
             function = new FunctionGraph("Pixel Processor Function");
+            function.ParentNode = this;
 
             function.ExpectedOutput = NodeType.Float4;
             function.OnGraphUpdated += Function_OnGraphUpdated;
@@ -162,10 +162,10 @@ namespace Materia.Nodes.Atomic
             }
 
             function = new FunctionGraph("Pixel Processor Function");
-
             function.ExpectedOutput = NodeType.Float4;
             function.OnGraphUpdated += Function_OnGraphUpdated;
             function.FromJson(d.functionGraph);
+            function.ParentNode = this;
 
             SetConnections(nodes, d.outputs);
 

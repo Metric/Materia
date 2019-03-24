@@ -17,6 +17,8 @@ using Materia.Nodes;
 using OpenTK;
 using Materia.Nodes.Atomic;
 using Materia.UI.Components;
+using Materia.Imaging;
+using System.IO;
 
 namespace Materia
 {
@@ -32,6 +34,14 @@ namespace Materia
         double originY;
 
         double scale;
+
+        public double Scale
+        {
+            get
+            {
+                return scale;
+            }
+        }
 
         Point start;
 
@@ -134,6 +144,7 @@ namespace Materia
                 outpoint.VerticalAlignment = VerticalAlignment.Center;
                 OutputNodes.Add(outpoint);
                 OutputStack.Children.Add(outpoint);
+                outpoint.UpdateColor();
             }
 
             foreach(NodeInput i in n.Inputs)
@@ -143,6 +154,7 @@ namespace Materia
                 inputpoint.VerticalAlignment = VerticalAlignment.Center;
                 InputStack.Children.Add(inputpoint);
                 InputNodes.Add(inputpoint);
+                inputpoint.UpdateColor();
             }
 
             n.OnUpdate += N_OnUpdate;
@@ -156,7 +168,15 @@ namespace Materia
 
         private void N_OnOutputRemovedFromNode(Node n, NodeOutput inp)
         {
-            
+            var uinp = OutputNodes.Find(m => m.Output == inp);
+
+            if(uinp != null)
+            {
+                OutputStack.Children.Remove(uinp);
+                OutputNodes.Remove(uinp);
+            }
+
+            ResizeHeight();
         }
 
         private void N_OnOutputAddedToNode(Node n, NodeOutput inp)
@@ -166,6 +186,7 @@ namespace Materia
             outpoint.VerticalAlignment = VerticalAlignment.Center;
             OutputNodes.Add(outpoint);
             OutputStack.Children.Add(outpoint);
+            outpoint.UpdateColor();
 
             ResizeHeight();
         }
@@ -190,6 +211,7 @@ namespace Materia
             inputpoint.VerticalAlignment = VerticalAlignment.Center;
             InputStack.Children.Add(inputpoint);
             InputNodes.Add(inputpoint);
+            inputpoint.UpdateColor();
 
             ResizeHeight();
         }
@@ -290,32 +312,24 @@ namespace Materia
             {
                 NodeName.Text = n.Name;
 
-                if (n.Brush != null)
+                int pw = 100;
+                int ph = 100;
+
+                //we transform the preview size based
+                //based on actual size
+                if(n.Width > n.Height)
                 {
-                    BitmapSource source = n.Brush.ToImageSource();
-                    Preview.Source = source;
+                    ph = (int)Math.Min(100, (ph * ((float)n.Height / (float)n.Width)));
                 }
-                else
+                else if(n.Height > n.Width)
                 {
-                    int pw = 100;
-                    int ph = 100;
+                    pw = (int)Math.Min(100, (pw * ((float)n.Width / (float)n.Height)));
+                }
 
-                    //we transform the preview size based
-                    //based on actual size
-                    if(n.Width > n.Height)
-                    {
-                        ph = (int)(ph * ((float)n.Height / (float)n.Width));
-                    }
-                    else if(n.Height > n.Width)
-                    {
-                        pw = (int)(pw * ((float)n.Width / (float)n.Height));
-                    }
+                byte[] small = n.GetPreview(pw, ph);
 
-                    byte[] small = n.GetPreview(pw, ph);
-
-                    if (small != null) {
-                        Preview.Source = BitmapSource.Create(pw, ph, 72, 72, PixelFormats.Bgr32, null, small, pw * 4);
-                    }
+                if (small != null) {
+                    Preview.Source = BitmapSource.Create(pw, ph, 72, 72, PixelFormats.Bgr32, null, small, pw * 4);
                 }
             }
             catch (Exception e) 
@@ -674,12 +688,12 @@ namespace Materia
             {
                 if(Node is PixelProcessorNode && Graph.Graph is ImageGraph)
                 {
-                    BreadCrumb bc = new BreadCrumb(Graph.Crumbs, "Pixel Processor Function", () =>
-                    {
-                        Graph.LoadGraph((Node as PixelProcessorNode).Function);
-                    });
+                    Graph.Push(Node);
 
-                    Graph.LoadGraph((Node as PixelProcessorNode).Function);
+                    if(UIPreviewPane.Instance != null)
+                    {
+                        UIPreviewPane.Instance.SetPreviewNode(this);
+                    }
                 }
             }
             else if(item.Header.ToString().ToLower().Contains("set as out"))
@@ -689,6 +703,42 @@ namespace Materia
                     FunctionGraph g = Graph.Graph as FunctionGraph;
                     g.SetOutputNode(Node.Id);
                 }
+            }
+            else if(item.Header.ToString().ToLower().Contains("export"))
+            {
+                ExportAsPng();
+            }
+        }
+
+        private void ExportAsPng()
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog();
+            dialog.Filter = "PNG|*.png";
+            dialog.CheckFileExists = false;
+            dialog.CheckPathExists = true;
+
+            if(dialog.ShowDialog() == true)
+            {
+                string path = dialog.FileName;
+                byte[] bits = Node.GetPreview(Node.Width, Node.Height);
+
+                Task.Run(() =>
+                {
+                    RawBitmap bmp = null;
+                    if (bits != null)
+                    {
+                        bmp = new RawBitmap(Node.Width, Node.Height, bits);
+                        var src = bmp.ToImageSource();
+                        PngBitmapEncoder encoder = new PngBitmapEncoder();
+                        BitmapFrame frame = BitmapFrame.Create(src);
+                        encoder.Frames.Add(frame);
+
+                        using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate))
+                        {
+                            encoder.Save(fs);
+                        }
+                    }
+                });
             }
         }
 

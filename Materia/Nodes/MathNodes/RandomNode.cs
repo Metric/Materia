@@ -35,6 +35,26 @@ namespace Materia.Nodes.MathNodes
 
             Outputs = new List<NodeOutput>();
             Outputs.Add(output);
+
+            OnGraphParentSet += RandomNode_OnGraphParentSet;
+        }
+
+        private void RandomNode_OnGraphParentSet()
+        {
+            if (ParentGraph != null)
+            {
+                r = new Random(ParentGraph.RandomSeed);
+
+                ParentGraph.OnGraphUpdated += ParentGraph_OnGraphUpdated;
+            }
+        }
+
+        private void ParentGraph_OnGraphUpdated(Graph g)
+        {
+            if(g == ParentGraph && ParentGraph != null)
+            {
+                r = new Random(ParentGraph.RandomSeed);
+            }
         }
 
         private void Input_OnInputChanged(NodeInput n)
@@ -44,7 +64,7 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
-            TryAndProcess();
+            Updated();
         }
 
         public override void TryAndProcess()

@@ -34,6 +34,11 @@ namespace Materia.UI.Components
             CrumbStack.Children.Add(c);
         }
 
+        public bool Contains(string id)
+        {
+            return crumbs.Find(m => !string.IsNullOrEmpty(m.Id) && m.Id.Equals(id)) != null;
+        }
+
         public void Clear()
         {
             crumbs.Clear();

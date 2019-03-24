@@ -106,6 +106,7 @@
     <Compile Include="Geometry\Geometry.cs" />
     <Compile Include="Geometry\FullScreenQuad.cs" />
     <Compile Include="Geometry\MeshRenderer.cs" />
+    <Compile Include="Geometry\UVRenderer.cs" />
     <Compile Include="Imaging\FloatBitmap.cs" />
     <Compile Include="Imaging\GLProcessing\BasicImageRenderer.cs" />
     <Compile Include="Imaging\GLProcessing\BlendProcessor.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="Imaging\GLProcessing\NormalsProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\OcclusionProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\PixelShaderProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\PreviewProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\TransformProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\UniformColorProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\WarpProcessor.cs" />
@@ -145,7 +147,10 @@
     <Compile Include="Nodes\Atomic\WarpNode.cs" />
     <Compile Include="Nodes\Attributes\ColorPickerAttribute.cs" />
     <Compile Include="Nodes\Attributes\FileSelectorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\GraphParameterEditorAttribute.cs" />
     <Compile Include="Nodes\Attributes\HidePropertyAttribute.cs" />
+    <Compile Include="Nodes\Attributes\ParameterMapEditorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\PromoteAttribute.cs" />
     <Compile Include="Nodes\Attributes\SectionAttribute.cs" />
     <Compile Include="Nodes\Attributes\TextInputAttribute.cs" />
     <Compile Include="Nodes\Attributes\TitleAttribute.cs" />
@@ -227,11 +232,17 @@
     <Compile Include="UI\Components\FileSelector.xaml.cs">
       <DependentUpon>FileSelector.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Components\GraphParameterEditor.xaml.cs">
+      <DependentUpon>GraphParameterEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\Components\Histogram.xaml.cs">
       <DependentUpon>Histogram.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Components\Magnifier.xaml.cs">
       <DependentUpon>Magnifier.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\ParameterMap.xaml.cs">
+      <DependentUpon>ParameterMap.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Components\PropertyInput.xaml.cs">
       <DependentUpon>PropertyInput.xaml</DependentUpon>
@@ -303,6 +314,9 @@
     <Compile Include="UI\UICurves.xaml.cs">
       <DependentUpon>UICurves.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\UIExportOutputs.xaml.cs">
+      <DependentUpon>UIExportOutputs.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\UIGraph.xaml.cs">
       <DependentUpon>UIGraph.xaml</DependentUpon>
     </Compile>
@@ -326,6 +340,7 @@
     </Compile>
     <Compile Include="Undo\UndoObject.cs" />
     <Compile Include="Undo\UndoRedoManager.cs" />
+    <Compile Include="ViewContext.cs" />
     <Compile Include="WinApi\MouseHook.cs" />
     <Compile Include="WinApi\Win32Api.cs" />
     <Compile Include="WinApi\WpfScreen.cs" />
@@ -365,6 +380,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="UI\Components\GraphParameterEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UI\Components\Histogram.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -390,6 +409,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="StyleResources.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\ParameterMap.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -422,6 +445,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\UICurves.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UIExportOutputs.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -542,6 +569,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\chevron_right.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\promotevar.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

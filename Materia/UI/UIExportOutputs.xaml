@@ -1,0 +1,27 @@
+﻿<Window x:Class="Materia.UI.UIExportOutputs"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Materia.UI"
+        mc:Ignorable="d"
+        Title="Export Outputs" Height="200" Width="256" Background="#222" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
+    <Grid>
+        <ListBox SelectionMode="Extended" Name="ExportType" Background="Transparent" BorderBrush="#333" Margin="10,10,10,42">
+            <ListBox.Items>
+                <ListBoxItem Foreground="LightGray">Separate Files</ListBoxItem>
+                <ListBoxItem Foreground="LightGray">Unreal Engine 4</ListBoxItem>
+                <ListBoxItem Foreground="LightGray">Unity 5</ListBoxItem>
+            </ListBox.Items>
+        </ListBox>
+        <Button Name="Confirm" Click="Confirm_Click"  Background="#444" Foreground="LightGray" Content="EXPORT" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="64" Height="20" Margin="5" BorderThickness="0" />
+        <Button Name="Cancel" Click="Cancel_Click"  Background="#444" Foreground="LightGray" Content="CANCEL" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="64" Height="20" Margin="5,5,70,5" BorderThickness="0" />
+
+        <Border Background="#cc222222" Name="ProgressView" Visibility="Collapsed">
+            <Grid>
+                <ProgressBar Name="ExportProgress" VerticalAlignment="Center" Height="2" />
+                <TextBlock Name="ExportStatus" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,20,0,0" Foreground="LightGray" Text="Exporting ..." />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

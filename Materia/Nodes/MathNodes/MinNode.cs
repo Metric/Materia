@@ -65,10 +65,7 @@ namespace Materia.Nodes.MathNodes
         {
             TryAndProcess();
 
-            //if (!HasEmptyInput)
-            //{
-            //    AddPlaceholderInput();
-            //}
+            Updated();
         }
 
         protected override void AddPlaceholderInput()

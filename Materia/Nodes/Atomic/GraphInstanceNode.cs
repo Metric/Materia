@@ -37,6 +37,20 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        [ParameterMapEditor]
+        public Dictionary<string, GraphParameterValue> Parameters
+        {
+            get
+            {
+                if(GraphInst != null)
+                {
+                    return GraphInst.Parameters;
+                }
+
+                return null;
+            }
+        }
+
         [HideProperty]
         public new float TileX
         {
@@ -152,7 +166,7 @@ namespace Materia.Nodes.Atomic
                     if(GraphInst.NodeLookup.TryGetValue(id, out n))
                     {
                         InputNode inp = (InputNode)n;
-                        NodeInput np = new NodeInput(inp.InType, n, inp.Name);
+                        NodeInput np = new NodeInput(NodeType.Color | NodeType.Gray, n, inp.Name);
                         inp.SetInput(np);
                         Inputs.Add(np);
                     }
@@ -170,7 +184,7 @@ namespace Materia.Nodes.Atomic
 
                         NodeOutput ot;
 
-                        ot = new NodeOutput(op.OutType, n, op.Name);
+                        ot = new NodeOutput(NodeType.Color | NodeType.Gray, n, op.Name);
                         //we add to our graph instance outputs so things can actually connect 
                         //to the output
                         Outputs.Add(ot);

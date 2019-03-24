@@ -15,6 +15,10 @@ namespace Materia.Nodes
         public delegate void UpdateEvent(Node n);
         public delegate void InputChanged(Node n, NodeInput inp);
         public delegate void OutputChanged(Node n, NodeOutput inp);
+
+        protected delegate void GraphParentSet();
+        protected event GraphParentSet OnGraphParentSet;
+
         public event UpdateEvent OnUpdate;
         public event UpdateEvent OnNameUpdate;
 
@@ -41,7 +45,23 @@ namespace Materia.Nodes
             }
         }
 
-        public Graph ParentGraph { get; set; }
+        protected Graph parentGraph;
+        public Graph ParentGraph
+        {
+            get
+            {
+                return parentGraph;
+            }
+            set
+            {
+                parentGraph = value;
+
+                if(OnGraphParentSet != null)
+                {
+                    OnGraphParentSet.Invoke();
+                }
+            }
+        }
 
         public string Id { get; set; }
 

@@ -16,6 +16,7 @@
                 <MenuItem Header="_Roughness" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Occlusion" Click="MenuItem_Click"></MenuItem>
             </MenuItem>
+            <MenuItem Header="_Export Image" Click="MenuItem_Click"></MenuItem>
         </ContextMenu>
         <ContextMenu x:Key="MathContext">
             <MenuItem Header="Set as output" Click="MenuItem_Click" />

@@ -21,19 +21,21 @@ namespace Materia.UI.Components
     public partial class BreadCrumb : UserControl
     {
         protected BreadCrumbs CrumbsView;
-        Action click;
+        UIGraph graph;
+        public string Id { get; protected set; }
 
         public BreadCrumb()
         {
             InitializeComponent();
         }
 
-        public BreadCrumb(BreadCrumbs view, string name, Action clickAction)
+        public BreadCrumb(BreadCrumbs view, string name, UIGraph g, string node)
         {
             InitializeComponent();
             CrumbName.Text = name;
             CrumbsView = view;
-            click = clickAction;
+            graph = g;
+            Id = node;
             view.Add(this);
         }
 
@@ -41,10 +43,7 @@ namespace Materia.UI.Components
         {
             CrumbsView.RemoveAfter(this);
 
-            if(click != null)
-            {
-                click.Invoke();
-            }
+            graph.PopTo(Id);
         }
     }
 }

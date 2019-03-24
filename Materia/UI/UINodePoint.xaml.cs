@@ -14,6 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Materia.Nodes;
 using System.Threading;
+using Materia.UI.Helpers;
 
 namespace Materia
 {
@@ -22,8 +23,6 @@ namespace Materia
     /// </summary>
     public partial class UINodePoint : UserControl
     {
-        CancellationTokenSource ctk;
-
         private List<UINodePoint> to;
 
         private Dictionary<UINodePoint, Path> paths;
@@ -31,6 +30,11 @@ namespace Materia
         public static UINodePoint SelectOrigin
         {
             get; set;
+        }
+
+        public static UINodePoint SelectOver
+        {
+            get; protected set;
         }
 
         public UINode Node { get; protected set; }
@@ -84,6 +88,13 @@ namespace Materia
             Name = "NodePoint" + nodeCount++;
             paths = new Dictionary<UINodePoint, Path>();
             to = new List<UINodePoint>();
+
+            LayoutUpdated += UINodePoint_LayoutUpdated;
+        }
+
+        private void UINodePoint_LayoutUpdated(object sender, EventArgs e)
+        {
+            UpdatePaths();
         }
 
         public UINodePoint(UINode n, UIGraph pc)
@@ -94,7 +105,44 @@ namespace Materia
             paths = new Dictionary<UINodePoint, Path>();
             to = new List<UINodePoint>();
             Node = n;
-            Node.OnNodeUIChanged += Node_OnNodeUIChanged;
+
+            LayoutUpdated += UINodePoint_LayoutUpdated;
+        }
+
+        public void UpdateColor()
+        {
+            if(Input != null)
+            {
+                if((Input.Type & NodeType.Color) != 0 && (Input.Type & NodeType.Gray) != 0)
+                {
+                    node.Background = (LinearGradientBrush)Resources["GrayColorInputOutput"];
+                }
+                else if((Input.Type & NodeType.Float) != 0 && (Input.Type & NodeType.Float2) != 0
+                    && (Input.Type & NodeType.Float3) != 0 && (Input.Type & NodeType.Float4) != 0)
+                {
+                    node.Background = (SolidColorBrush)Resources["AnyFloatInputOutput"];
+                }
+                else
+                {
+                    node.Background = (SolidColorBrush)Resources[Input.Type.ToString() + "InputOutput"];
+                }
+            }
+            else if(Output != null)
+            {
+                if ((Output.Type & NodeType.Color) != 0 && (Output.Type & NodeType.Gray) != 0)
+                {
+                    node.Background = (LinearGradientBrush)Resources["GrayColorInputOutput"];
+                }
+                else if ((Output.Type & NodeType.Float) != 0 && (Output.Type & NodeType.Float2) != 0
+                    && (Output.Type & NodeType.Float3) != 0 && (Output.Type & NodeType.Float4) != 0)
+                {
+                    node.Background = (SolidColorBrush)Resources["AnyFloatInputOutput"];
+                }
+                else
+                {
+                    node.Background = (SolidColorBrush)Resources[Output.Type.ToString() + "InputOutput"];
+                }
+            }
         }
 
         void ToggleName()
@@ -115,18 +163,6 @@ namespace Materia
                 InputName.Text = "";
                 OutputName.Text = "";
             }
-        }
-
-        private void Node_OnNodeUIChanged()
-        {
-            ctk = null;
-
-            if (ParentNode != null)
-            {
-                ParentNode.UpdatePaths();
-            }
-
-            UpdatePaths();
         }
 
         public bool CanConnect(UINodePoint p)
@@ -240,48 +276,67 @@ namespace Materia
 
         public void UpdatePaths()
         {
-            Point r1 = this.TransformToAncestor(graph.ViewPort).Transform(new Point(ActualWidth, 8f));
-
-            foreach (UINodePoint n in to)
+            //catch for when the node is removed and layout update is still triggered
+            try
             {
-                Point r2 = n.TransformToAncestor(graph.ViewPort).Transform(new Point(0f, 8f));
+                if (this.Parent == null) return;
 
-                Path path = null;
-
-                paths.TryGetValue(n, out path);
-
-                double dy = r2.Y - r1.Y;
-
-                Point mid = new Point((r2.X + r1.X) * 0.5f, (r2.Y + r1.Y) * 0.5f + dy * 0.5f);
-
-                if (path != null)
+                if(!this.HasAncestor(graph.ViewPort))
                 {
-                    if (path.Data == null)
-                    {
-                        path.VerticalAlignment = VerticalAlignment.Top;
-                        path.HorizontalAlignment = HorizontalAlignment.Left;
-                        PathGeometry p = new PathGeometry();
-                        PathFigure pf = new PathFigure();
-                        pf.IsClosed = false;
-                        pf.StartPoint = r1;
+                    return;
+                }
 
-                        BezierSegment seg = new BezierSegment(r1, mid, r2, true);
-                        pf.Segments.Add(seg);
-                        p.Figures.Add(pf);
-                        path.Data = p;
-                    }
-                    else
+                Point r1 = this.TransformToAncestor(graph.ViewPort).Transform(new Point(ActualWidth, 8f));
+
+                foreach (UINodePoint n in to)
+                {
+                    if (n.Parent == null) continue;
+
+                    if(!n.HasAncestor(graph.ViewPort))
                     {
-                        PathGeometry p = (PathGeometry)path.Data;
-                        PathFigure pf = p.Figures[0];
-                        pf.StartPoint = r1;
-                        BezierSegment seg = (BezierSegment)pf.Segments[0];
-                        seg.Point1 = r1;
-                        seg.Point2 = mid;
-                        seg.Point3 = r2;
+                        continue;
+                    }
+
+                    Point r2 = n.TransformToAncestor(graph.ViewPort).Transform(new Point(0f, 8f));
+
+                    Path path = null;
+
+                    paths.TryGetValue(n, out path);
+
+                    double dy = r2.Y - r1.Y;
+
+                    Point mid = new Point((r2.X + r1.X) * 0.5f, (r2.Y + r1.Y) * 0.5f + dy * 0.5f);
+
+                    if (path != null)
+                    {
+                        if (path.Data == null)
+                        {
+                            path.VerticalAlignment = VerticalAlignment.Top;
+                            path.HorizontalAlignment = HorizontalAlignment.Left;
+                            PathGeometry p = new PathGeometry();
+                            PathFigure pf = new PathFigure();
+                            pf.IsClosed = false;
+                            pf.StartPoint = r1;
+
+                            BezierSegment seg = new BezierSegment(r1, mid, r2, true);
+                            pf.Segments.Add(seg);
+                            p.Figures.Add(pf);
+                            path.Data = p;
+                        }
+                        else
+                        {
+                            PathGeometry p = (PathGeometry)path.Data;
+                            PathFigure pf = p.Figures[0];
+                            pf.StartPoint = r1;
+                            BezierSegment seg = (BezierSegment)pf.Segments[0];
+                            seg.Point1 = r1;
+                            seg.Point2 = mid;
+                            seg.Point3 = r2;
+                        }
                     }
                 }
             }
+            catch { }
         }
 
         private void UserControl_MouseDown(object sender, MouseButtonEventArgs e)
@@ -322,6 +377,8 @@ namespace Materia
         private void Node_MouseEnter(object sender, MouseEventArgs e)
         {
             ShowName = true;
+
+            SelectOver = this;
 
             if(SelectOrigin != null)
             { 
@@ -367,7 +424,13 @@ namespace Materia
 
         private void Node_MouseLeave(object sender, MouseEventArgs e)
         {
+            SelectOver = null;
             ShowName = prevShowName;
+        }
+
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            LayoutUpdated -= UINodePoint_LayoutUpdated;
         }
     }
 }

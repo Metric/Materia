@@ -7,6 +7,8 @@ using Materia.Nodes.MathNodes;
 using Newtonsoft.Json;
 using Materia.Imaging;
 using Materia.Shaders;
+using Materia.MathHelpers;
+using Materia.Nodes.Attributes;
 
 namespace Materia.Nodes
 {
@@ -20,11 +22,13 @@ namespace Materia.Nodes
 
         public GLShaderProgram Shader { get; protected set; }
 
+        [HideProperty]
         public NodeType ExpectedOutput
         {
             get; set;
         }
 
+        [HideProperty]
         public bool HasExpectedOutput
         {
             get
@@ -40,6 +44,52 @@ namespace Materia.Nodes
         public object Result
         {
             get; set;
+        }
+
+        protected Node parentNode;
+        public Node ParentNode
+        {
+            get
+            {
+                return parentNode;
+            }
+            set
+            {
+                parentNode = value;
+                //update nodes
+                int c = Nodes.Count;
+                for(int i = 0; i < c; i++)
+                {
+                    MathNode n = (MathNode)Nodes[i];
+                    n.ParentNode = parentNode;
+                }
+            }
+        }
+
+        [HideProperty]
+        public new int Width
+        {
+            get
+            {
+                return width;
+            }
+            set
+            {
+                width = value;
+            }
+        }
+
+        [HideProperty]
+        public new int Height
+        {
+            get
+            {
+                return height;
+            }
+            set
+            {
+                height = value;
+            }
         }
 
         public FunctionGraph(string name, int w = 256, int h = 256) : base(name, w, h)
@@ -60,6 +110,16 @@ namespace Materia.Nodes
             Stack<Node> reverseStack = new Stack<Node>();
             Queue<Node> processStack = new Queue<Node>();
 
+            string sizePart = "vec2 size = vec2(0);\r\n";
+
+            if(parentNode != null)
+            {
+                int w = parentNode.Width;
+                int h = parentNode.Height;
+
+                sizePart = "vec2 size = vec2(" + w + "," + h + ");\r\n";
+            }
+
             string frag = "#version 330 core\r\n"
                          + "out vec4 FragColor;\r\n"
                          + "in vec2 UV;\r\n"
@@ -67,6 +127,7 @@ namespace Materia.Nodes
                          + "uniform sampler2D Input1;\r\n"
                          + GLSLHash
                          + "void main() {\r\n"
+                         + sizePart
                          + "vec2 pos = UV;\r\n";
 
             processStack.Enqueue(OutputNode);
@@ -108,7 +169,6 @@ namespace Materia.Nodes
             var last = OutputNode as MathNode;
 
             frag += "FragColor = vec4(" + last.ShaderId + "0);\r\n}";
-            Console.Write(frag);
 
             //one last check to verify the output actually has the expected output
             if (!HasExpectedOutput) return false;
@@ -149,13 +209,13 @@ namespace Materia.Nodes
 
         //a function graph does not allow embedded graph instances
         //and the type must be coming from MathNodes path
-        //or must be a sequence node
-        //as a sequence node is simply a pass through to multiple branches
         public override Node CreateNode(string type)
         {
             if (type.Contains("MathNodes") && !type.Contains(System.IO.Path.PathSeparator))
             {
-                return base.CreateNode(type);
+                MathNode n = base.CreateNode(type) as MathNode;
+                n.ParentNode = parentNode;
+                return n;
             }
 
             return null;
@@ -174,6 +234,18 @@ namespace Materia.Nodes
         public override void TryAndProcess()
         {
             //if (!HasExpectedOutput) return;
+
+            if(parentNode != null)
+            {
+                int w = parentNode.Width;
+                int h = parentNode.Height;
+
+                SetVar("size", new MVector(w, h));
+            }
+            else
+            {
+                SetVar("size", new MVector());
+            }
 
             if(Nodes.Count == 1)
             {

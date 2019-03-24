@@ -23,6 +23,7 @@ namespace Materia.Nodes.Atomic
 
         int rays;
 
+        [Promote(NodeType.Float)]
         [Slider(IsInt = true, Max = 128, Min = 1, Snap = false, Ticks = new float[0])]
         public int Rays
         {
@@ -151,9 +152,16 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            int prays = rays;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Rays"))
+            {
+                prays = ParentGraph.GetParameterValue<int>(Id, "Rays");
+            }
+
             blur.TileX = 1;
             blur.TileY = 1;
-            blur.Intensity = rays;
+            blur.Intensity = prays;
             blur.Process(width, height, i1, buffer);
             blur.Complete();
             processor.TileX = tileX;
