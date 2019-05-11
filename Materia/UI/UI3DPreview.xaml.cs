@@ -121,7 +121,7 @@ namespace Materia.UI
                 previewCameraMode = PreviewCameraMode.Perspective;
                 previewPosition = PreviewCameraPosition.Front;
 
-                glview = new TK.GLControl(new GraphicsMode(new ColorFormat(8,8,8,8), 24));
+                glview = new TK.GLControl(GraphicsMode.Default);
                 glview.Load += Glview_Load;
                 glview.Paint += Glview_Paint;
                 glview.MouseWheel += Glview_MouseWheel;
