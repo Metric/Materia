@@ -206,7 +206,11 @@ namespace Xceed.Wpf.AvalonDock.Controls
       {
         case DropTargetType.DockingManagerDockLeft:
           {
-            var desideredWidth = layoutAnchorablePane.DockWidth.Value.IsAbsolute ? layoutAnchorablePane.DockWidth.Value.Value : layoutAnchorablePaneWithActualSize.ActualWidth;
+            double desideredWidth = layoutAnchorablePaneWithActualSize.ActualWidth;
+            if (layoutAnchorablePane.DockWidth != null)
+            {
+                desideredWidth = layoutAnchorablePane.DockWidth.Value.IsAbsolute ? layoutAnchorablePane.DockWidth.Value.Value : layoutAnchorablePaneWithActualSize.ActualWidth;
+            }
             var previewBoxRect = new Rect(
                 targetScreenRect.Left - overlayWindow.Left,
                 targetScreenRect.Top - overlayWindow.Top,
@@ -217,7 +221,11 @@ namespace Xceed.Wpf.AvalonDock.Controls
           }
         case DropTargetType.DockingManagerDockTop:
           {
-            var desideredHeight = layoutAnchorablePane.DockHeight.Value.IsAbsolute ? layoutAnchorablePane.DockHeight.Value.Value : layoutAnchorablePaneWithActualSize.ActualHeight;
+            double desideredHeight = layoutAnchorablePaneWithActualSize.ActualHeight;
+            if (layoutAnchorablePane.DockHeight != null)
+            {
+                desideredHeight = layoutAnchorablePane.DockHeight.Value.IsAbsolute ? layoutAnchorablePane.DockHeight.Value.Value : layoutAnchorablePaneWithActualSize.ActualHeight;
+            }
             var previewBoxRect = new Rect(
                 targetScreenRect.Left - overlayWindow.Left,
                 targetScreenRect.Top - overlayWindow.Top,
@@ -228,7 +236,11 @@ namespace Xceed.Wpf.AvalonDock.Controls
           }
         case DropTargetType.DockingManagerDockRight:
           {
-            var desideredWidth = layoutAnchorablePane.DockWidth.Value.IsAbsolute ? layoutAnchorablePane.DockWidth.Value.Value : layoutAnchorablePaneWithActualSize.ActualWidth;
+            double desideredWidth = layoutAnchorablePaneWithActualSize.ActualWidth;
+            if (layoutAnchorablePane.DockWidth != null)
+            {
+                desideredWidth = layoutAnchorablePane.DockWidth.Value.IsAbsolute ? layoutAnchorablePane.DockWidth.Value.Value : layoutAnchorablePaneWithActualSize.ActualWidth;
+            }
             var previewBoxRect = new Rect(
                 targetScreenRect.Right - overlayWindow.Left - Math.Min( desideredWidth, targetScreenRect.Width / 2.0 ),
                 targetScreenRect.Top - overlayWindow.Top,
@@ -239,7 +251,11 @@ namespace Xceed.Wpf.AvalonDock.Controls
           }
         case DropTargetType.DockingManagerDockBottom:
           {
-            var desideredHeight = layoutAnchorablePane.DockHeight.Value.IsAbsolute ? layoutAnchorablePane.DockHeight.Value.Value : layoutAnchorablePaneWithActualSize.ActualHeight;
+            double desideredHeight = layoutAnchorablePaneWithActualSize.ActualHeight;
+            if (layoutAnchorablePane.DockHeight != null)
+            {
+                desideredHeight = layoutAnchorablePane.DockHeight.Value.IsAbsolute ? layoutAnchorablePane.DockHeight.Value.Value : layoutAnchorablePaneWithActualSize.ActualHeight;
+            }
             var previewBoxRect = new Rect(
                 targetScreenRect.Left - overlayWindow.Left,
                 targetScreenRect.Bottom - overlayWindow.Top - Math.Min( desideredHeight, targetScreenRect.Height / 2.0 ),

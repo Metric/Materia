@@ -79,7 +79,7 @@ namespace Xceed.Wpf.AvalonDock.Layout
 
     protected override void OnDockWidthChanged()
     {
-      if( DockWidth.Value.IsAbsolute && ChildrenCount == 1 )
+      if( DockWidth != null && DockWidth.Value.IsAbsolute && ChildrenCount == 1 )
         ( ( ILayoutPositionableElement )Children[ 0 ] ).DockWidth = DockWidth;
 
       base.OnDockWidthChanged();
@@ -87,16 +87,17 @@ namespace Xceed.Wpf.AvalonDock.Layout
 
     protected override void OnDockHeightChanged()
     {
-      if( DockHeight.Value.IsAbsolute && ChildrenCount == 1 )
+      if( DockHeight != null && DockHeight.Value.IsAbsolute && ChildrenCount == 1 )
         ( ( ILayoutPositionableElement )Children[ 0 ] ).DockHeight = DockHeight;
       base.OnDockHeightChanged();
     }
 
     protected override void OnChildrenCollectionChanged()
     {
-      if( DockWidth.Value.IsAbsolute && ChildrenCount == 1 )
+      
+      if(DockWidth != null && DockWidth.Value.IsAbsolute && ChildrenCount == 1 )
         ( ( ILayoutPositionableElement )Children[ 0 ] ).DockWidth = DockWidth;
-      if( DockHeight.Value.IsAbsolute && ChildrenCount == 1 )
+      if(DockHeight != null && DockHeight.Value.IsAbsolute && ChildrenCount == 1 )
         ( ( ILayoutPositionableElement )Children[ 0 ] ).DockHeight = DockHeight;
       base.OnChildrenCollectionChanged();
     }
