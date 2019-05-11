@@ -3,6 +3,15 @@ Materia
 
 An open source alternative to Substance Designer written in C#. 
 
+A simple setup
+-----------------
+![image](https://github.com/Metric/Materia/blob/master/screenshot1.png)
+
+Pre-existing Textures
+---------------------
+![image](https://github.com/Metric/Materia/blob/master/screenshot2.png)
+
+
 Why did I start making this?
 ============================
 I got tired of paying the fee for the Substance suite.
