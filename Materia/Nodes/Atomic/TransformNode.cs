@@ -19,10 +19,10 @@ namespace Materia.Nodes.Atomic
     {
         TransformProcessor processor;
 
-        protected int xoffset;
+        protected float xoffset;
 
         [Title(Title = "Offset X")]
-        public int XOffset
+        public float XOffset
         {
             get
             {
@@ -35,10 +35,10 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected int yoffset;
+        protected float yoffset;
 
         [Title(Title = "Offset Y")]
-        public int YOffset
+        public float YOffset
         {
             get
             {
@@ -204,8 +204,8 @@ namespace Materia.Nodes.Atomic
 
         public class TransformData : NodeData
         {
-            public int xOffset;
-            public int yOffset;
+            public float xOffset;
+            public float yOffset;
             public float angle;
             public float scaleX;
             public float scaleY;

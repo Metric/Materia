@@ -53,7 +53,7 @@ namespace Materia.Buffers
 
         public void AttachDepth(GLRenderBuffer buf)
         {
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, RenderbufferTarget.Renderbuffer, buf.Id);
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, buf.Id);
         }
 
         public bool IsValid

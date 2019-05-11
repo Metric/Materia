@@ -31,10 +31,11 @@ uniform sampler2D Mask;
 //Saturation = 18,
 //Color = 19,
 //Luminosity = 20
+//LinearLight = 21
 
-uniform int blendMode;
-uniform float alpha;
-uniform int hasMask;
+uniform int blendMode = 1;
+uniform float alpha = 1;
+uniform int hasMask = 0;
 
 ///HSL HELPERS
 vec3 ToHSL(vec3 c) {
@@ -136,7 +137,7 @@ vec3 FromHSL(vec3 c) {
 //END HSL HELPERS
 
 float AddSub(float a, float b) {
-    if(b > 0.5) {
+    if(a < 0.5) {
         return min(1, max(0, a + b));
     }
     else {
@@ -161,7 +162,7 @@ float Divide(float a, float b) {
 }
 
 float Overlay(float a, float b) {
-    if(a < 0.5) {
+    if(a > 0.5) {
         return Multiple(a,b);
     }
     else {
@@ -170,8 +171,12 @@ float Overlay(float a, float b) {
 }
 
 float HardLight(float a, float b) {
-    float r = Multiple(a,b);
-    return Screen(r, a);
+    if(a > 0.5) {
+        return Screen(a,b);
+    }
+    else {
+        return Multiple(a,b);
+    }
 }
 
 float SoftLight(float a, float b) {
@@ -195,22 +200,30 @@ float LinearBurn(float a, float b) {
     return min(1, max(0, a + b - 1));
 }
 
+float LinearLight(float a, float b) {
+    if(a > 0.5) {
+        return LinearBurn(a,b);
+    }
+    else {
+        return LinearDodge(a,b);
+    }
+}
+
 float VividLight(float a, float b) {
-    float r = ColorDodge(a ,b);
-    return ColorBurn(r, a);
+    if(a > 0.5) {
+        return ColorDodge(a,b);
+    }
+    else {
+        return ColorBurn(a,b);
+    }
 }
 
 float Subtract(float a, float b) {
-    return min(1, max(0, b - a));
+    return min(1, max(0, b + a - 1));
 }
 
 float Difference(float a, float b) {
-    if(a > b) {
-        return a - b;
-    }
-    else {
-        return b - a;
-    }
+    return min(1, max(0, abs(b - a)));
 }
 
 float Darken(float a, float b) {
@@ -353,7 +366,7 @@ void main() {
         final.rgb = Hue(b.rgb * alpha,a.rgb * alpha);
     }
     else if(blendMode == 18) {
-        final.rgb = Saturation(b.rgb * alpha, a.rgb * alpha);
+        final.rgb = Saturation(b.rgb * alpha, a.rgb * alpha);   
     }
     else if(blendMode == 19) {
         final.rgb = Color(b.rgb * alpha, a.rgb * alpha);
@@ -361,10 +374,15 @@ void main() {
     else if(blendMode == 20) {
         final.rgb = Luminosity(b.rgb * alpha, a.rgb * alpha);
     }
+    else if(blendMode == 21) {
+        final.r = LinearLight(b.r * alpha, a.r * alpha);
+        final.g = LinearLight(b.g * alpha, a.g * alpha);
+        final.b = LinearLight(b.b * alpha, a.b * alpha);
+    }
 
     float m = 1;
     if(hasMask == 1) {
-        m = texture(Mask, UV);        
+        m = texture(Mask, UV).r;        
     }
     final.a = Copy(b.a, a.a, a.a);
     final *= m;

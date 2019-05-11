@@ -35,7 +35,8 @@ namespace Materia.Nodes.Atomic
         Hue = 17,
         Saturation = 18,
         Color = 19,
-        Luminosity = 20
+        Luminosity = 20,
+        LinearLight = 21
     }
 
     public class BlendNode : ImageNode
@@ -154,7 +155,12 @@ namespace Materia.Nodes.Atomic
         {
             GLTextuer2D i1 = (GLTextuer2D)first.Input.Data;
             GLTextuer2D i2 = (GLTextuer2D)second.Input.Data;
-            GLTextuer2D i3 = (GLTextuer2D)mask.Input.Data;
+            GLTextuer2D i3 = null;
+
+            if(mask.Input != null)
+            {
+                i3 = (GLTextuer2D)mask.Input.Data;
+            }
 
             if (i1 == null || i2 == null) return;
             if (i1.Id == 0) return;

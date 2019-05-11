@@ -45,11 +45,11 @@ namespace Materia.Imaging.GLProcessing
                 shader.SetUniform("blendMode", BlendMode);
                 shader.SetUniform("alpha", Alpha);
 
-                if(mask != null)
+                if (mask != null)
                 {
-                    shader.SetUniform("hasMask", 1);
                     shader.SetUniform("Mask", 2);
                     GL.ActiveTexture(TextureUnit.Texture2);
+                    shader.SetUniform("hasMask", 1);
                     mask.Bind();
                 }
                 else

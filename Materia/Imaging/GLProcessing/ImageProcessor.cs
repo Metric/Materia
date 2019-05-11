@@ -41,6 +41,7 @@ namespace Materia.Imaging.GLProcessing
                 renderBuff = new GLRenderBuffer();
                 renderBuff.Bind();
                 renderBuff.SetBufferStorageAsDepth(4096, 4096);
+                Console.WriteLine("render buff id: " + renderBuff.Id);
                 GLRenderBuffer.Unbind();
             }
             if (colorBuff == null)
@@ -64,8 +65,8 @@ namespace Materia.Imaging.GLProcessing
 
                 if (!frameBuff.IsValid)
                 {
-
-                    Console.WriteLine("Framebuffer not complete!!!");
+                    var status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);  
+                    Console.WriteLine("Framebuffer not complete!!! with status: " + status);
                     GLFrameBuffer.Unbind();
                     return;
                 }

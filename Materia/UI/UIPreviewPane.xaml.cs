@@ -19,6 +19,7 @@ using Materia.Geometry;
 using Materia.Imaging.GLProcessing;
 using OpenTK.Graphics.OpenGL;
 using OpenTK;
+using OpenTK.Graphics;
 
 namespace Materia
 {

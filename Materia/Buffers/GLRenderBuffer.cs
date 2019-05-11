@@ -34,7 +34,7 @@ namespace Materia.Buffers
 
         public void SetBufferStorageAsDepth(int width, int height)
         {
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.DepthComponent24, width, height);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, width, height);
         }
 
         public void Release()
