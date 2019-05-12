@@ -72,7 +72,7 @@ Build Dependencies
  * OpenTK via Nuget
  * OpenTK.GLControl via Nuget
  * Assimp via Nuget
- * All other dependecies are in this repository
+ * All other dependencies are in this repository
  * Uses a custom build of the free ExtendedWpfToolkit that fixes some bugs in AvalonDock, uses proper WPF GridSplitter controls in AvalonDock and customizes AvalonDock Metro Theme.
 
 Build Instructions
