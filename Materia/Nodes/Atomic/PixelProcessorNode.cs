@@ -166,10 +166,6 @@ namespace Materia.Nodes.Atomic
             function.OnGraphUpdated += Function_OnGraphUpdated;
             function.FromJson(d.functionGraph);
             function.ParentNode = this;
-
-            SetConnections(nodes, d.outputs);
-
-            TryAndProcess();
         }
 
         public override string GetJson()

@@ -8,7 +8,6 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -22,6 +21,8 @@ using System.Collections.ObjectModel;
 using Materia.Geometry;
 using Materia.Imaging;
 using RSMI.Containers;
+using Materia.MathHelpers;
+using Materia.Hdri;
 
 namespace Materia.UI
 {
@@ -56,22 +57,18 @@ namespace Materia.UI
     /// </summary>
     public partial class UI3DPreview : UserControl
     {
-        TK.GLControl glview;
-        public GLTextuer2D irradiance { get; protected set; }
-        public GLTextuer2D prefiltered { get; protected set; }
+        GLControl glview;
 
         public GLTextuer2D defaultBlack { get; protected set; }
         public GLTextuer2D defaultGray { get; protected set; }
         public GLTextuer2D defaultWhite { get; protected set; }
         public GLTextuer2D defaultDarkGray { get; protected set; }
 
-        Matrix4 proj;
-        Quaternion rotation;
-        Vector3 cameraTranslation;
-        Vector3 objectTranslation;
+        Camera camera;
+        Transform previewObject;
 
-        TK.Vector3 lightPosition;
-        TK.Vector3 lightColor;
+        Vector3 lightPosition;
+        Vector3 lightColor;
 
         MeshRenderer cube;
         MeshRenderer sphere;
@@ -84,11 +81,6 @@ namespace Materia.UI
         Mesh cylinderMesh;
         Mesh planeMesh;
         Mesh cubeRoundedMesh;
-
-        Point start;
-
-        float rotX = 0;
-        float rotY = 0;
 
         Material.PBRMaterial mat;
 
@@ -103,14 +95,23 @@ namespace Materia.UI
         PreviewCameraPosition previewPosition;
         PreviewCameraMode previewCameraMode;
 
+        Point mouseStart;
+
         public static UI3DPreview Instance { get; protected set; }
 
         public UI3DPreview()
         {
+            HdriManager.Scan();
+            HdriManager.OnHdriLoaded += HdriManager_OnHdriLoaded;
             InitializeComponent();
-            Console.WriteLine("3d view inited");
             Instance = this;
             InitGL();
+            Console.WriteLine("3d view inited");
+        }
+
+        private void HdriManager_OnHdriLoaded(GLTextuer2D irradiance, GLTextuer2D prefiltered)
+        {
+            Invalidate();
         }
 
         private void InitGL()
@@ -119,26 +120,25 @@ namespace Materia.UI
             {
                 previewType = PreviewGeometryType.Cube;
                 previewCameraMode = PreviewCameraMode.Perspective;
-                previewPosition = PreviewCameraPosition.Front;
+                previewPosition = PreviewCameraPosition.Perspective;
 
-                glview = new TK.GLControl(GraphicsMode.Default);
+                glview = new GLControl(GraphicsMode.Default);
                 glview.Load += Glview_Load;
                 glview.Paint += Glview_Paint;
                 glview.MouseWheel += Glview_MouseWheel;
                 glview.MouseMove += Glview_MouseMove;
                 glview.MouseDown += Glview_MouseDown;
                 FHost.Child = glview;
-                rotX = 25;
-                rotY = 45;
-                rotation = Quaternion.FromEulerAngles(rotX * ((float)Math.PI / 180.0f), rotY * ((float)Math.PI / 180.0f), 0);
-                cameraTranslation = new Vector3(0, 0, 3);
-                objectTranslation = new Vector3(0, 0, 0);
+                previewObject = new Transform();
+                camera = new Camera();
+                camera.LocalEulerAngles = new Vector3(25, 45, 0);
+                camera.LocalPosition = new Vector3(0, 0, 3);
             }
         }
 
         private void Glview_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            start = new Point(e.Location.X, e.Location.Y);
+            mouseStart = new Point(e.Location.X, e.Location.Y);
         }
 
         private void Glview_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -147,19 +147,21 @@ namespace Materia.UI
             {
                 Point p = new Point(e.Location.X, e.Location.Y);
 
-                Quaternion n = Quaternion.FromEulerAngles(rotX * ((float)Math.PI / 180.0f), rotY * ((float)Math.PI / 180.0f), 0);
+                Quaternion n = camera.LocalRotation;
 
                 Vector3 up = n * new Vector3(0, 1, 0);
 
-                rotX += ((float)p.Y - (float)start.Y) * 0.25f;
-                rotY += ((float)p.X - (float)start.X) * 0.25f * Math.Sign(up.Y);
+                Vector3 euler = camera.LocalEulerAngles;
 
-                rotX = rotX % 360;
-                rotY = rotY % 360;
+                euler.X += ((float)p.Y - (float)mouseStart.Y) * 0.25f;
+                euler.Y += ((float)p.X - (float)mouseStart.X) * 0.25f * Math.Sign(up.Y);
 
-                rotation = n;
+                euler.X %= 360;
+                euler.Y %= 360;
 
-                start = p;
+                camera.LocalEulerAngles = euler;
+
+                mouseStart = p;
 
                 Invalidate();
             }
@@ -167,15 +169,15 @@ namespace Materia.UI
             {
                 Point p = new Point(e.Location.X, e.Location.Y);
 
-                Vector3 right = Vector3.Normalize(rotation * Vector3.UnitX);
-                Vector3 up = Vector3.Normalize(rotation * Vector3.UnitY);
+                Vector3 right = camera.Right;
+                Vector3 up = camera.Up;
 
-                float dx = ((float)p.X - (float)start.X) * 0.0005f;
-                float dy = ((float)p.Y - (float)start.Y) * -0.0005f;
+                float dx = ((float)p.X - (float)mouseStart.X) * 0.0005f;
+                float dy = ((float)p.Y - (float)mouseStart.Y) * -0.0005f;
 
                 Vector3 t = right * dx + up * dy;
 
-                objectTranslation += t;
+                previewObject.LocalPosition += t;
 
                 Invalidate();
             }
@@ -185,11 +187,11 @@ namespace Materia.UI
         {
             if (e.Delta > 0)
             {
-                cameraTranslation += new Vector3(0, 0, -0.25f);
+                camera.LocalPosition += new Vector3(0, 0, -0.25f);
             }
             else if (e.Delta < 0)
             {
-                cameraTranslation += new Vector3(0, 0, 0.25f);
+                camera.LocalPosition += new Vector3(0, 0, 0.25f);
             }
 
             Invalidate();
@@ -540,6 +542,7 @@ namespace Materia.UI
                     cubeRounded.Mat = mat;
                 }
 
+                //NOTE TO SELF: Recreate the cylnder 3D object with better UV
                 string pcyl = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Geometry", "cylinder.obj");
                 importer = new RSMI.Importer();
                 meshes = importer.Parse(pcyl);
@@ -618,19 +621,18 @@ namespace Materia.UI
             GL.Clear(ClearBufferMask.ColorBufferBit);            
             GL.Clear(ClearBufferMask.DepthBufferBit); 
 
-            float wratio = (float)glview.Width / (float)glview.Height;
+            camera.Aspect = (float)glview.Width / (float)glview.Height;
+
+            Matrix4 proj;
 
             if (previewCameraMode == PreviewCameraMode.Orthographic)
             {
-                proj = Matrix4.CreateOrthographic(Math.Max(1, cameraTranslation.Z), Math.Max(1, cameraTranslation.Z / wratio), 0.03f, 1000f);
+                proj = camera.Orthographic;
             }
             else
             {
-                proj = Matrix4.CreatePerspectiveFieldOfView(40 * (float)(Math.PI / 180.0f), (float)glview.Width / (float)glview.Height, 0.03f, 1000f);
+                proj = camera.Perspective;
             }
-
-            Matrix4 view = Matrix4.CreateFromQuaternion(rotation) * Matrix4.CreateTranslation(-cameraTranslation);
-            Vector3 pos = Vector3.Normalize((view * new Vector4(0, 0, 1, 1)).Xyz) * cameraTranslation.Z;
 
             CheckMaterials();
 
@@ -638,12 +640,12 @@ namespace Materia.UI
             {
                 if (cube != null)
                 {
-                    cube.CameraPosition = pos;
-                    cube.IrradianceMap = irradiance;
-                    cube.PrefilterMap = prefiltered;
+                    cube.CameraPosition = camera.EyePosition;
+                    cube.IrradianceMap = HdriManager.Irradiance;
+                    cube.PrefilterMap = HdriManager.Prefiltered;
                     cube.Projection = proj;
-                    cube.Model = TK.Matrix4.CreateTranslation(objectTranslation);
-                    cube.View = view;
+                    cube.Model = previewObject.WorldMatrix;
+                    cube.View = camera.View;
                     cube.LightColor = lightColor;
                     cube.LightPosition = lightPosition;
                     cube.Draw();
@@ -653,12 +655,12 @@ namespace Materia.UI
             {
                 if(sphere != null)
                 {
-                    sphere.CameraPosition = pos; 
-                    sphere.IrradianceMap = irradiance;
-                    sphere.PrefilterMap = prefiltered;
+                    sphere.CameraPosition = camera.EyePosition; 
+                    sphere.IrradianceMap = HdriManager.Irradiance;
+                    sphere.PrefilterMap = HdriManager.Prefiltered;
                     sphere.Projection = proj;
-                    sphere.Model = TK.Matrix4.CreateTranslation(objectTranslation);
-                    sphere.View = view;
+                    sphere.Model = previewObject.WorldMatrix;
+                    sphere.View = camera.View;
                     sphere.LightColor = lightColor;
                     sphere.LightPosition = lightPosition;
                     sphere.Draw();
@@ -668,12 +670,12 @@ namespace Materia.UI
             {
                 if(cylinder != null)
                 {
-                    cylinder.CameraPosition = pos;
-                    cylinder.IrradianceMap = irradiance;
-                    cylinder.PrefilterMap = prefiltered;
+                    cylinder.CameraPosition = camera.EyePosition;
+                    cylinder.IrradianceMap = HdriManager.Irradiance;
+                    cylinder.PrefilterMap = HdriManager.Prefiltered;
                     cylinder.Projection = proj;
-                    cylinder.Model = TK.Matrix4.CreateTranslation(objectTranslation);
-                    cylinder.View = view;
+                    cylinder.Model = previewObject.WorldMatrix;
+                    cylinder.View = camera.View;
                     cylinder.LightColor = lightColor;
                     cylinder.LightPosition = lightPosition;
                     cylinder.Draw();
@@ -683,12 +685,12 @@ namespace Materia.UI
             {
                 if (plane != null)
                 {
-                    plane.CameraPosition = pos;
-                    plane.IrradianceMap = irradiance;
-                    plane.PrefilterMap = prefiltered;
+                    plane.CameraPosition = camera.EyePosition;
+                    plane.IrradianceMap = HdriManager.Irradiance;
+                    plane.PrefilterMap = HdriManager.Prefiltered;
                     plane.Projection = proj;
-                    plane.Model = TK.Matrix4.CreateTranslation(objectTranslation);
-                    plane.View = view;
+                    plane.Model = previewObject.WorldMatrix;
+                    plane.View = camera.View;
                     plane.LightColor = lightColor;
                     plane.LightPosition = lightPosition;
                     plane.Draw();
@@ -698,12 +700,12 @@ namespace Materia.UI
             {
                 if (cubeRounded != null)
                 {
-                    cubeRounded.CameraPosition = pos;
-                    cubeRounded.IrradianceMap = irradiance;
-                    cubeRounded.PrefilterMap = prefiltered;
+                    cubeRounded.CameraPosition = camera.EyePosition;
+                    cubeRounded.IrradianceMap = HdriManager.Irradiance;
+                    cubeRounded.PrefilterMap = HdriManager.Prefiltered;
                     cubeRounded.Projection = proj;
-                    cubeRounded.Model = TK.Matrix4.CreateTranslation(objectTranslation);
-                    cubeRounded.View = view;
+                    cubeRounded.Model = previewObject.WorldMatrix;
+                    cubeRounded.View = camera.View;
                     cubeRounded.LightColor = lightColor;
                     cubeRounded.LightPosition = lightPosition;
                     cubeRounded.Draw();
@@ -732,7 +734,8 @@ namespace Materia.UI
 
             Task.Run(async () =>
             {
-                await LoadHdri("Circus");
+                //initial hdri load
+                await HdriManager.Load();
             });
         }
 
@@ -742,71 +745,6 @@ namespace Materia.UI
             {
                 glview.Invalidate();
             }
-        }
-
-        protected async Task LoadHdri(string folder)
-        {
-            string iradpath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Hdri", folder, "irradiance.dds");
-            string prefpath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Hdri", folder, "prefiltered.dds");
-
-            try
-            {
-                DDSImage rad = await DDSReader.DDSReader.ReadImageAsync(iradpath);
-                DDSImage pre = await DDSReader.DDSReader.ReadImageAsync(prefpath);
-
-                App.Current.Dispatcher.Invoke(() =>
-                {
-                    Collection<DDSMipMap> mips = (Collection<DDSMipMap>)rad.Frames;
-
-                    if (mips.Count > 0)
-                    {
-
-                        var mip = mips[0];
-                        byte[] data = mip.MipmapData[0];
-                        if (irradiance != null)
-                        {
-                            irradiance.Release();
-                        }
-
-                        irradiance = new GLTextuer2D(PixelInternalFormat.Rgb8);
-                        irradiance.Bind();
-                        irradiance.SetData(data, OpenTK.Graphics.OpenGL.PixelFormat.Rgb, (int)mip.Width, (int)mip.Height);
-                        irradiance.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
-                        irradiance.SetWrap((int)TextureWrapMode.ClampToEdge);
-                        GLTextuer2D.Unbind();
-                    }
-
-                    mips = (Collection<DDSMipMap>)pre.Frames;
-
-                    if (mips.Count > 0)
-                    {
-                        if (prefiltered != null)
-                        {
-                            prefiltered.Release();
-                        }
-
-                        prefiltered = new GLTextuer2D(PixelInternalFormat.Rgb8);
-                        prefiltered.Bind();
-                        prefiltered.SetMaxMipLevel(4);
-
-                        for (int i = 0; i < mips.Count; i++)
-                        {
-                            var mip = mips[i];
-                            byte[] data = mip.MipmapData[0];
-
-                            prefiltered.SetData(data, OpenTK.Graphics.OpenGL.PixelFormat.Rgb, (int)mip.Width, (int)mip.Height, i);
-                        }
-
-                        prefiltered.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
-                        prefiltered.SetWrap((int)TextureWrapMode.ClampToEdge);
-
-                        GLTextuer2D.Unbind();
-                    }
-
-                    Invalidate();
-                });
-            }
-            catch (Exception e) { Console.WriteLine(e.StackTrace); }
         }
 
         private void UserControl_Unloaded(object sender, RoutedEventArgs e)
@@ -840,17 +778,7 @@ namespace Materia.UI
                 defaultDarkGray = null;
             }
 
-            if (irradiance != null)
-            {
-                irradiance.Release();
-                irradiance = null;
-            }
-
-            if (prefiltered != null)
-            {
-                prefiltered.Release();
-                prefiltered = null;
-            }
+            HdriManager.Release();
 
             if (mat != null)
             {
@@ -928,33 +856,30 @@ namespace Materia.UI
             switch (previewPosition)
             {
                 case PreviewCameraPosition.Back:
-                    rotX = 0; rotY = 180;
+                    camera.LocalEulerAngles = new Vector3(0, 180, 0);
                     break;
                 case PreviewCameraPosition.Front:
-                    rotX = 0; rotY = 0;
+                    camera.LocalEulerAngles = new Vector3(0, 0, 0);
                     break;
                 case PreviewCameraPosition.Top:
-                    rotX = 90; rotY = 0;
+                    camera.LocalEulerAngles = new Vector3(90, 0, 0);
                     break;
                 case PreviewCameraPosition.Bottom:
-                    rotX = 270; rotY = 0;
+                    camera.LocalEulerAngles = new Vector3(270, 0, 0);
                     break;
                 case PreviewCameraPosition.Right:
-                    rotX = 0; rotY = 90;
+                    camera.LocalEulerAngles = new Vector3(0, 90, 0);
                     break;
                 case PreviewCameraPosition.Left:
-                    rotX = 0; rotY = 270;
+                    camera.LocalEulerAngles = new Vector3(0, 270, 0);
                     break;
                 case PreviewCameraPosition.Perspective:
-                    rotX = 25; rotY = 45;
+                    camera.LocalEulerAngles = new Vector3(25, 45, 0);
                     break;
                 default:
-                    rotX = 0; rotY = 0;
+                    camera.LocalEulerAngles = new Vector3(0, 0, 0);
                     break;
             }
-
-
-            rotation = Quaternion.FromEulerAngles(rotX * ((float)Math.PI / 180.0f), rotY * ((float)Math.PI / 180.0f), 0);
 
             Invalidate();
         }
@@ -972,37 +897,35 @@ namespace Materia.UI
 
         private void ResetScene_Click(object sender, RoutedEventArgs e)
         {
-            objectTranslation = new Vector3(0,0,0);
+            previewObject.LocalPosition = new Vector3(0,0,0);
 
             switch (previewPosition)
             {
                 case PreviewCameraPosition.Back:
-                    rotX = 0; rotY = 180;
+                    camera.LocalEulerAngles = new Vector3(0, 180, 0);
                     break;
                 case PreviewCameraPosition.Front:
-                    rotX = 0; rotY = 0;
+                    camera.LocalEulerAngles = new Vector3(0, 0, 0);
                     break;
                 case PreviewCameraPosition.Top:
-                    rotX = 90; rotY = 0;
+                    camera.LocalEulerAngles = new Vector3(90, 0, 0);
                     break;
                 case PreviewCameraPosition.Bottom:
-                    rotX = 270; rotY = 0;
+                    camera.LocalEulerAngles = new Vector3(270, 0, 0);
                     break;
                 case PreviewCameraPosition.Right:
-                    rotX = 0; rotY = 90;
+                    camera.LocalEulerAngles = new Vector3(0, 90, 0);
                     break;
                 case PreviewCameraPosition.Left:
-                    rotX = 0; rotY = 270;
+                    camera.LocalEulerAngles = new Vector3(0, 270, 0);
                     break;
                 case PreviewCameraPosition.Perspective:
-                    rotX = 25; rotY = 45;
+                    camera.LocalEulerAngles = new Vector3(25, 45, 0);
                     break;
                 default:
-                    rotX = 0; rotY = 0;
+                    camera.LocalEulerAngles = new Vector3(0, 0, 0);
                     break;
             }
-
-            rotation = Quaternion.FromEulerAngles(rotX * ((float)Math.PI / 180.0f), rotY * ((float)Math.PI / 180.0f), 0);
 
             Invalidate();
         }

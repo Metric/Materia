@@ -177,22 +177,22 @@ namespace Materia.Nodes.Atomic
             {
                 if(ParentGraph.HasParameterValue(Id, "RedChannel"))
                 {
-                    predChannel = ParentGraph.GetParameterValue<int>(Id, "RedChannel");
+                    predChannel = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "RedChannel"));
                 }
 
                 if(ParentGraph.HasParameterValue(Id, "GreenChannel"))
                 {
-                    pgreenChannel = ParentGraph.GetParameterValue<int>(Id, "GreenChannel");
+                    pgreenChannel = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "GreenChannel"));
                 }
 
                 if(ParentGraph.HasParameterValue(Id, "BlueChannel"))
                 {
-                    pblueChannel = ParentGraph.GetParameterValue<int>(Id, "BlueChannel");
+                    pblueChannel = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "BlueChannel"));
                 }
 
                 if(ParentGraph.HasParameterValue(Id, "AlphaChannel"))
                 {
-                    palphaChannel = ParentGraph.GetParameterValue<int>(Id, "AlphaChannel");
+                    palphaChannel = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "AlphaChannel"));
                 }
             }
 
@@ -236,10 +236,6 @@ namespace Materia.Nodes.Atomic
             greenChannel = d.green;
             blueChannel = d.blue;
             alphaChannel = d.alpha;
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
 
         public override void Dispose()

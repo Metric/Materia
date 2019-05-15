@@ -14,6 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Reflection;
 using OpenTK;
+using Materia.MathHelpers;
 
 namespace Materia.UI.Components
 {
@@ -33,13 +34,22 @@ namespace Materia.UI.Components
             SelectColor.Background = new SolidColorBrush(Colors.Black);
         }
 
-        public ColorSelect(PropertyInfo p, object owner)
+        public ColorSelect(PropertyInfo p, object owner, bool isMVector = false)
         {
             InitializeComponent();
             property = p;
             propertyOwner = owner;
 
-            current = (Vector4)p.GetValue(owner);
+            if (isMVector)
+            {
+                MVector m = (MVector)p.GetValue(owner);
+                current = new Vector4(m.X, m.Y, m.Z, m.W);
+            }
+            else
+            {
+                current = (Vector4)p.GetValue(owner);
+            }
+
             c = D.Color.FromArgb((int)(current.W * 255), (int)(current.X * 255), (int)(current.Y * 255), (int)(current.Z * 255));
             SelectColor.Background = new SolidColorBrush(Color.FromArgb(c.A, c.R, c.G, c.B));
         }

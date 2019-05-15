@@ -135,10 +135,6 @@ namespace Materia.Nodes.Atomic
             LevelsData d = JsonConvert.DeserializeObject<LevelsData>(data);
             SetBaseNodeDate(d);
             range = d.range;
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
 
         public override string GetJson()

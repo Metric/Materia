@@ -16,6 +16,7 @@ using Materia.Nodes;
 using System.Reflection;
 using Materia.Nodes.Attributes;
 using OpenTK;
+using Materia.MathHelpers;
 
 namespace Materia.UI.Components
 {
@@ -43,12 +44,16 @@ namespace Materia.UI.Components
                     Node n = null;
                     g.NodeLookup.TryGetValue(split[0], out n);
 
-                    PropertyLabel lbl = new PropertyLabel();
-                    lbl.Title = v.Name;
-                    Stack.Children.Add(lbl);
+                    if(n == null)
+                    {
+                        n = g.FindSubNodeById(split[0]);
+                    }
 
                     if(n != null)
                     {
+                        PropertyLabel lbl = new PropertyLabel();
+                        lbl.Title = v.Name;
+                        Stack.Children.Add(lbl);
                         BuildParameter(split[1], v, n);
                     }
                 }
@@ -62,27 +67,9 @@ namespace Materia.UI.Components
                 PropertyInfo info1 = n.GetType().GetProperty(parameter);
                 PropertyInfo info2 = v.GetType().GetProperty("Value");
 
-                if (info1 == null)
+                if (info1 != null)
                 {
-                    if(v.Value is float)
-                    {
-                        NumberInput np = new NumberInput(NumberInputType.Float, v, info2);
-                        Stack.Children.Add(np);
-                    }
-                    else if(v.Value is int)
-                    {
-                        NumberInput np = new NumberInput(NumberInputType.Int, v, info2);
-                        Stack.Children.Add(np);
-                    }
-                    else if(v.Value is bool)
-                    {
-                        ToggleControl tc = new ToggleControl("True", info2, v);
-                        Stack.Children.Add(tc);
-                    }
-                }
-                else
-                {
-                    if (v.Value is float || v.Value is int)
+                    if (v.Value is double || v.Value is float || v.Value is int)
                     {
                         SliderAttribute sl = info1.GetCustomAttribute<SliderAttribute>();
 
@@ -90,6 +77,11 @@ namespace Materia.UI.Components
                         {
                             NumberSlider inp = new NumberSlider(sl, info2, v);
                             Stack.Children.Add(inp);
+                        }
+                        else if(v.Value is double)
+                        {
+                            NumberInput np = new NumberInput(NumberInputType.Float, v, info2);
+                            Stack.Children.Add(np);
                         }
                         else if(v.Value is float)
                         {
@@ -106,6 +98,11 @@ namespace Materia.UI.Components
                     {
                         ToggleControl tc = new ToggleControl(v.Name, info2, v);
                         Stack.Children.Add(tc);
+                    }
+                    else if(v.Value is MVector)
+                    {
+                        ColorSelect cs = new ColorSelect(info2, v, true);
+                        Stack.Children.Add(cs);
                     }
                     else if(v.Value is Vector4)
                     {

@@ -63,26 +63,34 @@ namespace Materia.Nodes.MathNodes
 
             n1id += index;
 
+            Console.WriteLine("floor prev input: " + n1id);
+
             if (input.Input.Type == NodeType.Float4)
             {
+                Console.WriteLine("floor Float4");
                 output.Type = NodeType.Float4;
                 return "vec4 " + s + " = floor(" + n1id + ");\r\n";
             }
             else if (input.Input.Type == NodeType.Float3)
             {
+                Console.WriteLine("floor Float3");
                 output.Type = NodeType.Float3;
-                return "vec2 " + s + " = floor(" + n1id + ");\r\n";
+                return "vec3 " + s + " = floor(" + n1id + ");\r\n";
             }
             else if (input.Input.Type == NodeType.Float2)
             {
+                Console.WriteLine("floor Float2");
                 output.Type = NodeType.Float2;
                 return "vec2 " + s + " = floor(" + n1id + ");\r\n";
             }
             else if (input.Input.Type == NodeType.Float)
             {
+                Console.WriteLine("floor Float");
                 output.Type = NodeType.Float;
                 return "float " + s + " = floor(" + n1id + ");\r\n";
             }
+
+            Console.WriteLine("floor nothing");
 
             return "";
         }

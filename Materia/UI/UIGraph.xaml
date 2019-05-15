@@ -31,5 +31,6 @@
             </Button>
         </StackPanel>
         <local:BreadCrumbs x:Name="Crumbs" VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="32" />
+        <TextBlock Name="OutputRequirementsLabel" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="5" Foreground="YellowGreen" FontSize="16" />
     </Grid>
 </UserControl>

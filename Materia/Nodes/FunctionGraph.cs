@@ -9,6 +9,8 @@ using Materia.Imaging;
 using Materia.Shaders;
 using Materia.MathHelpers;
 using Materia.Nodes.Attributes;
+using System.Reflection;
+using OpenTK;
 
 namespace Materia.Nodes
 {
@@ -37,7 +39,7 @@ namespace Materia.Nodes
                 if (OutputNode.Outputs == null) return false;
                 if (OutputNode.Outputs.Count == 0) return false;
 
-                return (OutputNode.Outputs[0].Type == ExpectedOutput);
+                return (OutputNode.Outputs[0].Type & ExpectedOutput) != 0;
             }
         }
 
@@ -95,6 +97,7 @@ namespace Materia.Nodes
         public FunctionGraph(string name, int w = 256, int h = 256) : base(name, w, h)
         {
             Name = name;
+            SetVar("PI", 3.14159265359f);
         }
 
         public virtual bool BuildShader()
@@ -123,6 +126,7 @@ namespace Materia.Nodes
             string frag = "#version 330 core\r\n"
                          + "out vec4 FragColor;\r\n"
                          + "in vec2 UV;\r\n"
+                         + "const float PI = 3.14159265359;\r\n"
                          + "uniform sampler2D Input0;\r\n"
                          + "uniform sampler2D Input1;\r\n"
                          + GLSLHash
@@ -145,11 +149,8 @@ namespace Materia.Nodes
                         if (inp.HasInput)
                         {
                             var n2 = inp.Input.Node;
-                            if (!reverseStack.Contains(n2))
-                            {
-                                reverseStack.Push(n2);
-                                processStack.Enqueue(n2);
-                            }
+                            reverseStack.Push(n2);
+                            processStack.Enqueue(n2);
                         }
                     }
                 }
@@ -163,7 +164,10 @@ namespace Materia.Nodes
       
                 if (string.IsNullOrEmpty(d)) return false;
 
-                frag += d;
+                if (frag.IndexOf(d) == -1)
+                {
+                    frag += d;
+                }
             }
 
             var last = OutputNode as MathNode;
@@ -231,9 +235,175 @@ namespace Materia.Nodes
             //do nothing in this graph
         }
 
+        protected void SetParentNodeVars()
+        {
+            if(parentNode != null)
+            {
+                var props = parentNode.GetType().GetProperties();
+
+                var p = parentNode.ParentGraph;
+
+                while(p != null && p is FunctionGraph)
+                {
+                    var np = (p as FunctionGraph).parentNode;
+
+                    if(np != null)
+                    {
+                        p = np.ParentGraph;
+                    }
+                    else
+                    {
+                        p = null;
+                    }
+                }
+
+                if (p != null)
+                {
+                    foreach (var prop in props)
+                    {
+                        if(!prop.PropertyType.Equals(typeof(int))
+                            && !prop.PropertyType.Equals(typeof(float))
+                            && !prop.PropertyType.Equals(typeof(MVector))
+                            && !prop.PropertyType.Equals(typeof(bool))
+                            && !prop.PropertyType.Equals(typeof(double))
+                            && !prop.PropertyType.Equals(typeof(Vector4)))
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            HidePropertyAttribute hb = prop.GetCustomAttribute<HidePropertyAttribute>();
+
+                            if(hb != null)
+                            {
+                                continue;
+                            }
+                        }
+                        catch
+                        {
+
+                        }
+
+                        object v = null;
+                        if (p.HasParameterValue(parentNode.Id, prop.Name))
+                        {
+                            var gp = p.GetParameterRaw(parentNode.Id, prop.Name);
+                            if (!gp.IsFunction())
+                            {
+                                v = gp.Value;
+                            }
+                            else
+                            {
+                                v = prop.GetValue(parentNode);
+                            }
+                        }
+                        else
+                        {
+                            v = prop.GetValue(parentNode);
+                        }
+
+                        string varName = "";
+
+                        try
+                        {
+                            TitleAttribute t = prop.GetCustomAttribute<TitleAttribute>();
+
+                            if(t != null)
+                            {
+                                varName = t.Title.Replace(" ", "");
+                            }
+                            else
+                            {
+                                varName = prop.Name;
+                            }
+                        }
+                        catch
+                        {
+                            varName = prop.Name;
+                        }
+
+                        if(v != null)
+                        {
+                            if(v is Vector4)
+                            {
+                                Vector4 vec = (Vector4)v;
+                                v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
+                            }
+
+                            SetVar(varName, v);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach(var prop in props)
+                    {
+                        if (!prop.PropertyType.Equals(typeof(int))
+                          && !prop.PropertyType.Equals(typeof(float))
+                          && !prop.PropertyType.Equals(typeof(MVector))
+                          && !prop.PropertyType.Equals(typeof(bool))
+                          && !prop.PropertyType.Equals(typeof(double))
+                          && !prop.PropertyType.Equals(typeof(Vector4)))
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            HidePropertyAttribute hb = prop.GetCustomAttribute<HidePropertyAttribute>();
+
+                            if (hb != null)
+                            {
+                                continue;
+                            }
+                        }
+                        catch
+                        {
+
+                        }
+
+                        object v = prop.GetValue(parentNode);
+                        string varName = "";
+
+                        try
+                        {
+                            TitleAttribute t = prop.GetCustomAttribute<TitleAttribute>();
+
+                            if (t != null)
+                            {
+                                varName = t.Title.Replace(" ", "");
+                            }
+                            else
+                            {
+                                varName = prop.Name;
+                            }
+                        }
+                        catch
+                        {
+                            varName = prop.Name;
+                        }
+
+                        if (v != null)
+                        {
+                            if (v is Vector4)
+                            {
+                                Vector4 vec = (Vector4)v;
+                                v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
+                            }
+
+                            SetVar(varName, v);
+                        }
+                    }
+                }
+            }
+        }
+
         public override void TryAndProcess()
         {
             //if (!HasExpectedOutput) return;
+
+            SetParentNodeVars();
 
             if(parentNode != null)
             {
@@ -247,30 +417,41 @@ namespace Materia.Nodes
                 SetVar("size", new MVector());
             }
 
-            if(Nodes.Count == 1)
+            if (OutputNode == null) return;
+
+            Stack<Node> reverseStack = new Stack<Node>();
+            Queue<Node> processStack = new Queue<Node>();
+
+            processStack.Enqueue(OutputNode);
+            reverseStack.Push(OutputNode);
+
+            while (processStack.Count > 0)
             {
-                Nodes[0].TryAndProcess();
-                return;
-            }
-            else if(Nodes.Count == 2)
-            {
-                Nodes[0].TryAndProcess();
-                Nodes[1].TryAndProcess();
-                return;
-            }
-            else if(Nodes.Count == 3)
-            {
-                Nodes[0].TryAndProcess();
-                Nodes[1].TryAndProcess();
-                Nodes[2].TryAndProcess();
-                return;
+                var n = processStack.Dequeue();
+
+                if (n.Inputs != null)
+                {
+                    for (int i = 0; i < n.Inputs.Count; i++)
+                    {
+                        var inp = n.Inputs[i];
+                        if (inp.HasInput)
+                        {
+                            var n2 = inp.Input.Node;
+                            if (!reverseStack.Contains(n2))
+                            {
+                                reverseStack.Push(n2);
+                                processStack.Enqueue(n2);
+                            }
+                        }
+                    }
+                }
             }
 
-            int len = Nodes.Count;
-
-            for (int i = 0; i < len; i++)
+            List<Node> nodes = reverseStack.ToList();
+            int count = nodes.Count;
+            for(int i = 0; i < count; i++)
             {
-                Nodes[i].TryAndProcess();
+                nodes[i].TryAndProcess();
             }
         }
 
@@ -308,9 +489,11 @@ namespace Materia.Nodes
 
             Node n = null;
 
-            NodeLookup.TryGetValue(d.outputNode, out n);
-
-            OutputNode = n;
+            if (d.outputNode != null)
+            {
+                NodeLookup.TryGetValue(d.outputNode, out n);
+                OutputNode = n;
+            }
         }
 
         public override void Dispose()

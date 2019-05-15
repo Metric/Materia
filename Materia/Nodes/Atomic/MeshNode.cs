@@ -12,6 +12,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Materia.Textures;
 using Materia.UI;
+using Newtonsoft.Json;
+using Materia.Hdri;
 
 namespace Materia.Nodes.Atomic
 {
@@ -321,6 +323,13 @@ namespace Materia.Nodes.Atomic
 
             Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
+
+            HdriManager.OnHdriLoaded += HdriManager_OnHdriLoaded;
+        }
+
+        private void HdriManager_OnHdriLoaded(GLTextuer2D irradiance, GLTextuer2D prefiltered)
+        {
+            TryAndProcess();
         }
 
         private void Input_OnInputRemoved(NodeInput n)
@@ -435,8 +444,8 @@ namespace Materia.Nodes.Atomic
 
                 if (v != null)
                 {
-                    mesh.IrradianceMap = v.irradiance;
-                    mesh.PrefilterMap = v.prefiltered;
+                    mesh.IrradianceMap = HdriManager.Irradiance;
+                    mesh.PrefilterMap = HdriManager.Prefiltered;
 
                     if (albedo == null)
                     {
@@ -497,16 +506,83 @@ namespace Materia.Nodes.Atomic
             });
         }
 
+        public class MeshNodeData : NodeData
+        {
+            public string path;
+            public string relativePath;
+            public bool resource;
+
+            public float translateX;
+            public float translateY;
+            public float translateZ;
+
+            public float scaleX;
+            public float scaleY;
+            public float scaleZ;
+
+            public int rotationX;
+            public int rotationY;
+            public int rotationZ;
+
+            public float cameraZoom;
+
+            public float meshTileX;
+            public float meshTileY;
+        }
+
         public override void FromJson(Dictionary<string, Node> nodes, string data)
         {
+            MeshNodeData d = JsonConvert.DeserializeObject<MeshNodeData>(data);
+            SetBaseNodeDate(d);
 
+            path = d.path;
+            Resource = d.resource;
+            relativePath = d.relativePath;
+
+            xOffset = d.translateX;
+            yOffset = d.translateY;
+            zOffset = d.translateZ;
+
+            scaleX = d.scaleX;
+            scaleY = d.scaleY;
+            scaleZ = d.scaleZ;
+
+            rotationX = d.rotationX;
+            rotationY = d.rotationY;
+            rotationZ = d.rotationZ;
+
+            cameraZoom = d.cameraZoom;
+
+            meshtileX = d.meshTileX;
+            meshtileY = d.meshTileY;
         }
 
         public override string GetJson()
         {
-            ///throw new NotImplementedException();
+            MeshNodeData d = new MeshNodeData();
+            FillBaseNodeData(d);
+            d.path = path;
+            d.relativePath = relativePath;
+            d.resource = Resource;
 
-            return "";
+            d.translateX = xOffset;
+            d.translateY = yOffset;
+            d.translateZ = zOffset;
+
+            d.scaleX = scaleX;
+            d.scaleY = scaleY;
+            d.scaleZ = scaleZ;
+
+            d.rotationX = rotationX;
+            d.rotationY = rotationY;
+            d.rotationZ = rotationZ;
+
+            d.cameraZoom = cameraZoom;
+            d.meshTileX = meshtileX;
+            d.meshTileY = meshtileY;
+
+
+            return JsonConvert.SerializeObject(d);
         }
 
         protected override void OnWidthHeightSet()
@@ -544,6 +620,8 @@ namespace Materia.Nodes.Atomic
         public override void Dispose()
         {
             base.Dispose();
+
+            HdriManager.OnHdriLoaded -= HdriManager_OnHdriLoaded;
 
             if (mesh != null)
             {

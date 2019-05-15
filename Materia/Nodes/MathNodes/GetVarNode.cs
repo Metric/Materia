@@ -90,7 +90,7 @@ namespace Materia.Nodes.MathNodes
             object d = null;
             if (ParentGraph != null)
             {
-                d = ParentGraph.GetVar<object>(varName);
+                d = ParentGraph.GetVar(varName);
             }
 
             output.Data = d;

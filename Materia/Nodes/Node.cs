@@ -113,7 +113,7 @@ namespace Materia.Nodes
 
         protected int width;
 
-        [Slider(IsInt = true, Max = 4096, Min = 16, Snap = true, Ticks = new float[] { 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
+        [Slider(IsInt = true, Max = 4096, Min = 8, Snap = true, Ticks = new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
         [Section(Section = "Standard")]
         public int Width
         {
@@ -130,7 +130,7 @@ namespace Materia.Nodes
 
         protected int height;
 
-        [Slider(IsInt = true, Max = 4096, Min = 16, Snap = true, Ticks = new float[] { 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
+        [Slider(IsInt = true, Max = 4096, Min = 8, Snap = true, Ticks = new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
         [Section(Section = "Standard")]
         public int Height
         {
@@ -467,7 +467,7 @@ namespace Materia.Nodes
             }
         }
 
-        protected void SetConnections(Dictionary<string,Node> nodes, List<NodeOutputConnection> connections)
+        public void SetConnections(Dictionary<string,Node> nodes, List<NodeOutputConnection> connections)
         {
             if (connections != null)
             {
@@ -476,10 +476,13 @@ namespace Materia.Nodes
                     Node n = null;
                     if (nodes.TryGetValue(nc.node, out n))
                     {
-                        var inp = n.Inputs[nc.index];
-                        if (nc.outIndex >= 0 && nc.outIndex < Outputs.Count)
+                        if (nc.index < n.Inputs.Count)
                         {
-                            Outputs[nc.outIndex].Add(inp);
+                            var inp = n.Inputs[nc.index];
+                            if (nc.outIndex >= 0 && nc.outIndex < Outputs.Count)
+                            {
+                                Outputs[nc.outIndex].Add(inp);
+                            }
                         }
                     }
                     else

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -46,6 +47,8 @@ namespace Materia.UI
             }
         }
 
+        CancellationTokenSource ctk;
+
         TItem root;
 
         public UIShelf()
@@ -61,7 +64,7 @@ namespace Materia.UI
 
             if (Directory.Exists(dir))
             {
-                string[] path = Directory.GetFiles(dir);
+                string[] path = Directory.GetFiles(dir, "*.mtg", SearchOption.AllDirectories);
 
                 List<string> sorter = new List<string>();
                 Dictionary<string, string> lookup = new Dictionary<string, string>();
@@ -88,12 +91,12 @@ namespace Materia.UI
                         NodeResource nsr = new NodeResource();
                         nsr.Title = fname;
                         nsr.Type = p;
-                        string structure = p.Replace(dir + Path.PathSeparator, "");
-                        if(structure.Contains(Path.PathSeparator))
+                        string structure = p.Replace(dir, "");
+                        if (structure.IndexOf(Path.DirectorySeparatorChar) > -1) 
                         {
                             TItem parent = root;
 
-                            string[] split = structure.Split(Path.PathSeparator);
+                            string[] split = structure.Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
 
                             for(int i = 0; i < split.Length - 1; i++)
                             {
@@ -103,8 +106,19 @@ namespace Materia.UI
                                 if (t == null)
                                 {
                                     TreeViewItem it = new TreeViewItem();
+                                    it.Foreground = new SolidColorBrush(Colors.LightGray);
                                     it.Header = s;
                                     t = new TItem(it);
+
+                                    if (parent == root || parent == null)
+                                    {
+                                        TreeList.Items.Add(it);
+                                    }
+                                    else
+                                    {
+                                        parent.Item.Items.Add(it);
+                                    }
+
                                     parent.Add(s, t);
                                 }
 
@@ -150,6 +164,125 @@ namespace Materia.UI
                         TreeList.Items.Add(nsr);
                     }
                 }
+            }
+        }
+
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            string s = SearchBox.Text;
+
+            if (TreeList == null || TreeList.Items == null) return;
+
+            if (string.IsNullOrEmpty(s) || string.IsNullOrWhiteSpace(s) || s.Equals("Search..."))
+            {
+                ClearFilters();
+                return;
+            }
+
+            if(ctk != null)
+            {
+                ctk.Cancel();
+            }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(250, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    SetFilters(s);
+                });
+            });
+        }
+
+        private void SetFilters(string s)
+        {
+            s = s.ToLower();
+
+            Predicate<object> fn = (object b) =>
+            {
+                if (b is TreeViewItem)
+                {
+                    return true;
+                }
+                else if (b is NodeResource)
+                {
+                    NodeResource nsr = (NodeResource)b;
+
+                    if (nsr.Title.ToLower().Contains(s))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            };
+
+            TreeList.Items.Filter = fn;
+
+            Stack<ItemCollection> stack = new Stack<ItemCollection>();
+            stack.Push(TreeList.Items);
+
+            while (stack.Count > 0)
+            {
+                ItemCollection c = stack.Pop();
+
+                foreach (object o in c)
+                {
+                    if (o is TreeViewItem)
+                    {
+                        TreeViewItem t = (TreeViewItem)o;
+
+                        t.Items.Filter = fn;
+                        stack.Push(t.Items);
+                    }
+                }
+            }
+        }
+
+        private void ClearFilters()
+        {
+            TreeList.Items.Filter = null;
+
+            Stack<ItemCollection> stack = new Stack<ItemCollection>();
+            stack.Push(TreeList.Items);
+
+            while (stack.Count > 0)
+            {
+                ItemCollection c = stack.Pop();
+
+                foreach (object o in c)
+                {
+                    if (o is TreeViewItem)
+                    {
+                        TreeViewItem t = (TreeViewItem)o;
+
+                        t.Items.Filter = null;
+                        stack.Push(t.Items);
+                    }
+                }
+            }
+        }
+
+        private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            string s = SearchBox.Text;
+
+            if(s.Equals("Search..."))
+            {
+                SearchBox.Text = "";
+            }
+        }
+
+        private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            string s = SearchBox.Text;
+
+            if(string.IsNullOrWhiteSpace(s) || string.IsNullOrWhiteSpace(s))
+            {
+                SearchBox.Text = "Search...";
             }
         }
     }

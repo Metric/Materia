@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Materia.Nodes.Attributes;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -12,6 +13,7 @@ namespace Materia.Nodes.MathNodes
         NodeOutput output;
 
         protected float val;
+        [Promote(NodeType.Float)]
         public float Value
         {
             get
@@ -79,12 +81,56 @@ namespace Materia.Nodes.MathNodes
         {
             var s = shaderId + "0";
 
-            return "float " + s + " = " + val + ";\r\n";
+            float v = val;
+
+            var p = ParentGraph;
+
+            while(p != null && p is FunctionGraph)
+            {
+                var np = (p as FunctionGraph).ParentNode;
+                if(np != null)
+                {
+                    p = np.ParentGraph;
+                }
+                else
+                {
+                    p = null;
+                }
+            }
+
+            if(p != null && p.HasParameterValue(Id, "Value"))
+            {
+                v = Convert.ToSingle(p.GetParameterValue(Id, "Value"));
+            }
+
+            return "float " + s + " = " + v + ";\r\n";
         }
 
         void Process()
         {
-            output.Data = val;
+            float v = val;
+
+            var p = ParentGraph;
+
+            while (p != null && p is FunctionGraph)
+            {
+                var np = (p as FunctionGraph).ParentNode;
+                if (np != null)
+                {
+                    p = np.ParentGraph;
+                }
+                else
+                {
+                    p = null;
+                }
+            }
+
+            if (p != null && p.HasParameterValue(Id, "Value"))
+            {
+                v = Convert.ToSingle(p.GetParameterValue(Id, "Value"));
+            }
+
+            output.Data = v;
             output.Changed();
 
             if (ParentGraph != null)

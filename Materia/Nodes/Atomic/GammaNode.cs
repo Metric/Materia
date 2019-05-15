@@ -3,74 +3,63 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Materia.Textures;
 using Materia.Imaging.GLProcessing;
-using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
+using Materia.Textures;
+using Newtonsoft.Json;
 
 namespace Materia.Nodes.Atomic
 {
-    public class WarpNode : ImageNode
+    public class GammaNode : ImageNode
     {
-        protected WarpProcessor processor;
-
         protected NodeInput input;
-        protected NodeInput input1;
 
-        protected NodeOutput output;
-
-        protected float intensity;
+        protected float gamma;
 
         [Promote(NodeType.Float)]
-        [Slider(IsInt = false, Max = 1.0f, Min = 0f, Snap = false, Ticks = new float[0])]
-        public float Intensity
+        public float Gamma
         {
             get
             {
-                return intensity;
+                return gamma;
             }
             set
             {
-                intensity = value;
+                gamma = value;
                 TryAndProcess();
             }
         }
 
-        public WarpNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        NodeOutput output;
+        GammaProcessor processor;
+
+        public GammaNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
-            Name = "Warp";
+            Name = "Gamma";
             Id = Guid.NewGuid().ToString();
 
             width = w;
             height = h;
-
-            intensity = 1;
+            gamma = 2.2f;
 
             tileX = tileY = 1;
 
             previewProcessor = new BasicImageRenderer();
-            processor = new WarpProcessor();
+            processor = new GammaProcessor();
 
             internalPixelType = p;
 
-            input = new NodeInput(NodeType.Gray | NodeType.Color, this, "Image Input");
-            input1 = new NodeInput(NodeType.Gray, this, "Grayscale Gradients");
-
-            output = new NodeOutput(NodeType.Gray | NodeType.Color, this);
+            input = new NodeInput(NodeType.Color | NodeType.Gray, this, "Image Input");
+            output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
             input.OnInputRemoved += Input_OnInputRemoved;
 
-            input1.OnInputAdded += Input_OnInputAdded;
-            input1.OnInputChanged += Input_OnInputChanged;
-            input1.OnInputRemoved += Input_OnInputRemoved;
-
             Inputs = new List<NodeInput>();
-            Outputs = new List<NodeOutput>();
-
             Inputs.Add(input);
-            Inputs.Add(input1);
+
+            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -92,36 +81,32 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(input.HasInput && input1.HasInput)
+            if(input.HasInput)
             {
-                Process();
+                Process();    
             }
         }
 
         void Process()
         {
             GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
-            GLTextuer2D i2 = (GLTextuer2D)input1.Input.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
 
-            if (i2 == null) return;
-            if (i2.Id == 0) return;
-
             CreateBufferIfNeeded();
 
-            float pintensity = intensity;
+            float pgamma = gamma;
 
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Gamma"))
             {
-                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
+                pgamma = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Gamma"));
             }
 
             processor.TileX = tileX;
-            processor.TileY = TileY;
-            processor.Intensity = pintensity;
-            processor.Process(width, height, i1, i2, buffer);
+            processor.TileY = tileY;
+            processor.Gamma = pgamma;
+            processor.Process(width, height, i1, buffer);
             processor.Complete();
 
             Updated();
@@ -129,25 +114,30 @@ namespace Materia.Nodes.Atomic
             output.Changed();
         }
 
-        public class WarpData : NodeData
+        public class GammaData : NodeData
         {
-            public float intensity;
+            public float gamma;
         }
 
         public override string GetJson()
         {
-            WarpData d = new WarpData();
+            GammaData d = new GammaData();
             FillBaseNodeData(d);
-            d.intensity = intensity;
+            d.gamma = gamma;
 
             return JsonConvert.SerializeObject(d);
         }
 
         public override void FromJson(Dictionary<string, Node> nodes, string data)
         {
-            WarpData d = JsonConvert.DeserializeObject<WarpData>(data);
+            GammaData d = JsonConvert.DeserializeObject<GammaData>(data);
             SetBaseNodeDate(d);
-            intensity = d.intensity;
+            gamma = d.gamma;
+        }
+
+        protected override void OnWidthHeightSet()
+        {
+            TryAndProcess();
         }
 
         public override void Dispose()

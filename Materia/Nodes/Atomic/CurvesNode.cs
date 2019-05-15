@@ -332,10 +332,6 @@ namespace Materia.Nodes.Atomic
             {
                 InitializeCurves(k, points[k]);
             }
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
 
 

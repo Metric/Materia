@@ -14,8 +14,27 @@ namespace Materia.Nodes
 {
     public class GraphParameterValue
     {
+        public delegate void GraphParameterUpdate(GraphParameterValue param);
+        public static event GraphParameterUpdate OnGraphParameterUpdate;
+
         public string Name { get; set; }
-        public object Value { get; set; }
+
+        protected object v;
+        public object Value
+        {
+            get
+            {
+                return v;
+            }
+            set
+            {
+                v = value;
+                if(OnGraphParameterUpdate != null)
+                {
+                    OnGraphParameterUpdate.Invoke(this);
+                }
+            }
+        }
 
         public class GraphParameterValueData
         {
@@ -138,6 +157,26 @@ namespace Materia.Nodes
             }
         }
 
+        protected string hdriIndex;
+
+        [HideProperty]
+        public string HdriIndex
+        {
+            get
+            {
+                return hdriIndex;
+            }
+            set
+            {
+                hdriIndex = value;
+                Hdri.HdriManager.Selected = value;
+            }
+        }
+
+        [Dropdown("HdriIndex")]
+        [Title(Title = "Hdri Image")]
+        public string[] HdriImages { get; set; }
+
         protected int randomSeed;
 
         [Title(Title = "Random Seed")]
@@ -192,7 +231,7 @@ namespace Materia.Nodes
 
         protected int width;
         protected int height;
-        [Slider(IsInt = true, Max = 4096, Min = 16, Snap = true, Ticks = new float[] { 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
+        [Slider(IsInt = true, Max = 4096, Min = 8, Snap = true, Ticks = new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
         [Section(Section = "Standard")]
         public int Width
         {
@@ -207,7 +246,7 @@ namespace Materia.Nodes
             }
         }
 
-        [Slider(IsInt = true, Max = 4096, Min = 16, Snap = true, Ticks = new float[] { 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
+        [Slider(IsInt = true, Max = 4096, Min = 8, Snap = true, Ticks = new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
         [Section(Section = "Standard")]
         public int Height
         {
@@ -224,11 +263,15 @@ namespace Materia.Nodes
 
         public Graph(string name, int w = 256, int h = 256)
         {
+            hdriIndex = Hdri.HdriManager.Selected;
+            HdriImages = Hdri.HdriManager.Available.ToArray();
+
             Name = name;
             Zoom = 1;
             ShiftX = ShiftY = 0;
             width = w;
             height = h;
+
             Variables = new Dictionary<string, object>();
             defaultTextureType = GraphPixelType.RGBA;
             Nodes = new List<Node>();
@@ -239,16 +282,51 @@ namespace Materia.Nodes
             Parameters = new Dictionary<string, GraphParameterValue>();
         }
 
-        public virtual T GetVar<T>(string k)
+        public virtual object GetVar(string k)
         {
-            T v = default(T);
+            if (k == null) return null;
 
             if(Variables.ContainsKey(k))
             {
-                v = (T)Variables[k];
+                return Variables[k];
             }
 
-            return v;
+            return null;
+        }
+
+        public Node FindSubNodeById(string id)
+        {
+            Node n = null;
+            var procnodes = Nodes.FindAll(m => m is PixelProcessorNode);
+
+            for(int i = 0; i < procnodes.Count; i++)
+            {
+                var proc = procnodes[i] as PixelProcessorNode;
+
+                if(proc.Function != null)
+                {
+                    if(proc.Function.NodeLookup.TryGetValue(id, out n))
+                    {
+                        return n;
+                    }
+                }
+            }
+
+            foreach(string k in Parameters.Keys)
+            {
+                var parameter = Parameters[k];
+                if(parameter.IsFunction())
+                {
+                    var g = parameter.Value as FunctionGraph;
+
+                    if(g.NodeLookup.TryGetValue(id, out n))
+                    {
+                        return n;
+                    }
+                }
+            }
+
+            return null;
         }
 
         public virtual void RemoveVar(string k)
@@ -272,6 +350,11 @@ namespace Materia.Nodes
             public double shiftX;
             public double shiftY;
             public float zoom;
+
+            public int width;
+            public int height;
+
+            public string hdriIndex;
 
             public Dictionary<string, string> parameters;
         }
@@ -316,12 +399,12 @@ namespace Materia.Nodes
         /// <param name="height"></param>
         public virtual void ResizeWith(int width, int height)
         {
-            this.width = width;
-            this.height = height;
-
             int c = Nodes.Count;
 
-            for(int i = 0; i < c; i++)
+            float wp = (float)width / (float)this.width;
+            float hp = (float)height / (float)this.height;
+
+            for (int i = 0; i < c; i++)
             {
                 Node n = Nodes[i];
 
@@ -345,11 +428,8 @@ namespace Materia.Nodes
 
                     if (OriginSizes.TryGetValue(n.Id, out osize))
                     {
-                        float wratio = width / (float)osize.X;
-                        float hratio = height / (float)osize.Y;
-
-                        int fwidth = (int)Math.Min(4096, Math.Max(16, Math.Round(osize.X * wratio)));
-                        int fheight = (int)Math.Min(4096, Math.Max(16, Math.Round(osize.Y * hratio)));
+                        int fwidth = (int)Math.Min(4096, Math.Max(8, Math.Round(osize.X * wp)));
+                        int fheight = (int)Math.Min(4096, Math.Max(8, Math.Round(osize.Y * hp)));
 
                         n.Width = fwidth;
                         n.Height = fheight;
@@ -388,17 +468,37 @@ namespace Materia.Nodes
             d.shiftX = ShiftX;
             d.shiftY = ShiftY;
             d.zoom = Zoom;
+            d.hdriIndex = hdriIndex;
+            d.parameters = GetJsonReadyParameters();
+            d.width = width;
+            d.height = height;
 
+            return JsonConvert.SerializeObject(d);
+        }
+
+        public virtual Dictionary<string, string> GetJsonReadyParameters()
+        {
             Dictionary<string, string> parameters = new Dictionary<string, string>();
 
-            foreach(var k in Parameters.Keys)
+            foreach (var k in Parameters.Keys)
             {
                 parameters[k] = Parameters[k].GetJson();
             }
 
-            d.parameters = parameters;
+            return parameters;
+        }
 
-            return JsonConvert.SerializeObject(d);
+        public virtual void SetJsonReadyParameters(Dictionary<string, string> parameters)
+        {
+            if (parameters != null)
+            {
+                Parameters = new Dictionary<string, GraphParameterValue>();
+
+                foreach (var k in parameters.Keys)
+                {
+                    Parameters[k] = GraphParameterValue.FromJson(parameters[k]);
+                }
+            }
         }
 
         public virtual bool Add(Node n)
@@ -532,6 +632,7 @@ namespace Materia.Nodes
                 Dictionary<string, Node> lookup = new Dictionary<string, Node>();
                 Dictionary<string, string> nodeData = new Dictionary<string, string>();
 
+                hdriIndex = d.hdriIndex;
                 Name = d.name;
                 OutputNodes = d.outputs;
                 InputNodes = d.inputs;
@@ -539,13 +640,15 @@ namespace Materia.Nodes
                 ShiftX = d.shiftX;
                 ShiftY = d.shiftY;
                 Zoom = d.zoom;
+                width = d.width;
+                height = d.height;
 
-                Parameters = new Dictionary<string, GraphParameterValue>();
+                if (width == 0 || width == int.MaxValue) width = 256;
+                if (height == 0 || height == int.MaxValue) height = 256;
 
-                foreach(var k in d.parameters.Keys)
-                {
-                    Parameters[k] = GraphParameterValue.FromJson(d.parameters[k]);
-                }
+                SetJsonReadyParameters(d.parameters);
+
+                Dictionary<string, Node.NodeData> tempData = new Dictionary<string, Node.NodeData>();
 
                 //parse node data
                 //setup initial object instances
@@ -572,6 +675,7 @@ namespace Materia.Nodes
                                         lookup[nd.id] = n;
                                         Nodes.Add(n);
                                         nodeData[nd.id] = s;
+                                        tempData[nd.id] = nd;
                                     }
                                     else if(t.Equals(typeof(InputNode)))
                                     {
@@ -581,6 +685,7 @@ namespace Materia.Nodes
                                         lookup[nd.id] = n;
                                         Nodes.Add(n);
                                         nodeData[nd.id] = s;
+                                        tempData[nd.id] = nd;
                                     }
                                     else
                                     {
@@ -592,6 +697,7 @@ namespace Materia.Nodes
                                             lookup[nd.id] = n;
                                             Nodes.Add(n);
                                             nodeData[nd.id] = s;
+                                            tempData[nd.id] = nd;
                                         }
                                     }
                                 }
@@ -625,6 +731,19 @@ namespace Materia.Nodes
                         //not actually used in the current one being edited
                         //it is used in the ResizeWith
                         OriginSizes[n.Id] = new Point(n.Width, n.Height);
+                    }
+                }
+
+                //finally after every node is populated
+                //try and connect them all!
+                //and tryandprocess
+                foreach(Node n in Nodes)
+                {
+                    Node.NodeData nd = null;
+                    if(tempData.TryGetValue(n.Id, out nd))
+                    {
+                        n.SetConnections(lookup, nd.outputs);
+                        n.TryAndProcess();
                     }
                 }
             }
@@ -695,9 +814,33 @@ namespace Materia.Nodes
             return p;
         }
 
+        public object GetParameterValue(string id, string parameter)
+        {
+            string cid = id + "." + parameter;
+
+            GraphParameterValue p = null;
+
+            if (Parameters.TryGetValue(cid, out p))
+            {
+                if (p.IsFunction())
+                {
+                    FunctionGraph g = p.Value as FunctionGraph;
+
+                    g.TryAndProcess();
+
+                    return g.Result;
+                }
+                else
+                {
+                    return p.Value;
+                }
+            }
+
+            return null;
+        } 
+
         public T GetParameterValue<T>(string id, string parameter)
         {
-
             string cid = id + "." + parameter;
 
             GraphParameterValue p = null;

@@ -23,6 +23,7 @@ namespace Materia.Nodes.Atomic
 
         EmbossProcessor processor;
 
+        [Promote(NodeType.Float)]
         [Slider(IsInt = true, Max = 360, Min = 0, Snap = false, Ticks = new float[0])]
         public int Angle
         {
@@ -39,6 +40,7 @@ namespace Materia.Nodes.Atomic
 
         int elevation;
 
+        [Promote(NodeType.Float)]
         [Slider(IsInt = true, Max = 180, Min = 0, Snap = false, Ticks = new float[0])]
         public int Elevation
         {
@@ -115,10 +117,6 @@ namespace Materia.Nodes.Atomic
             SetBaseNodeDate(d);
             angle = d.angle;
             elevation = d.elevation;
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
 
         public override string GetJson()
@@ -149,10 +147,23 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            int pangle = angle;
+            int pelevation = elevation;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Angle"))
+            {
+                pangle = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Angle"));
+            }
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Elevation"))
+            {
+                pelevation = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Elevation"));
+            }
+
             processor.TileX = tileX;
             processor.TileY = tileY;
-            processor.Azimuth = angle * (float)(Math.PI / 180.0f);
-            processor.Elevation = elevation * (float)(Math.PI / 180.0f);
+            processor.Azimuth = pangle * (float)(Math.PI / 180.0f);
+            processor.Elevation = pelevation * (float)(Math.PI / 180.0f);
             processor.Process(width, height, i1, buffer);
             processor.Complete();
 

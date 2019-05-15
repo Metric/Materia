@@ -201,10 +201,6 @@ namespace Materia.Nodes.Atomic
             path = d.path;
             Resource = d.resource;
             relativePath = d.relativePath;
-
-            SetConnections(nodes, d.outputs);
-
-            Process();
         }
 
         public override string GetJson()

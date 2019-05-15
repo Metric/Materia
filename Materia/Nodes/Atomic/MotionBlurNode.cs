@@ -7,6 +7,7 @@ using Materia.Imaging.GLProcessing;
 using Materia.Nodes.Attributes;
 using Materia.Textures;
 using OpenTK;
+using Newtonsoft.Json;
 
 namespace Materia.Nodes.Atomic
 {
@@ -15,6 +16,7 @@ namespace Materia.Nodes.Atomic
         MotionBlurProcessor processor;
 
         int magnitude;
+        [Promote(NodeType.Float)]
         [Slider(IsInt = true, Max = 128, Min = 1, Snap = false, Ticks = new float[0])]
         public int Intensity
         {
@@ -30,6 +32,7 @@ namespace Materia.Nodes.Atomic
         }
 
         int direction;
+        [Promote(NodeType.Float)]
         [Slider(IsInt = true, Max = 180, Min = 0, Snap = false, Ticks = new float[0])]
         public int Direction
         {
@@ -111,10 +114,23 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            int pintensity = magnitude;
+            int pdirection = direction;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
+            {
+                pintensity = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Intensity"));
+            }
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Direction"))
+            {
+                pdirection = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Direction"));
+            }
+
             processor.TileX = 1;
             processor.TileY = 1;
-            processor.Direction = (float)direction * (float)(Math.PI / 180.0f);
-            processor.Magnitude = magnitude;
+            processor.Direction = (float)pdirection * (float)(Math.PI / 180.0f);
+            processor.Magnitude = pintensity;
             processor.Process(width, height, i1, buffer);
             processor.Complete();
 
@@ -130,14 +146,28 @@ namespace Materia.Nodes.Atomic
             output.Changed();
         }
 
+        public class MotionBlurData : NodeData
+        {
+            public int intensity;
+            public int direction;
+        }
+
         public override void FromJson(Dictionary<string, Node> nodes, string data)
         {
-
+            MotionBlurData d = JsonConvert.DeserializeObject<MotionBlurData>(data);
+            SetBaseNodeDate(d);
+            magnitude = d.intensity;
+            direction = d.direction;
         }
 
         public override string GetJson()
         {
-            return "";
+            MotionBlurData d = new MotionBlurData();
+            FillBaseNodeData(d);
+            d.intensity = magnitude;
+            d.direction = direction;
+
+            return JsonConvert.SerializeObject(d);
         }
 
         protected override void OnWidthHeightSet()

@@ -12,13 +12,14 @@ using System.Threading;
 
 namespace Materia.Nodes.Atomic
 {
-    public class GraphInstanceNode : Node
+    public class GraphInstanceNode : ImageNode
     {
         public Graph GraphInst { get; protected set; }
 
         CancellationTokenSource ctk;
 
         protected string path;
+        protected Dictionary<string, string> jsonParameters;
 
         [FileSelector]
         [Section(Section = "Content")]
@@ -92,7 +93,7 @@ namespace Materia.Nodes.Atomic
 
         protected string GraphData { get; set; }
 
-        public GraphInstanceNode(int w, int h)
+        public GraphInstanceNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
             width = w;
             height = h;
@@ -109,6 +110,19 @@ namespace Materia.Nodes.Atomic
             //instead they are loaded after the graph is loaded
             Inputs = new List<NodeInput>();
             Outputs = new List<NodeOutput>();
+
+            GraphParameterValue.OnGraphParameterUpdate += GraphParameterValue_OnGraphParameterUpdate;
+        }
+
+        private void GraphParameterValue_OnGraphParameterUpdate(GraphParameterValue param)
+        {
+            if(GraphInst != null)
+            {
+                if(GraphInst.Parameters.Values.Contains(param))
+                {
+                    GraphInst.TryAndProcess();
+                }
+            }
         }
 
         //used for initial loading
@@ -129,12 +143,15 @@ namespace Materia.Nodes.Atomic
 
                 string nm = Path.GetFileNameWithoutExtension(path);
 
+                Name = nm;
+
                 //the width and height here don't matter
-                GraphInst = new Graph(nm, width, height);
+                GraphInst = new Graph(nm);
 
                 GraphData = File.ReadAllText(path);
 
                 GraphInst.FromJson(GraphData);
+                GraphInst.SetJsonReadyParameters(jsonParameters);
 
                 //now do real initial resize
                 GraphInst.ResizeWith(width, height);
@@ -166,7 +183,8 @@ namespace Materia.Nodes.Atomic
                     if(GraphInst.NodeLookup.TryGetValue(id, out n))
                     {
                         InputNode inp = (InputNode)n;
-                        NodeInput np = new NodeInput(NodeType.Color | NodeType.Gray, n, inp.Name);
+                        NodeInput np = new NodeInput(NodeType.Color | NodeType.Gray, this, inp.Name);
+                       
                         inp.SetInput(np);
                         Inputs.Add(np);
                     }
@@ -228,7 +246,10 @@ namespace Materia.Nodes.Atomic
                 App.Current.Dispatcher.Invoke(() =>
                 {
                     ctk = null;
-                    GraphInst.ReleaseIntermediateBuffers();
+                    if (GraphInst != null)
+                    {
+                        GraphInst.ReleaseIntermediateBuffers();
+                    }
                 });
             });
         }
@@ -259,6 +280,8 @@ namespace Materia.Nodes.Atomic
         //the original graph file
         public class GraphInstanceNodeData : NodeData
         {
+            public List<string> inputIds;
+            public Dictionary<string, string> parameters;
             public string rawData;
             public string path;
         }
@@ -269,6 +292,7 @@ namespace Materia.Nodes.Atomic
             SetBaseNodeDate(d);
             GraphData = d.rawData;
             path = d.path;
+            jsonParameters = d.parameters;
 
             bool didLoad = false;
 
@@ -288,16 +312,13 @@ namespace Materia.Nodes.Atomic
             //fall back to last instance data saved
             if (!didLoad)
             {
-                GraphInst = new Graph(Name, width, height);
+                GraphInst = new Graph(Name);
                 GraphInst.FromJson(GraphData);
+                GraphInst.SetJsonReadyParameters(jsonParameters);
                 GraphInst.ResizeWith(width, height);
 
                 Setup();
             }
-
-            SetConnections(nodes, d.outputs);
-
-            Updated();
         }
 
         public override string GetJson()
@@ -306,6 +327,7 @@ namespace Materia.Nodes.Atomic
             FillBaseNodeData(d);
             d.rawData = GraphData;
             d.path = path;
+            d.parameters = GraphInst.GetJsonReadyParameters();
 
             return JsonConvert.SerializeObject(d);
         }
@@ -323,6 +345,8 @@ namespace Materia.Nodes.Atomic
         public override void Dispose()
         {
             base.Dispose();
+
+            GraphParameterValue.OnGraphParameterUpdate -= GraphParameterValue_OnGraphParameterUpdate;
 
             if(GraphInst != null)
             {

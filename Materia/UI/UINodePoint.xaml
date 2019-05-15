@@ -29,7 +29,7 @@
         <Border Width="16" Height="16" Name="node" MouseEnter="Node_MouseEnter" MouseLeave="Node_MouseLeave"  Background="LightGray" CornerRadius="{Binding Path=ActualHeight, ElementName=node}" ClipToBounds="False">
             <Border Name="insideBorder" BorderThickness="2" BorderBrush="Black" CornerRadius="{Binding Path=ActualHeight, ElementName=insideBorder}"></Border>
         </Border>
-        <TextBlock Name="OutputName" Foreground="LightGray" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="18" />
-        <TextBlock Name="InputName" Foreground="LightGray" HorizontalAlignment="Right" VerticalAlignment="Center" Canvas.Right="18" />
+        <TextBlock Name="OutputName" Foreground="LightGray" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="18" IsHitTestVisible="False" />
+        <TextBlock Name="InputName" Foreground="LightGray" HorizontalAlignment="Right" VerticalAlignment="Center" Canvas.Right="18" IsHitTestVisible="False" />
     </Canvas>
 </UserControl>

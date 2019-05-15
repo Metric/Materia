@@ -7,6 +7,7 @@ using OpenTK;
 using Newtonsoft.Json;
 using Materia.Imaging.GLProcessing;
 using Materia.Nodes.Attributes;
+using Materia.MathHelpers;
 
 namespace Materia.Nodes.Atomic
 {
@@ -14,6 +15,7 @@ namespace Materia.Nodes.Atomic
     {
         Vector4 color;
 
+        [Promote(NodeType.Float4)]
         [ColorPicker]
         public Vector4 Color
         {
@@ -91,7 +93,28 @@ namespace Materia.Nodes.Atomic
         {
             CreateBufferIfNeeded();
 
-            processor.Color = color;
+            Vector4 pcolor = color;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Color"))
+            {
+                object obj = ParentGraph.GetParameterValue(Id, "Color");
+
+                if (obj is MVector)
+                {
+                    MVector m = (MVector)obj;
+
+                    pcolor.X = m.X;
+                    pcolor.Y = m.Y;
+                    pcolor.Z = m.Z;
+                    pcolor.W = m.W;
+                }
+                else if(obj is Vector4)
+                {
+                    pcolor = (Vector4)obj;
+                }
+            }
+
+            processor.Color = pcolor;
             processor.Process(width, height, null, buffer);
             processor.Complete();
 
@@ -111,10 +134,6 @@ namespace Materia.Nodes.Atomic
             SetBaseNodeDate(d);
             float[] c = d.color;
             color = new Vector4(c[0], c[1], c[2], c[3]);
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
 
         public override string GetJson()

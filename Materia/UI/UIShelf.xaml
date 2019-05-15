@@ -7,7 +7,9 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" AllowDrop="True" Drop="UserControl_Drop">
     <Grid Background="#222" AllowDrop="True">
-        <TreeView Background="Transparent" Margin="2" Name="TreeList">
+        <TextBox Name="SearchBox" Text="Search..." HorizontalAlignment="Stretch" Margin="2" Padding="2,2,0,2" Background="#222" Foreground="LightGray" VerticalAlignment="Top" Height="24" TextChanged="SearchBox_TextChanged" GotFocus="SearchBox_GotFocus" LostFocus="SearchBox_LostFocus" />
+
+        <TreeView Background="Transparent" Margin="2,28,2,2" Name="TreeList">
             <TreeViewItem Foreground="LightGray" Header="Atomic">
                 <local:NodeResource Margin="1" Title="Input" Type="Materia.Nodes.Atomic.InputNode" />
                 <local:NodeResource Margin="1" Title="Output" Type="Materia.Nodes.Atomic.OutputNode" />
@@ -19,6 +21,7 @@
                 <local:NodeResource Margin="1" Title="Channel Switch" Type="Materia.Nodes.Atomic.ChannelSwitchNode" />
                 <local:NodeResource Margin="1" Title="Curves" Type="Materia.Nodes.Atomic.CurvesNode" />
                 <local:NodeResource Margin="1" Title="Emboss" Type="Materia.Nodes.Atomic.EmbossNode" />
+                <local:NodeResource Margin="1" Title="Gamma" Type="Materia.Nodes.Atomic.GammaNode" />
                 <local:NodeResource Margin="1" Title="Grayscale Conversion" Type="Materia.Nodes.Atomic.GrayscaleConversionNode" />
                 <local:NodeResource Margin="1" Title="Invert" Type="Materia.Nodes.Atomic.InvertNode" />
                 <local:NodeResource Margin="1" Title="Levels" Type="Materia.Nodes.Atomic.LevelsNode" />

@@ -158,24 +158,24 @@ float Screen(float a, float b) {
 }
 
 float Divide(float a, float b) {
-    return min(1, max(0, b / (a + 0.0001)));
+    return min(1, max(0, a / (b + 0.0001)));
 }
 
 float Overlay(float a, float b) {
-    if(a > 0.5) {
-        return Multiple(a,b);
+    if(a < 0.5) {
+        return min(1, max(0, 2 * a * b));
     }
     else {
-        return Screen(a,b);
+        return min(1, max(0, 1 - 2 * (1 - a) * (1 - b)));
     }
 }
 
 float HardLight(float a, float b) {
-    if(a > 0.5) {
-        return Screen(a,b);
+    if(a < 0.5) {
+        return min(1, max(0, 1 - 2 * (1 - b) * (1 - a)));
     }
     else {
-        return Multiple(a,b);
+        return min(1, max(0, b * a * 2));
     }
 }
 
@@ -201,20 +201,15 @@ float LinearBurn(float a, float b) {
 }
 
 float LinearLight(float a, float b) {
-    if(a > 0.5) {
-        return LinearBurn(a,b);
-    }
-    else {
-        return LinearDodge(a,b);
-    }
+    return min(1, max(0, 2 * a + b - 1));
 }
 
 float VividLight(float a, float b) {
-    if(a > 0.5) {
-        return ColorDodge(a,b);
+    if(a < 0.5) {
+        return min(1, max(0, 1 - (1-b) / (2 * a)));
     }
     else {
-        return ColorBurn(a,b);
+        return min(1, max(0, b / (1 - 2 * a)));
     }
 }
 
@@ -223,7 +218,7 @@ float Subtract(float a, float b) {
 }
 
 float Difference(float a, float b) {
-    return min(1, max(0, abs(b - a)));
+    return min(1, max(0, abs(a - b)));
 }
 
 float Darken(float a, float b) {

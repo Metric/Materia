@@ -103,11 +103,11 @@ namespace Materia.Nodes.Atomic
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Radius"))
             {
-                pradius = ParentGraph.GetParameterValue<float>(Id, "Radius");
+                pradius = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Radius"));
             }
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Outline"))
             {
-                poutline = ParentGraph.GetParameterValue<float>(Id, "Outline");
+                poutline = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Outline"));
             }
 
             processor.TileX = 1;
@@ -166,10 +166,6 @@ namespace Materia.Nodes.Atomic
             SetBaseNodeDate(d);
             radius = d.radius;
             outline = d.outline;
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
     }
 }

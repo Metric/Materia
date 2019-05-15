@@ -56,9 +56,25 @@ namespace Materia.UI.Components
             {
                 EditVar.Visibility = Visibility.Visible;
 
-                if(Node.ParentGraph != null)
+                var p = Node.ParentGraph;
+
+                while(p != null && p is FunctionGraph)
                 {
-                    var g = Node.ParentGraph;
+                    var np = (p as FunctionGraph).ParentNode;
+
+                    if(np != null)
+                    {
+                        p = np.ParentGraph;
+                    }
+                    else
+                    {
+                        p = null;
+                    }
+                }
+
+                if(p != null)
+                {
+                    var g = p;
 
                     if(g.HasParameterValue(Node.Id, Parameter))
                     {
@@ -92,9 +108,25 @@ namespace Materia.UI.Components
                 {
                     var v = info.GetValue(Node);
 
-                    if(Node.ParentGraph != null)
+                    var p = Node.ParentGraph;
+
+                    while (p != null && p is FunctionGraph)
                     {
-                        var pg = Node.ParentGraph;
+                        var np = (p as FunctionGraph).ParentNode;
+
+                        if (np != null)
+                        {
+                            p = np.ParentGraph;
+                        }
+                        else
+                        {
+                            p = null;
+                        }
+                    }
+
+                    if (p != null)
+                    {
+                        var pg = p;
 
                         pg.SetParameterValue(Node.Id, Parameter, v);
 
@@ -123,9 +155,25 @@ namespace Materia.UI.Components
 
                 g.ExpectedOutput = pro.ExpectedType;
 
-                if (Node.ParentGraph != null)
+                var p = Node.ParentGraph;
+
+                while (p != null && p is FunctionGraph)
                 {
-                    var pg = Node.ParentGraph;
+                    var np = (p as FunctionGraph).ParentNode;
+
+                    if (np != null)
+                    {
+                        p = np.ParentGraph;
+                    }
+                    else
+                    {
+                        p = null;
+                    }
+                }
+
+                if (p != null)
+                {
+                    var pg = p;
 
                     pg.SetParameterValue(Node.Id, Parameter, g);
 
@@ -141,9 +189,25 @@ namespace Materia.UI.Components
         {
             if (Node == null) return;
 
-            if(Node.ParentGraph != null)
+            var p = Node.ParentGraph;
+
+            while (p != null && p is FunctionGraph)
             {
-                var g = Node.ParentGraph;
+                var np = (p as FunctionGraph).ParentNode;
+
+                if (np != null)
+                {
+                    p = np.ParentGraph;
+                }
+                else
+                {
+                    p = null;
+                }
+            }
+
+            if (p != null)
+            {
+                var g = p;
 
                 g.RemoveParameterValue(Node.Id, Parameter);
 
@@ -157,9 +221,25 @@ namespace Materia.UI.Components
         {
             if (Node == null || string.IsNullOrEmpty(Parameter)) return;
 
-            if(Node.ParentGraph != null)
+            var p = Node.ParentGraph;
+
+            while (p != null && p is FunctionGraph)
             {
-                var g = Node.ParentGraph;
+                var np = (p as FunctionGraph).ParentNode;
+
+                if (np != null)
+                {
+                    p = np.ParentGraph;
+                }
+                else
+                {
+                    p = null;
+                }
+            }
+
+            if (p != null)
+            {
+                var g = p;
                 if(g.HasParameterValue(Node.Id, Parameter))
                 {
                     if(g.IsParameterValueFunction(Node.Id, Parameter))

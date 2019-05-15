@@ -20,6 +20,7 @@ using System.Threading;
 using Newtonsoft.Json;
 using Materia.Undo;
 using Materia.UI.Components;
+using Materia.Hdri;
 
 namespace Materia
 {
@@ -68,6 +69,22 @@ namespace Materia
         public string StoredGraph { get; protected set; }
         public string StoredGraphCWD { get; protected set; }
         public string[] StoredGraphStack { get; protected set; }
+        protected string StoredGraphName { get; set; }
+
+        public string GraphName
+        {
+            get
+            {
+                if(Original != null)
+                {
+                    return Original.Name;
+                }
+                else
+                {
+                    return StoredGraphName;
+                }
+            }
+        }
 
         public float ScaledGridSnap
         {
@@ -284,22 +301,16 @@ namespace Materia
                 double minX = float.MaxValue;
                 double minY = float.MaxValue;
 
-                //apply copied data to new nodes
+                //find minx and miny
                 foreach (UINode n in added)
                 {
-                    string json = null;
-                    if (jsonContent.TryGetValue(n.Node.Id, out json))
+                    if(minX > n.Node.ViewOriginX)
                     {
-                        n.Node.FromJson(realLookup, json);
-                        
-                        if(minX > n.Node.ViewOriginX)
-                        {
-                            minX = n.Node.ViewOriginX;
-                        }
-                        if(minY > n.Node.ViewOriginY)
-                        {
-                            minY = n.Node.ViewOriginY;
-                        }
+                        minX = n.Node.ViewOriginX;
+                    }
+                    if(minY > n.Node.ViewOriginY)
+                    {
+                        minY = n.Node.ViewOriginY;
                     }
                 }
 
@@ -308,6 +319,14 @@ namespace Materia
                 {
                     double dx = n.Node.ViewOriginX - minX;
                     double dy = n.Node.ViewOriginY - minY;
+
+                    //also set node connections as needed
+                    string json = null;
+                    if (jsonContent.TryGetValue(n.Node.Id, out json))
+                    {
+                        Node.NodeData nd = JsonConvert.DeserializeObject<Node.NodeData>(json);
+                        n.Node.SetConnections(realLookup, nd.outputs);
+                    }
 
                     n.OffsetTo(mp.X + dx, mp.Y + dy);
                 }
@@ -595,6 +614,7 @@ namespace Materia
 
             Graph.CWD = CWD;
             Graph.FromJson(data);
+            HdriManager.Selected = Graph.HdriIndex;
 
             Graph.OnGraphUpdated += Graph_OnGraphUpdated;
 
@@ -624,6 +644,17 @@ namespace Materia
 
         protected void LoadGraphUI()
         {
+            if(Graph is FunctionGraph)
+            {
+                FunctionGraph fg = (FunctionGraph)Graph;
+
+                OutputRequirementsLabel.Text = "Required Output Node Type: " + fg.ExpectedOutput.ToString();
+            }
+            else
+            {
+                OutputRequirementsLabel.Text = "";
+            }
+
             foreach (Node n in Graph.Nodes)
             {
                 UINode unode = new UINode(n, this, n.ViewOriginX, n.ViewOriginY, XShift, YShift, Scale);
@@ -811,20 +842,16 @@ namespace Materia
 
                 if(n != null)
                 {
-                    if(n is GraphInstanceNode)
-                    {
-                        GraphInstanceNode gn = (GraphInstanceNode)n;
-                        gn.Load(nd.type);
-                    }
-
                     n.Id = nd.id;
 
                     n.Width = nd.width;
                     n.Height = nd.height;
 
+                    n.FromJson(Graph.NodeLookup, json);
+
                     Graph.Add(n);
 
-                    n.FromJson(Graph.NodeLookup, json);
+                    n.SetConnections(Graph.NodeLookup, nd.outputs);
 
                     unode = new UINode(n, this, p.X, p.Y, XShift, YShift, Scale);
                     unode.HorizontalAlignment = HorizontalAlignment.Left;
@@ -875,13 +902,8 @@ namespace Materia
 
                 if (n != null)
                 {
-                    if (n is GraphInstanceNode)
-                    {
-                        GraphInstanceNode gn = (GraphInstanceNode)n;
-                        gn.Load(nd.type);
-                    }
-
                     realLookup[nd.id] = n;
+                    n.FromJson(realLookup, json);
 
                     Graph.Add(n);
 
@@ -1521,6 +1543,7 @@ namespace Materia
             {
                 CaptureStack();
 
+                StoredGraphName = Original.Name;
                 StoredGraph = Original.GetJson();
                 StoredGraphCWD = Original.CWD;
 

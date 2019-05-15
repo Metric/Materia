@@ -40,6 +40,9 @@ namespace Materia.Nodes.MathNodes
             input2.OnInputAdded += Input_OnInputAdded;
             input2.OnInputChanged += Input_OnInputChanged;
 
+            input3.OnInputAdded += Input_OnInputAdded;
+            input3.OnInputChanged += Input_OnInputChanged;
+
             Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
@@ -56,7 +59,7 @@ namespace Materia.Nodes.MathNodes
 
         public override void TryAndProcess()
         {
-            if (input.HasInput && input2.HasInput)
+            if (input.HasInput && input2.HasInput && input3.HasInput)
             {
                 Process();
             }
@@ -85,28 +88,28 @@ namespace Materia.Nodes.MathNodes
 
             string compute = ""; 
 
-            if(input2.Type == NodeType.Float && input3.Type == NodeType.Float)
+            if(input2.Input.Type == NodeType.Float && input3.Input.Type == NodeType.Float)
             {
                 output.Type = NodeType.Float;
                 compute = "float " + s + ";\r\n" + " if(" + n1id + ") { \r\n";
                 compute += s + " = " + n2id + ";\r\n} else {\r\n";
                 compute += s + " = " + n3id + ";}\r\n";
             }
-            else if(input2.Type == NodeType.Float2 && input3.Type == NodeType.Float2)
+            else if(input2.Input.Type == NodeType.Float2 && input3.Input.Type == NodeType.Float2)
             {
                 output.Type = NodeType.Float2;
                 compute = "vec2 " + s + ";\r\n" + "if(" + n1id + ") { \r\n";
                 compute += s + " = " + n2id + ";\r\n} else {\r\n";
                 compute += s + " = " + n3id + ";}\r\n";
             }
-            else if (input2.Type == NodeType.Float3 && input3.Type == NodeType.Float3)
+            else if (input2.Input.Type == NodeType.Float3 && input3.Input.Type == NodeType.Float3)
             {
                 output.Type = NodeType.Float3;
                 compute = "vec3 " + s + ";\r\n" + "if(" + n1id + ") { \r\n";
                 compute += s + " = " + n2id + ";\r\n} else {\r\n";
                 compute += s + " = " + n3id + ";}\r\n";
             }
-            else if (input2.Type == NodeType.Float4 && input3.Type == NodeType.Float4)
+            else if (input2.Input.Type == NodeType.Float4 && input3.Input.Type == NodeType.Float4)
             {
                 output.Type = NodeType.Float4;
                 compute = "vec4 " + s + ";\r\n" + "if(" + n1id + ") { \r\n";

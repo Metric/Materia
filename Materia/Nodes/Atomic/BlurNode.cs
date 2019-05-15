@@ -118,7 +118,7 @@ namespace Materia.Nodes.Atomic
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
             {
-                pintensity = ParentGraph.GetParameterValue<int>(Id, "Intensity");
+                pintensity = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Intensity"));
             }
 
             processor.Intensity = pintensity;
@@ -169,10 +169,6 @@ namespace Materia.Nodes.Atomic
             BlurData d = JsonConvert.DeserializeObject<BlurData>(data);
             SetBaseNodeDate(d);
             intensity = d.intensity;
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
     }
 }

@@ -353,16 +353,75 @@ namespace Materia.Nodes.Atomic
             });
         }
 
+        public class MeshDepthNodeData : NodeData
+        {
+            public string path;
+            public string relativePath;
+            public bool resource;
+
+            public float translateX;
+            public float translateY;
+            public float translateZ;
+
+            public float scaleX;
+            public float scaleY;
+            public float scaleZ;
+
+            public int rotationX;
+            public int rotationY;
+            public int rotationZ;
+
+            public float cameraZoom;
+        }
+
         public override void FromJson(Dictionary<string, Node> nodes, string data)
         {
-            
+            MeshDepthNodeData d = JsonConvert.DeserializeObject<MeshDepthNodeData>(data);
+            SetBaseNodeDate(d);
+
+            path = d.path;
+            Resource = d.resource;
+            relativePath = d.relativePath;
+
+            xOffset = d.translateX;
+            yOffset = d.translateY;
+            zOffset = d.translateZ;
+
+            scaleX = d.scaleX;
+            scaleY = d.scaleY;
+            scaleZ = d.scaleZ;
+
+            rotationX = d.rotationX;
+            rotationY = d.rotationY;
+            rotationZ = d.rotationZ;
+
+            cameraZoom = d.cameraZoom;
         }
 
         public override string GetJson()
         {
-            ///throw new NotImplementedException();
+            MeshDepthNodeData d = new MeshDepthNodeData();
+            FillBaseNodeData(d);
 
-            return "";
+            d.path = path;
+            d.relativePath = relativePath;
+            d.resource = Resource;
+
+            d.translateX = xOffset;
+            d.translateY = yOffset;
+            d.translateZ = zOffset;
+
+            d.scaleX = scaleX;
+            d.scaleY = scaleY;
+            d.scaleZ = scaleZ;
+
+            d.rotationX = rotationX;
+            d.rotationY = rotationY;
+            d.rotationZ = rotationZ;
+
+            d.cameraZoom = cameraZoom;
+
+            return JsonConvert.SerializeObject(d);
         }
 
         protected override void OnWidthHeightSet()

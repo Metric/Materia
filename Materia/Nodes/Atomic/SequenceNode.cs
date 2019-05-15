@@ -220,10 +220,6 @@ namespace Materia.Nodes.Atomic
         {
             NodeData d = JsonConvert.DeserializeObject<NodeData>(data);
             SetBaseNodeDate(d);
-
-            SetConnections(nodes, d.outputs);
-
-            TryAndProcess();
         }
     }
 }

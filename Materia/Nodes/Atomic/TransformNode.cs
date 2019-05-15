@@ -21,6 +21,7 @@ namespace Materia.Nodes.Atomic
 
         protected float xoffset;
 
+        [Promote(NodeType.Float)]
         [Title(Title = "Offset X")]
         public float XOffset
         {
@@ -37,6 +38,7 @@ namespace Materia.Nodes.Atomic
 
         protected float yoffset;
 
+        [Promote(NodeType.Float)]
         [Title(Title = "Offset Y")]
         public float YOffset
         {
@@ -53,6 +55,7 @@ namespace Materia.Nodes.Atomic
 
         protected float angle;
 
+        [Promote(NodeType.Float)]
         [Slider(IsInt = false, Max = 360, Min = 0, Snap = false, Ticks = new float[0])]
         public float Angle
         {
@@ -68,6 +71,8 @@ namespace Materia.Nodes.Atomic
         }
 
         protected float scaleX;
+
+        [Promote(NodeType.Float)]
         [Title(Title = "Scale X")]
         public float ScaleX
         {
@@ -82,6 +87,8 @@ namespace Materia.Nodes.Atomic
             }
         }
         protected float scaleY;
+
+        [Promote(NodeType.Float)]
         [Title(Title = "Scale Y")]
         public float ScaleY
         {
@@ -171,9 +178,42 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            Matrix3 rot = Matrix3.CreateRotationZ(angle * (float)(Math.PI / 180.0));
-            Matrix3 scale = Matrix3.CreateScale(1.0f / scaleX, 1.0f / scaleY, 1);
-            Vector3 trans = new Vector3(xoffset, yoffset, 0);
+            float pangle = angle;
+
+            float pscaleX = scaleX;
+            float pscaleY = scaleY;
+
+            float pxoffset = xoffset;
+            float pyoffset = yoffset;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "XOffset"))
+            {
+                pxoffset = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "XOffset"));
+            }
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "YOffset"))
+            {
+                pyoffset = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "YOffset"));
+            }
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "ScaleX"))
+            {
+                pscaleX = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "ScaleX"));
+            }
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "ScaleY"))
+            {
+                pscaleY = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "ScaleY"));
+            }
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Angle"))
+            {
+                pangle = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Angle"));
+            }
+
+            Matrix3 rot = Matrix3.CreateRotationZ(pangle * (float)(Math.PI / 180.0));
+            Matrix3 scale = Matrix3.CreateScale(1.0f / pscaleX, 1.0f / pscaleY, 1);
+            Vector3 trans = new Vector3(pxoffset, pyoffset, 0);
 
             processor.TileX = tileX;
             processor.TileY = tileY;
@@ -235,10 +275,6 @@ namespace Materia.Nodes.Atomic
             angle = d.angle;
             scaleX = d.scaleX;
             scaleY = d.scaleY;
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
     }
 }

@@ -176,10 +176,6 @@ namespace Materia.Nodes.Atomic
             g = d.green;
             b = d.blue;
             a = d.alpha;
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
 
         public override string GetJson()

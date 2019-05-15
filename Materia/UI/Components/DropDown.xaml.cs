@@ -222,6 +222,10 @@ namespace Materia
                         {
                             prop.SetValue(propertyOwner, index);
                         }
+                        else if(prop.PropertyType.Equals(typeof(string)))
+                        {
+                            prop.SetValue(propertyOwner, Dropdown.SelectedItem);
+                        }
                     }
                     catch (Exception ex)
                     {

@@ -23,5 +23,5 @@ void main() {
         result += texture(MainTex, UV + (j * offset));
     }
 
-    FragColor = result / intensity;
+    FragColor = result / (intensity + 1);
 }

@@ -23,6 +23,7 @@ namespace Materia.Nodes.Atomic
 
         NormalsProcessor processor;
 
+        [Promote(NodeType.Float)]
         [Slider(IsInt = false, Max = 32, Min = 0.001f, Snap = false, Ticks = new float[0])]
         public float Intensity
         {
@@ -126,10 +127,17 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            float pintensity = intensity;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
+            {
+                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
+            }
+
             processor.TileX = tileX;
             processor.TileY = tileY;
             processor.DirectX = directx;
-            processor.Intensity = intensity;
+            processor.Intensity = pintensity;
             processor.Process(width, height, i1, buffer);
             processor.Complete();
 
@@ -160,10 +168,6 @@ namespace Materia.Nodes.Atomic
             SetBaseNodeDate(d);
             intensity = d.intensity;
             directx = d.directx;
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
 
         public override void Dispose()

@@ -169,10 +169,6 @@ namespace Materia.Nodes.Atomic
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
             Outputs.Clear();
             Outputs.Add(Output);
-
-            SetConnections(nodes, d.outputs);
-
-            TryAndProcess();
         }
 
         public override string GetJson()

@@ -157,7 +157,7 @@ namespace Materia.Nodes.Atomic
             GLTextuer2D i2 = (GLTextuer2D)second.Input.Data;
             GLTextuer2D i3 = null;
 
-            if(mask.Input != null)
+            if(mask.HasInput)
             {
                 i3 = (GLTextuer2D)mask.Input.Data;
             }
@@ -173,11 +173,11 @@ namespace Materia.Nodes.Atomic
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Mode"))
             {
-                pmode = ParentGraph.GetParameterValue<int>(Id, "Mode");
+                pmode = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Mode"));
             }
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alpha"))
             {
-                palpha = ParentGraph.GetParameterValue<float>(Id, "Alpha");
+                palpha = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Alpha"));
             }
 
             processor.TileX = tileX;
@@ -230,10 +230,6 @@ namespace Materia.Nodes.Atomic
             SetBaseNodeDate(d);
             Enum.TryParse<BlendType>(d.mode, out mode);
             alpha = d.alpha;
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
     }
 }

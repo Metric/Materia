@@ -98,10 +98,6 @@ namespace Materia.Nodes.Atomic
             AOData d = JsonConvert.DeserializeObject<AOData>(data);
             SetBaseNodeDate(d);
             rays = d.rays;
-
-            SetConnections(nodes, d.outputs);
-
-            OnWidthHeightSet();
         }
 
         public override string GetJson()
@@ -156,7 +152,7 @@ namespace Materia.Nodes.Atomic
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Rays"))
             {
-                prays = ParentGraph.GetParameterValue<int>(Id, "Rays");
+                prays = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Rays"));
             }
 
             blur.TileX = 1;

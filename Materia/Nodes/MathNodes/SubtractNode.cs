@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Add";
+            Name = "Subtract";
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
             Inputs = new List<NodeInput>();

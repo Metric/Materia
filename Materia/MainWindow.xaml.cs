@@ -217,7 +217,10 @@ namespace Materia
                     if (GraphDocuments.SelectedContentIndex > -1)
                     {
                         var graph = graphs[GraphDocuments.SelectedContentIndex];
-                        UINodeParameters.Instance.SetActive(graph.Graph);
+                        if (graph.Graph != null)
+                        {
+                            UINodeParameters.Instance.SetActive(graph.Graph);
+                        }
                     }
                 }
             }
@@ -284,7 +287,7 @@ namespace Materia
                             g.SaveAs(svf.FileName);
 
                             var doc = documents[GraphDocuments.SelectedContentIndex];
-                            doc.Title = g.Graph.Name;
+                            doc.Title = g.GraphName;
                         }
                     }
                 }
@@ -296,7 +299,7 @@ namespace Materia
                     UIGraph g = graphs[GraphDocuments.SelectedContentIndex];
                     HandleSave(g);
                     var doc = documents[GraphDocuments.SelectedContentIndex];
-                    doc.Title = g.Graph.Name;
+                    doc.Title = g.GraphName;
                 }
             }
             else if (item.Header.ToString().ToLower().Contains("open"))
@@ -338,10 +341,7 @@ namespace Materia
                     g.LoadGraph(path);
 
                     var doc = documents[GraphDocuments.SelectedContentIndex];
-
-                    //TabItem tb = (TabItem)GraphTabs.Items[GraphTabs.SelectedIndex];
-                    //tb.Header = g.Graph.Name;
-                    doc.Title = g.Graph.Name;
+                    doc.Title = g.GraphName;
                 }
             }
         }
@@ -377,9 +377,9 @@ namespace Materia
             UIGraph g = new UIGraph();
             LayoutDocument doc = new LayoutDocument();
             doc.Content = g;
-            doc.Title = g.Graph.Name;
+            doc.Title = g.GraphName;
             doc.Closing += Doc_Closing;
-            doc.ContentId = g.Graph.Name + graphs.Count;
+            doc.ContentId = g.GraphName + graphs.Count;
             doc.CanFloat = false;
             doc.CanMove = false;
 
@@ -407,7 +407,7 @@ namespace Materia
                     var g = graphs[idx];
                     if (g.Modified && !g.ReadOnly)
                     {
-                        if (MessageBox.Show(this, g.Graph.Name + " has been modified. Do you want to save the changes?", "Save Changes", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        if (MessageBox.Show(this, g.GraphName + " has been modified. Do you want to save the changes?", "Save Changes", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
                             HandleSave(g);
                         }
@@ -437,12 +437,12 @@ namespace Materia
             {
                 if(g.Modified && !g.ReadOnly)
                 {
-                    var result = MessageBox.Show(this, g.Graph.Name + " has been modified. Do you want to save the changes?", "Save Changes", MessageBoxButton.YesNoCancel);
+                    var result = MessageBox.Show(this, g.GraphName + " has been modified. Do you want to save the changes?", "Save Changes", MessageBoxButton.YesNoCancel);
                     if (result == MessageBoxResult.Yes)
                     {
                         HandleSave(g);
                     }
-                    else if(result == MessageBoxResult.Cancel)
+                    else if (result == MessageBoxResult.Cancel)
                     {
                         e.Cancel = true;
                         return;

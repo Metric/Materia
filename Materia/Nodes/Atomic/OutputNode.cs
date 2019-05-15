@@ -203,8 +203,6 @@ namespace Materia.Nodes.Atomic
             OutputNodeData d = JsonConvert.DeserializeObject<OutputNodeData>(data);
             SetBaseNodeDate(d);
             outtype = d.outType;
-
-            TryAndProcess();
         }
 
         public override string GetJson()

@@ -107,6 +107,7 @@
     <Compile Include="Geometry\FullScreenQuad.cs" />
     <Compile Include="Geometry\MeshRenderer.cs" />
     <Compile Include="Geometry\UVRenderer.cs" />
+    <Compile Include="Hdri\HdriManager.cs" />
     <Compile Include="Imaging\FloatBitmap.cs" />
     <Compile Include="Imaging\GLProcessing\BasicImageRenderer.cs" />
     <Compile Include="Imaging\GLProcessing\BlendProcessor.cs" />
@@ -114,6 +115,7 @@
     <Compile Include="Imaging\GLProcessing\ChannelSwitchProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\CircleProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\CurvesProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\GammaProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\MeshDepthProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\MeshProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\EmbossProcessor.cs" />
@@ -130,10 +132,13 @@
     <Compile Include="Imaging\GLProcessing\UniformColorProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\WarpProcessor.cs" />
     <Compile Include="Material\PBRDepth.cs" />
+    <Compile Include="MathHelpers\Camera.cs" />
     <Compile Include="MathHelpers\MVector.cs" />
+    <Compile Include="MathHelpers\Transform.cs" />
     <Compile Include="Nodes\Atomic\BitmapNode.cs" />
     <Compile Include="Nodes\Atomic\ChannelSwitchNode.cs" />
     <Compile Include="Nodes\Atomic\EmbossNode.cs" />
+    <Compile Include="Nodes\Atomic\GammaNode.cs" />
     <Compile Include="Nodes\Atomic\GraphInstanceNode.cs" />
     <Compile Include="Nodes\Atomic\GrayscaleConversionNode.cs" />
     <Compile Include="Nodes\Atomic\InputNode.cs" />
@@ -202,6 +207,7 @@
     <Compile Include="Nodes\MathNodes\NotEqualNode.cs" />
     <Compile Include="Nodes\MathNodes\NotNode.cs" />
     <Compile Include="Nodes\MathNodes\OrNode.cs" />
+    <Compile Include="Nodes\MathNodes\PolarNode.cs" />
     <Compile Include="Nodes\MathNodes\Pow2Node.cs" />
     <Compile Include="Nodes\MathNodes\RandomNode.cs" />
     <Compile Include="Nodes\MathNodes\RoundNode.cs" />
