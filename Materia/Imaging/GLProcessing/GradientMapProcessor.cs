@@ -55,6 +55,10 @@ namespace Materia.Imaging.GLProcessing
                     UseMask = true;
                     Mask.Bind();
                 }
+                else
+                {
+                    UseMask = false;
+                }
 
                 shader.SetUniform("useMask", UseMask);
 

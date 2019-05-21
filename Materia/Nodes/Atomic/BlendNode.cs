@@ -116,6 +116,7 @@ namespace Materia.Nodes.Atomic
             first.OnInputAdded += OnInputAdded;
             first.OnInputRemoved += OnInputRemoved;
             first.OnInputChanged += OnInputChanged;
+
             second.OnInputRemoved += OnInputRemoved;
             second.OnInputAdded += OnInputAdded;
             second.OnInputChanged += OnInputChanged;

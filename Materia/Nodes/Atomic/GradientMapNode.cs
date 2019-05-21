@@ -67,6 +67,7 @@ namespace Materia.Nodes.Atomic
 
             input2.OnInputAdded += Input_OnInputAdded;
             input2.OnInputChanged += Input_OnInputChanged;
+            input2.OnInputRemoved += Input_OnInputRemoved;
 
             Inputs = new List<NodeInput>();
             Inputs.Add(input);
@@ -74,6 +75,11 @@ namespace Materia.Nodes.Atomic
 
             Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
+        }
+
+        private void Input_OnInputRemoved(NodeInput n)
+        {
+            TryAndProcess();
         }
 
         private void Input_OnInputChanged(NodeInput n)

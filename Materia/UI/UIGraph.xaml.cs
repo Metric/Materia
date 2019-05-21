@@ -821,6 +821,11 @@ namespace Materia
 
         public void Release()
         {
+            if(UINodeParameters.Instance != null)
+            {
+                UINodeParameters.Instance.ClearView();
+            }
+
             foreach (UINode n in GraphNodes)
             {
                 ViewPort.Children.Remove(n);
