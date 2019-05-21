@@ -44,7 +44,7 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public SetVarNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public SetVarNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -57,26 +57,21 @@ namespace Materia.Nodes.MathNodes
             input = new NodeInput(NodeType.Bool | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any");
             output = new NodeOutput(NodeType.Bool | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
             input.OnInputRemoved += Input_OnInputRemoved;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
         private void Input_OnInputRemoved(NodeInput n)
         {
-            if(ParentGraph != null)
+            if(ParentGraph != null && !string.IsNullOrEmpty(varName))
             {
                 ParentGraph.SetVar(varName, null);
             }
-
-            output.Data = null;
-            output.Changed();
         }
 
         private void Input_OnInputChanged(NodeInput n)
@@ -86,8 +81,19 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
+            UpdateOutputType();
             Updated();
         }
+
+        public override void UpdateOutputType()
+        {
+            if(input.HasInput)
+            {
+                NodeType t1 = input.Input.Type;
+                output.Type = t1;
+            }
+        }
+
 
         public override void TryAndProcess()
         {
@@ -99,13 +105,18 @@ namespace Materia.Nodes.MathNodes
 
         void Process()
         {
+            if (string.IsNullOrEmpty(varName)) return;
+
             if(ParentGraph != null)
             {
                 ParentGraph.SetVar(varName, input.Input.Data);
             }
 
             output.Data = input.Input.Data;
-            output.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {
@@ -118,10 +129,11 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput) return "";
-            var s = shaderId + "0";
+            if (string.IsNullOrEmpty(varName)) return "";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
             var t = input.Input.Type;
             var index = input.Input.Node.Outputs.IndexOf(input.Input);
@@ -131,44 +143,72 @@ namespace Materia.Nodes.MathNodes
             if(t == NodeType.Float)
             {
                 output.Type = NodeType.Float;
-                return "float " + varName + " = " + n1id + ";\r\n float " + s + " = " + n1id + ";\r\n";
+                string op = "float " + varName + " = " + n1id + ";\r\n float " + s + " = " + n1id + ";\r\n";
+                if(currentFrag.IndexOf("float " + VarName + " = ") > -1)
+                {
+                    op = varName + " = " + n1id + ";\r\n float " + s + " = " + n1id + ";\r\n";
+                }
+                return op;
             }
             else if(t == NodeType.Bool)
             {
                 output.Type = NodeType.Bool;
-                return "bool " + varName + " = " + n1id + ";\r\n bool " + s + " = " + n1id + ";\r\n";
+                string op = "bool " + varName + " = " + n1id + ";\r\n bool " + s + " = " + n1id + ";\r\n";
+                if (currentFrag.IndexOf("bool " + VarName + " = ") > -1)
+                {
+                    op = varName + " = " + n1id + ";\r\n bool " + s + " = " + n1id + ";\r\n";
+                }
+                return op;
             }
             else if(t == NodeType.Float2)
             {
                 output.Type = NodeType.Float2;
-                return "vec2 " + varName + " = " + n1id + ";\r\n vec2 " + s + " = " + n1id + ";\r\n";
+                string op = "vec2 " + varName + " = " + n1id + ";\r\n vec2 " + s + " = " + n1id + ";\r\n";
+                if (currentFrag.IndexOf("vec2 " + VarName + " = ") > -1)
+                {
+                    op = varName + " = " + n1id + ";\r\n vec2 " + s + " = " + n1id + ";\r\n";
+                }
+                return op;
             }
             else if(t == NodeType.Float3)
             {
                 output.Type = NodeType.Float3;
-                return "vec3 " + varName + " = " + n1id + ";\r\n vec3 " + s + " = " + n1id + ";\r\n";
+                string op = "vec3 " + varName + " = " + n1id + ";\r\n vec3 " + s + " = " + n1id + ";\r\n";
+                if (currentFrag.IndexOf("vec3 " + VarName + " = ") > -1)
+                {
+                    op = varName + " = " + n1id + ";\r\n vec3 " + s + " = " + n1id + ";\r\n";
+                }
+                return op;
             }
             else if(t == NodeType.Float4)
             {
                 output.Type = NodeType.Float4;
-                return "vec4 " + varName + " = " + n1id + ";\r\n vec4 " + s + " = " + n1id + ";\r\n";
+                string op = "vec4 " + varName + " = " + n1id + ";\r\n vec4 " + s + " = " + n1id + ";\r\n";
+                if (currentFrag.IndexOf("vec4 " + VarName + " = ") > -1)
+                {
+                    op = varName + " = " + n1id + ";\r\n vec4 " + s + " = " + n1id + ";\r\n";
+                }
+                return op;
             }
 
             return "";
         }
 
+        public override void Dispose()
+        {
+            if (ParentGraph != null)
+            {
+                parentGraph.RemoveVar(varName);
+            }
+
+            base.Dispose();
+        }
 
         public override void FromJson(Dictionary<string, Node> nodes, string data)
         {
             VarData d = JsonConvert.DeserializeObject<VarData>(data);
             SetBaseNodeDate(d);
             varName = d.varName;
-
-            SetConnections(nodes, d.outputs);
-
-            TryAndProcess();
-
-            Updated();
         }
 
         public override string GetJson()

@@ -44,6 +44,14 @@ namespace Materia
             }
         }
 
+        [Category("My Props")]
+        [Description("The path structure")]
+        [DisplayName("Path")]
+        public string Path
+        {
+            get; set;
+        }
+
         public NodeResource()
         {
             InitializeComponent();
@@ -55,6 +63,16 @@ namespace Materia
             {
                 DragDrop.DoDragDrop(this, this, DragDropEffects.Copy);
             }
+        }
+
+        private void UserControl_MouseEnter(object sender, MouseEventArgs e)
+        {
+            GridView.Background = new SolidColorBrush(Color.FromArgb(255, 32, 32, 32));
+        }
+
+        private void UserControl_MouseLeave(object sender, MouseEventArgs e)
+        {
+            GridView.Background = new SolidColorBrush(Colors.Transparent);
         }
     }
 }

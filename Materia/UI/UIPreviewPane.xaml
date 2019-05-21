@@ -76,17 +76,17 @@
                 </ToggleButton>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Width="223" HorizontalAlignment="Right" FlowDirection="RightToLeft">
-                <Button Name="ZoomIn" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomIn_Click" ToolTip="Zoom in">
+                <Button Name="ZoomIn" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomIn_Click" ToolTip="Zoom in" Style="{DynamicResource ImageTextButton}">
                     <Image Source="/Materia;component/Images/add.png" />
                 </Button>
                 <TextBlock Name="ZoomLevel" Width="54" VerticalAlignment="Center" FlowDirection="LeftToRight" Text="50%" TextAlignment="Center" Foreground="LightGray" />
-                <Button Name="ZoomOut" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomOut_Click" ToolTip="Zoom out">
+                <Button Name="ZoomOut" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomOut_Click" ToolTip="Zoom out" Style="{DynamicResource ImageTextButton}">
                     <Image Source="/Materia;component/Images/minus.png" />
                 </Button>
-                <Button Name="Ratio1" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="Ratio1_Click" ToolTip="Reset zoom to 100%">
+                <Button Name="Ratio1" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="Ratio1_Click" ToolTip="Reset zoom to 100%" Style="{DynamicResource ImageTextButton}">
                     <Image Source="/Materia;component/Images/1x1.png" />
                 </Button>
-                <Button Name="FitIntoView" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="FitIntoView_Click" ToolTip="Fit image into view">
+                <Button Name="FitIntoView" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="FitIntoView_Click" ToolTip="Fit image into view" Style="{DynamicResource ImageTextButton}">
                     <Image Source="/Materia;component/Images/aspect.png" />
                 </Button>
             </StackPanel>

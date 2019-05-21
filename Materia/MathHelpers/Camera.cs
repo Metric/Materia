@@ -10,12 +10,65 @@ namespace Materia.MathHelpers
 {
     public class Camera : Transform
     {
+        public delegate void CameraChange();
+        public static event CameraChange OnCameraChanged;
+
         [HideProperty]
         public float Aspect { get; set; }
 
-        public float Fov { get; set; }
-        public float Near { get; set; }
-        public float Far { get; set; }
+        protected float fov;
+        public float Fov
+        {
+            get
+            {
+                return fov;
+            }
+            set
+            {
+                fov = value;
+                if (fov < 1) fov = 1;
+                if (OnCameraChanged != null)
+                {
+                    OnCameraChanged.Invoke();
+                }
+            }
+        }
+
+        protected float near;
+        public float Near
+        {
+            get
+            {
+                return near;
+            }
+            set
+            {
+                near = value;
+                if (near == 0) near = 0.0001f;
+                if (OnCameraChanged != null)
+                {
+                    OnCameraChanged.Invoke();
+                }
+            }
+        }
+
+        protected float far;
+        public float Far
+        {
+            get
+            {
+                return far;
+            }
+            set
+            {
+                far = value;
+                if (far == 0) far = 0.0001f;
+                if(OnCameraChanged != null)
+                {
+                    OnCameraChanged.Invoke();
+                }
+            }
+        }
 
         [HideProperty]
         public Matrix4 Orthographic
@@ -55,9 +108,9 @@ namespace Materia.MathHelpers
 
         public Camera(Transform p = null) : base(p)
         {
-            Near = 0.03f;
-            Far = 1000f;
-            Fov = 40;
+            near = 0.03f;
+            far = 1000f;
+            fov = 40;
             Aspect = 1;
         }
     }

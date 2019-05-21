@@ -15,7 +15,7 @@ namespace Materia.Nodes.MathNodes
         NodeOutput output3;
         NodeOutput output4;
 
-        public BreakFloat4Node(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public BreakFloat4Node(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -31,13 +31,11 @@ namespace Materia.Nodes.MathNodes
             output3 = new NodeOutput(NodeType.Float, this, "Z");
             output4 = new NodeOutput(NodeType.Float, this, "W");
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
             Outputs.Add(output2);
             Outputs.Add(output3);
@@ -62,17 +60,17 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
-            if (!Inputs[0].HasInput) return "";
-            var s1 = shaderId + "0";
-            var s2 = shaderId + "1";
-            var s3 = shaderId + "2";
-            var s4 = shaderId + "3";
+            if (!Inputs[1].HasInput) return "";
+            var s1 = shaderId + "1";
+            var s2 = shaderId + "2";
+            var s3 = shaderId + "3";
+            var s4 = shaderId + "4";
 
-            var n1id = (Inputs[0].Input.Node as MathNode).ShaderId;
+            var n1id = (Inputs[1].Input.Node as MathNode).ShaderId;
 
-            var index = Inputs[0].Input.Node.Outputs.IndexOf(Inputs[0].Input);
+            var index = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
 
             n1id += index;
 
@@ -96,10 +94,10 @@ namespace Materia.Nodes.MathNodes
             output3.Data = v.Z;
             output4.Data = v.W;
 
-            output.Changed();
-            output2.Changed();
-            output3.Changed();
-            output4.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
         }
     }
 }

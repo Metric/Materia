@@ -14,7 +14,11 @@ namespace Materia.Nodes
         Float2 = 16,
         Float3 = 32,
         Float4 = 64,
-        Bool = 128
+        Bool = 128,
+        //todo: hide execute, color, and gray from custom parameters
+        //will need to modify ParameterList to do so
+        //and more
+        Execute = 256
     }
 
     public class NodeInput

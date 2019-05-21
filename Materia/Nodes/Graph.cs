@@ -9,88 +9,11 @@ using System.Windows;
 using Materia.Nodes.Atomic;
 using Materia.Nodes.Attributes;
 using OpenTK.Graphics.OpenGL;
+using Materia.MathHelpers;
+using System.Threading;
 
 namespace Materia.Nodes
 {
-    public class GraphParameterValue
-    {
-        public delegate void GraphParameterUpdate(GraphParameterValue param);
-        public static event GraphParameterUpdate OnGraphParameterUpdate;
-
-        public string Name { get; set; }
-
-        protected object v;
-        public object Value
-        {
-            get
-            {
-                return v;
-            }
-            set
-            {
-                v = value;
-                if(OnGraphParameterUpdate != null)
-                {
-                    OnGraphParameterUpdate.Invoke(this);
-                }
-            }
-        }
-
-        public class GraphParameterValueData
-        {
-            public string name;
-            public object value;
-            public bool isFunction;
-        }
-
-        public GraphParameterValue(string name, object value)
-        {
-            Name = name;
-            Value = value;
-        }
-
-        public bool IsFunction()
-        {
-            if (Value == null) return false;
-            return Value is FunctionGraph;
-        }
-
-        public string GetJson()
-        {
-            GraphParameterValueData d = new GraphParameterValueData();
-            d.name = Name;
-            d.isFunction = IsFunction();
-
-            if (d.isFunction)
-            {
-                FunctionGraph g = Value as FunctionGraph;
-
-                d.value = g.GetJson();
-            }
-            else
-            {
-                d.value = Value;
-            }
-
-            return JsonConvert.SerializeObject(d);
-        }
-
-        public static GraphParameterValue FromJson(string data)
-        {
-            GraphParameterValueData d = JsonConvert.DeserializeObject<GraphParameterValueData>(data);
-
-            if (d.isFunction)
-            {
-                FunctionGraph t = new FunctionGraph("temp");
-                t.FromJson((string)d.value);
-                return new GraphParameterValue(d.name, t);
-            }
-
-
-            return new GraphParameterValue(d.name, d.value);
-        }
-    }
-
     public enum GraphPixelType
     {
         RGBA = PixelInternalFormat.Rgba8,
@@ -120,13 +43,24 @@ namespace Materia.Nodes
         protected Dictionary<string, object> Variables { get; set; }
         protected Dictionary<string, Point> OriginSizes;
 
+        protected Dictionary<string, Node.NodeData> tempData;
+
         /// <summary>
         /// Parameters are only available for image graphs and fx graphs
         /// </summary>
         [GraphParameterEditor]
         public Dictionary<string, GraphParameterValue> Parameters { get; protected set; }
+        
+        [Section(Section = "Custom Parameters")]
+        [Title(Title = "")]
+        [ParameterEditor]
+        public List<GraphParameterValue> CustomParameters { get; protected set; }
 
-        [HideProperty]
+        [Section(Section = "Custom Functions")]
+        [Title(Title = "")]
+        [GraphFunctionEditor]
+        public List<FunctionGraph> CustomFunctions { get; protected set; }
+
         public string Name { get; set; }
 
         [HideProperty]
@@ -189,8 +123,8 @@ namespace Materia.Nodes
             set
             {
                 randomSeed = value;
-
-                if(this is FunctionGraph)
+				
+				if(this is FunctionGraph)
                 {
                     Updated();
                     return;
@@ -263,6 +197,7 @@ namespace Materia.Nodes
 
         public Graph(string name, int w = 256, int h = 256)
         {
+            tempData = new Dictionary<string, Node.NodeData>();
             hdriIndex = Hdri.HdriManager.Selected;
             HdriImages = Hdri.HdriManager.Available.ToArray();
 
@@ -280,6 +215,8 @@ namespace Materia.Nodes
             InputNodes = new List<string>();
             OriginSizes = new Dictionary<string, Point>();
             Parameters = new Dictionary<string, GraphParameterValue>();
+            CustomParameters = new List<GraphParameterValue>();
+            CustomFunctions = new List<FunctionGraph>();
         }
 
         public virtual object GetVar(string k)
@@ -326,6 +263,14 @@ namespace Materia.Nodes
                 }
             }
 
+            foreach(FunctionGraph g in CustomFunctions)
+            {
+                if(g.NodeLookup.TryGetValue(id, out n))
+                {
+                    return n;
+                }
+            }
+
             return null;
         }
 
@@ -357,6 +302,8 @@ namespace Materia.Nodes
             public string hdriIndex;
 
             public Dictionary<string, string> parameters;
+            public List<string> customParameters;
+            public List<string> customFunctions;
         }
 
         public virtual void TryAndProcess()
@@ -472,8 +419,22 @@ namespace Materia.Nodes
             d.parameters = GetJsonReadyParameters();
             d.width = width;
             d.height = height;
+            d.customParameters = GetJsonReadyCustomParameters();
+            d.customFunctions = GetJsonReadyCustomFunctions();
 
             return JsonConvert.SerializeObject(d);
+        }
+
+        public virtual List<string> GetJsonReadyCustomFunctions()
+        {
+            List<string> funcs = new List<string>();
+
+            foreach(var f in CustomFunctions)
+            {
+                funcs.Add(f.GetJson());
+            }
+
+            return funcs;
         }
 
         public virtual Dictionary<string, string> GetJsonReadyParameters()
@@ -488,6 +449,40 @@ namespace Materia.Nodes
             return parameters;
         }
 
+
+        public List<string> GetJsonReadyCustomParameters()
+        {
+            List<string> parameters = new List<string>();
+            foreach (var g in CustomParameters)
+            {
+                parameters.Add(g.GetJson());
+            }
+            return parameters;
+        }
+
+        public virtual void SetJsonReadyCustomFunctions(List<string> functions)
+        {
+            if(functions != null)
+            {
+                CustomFunctions = new List<FunctionGraph>();
+
+                foreach(string k in functions)
+                {
+                    FunctionGraph g = new FunctionGraph("temp");
+                    CustomFunctions.Add(g);
+                    g.FromJson(k);
+                }
+
+                foreach(FunctionGraph g in CustomFunctions)
+                {
+                    //finally set parent graph
+                    //and set connections
+                    g.ParentGraph = this;
+                    g.SetConnections();
+                }
+            }
+        }
+
         public virtual void SetJsonReadyParameters(Dictionary<string, string> parameters)
         {
             if (parameters != null)
@@ -496,7 +491,30 @@ namespace Materia.Nodes
 
                 foreach (var k in parameters.Keys)
                 {
-                    Parameters[k] = GraphParameterValue.FromJson(parameters[k]);
+                    string[] split = k.Split('.');
+
+                    Node n = null;
+                    NodeLookup.TryGetValue(split[0], out n);
+
+                    Parameters[k] = GraphParameterValue.FromJson(parameters[k], n);
+                    if(Parameters[k].IsFunction())
+                    {
+                        var f = Parameters[k].Value as FunctionGraph;
+                        f.OnGraphUpdated += Graph_OnGraphUpdated;
+                    }
+                }
+            }
+        }
+
+        public virtual void SetJsonReadyCustomParameters(List<string> parameters)
+        {
+            if(parameters != null)
+            {
+                CustomParameters.Clear();
+
+                foreach(var k in parameters)
+                {
+                    CustomParameters.Add(GraphParameterValue.FromJson(k, null));
                 }
             }
         }
@@ -629,6 +647,7 @@ namespace Materia.Nodes
 
             if (d != null)
             {
+                tempData = new Dictionary<string, Node.NodeData>();
                 Dictionary<string, Node> lookup = new Dictionary<string, Node>();
                 Dictionary<string, string> nodeData = new Dictionary<string, string>();
 
@@ -646,9 +665,8 @@ namespace Materia.Nodes
                 if (width == 0 || width == int.MaxValue) width = 256;
                 if (height == 0 || height == int.MaxValue) height = 256;
 
-                SetJsonReadyParameters(d.parameters);
-
-                Dictionary<string, Node.NodeData> tempData = new Dictionary<string, Node.NodeData>();
+                SetJsonReadyCustomParameters(d.customParameters);
+                SetJsonReadyCustomFunctions(d.customFunctions);
 
                 //parse node data
                 //setup initial object instances
@@ -714,10 +732,15 @@ namespace Materia.Nodes
                     }
                 }
 
+                //after setting initial lookup
                 NodeLookup = lookup;
 
+                //and before applying real data to each node...
+                //we need to populate the parameters for them
+                SetJsonReadyParameters(d.parameters);
+
                 //apply data to nodes
-                foreach(Node n in Nodes)
+                foreach (Node n in Nodes)
                 {
                     string ndata = null;
                     nodeData.TryGetValue(n.Id, out ndata);
@@ -726,7 +749,6 @@ namespace Materia.Nodes
                     {
                         n.FromJson(lookup, ndata);
 
-                        n.OnUpdate += N_OnUpdate;
                         //origin sizes are only for graph instances
                         //not actually used in the current one being edited
                         //it is used in the ResizeWith
@@ -734,18 +756,42 @@ namespace Materia.Nodes
                     }
                 }
 
-                //finally after every node is populated
-                //try and connect them all!
-                //and tryandprocess
-                foreach(Node n in Nodes)
+                if (!(this is FunctionGraph))
                 {
-                    Node.NodeData nd = null;
-                    if(tempData.TryGetValue(n.Id, out nd))
-                    {
-                        n.SetConnections(lookup, nd.outputs);
-                        n.TryAndProcess();
-                    }
+                    SetConnections();
                 }
+            }
+        }
+
+        public void SetConnections()
+        {
+            //finally after every node is populated
+            //try and connect them all!
+            foreach (Node n in Nodes)
+            {
+                Node.NodeData nd = null;
+                if (tempData.TryGetValue(n.Id, out nd))
+                {
+                    n.SetConnections(NodeLookup, nd.outputs);
+                }
+            }
+
+            //then add event handlers!
+            foreach(Node n in Nodes)
+            {
+                n.OnUpdate += N_OnUpdate;
+            }
+
+            //release temp data
+            tempData.Clear();
+
+            if (this is FunctionGraph)
+            {
+                (this as FunctionGraph).UpdateOutputTypes();
+            }
+            else
+            {
+                TryAndProcess();
             }
         }
 
@@ -905,11 +951,37 @@ namespace Materia.Nodes
                     g.Dispose();
                 }
 
+                if (v is float || v is int || v is double)
+                {
+                    p.Type = NodeType.Float;
+                }
+                else if (v is bool)
+                {
+                    p.Type = NodeType.Bool;
+                }
+                else if (v is MVector)
+                {
+                    p.Type = NodeType.Float4;
+                }
+
                 p.Value = v;
             }
             else
             {
-                Parameters[cid] = new GraphParameterValue(parameter, v);
+                p = Parameters[cid] = new GraphParameterValue(parameter, v);
+
+                if (v is float || v is int || v is double)
+                {
+                    p.Type = NodeType.Float;
+                }
+                else if (v is bool)
+                {
+                    p.Type = NodeType.Bool;
+                }
+                else if (v is MVector)
+                {
+                    p.Type = NodeType.Float4;
+                }
             }
 
             if (v is FunctionGraph)
@@ -926,7 +998,7 @@ namespace Materia.Nodes
             {
                 FunctionGraph fg = g as FunctionGraph;
 
-                if(fg.ParentNode != null)
+                if (fg.ParentNode != null)
                 {
                     fg.ParentNode.TryAndProcess();
                 }

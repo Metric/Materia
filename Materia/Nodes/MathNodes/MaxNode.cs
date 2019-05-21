@@ -10,7 +10,7 @@ namespace Materia.Nodes.MathNodes
     {
         NodeOutput output;
 
-        public MaxNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public MaxNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -19,8 +19,6 @@ namespace Materia.Nodes.MathNodes
             Name = "Max";
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
-
-            Inputs = new List<NodeInput>();
 
             output = new NodeOutput(NodeType.Float, this);
 
@@ -35,7 +33,6 @@ namespace Materia.Nodes.MathNodes
                 input.OnInputRemoved += Input_OnInputRemoved;
             }
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -43,7 +40,7 @@ namespace Materia.Nodes.MathNodes
         {
             var noinputs = Inputs.FindAll(m => !m.HasInput);
 
-            if (noinputs != null && noinputs.Count >= 2 && Inputs.Count > 2)
+            if (noinputs != null && noinputs.Count >= 3 && Inputs.Count > 3)
             {
                 var inp = noinputs[noinputs.Count - 1];
 
@@ -84,10 +81,13 @@ namespace Materia.Nodes.MathNodes
 
             foreach (NodeInput inp in Inputs)
             {
-                if (inp.HasInput)
+                if (inp != executeInput)
                 {
-                    hasInput = true;
-                    break;
+                    if (inp.HasInput)
+                    {
+                        hasInput = true;
+                        break;
+                    }
                 }
             }
 
@@ -97,18 +97,18 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
-            if (!Inputs[0].HasInput || !Inputs[1].HasInput) return "";
-            var s = shaderId + "0";
-            var n1id = (Inputs[0].Input.Node as MathNode).ShaderId;
-            var n2id = (Inputs[1].Input.Node as MathNode).ShaderId;
+            if (!Inputs[1].HasInput || !Inputs[2].HasInput) return "";
+            var s = shaderId + "1";
+            var n1id = (Inputs[1].Input.Node as MathNode).ShaderId;
+            var n2id = (Inputs[2].Input.Node as MathNode).ShaderId;
 
-            var index = Inputs[0].Input.Node.Outputs.IndexOf(Inputs[0].Input);
+            var index = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
 
             n1id += index;
 
-            var index2 = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
+            var index2 = Inputs[2].Input.Node.Outputs.IndexOf(Inputs[2].Input);
 
             n2id += index2;
 
@@ -121,21 +121,27 @@ namespace Materia.Nodes.MathNodes
 
             foreach (NodeInput inp in Inputs)
             {
-                if (inp.HasInput)
+                if (inp != executeInput)
                 {
-                    object o = inp.Input.Data;
-                    if (o == null) continue;
-
-                    if (o is float || o is int)
+                    if (inp.HasInput)
                     {
-                        float f = (float)o;
-                        v = Math.Max(f,v);
+                        object o = inp.Input.Data;
+                        if (o == null) continue;
+
+                        if (o is float || o is int)
+                        {
+                            float f = (float)o;
+                            v = Math.Max(f, v);
+                        }
                     }
                 }
             }
 
             output.Data = v;
-            output.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {

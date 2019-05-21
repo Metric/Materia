@@ -15,7 +15,7 @@ namespace Materia.Nodes.MathNodes
 
         MVector vec;
 
-        public MakeFloat2Node(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public MakeFloat2Node(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -32,7 +32,6 @@ namespace Materia.Nodes.MathNodes
 
             output = new NodeOutput(NodeType.Float2, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
 
@@ -42,7 +41,6 @@ namespace Materia.Nodes.MathNodes
             input2.OnInputAdded += Input_OnInputAdded;
             input2.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -64,10 +62,10 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput || !input2.HasInput) return "";
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
             var n2id = (input2.Input.Node as MathNode).ShaderId;
 
@@ -87,13 +85,27 @@ namespace Materia.Nodes.MathNodes
         {
             if (input.Input.Data == null || input2.Input.Data == null) return;
 
+            if (!(input.Input.Data is float))
+            {
+                Console.WriteLine(input.Input.Node.Name + " is a vec2 and trying to connect to a float");
+                return;
+            }
+            if(!(input2.Input.Data is float))
+            {
+                Console.WriteLine(input2.Input.Node.Name + " is a vec2 and trying to connect to a float");
+                return;
+            }
+
             float x = (float)input.Input.Data;
             float y = (float)input2.Input.Data;
 
             vec.X = x;
             vec.Y = y;
             output.Data = vec;
-            output.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {

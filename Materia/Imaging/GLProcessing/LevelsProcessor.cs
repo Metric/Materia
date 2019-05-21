@@ -29,6 +29,10 @@ namespace Materia.Imaging.GLProcessing
 
             if (shader != null)
             {
+                ResizeViewTo(tex, output, tex.Width, tex.Height, width, height);
+                tex = output;
+                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
                 Vector3 min = Min;
                 Vector3 max = Max;
                 Vector3 mid = Mid;

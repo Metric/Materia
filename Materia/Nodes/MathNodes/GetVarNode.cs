@@ -33,7 +33,6 @@ namespace Materia.Nodes.MathNodes
                 }
 
                 varName = value;
-                TryAndProcess();
                 Updated();
             }
         }
@@ -48,11 +47,10 @@ namespace Materia.Nodes.MathNodes
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
-            output = new NodeOutput(NodeType.Bool | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
-
+            Outputs = new List<NodeOutput>();
             Inputs = new List<NodeInput>();
 
-            Outputs = new List<NodeOutput>();
+            output = new NodeOutput(NodeType.Bool | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
             Outputs.Add(output);
         }
 
@@ -61,28 +59,44 @@ namespace Materia.Nodes.MathNodes
             Process();
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             var s = shaderId + "0";
 
+            string prefix = "";
+
             if (output.Type == NodeType.Float)
             {
-                return "float " + s + " = " + varName + ";\r\n";
+                 prefix = "float ";
             }
             else if(output.Type == NodeType.Float2)
             {
-                return "vec2 " + s + " = " + varName + ";\r\n";
+                 prefix = "vec2 ";
             }
             else if(output.Type == NodeType.Float3)
             {
-                return "vec3 " + s + " = " + varName + ";\r\n";
+                 prefix = "vec3 ";
             }
             else if(output.Type == NodeType.Float4)
             {
-                return "vec4 " + s + " = " + varName + ";\r\n";
+                 prefix = "vec4 ";
+            }
+            else if(output.Type == NodeType.Bool)
+            {
+                 prefix = "bool ";
             }
 
-            return "";
+           
+            if (currentFrag.IndexOf(prefix + s + " = ") > -1)
+            {
+                prefix = s + " = " + varName + ";\r\n";
+            }
+            else
+            {
+                prefix += s + " = " + varName + ";\r\n";
+            }
+
+            return prefix;
         }
 
         protected virtual void Process()
@@ -112,10 +126,6 @@ namespace Materia.Nodes.MathNodes
             VarData d = JsonConvert.DeserializeObject<VarData>(data);
             SetBaseNodeDate(d);
             varName = d.varName;
-
-            SetConnections(nodes, d.outputs);
-
-            TryAndProcess();
         }
 
         public override string GetJson()

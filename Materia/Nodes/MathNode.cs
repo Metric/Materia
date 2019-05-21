@@ -10,9 +10,20 @@ namespace Materia.Nodes
 {
     public class MathNode : Node
     {
+        public NodeInput executeInput;
+
+        protected Node parentNode;
         public Node ParentNode
         {
-            get; set;
+            get
+            {
+                return parentNode;
+            }
+            set
+            {
+                parentNode = value;
+                OnParentNodeSet();
+            }
         }
 
         protected string shaderId;
@@ -89,12 +100,32 @@ namespace Materia.Nodes
             }
         }
 
+        public MathNode()
+        {
+            Inputs = new List<NodeInput>();
+            Outputs = new List<NodeOutput>();
+
+            executeInput = new NodeInput(NodeType.Execute, this);
+            Inputs.Add(executeInput);
+            Outputs.Add(new NodeOutput(NodeType.Execute, this));
+        }
+
+        public Graph TopGraph()
+        {
+            var p = ParentGraph;
+
+            if(p is FunctionGraph)
+            {
+                p = (p as FunctionGraph).TopGraph();
+            }
+
+            return p;
+        }
+
         public override void FromJson(Dictionary<string, Node> nodes, string data)
         {
             NodeData d = JsonConvert.DeserializeObject<NodeData>(data);
             SetBaseNodeDate(d);
-            SetConnections(nodes, d.outputs);
-            TryAndProcess();
         }
 
         public override string GetJson()
@@ -110,7 +141,22 @@ namespace Materia.Nodes
             
         }
 
-        public virtual string GetShaderPart()
+        public virtual void OnFunctionParentSet()
+        {
+
+        }
+
+        protected virtual void OnParentNodeSet()
+        {
+
+        }
+
+        public virtual void UpdateOutputType()
+        {
+
+        }
+
+        public virtual string GetShaderPart(string currentFrag)
         {
             return "";
         }

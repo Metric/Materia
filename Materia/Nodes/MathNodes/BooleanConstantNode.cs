@@ -13,6 +13,8 @@ namespace Materia.Nodes.MathNodes
         NodeOutput output;
 
         protected bool val;
+
+        [Promote(NodeType.Bool)]
         public bool True
         {
             get
@@ -61,10 +63,6 @@ namespace Materia.Nodes.MathNodes
             BoolConstantData d = JsonConvert.DeserializeObject<BoolConstantData>(data);
             SetBaseNodeDate(d);
             val = d.val;
-
-            SetConnections(nodes, d.outputs);
-
-            Updated();
         }
 
         public override string GetJson()
@@ -76,16 +74,32 @@ namespace Materia.Nodes.MathNodes
             return JsonConvert.SerializeObject(d);
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             var s = shaderId + "0";
 
-            return "bool " + s + " = " + val.ToString().ToLower() + ";\r\n";
+            bool t = val;
+
+            var p = TopGraph();
+            if (p != null && p.HasParameterValue(Id, "True"))
+            {
+                t = Convert.ToBoolean(p.GetParameterValue(Id, "True"));
+            }
+
+            return "bool " + s + " = " + t.ToString().ToLower() + ";\r\n";
         }
 
         void Process()
         {
-            output.Data = val;
+            bool t = val;
+
+            var p = TopGraph();
+            if (p != null && p.HasParameterValue(Id, "True"))
+            {
+                t = Convert.ToBoolean(p.GetParameterValue(Id, "True"));
+            }
+
+            output.Data = t;
             output.Changed();
 
             if (ParentGraph != null)

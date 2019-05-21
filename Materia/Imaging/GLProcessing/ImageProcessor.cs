@@ -20,22 +20,63 @@ namespace Materia.Imaging.GLProcessing
         protected static GLFrameBuffer frameBuff;
         protected static GLTextuer2D colorBuff;
 
+        protected static PreviewProcessor resizeProcessor;
+
         protected static Dictionary<string, GLShaderProgram> Shaders = new Dictionary<string, GLShaderProgram>();
 
         protected int Width { get; set; }
         protected int Height { get; set; }
+
+        public bool Stretch { get; set; }
 
         public float TileX { get; set; }
         public float TileY { get; set; }
 
         public ImageProcessor()
         {
+            Stretch = true;
             TileX = 1;
             TileY = 1;
         }
 
+        protected void ResizeViewTo(GLTextuer2D inc, GLTextuer2D o, int owidth, int oheight, int nwidth, int nheight)
+        {
+            float wp = (float)nwidth / (float)owidth;
+            float hp = (float)nheight / (float)oheight;
+
+            float fp = wp < hp ? wp : hp;
+
+            Matrix4 proj = Matrix4.CreateOrthographic(nwidth, nheight, 0.03f, 1000f);
+            Matrix4 translation = Matrix4.CreateTranslation(0, 0, 0);
+            //half width/height for scale as it is centered based
+            Matrix4 sm = Matrix4.CreateScale(fp * (float)(owidth * 0.5f), -fp * (float)(oheight * 0.5f), 1);
+            Matrix4 model = sm * translation;
+            Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
+
+            resizeProcessor.Model = model;
+            resizeProcessor.View = view;
+            resizeProcessor.Projection = proj;
+
+            resizeProcessor.Bind(inc);
+
+            if(renderQuad != null)
+            {
+                renderQuad.Draw();
+            }
+
+            resizeProcessor.Unbind();
+
+            o.Bind();
+            o.CopyFromFrameBuffer(nwidth, nheight);
+            GLTextuer2D.Unbind();
+        }
+
         protected void CreateBuffersIfNeeded()
         {
+            if(resizeProcessor == null)
+            {
+                resizeProcessor = new PreviewProcessor();
+            }
             if (renderBuff == null)
             {
                 renderBuff = new GLRenderBuffer();
@@ -62,6 +103,8 @@ namespace Materia.Imaging.GLProcessing
                 frameBuff.Bind();
                 frameBuff.AttachColor(colorBuff);
                 frameBuff.AttachDepth(renderBuff);
+                GL.DrawBuffer(DrawBufferMode.ColorAttachment0);
+                GL.ReadBuffer(ReadBufferMode.ColorAttachment0);
 
                 if (!frameBuff.IsValid)
                 {
@@ -167,18 +210,22 @@ namespace Materia.Imaging.GLProcessing
             if (colorBuff != null)
             {
                 colorBuff.Release();
+                colorBuff = null;
             }
             if (renderQuad != null)
             {
                 renderQuad.Release();
+                renderQuad = null;
             }
             if (renderBuff != null)
             {
                 renderBuff.Release();
+                renderBuff = null;
             }
             if (frameBuff != null)
             {
                 frameBuff.Release();
+                frameBuff = null;
             }
         }
     }

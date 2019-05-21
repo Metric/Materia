@@ -28,7 +28,8 @@ namespace Materia
     {
         Parameter,
         Pixel,
-        FX
+        FX,
+        CustomFunction
     }
     /// <summary>
     /// Interaction logic for UIGraph.xaml
@@ -277,8 +278,18 @@ namespace Materia
                 string data = Clipboard.GetText();
 
                 if (string.IsNullOrEmpty(data)) return;
+                GraphCopyData cd;
 
-                GraphCopyData cd = JsonConvert.DeserializeObject<GraphCopyData>(data);
+                //apparently deserialize will throw an exception
+                //it the content isn't json at atll
+                try
+                {
+                   cd = JsonConvert.DeserializeObject<GraphCopyData>(data);
+                }
+                catch
+                {
+                    return;
+                }
 
                 if (cd.nodes == null || cd.nodes.Count == 0) return;
 
@@ -421,20 +432,40 @@ namespace Materia
         {
             if (graph != null)
             {
-                GraphStackItem item = new GraphStackItem();
-                item.id = n.Id;
-                item.node = n;
-                item.graph = graph;
-                item.type = type;
-                item.parameter = param;
-
-
-                if (!GraphStack.Contains(item))
+                if (n != null)
                 {
-                    GraphStack.Push(item);
-                    if (!Crumbs.Contains(n.Id))
+                    GraphStackItem item = new GraphStackItem();
+                    item.id = n.Id;
+                    item.node = n;
+                    item.graph = graph;
+                    item.type = type;
+                    item.parameter = param;
+
+
+                    if (!GraphStack.Contains(item))
                     {
-                        BreadCrumb c = new BreadCrumb(Crumbs, graph.Name, this, n.Id);
+                        GraphStack.Push(item);
+                        if (!Crumbs.Contains(n.Id))
+                        {
+                            BreadCrumb c = new BreadCrumb(Crumbs, graph.Name, this, n.Id);
+                        }
+                    }
+                }
+                else
+                {
+                    GraphStackItem item = new GraphStackItem();
+                    item.id = graph.Name;
+                    item.node = null;
+                    item.graph = graph;
+                    item.type = type;
+                    item.parameter = param;
+                    if(!GraphStack.Contains(item))
+                    {
+                        GraphStack.Push(item);
+                        if(!Crumbs.Contains(item.id))
+                        {
+                            BreadCrumb c = new BreadCrumb(Crumbs, graph.Name, this, item.id);
+                        }
                     }
                 }
             }
@@ -450,6 +481,12 @@ namespace Materia
             Graph = graph;
 
             Scale = Graph.Zoom;
+
+            if(Scale <= 0)
+            {
+                Scale = 1;
+            }
+
             XShift = Graph.ShiftX;
             YShift = Graph.ShiftY;
 
@@ -533,6 +570,35 @@ namespace Materia
                         else if(item.type == GraphStackType.FX)
                         {
                             //do same as pixel basically
+                        }
+                        else if(item.type == GraphStackType.CustomFunction)
+                        {
+                            FunctionGraph fn = graph.CustomFunctions.Find(m => m.Name.Equals(item.id));
+
+                            if(fn != null)
+                            {
+                                graph = item.graph = fn;
+
+                                if(!GraphStack.Contains(item))
+                                {
+                                    GraphStack.Push(item);
+
+                                    if(!Crumbs.Contains(item.id))
+                                    {
+                                        BreadCrumb c = new BreadCrumb(Crumbs, fn.Name, this, item.id);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                StoredGraphStack = null;
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            StoredGraphStack = null;
+                            return;
                         }
                     }
                     else
@@ -1431,6 +1497,7 @@ namespace Materia
             {
                 SelectedNodes.Remove(n);
                 n.HideBorder();
+                
             }
             else
             {
@@ -1441,12 +1508,14 @@ namespace Materia
 
         public void ClearMultiSelect()
         {
-            foreach(UINode n in SelectedNodes)
+            List<UINode> toRemove = SelectedNodes.ToList();
+
+            SelectedNodes.Clear();
+
+            foreach (UINode n in toRemove)
             {
                 n.HideBorder();
             }
-
-            SelectedNodes.Clear();
         }
 
         private void ViewPort_MouseWheel(object sender, MouseWheelEventArgs e)

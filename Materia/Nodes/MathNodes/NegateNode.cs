@@ -12,7 +12,7 @@ namespace Materia.Nodes.MathNodes
         NodeInput input;
         NodeOutput output;
 
-        public NegateNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public NegateNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -25,13 +25,11 @@ namespace Materia.Nodes.MathNodes
             input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Float Type");
             output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -42,7 +40,16 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
+            UpdateOutputType();
             Updated();
+        }
+
+        public override void UpdateOutputType()
+        {
+            if(input.HasInput && executeInput.HasInput)
+            {
+                output.Type = input.Input.Type;
+            }
         }
 
         public override void TryAndProcess()
@@ -53,10 +60,10 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput) return "";
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
 
             var index = input.Input.Node.Outputs.IndexOf(input.Input);
@@ -97,19 +104,28 @@ namespace Materia.Nodes.MathNodes
             {
                 float v = (float)o;
                 output.Data = v * -1;
-                output.Changed();
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
             else if (o is MVector)
             {
                 MVector v = (MVector)o;
 
                 output.Data = v * -1;
-                output.Changed();
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
             else
             {
                 output.Data = 0;
-                output.Changed();
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
 
             if (ParentGraph != null)

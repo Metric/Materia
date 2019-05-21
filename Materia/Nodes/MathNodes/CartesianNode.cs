@@ -13,7 +13,7 @@ namespace Materia.Nodes.MathNodes
         NodeOutput output;
         NodeOutput output2;
 
-        public CartesianNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public CartesianNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -28,7 +28,6 @@ namespace Materia.Nodes.MathNodes
             output = new NodeOutput(NodeType.Float, this, "X Output");
             output2 = new NodeOutput(NodeType.Float, this, "Y Output");
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
                 
@@ -38,7 +37,6 @@ namespace Materia.Nodes.MathNodes
             input2.OnInputAdded += Input_OnInputAdded;
             input2.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
             Outputs.Add(output2);
         }
@@ -61,20 +59,20 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
-            if (!Inputs[0].HasInput || !Inputs[1].HasInput) return "";
-            var s1 = shaderId + "0";
-            var s2 = shaderId + "1";
+            if (!Inputs[1].HasInput || !Inputs[2].HasInput) return "";
+            var s1 = shaderId + "1";
+            var s2 = shaderId + "2";
 
-            var n1id = (Inputs[0].Input.Node as MathNode).ShaderId;
-            var n2id = (Inputs[1].Input.Node as MathNode).ShaderId;
+            var n1id = (Inputs[1].Input.Node as MathNode).ShaderId;
+            var n2id = (Inputs[2].Input.Node as MathNode).ShaderId;
 
-            var index = Inputs[0].Input.Node.Outputs.IndexOf(Inputs[0].Input);
+            var index = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
 
             n1id += index;
 
-            var index2 = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
+            var index2 = Inputs[2].Input.Node.Outputs.IndexOf(Inputs[2].Input);
 
             n2id += index2;
 
@@ -96,9 +94,12 @@ namespace Materia.Nodes.MathNodes
 
 
             output.Data = radius * (float)Math.Cos(theta);
-            output.Changed();
             output2.Data = radius * (float)Math.Sin(theta);
-            output2.Changed();
+
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {

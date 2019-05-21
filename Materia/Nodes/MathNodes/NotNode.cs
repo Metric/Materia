@@ -11,7 +11,7 @@ namespace Materia.Nodes.MathNodes
         NodeInput input;
         NodeOutput output;
 
-        public NotNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public NotNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -24,13 +24,11 @@ namespace Materia.Nodes.MathNodes
             input = new NodeInput(NodeType.Bool, this, "Bool Input");
             output = new NodeOutput(NodeType.Bool, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -52,10 +50,10 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput) return "";
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
 
             var index = input.Input.Node.Outputs.IndexOf(input.Input);
@@ -72,7 +70,10 @@ namespace Materia.Nodes.MathNodes
             bool v = (bool)input.Input.Data;
 
             output.Data = !v;
-            output.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {

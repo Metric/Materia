@@ -20,6 +20,7 @@ namespace Materia.Imaging.GLProcessing
 
         public TransformProcessor() : base()
         {
+            Stretch = false;
             shader = GetShader("image.glsl", "transform.glsl");
         }
 
@@ -29,6 +30,10 @@ namespace Materia.Imaging.GLProcessing
 
             if (shader != null)
             {
+                ResizeViewTo(tex, output, tex.Width, tex.Height, width, height);
+                tex = output;
+                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
                 Matrix3 rot = Rotation;
                 Matrix3 sc = Scale;
                 Vector3 tr = Translation;

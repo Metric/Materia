@@ -31,9 +31,19 @@ namespace Materia.Buffers
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
         }
 
+        public void BindRead()
+        {
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, fbo);
+        }
+
         public static void Unbind()
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        }
+
+        public static void UnbindRead()
+        {
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
         }
 
         public void AttachDepth(GLTextuer2D tex)
@@ -41,14 +51,14 @@ namespace Materia.Buffers
             GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, tex.Id, 0);
         }
 
-        public void AttachColor(GLTextuer2D tex)
+        public void AttachColor(GLTextuer2D tex, int index = 0)
         {
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, tex.Id, 0);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0 + index, TextureTarget.Texture2D, tex.Id, 0);
         }
 
-        public void AttachColor(GLRenderBuffer buf)
+        public void AttachColor(GLRenderBuffer buf, int index = 0)
         {
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, RenderbufferTarget.Renderbuffer, buf.Id);
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0 + index, RenderbufferTarget.Renderbuffer, buf.Id);
         }
 
         public void AttachDepth(GLRenderBuffer buf)

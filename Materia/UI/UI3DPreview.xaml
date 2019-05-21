@@ -31,7 +31,7 @@
                 <MenuItem Header="_Orthographic" h:MenuItemExtensions.GroupName="cameraMode" Click="CameraMode_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
                 <MenuItem Header="_Perspective" h:MenuItemExtensions.GroupName="cameraMode" Click="CameraMode_Click" Foreground="#555" IsChecked="True" IsCheckable="True" />
                 <Separator />
-                <MenuItem Header="_Settings" Foreground="#555" />
+                <MenuItem Header="_Settings" Foreground="#555" Click="CameraSettings_Click" />
             </MenuItem>
         </Menu>
     </Grid>

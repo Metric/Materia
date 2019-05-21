@@ -16,7 +16,7 @@ namespace Materia.Nodes.MathNodes
 
         MVector vec;
 
-        public MakeFloat3Node(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public MakeFloat3Node(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -34,7 +34,6 @@ namespace Materia.Nodes.MathNodes
 
             output = new NodeOutput(NodeType.Float3, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
             Inputs.Add(input3);
@@ -47,8 +46,6 @@ namespace Materia.Nodes.MathNodes
 
             input3.OnInputAdded += Input_OnInputAdded;
             input3.OnInputChanged += Input_OnInputChanged;
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -70,10 +67,10 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput || !input2.HasInput || !input3.HasInput) return "";
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
             var n2id = (input2.Input.Node as MathNode).ShaderId;
             var n3id = (input3.Input.Node as MathNode).ShaderId;
@@ -107,7 +104,10 @@ namespace Materia.Nodes.MathNodes
             vec.Z = z;
 
             output.Data = vec;
-            output.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using OpenTK;
 
 namespace Materia.UI.Helpers
@@ -57,6 +58,13 @@ namespace Materia.UI.Helpers
             float c = (float)Math.Pow(b, 0.5f);
 
             return (c + t);
+        }
+
+        public static Point GetPointOnBezierCurve(Point start, Point control, Point end, float t)
+        {
+            double x = (((1 - t) * (1 - t)) * start.X) + (2 * t * (1 - t) * control.X) + ((t * t) * end.X);
+            double y = (((1 - t) * (1 - t)) * start.Y) + (2 * t * (1 - t) * control.Y) + ((t * t) * end.Y);
+            return new Point(x, y);
         }
     }
 }

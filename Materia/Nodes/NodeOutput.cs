@@ -26,9 +26,27 @@ namespace Materia.Nodes
         public event OutputChanged OnInputAdded;
         public event OutputChanged OnInputRemoved;
 
+        public event OutputChanged OnTypeChanged;
+
         public List<NodeInput> To { get; protected set; }
 
-        public NodeType Type { get; set; }
+        protected NodeType type;
+        public NodeType Type
+        {
+            get
+            {
+                return type;
+            }
+            set
+            {
+                type = value;
+                if(OnTypeChanged != null)
+                {
+                    OnTypeChanged.Invoke(this);
+                }
+            }
+        }
+
         public Node Node { get; protected set; }
 
         public string Name { get; set; }
@@ -60,10 +78,33 @@ namespace Materia.Nodes
 
         public NodeOutput(NodeType t, Node n, string name = "")
         {
-            Type = t;
+            type = t;
             Node = n;
             Name = name;
             To = new List<NodeInput>();
+        }
+
+        public bool InsertAt(int index, NodeInput inp)
+        {
+            if ((inp.Type & Type) != 0)
+            {
+                if (inp.Input != null)
+                {
+                    inp.Input.Remove(inp);
+                }
+
+                inp.Input = this;
+                To.Insert(index,inp);
+
+                if (OnInputAdded != null)
+                {
+                    OnInputAdded(this);
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         public bool Add(NodeInput inp)

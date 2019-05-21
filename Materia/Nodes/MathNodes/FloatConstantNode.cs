@@ -62,10 +62,6 @@ namespace Materia.Nodes.MathNodes
             FloatConstantData d = JsonConvert.DeserializeObject<FloatConstantData>(data);
             SetBaseNodeDate(d);
             val = d.val;
-
-            SetConnections(nodes, d.outputs);
-
-            Updated();
         }
 
         public override string GetJson()
@@ -77,28 +73,14 @@ namespace Materia.Nodes.MathNodes
             return JsonConvert.SerializeObject(d);
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             var s = shaderId + "0";
 
             float v = val;
 
-            var p = ParentGraph;
-
-            while(p != null && p is FunctionGraph)
-            {
-                var np = (p as FunctionGraph).ParentNode;
-                if(np != null)
-                {
-                    p = np.ParentGraph;
-                }
-                else
-                {
-                    p = null;
-                }
-            }
-
-            if(p != null && p.HasParameterValue(Id, "Value"))
+            var p = TopGraph();
+            if (p != null && p.HasParameterValue(Id, "Value"))
             {
                 v = Convert.ToSingle(p.GetParameterValue(Id, "Value"));
             }
@@ -110,21 +92,7 @@ namespace Materia.Nodes.MathNodes
         {
             float v = val;
 
-            var p = ParentGraph;
-
-            while (p != null && p is FunctionGraph)
-            {
-                var np = (p as FunctionGraph).ParentNode;
-                if (np != null)
-                {
-                    p = np.ParentGraph;
-                }
-                else
-                {
-                    p = null;
-                }
-            }
-
+            var p = TopGraph();
             if (p != null && p.HasParameterValue(Id, "Value"))
             {
                 v = Convert.ToSingle(p.GetParameterValue(Id, "Value"));

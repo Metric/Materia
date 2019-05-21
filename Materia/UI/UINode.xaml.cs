@@ -254,7 +254,7 @@ namespace Materia
 
                             if (odx >= 0 && odx < OutputNodes.Count)
                             {
-                                OutputNodes[odx].ConnectToNode(p);
+                                OutputNodes[odx].ConnectToNode(p, true);
                             }
                         }
                         else
@@ -454,6 +454,11 @@ namespace Materia
             {
                 n.ShowName = false;
             }
+
+            foreach(UINodePoint p in OutputNodes)
+            {
+                p.UpdateSelected(false);
+            }
         }
 
         public void ShowBorder()
@@ -469,6 +474,11 @@ namespace Materia
             foreach (UINodePoint n in OutputStack.Children)
             {
                 n.ShowName = true;
+            }
+
+            foreach (UINodePoint p in OutputNodes)
+            {
+                p.UpdateSelected(true);
             }
         }
 
@@ -539,6 +549,7 @@ namespace Materia
 
                 Graph.ClearMultiSelect();
                 Graph.ToggleMultiSelect(this);
+                Canvas.SetZIndex(this, 1);
             }
             else if(e.RightButton == MouseButtonState.Pressed)
             {
@@ -634,6 +645,7 @@ namespace Materia
             if(e.LeftButton == MouseButtonState.Released)
             {
                 mouseDown = false;
+                Canvas.SetZIndex(this, 0);
             }
         }
 

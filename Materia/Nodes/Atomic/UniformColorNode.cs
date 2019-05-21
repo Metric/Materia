@@ -13,11 +13,11 @@ namespace Materia.Nodes.Atomic
 {
     public class UniformColorNode : ImageNode
     {
-        Vector4 color;
+        MVector color;
 
         [Promote(NodeType.Float4)]
         [ColorPicker]
-        public Vector4 Color
+        public MVector Color
         {
             get
             {
@@ -70,7 +70,7 @@ namespace Materia.Nodes.Atomic
 
             tileX = tileY = 1;
 
-            color = new Vector4(0, 0, 0, 1);
+            color = new MVector(0, 0, 0, 1);
 
             processor = new UniformColorProcessor();
             previewProcessor = new BasicImageRenderer();
@@ -93,7 +93,7 @@ namespace Materia.Nodes.Atomic
         {
             CreateBufferIfNeeded();
 
-            Vector4 pcolor = color;
+            Vector4 pcolor = new Vector4(color.X, color.Y, color.Z, color.W);
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Color"))
             {
@@ -133,7 +133,7 @@ namespace Materia.Nodes.Atomic
             UniformColorNodeData d = JsonConvert.DeserializeObject<UniformColorNodeData>(data);
             SetBaseNodeDate(d);
             float[] c = d.color;
-            color = new Vector4(c[0], c[1], c[2], c[3]);
+            color = new MVector(c[0], c[1], c[2], c[3]);
         }
 
         public override string GetJson()

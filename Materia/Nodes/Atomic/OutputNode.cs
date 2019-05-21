@@ -135,6 +135,7 @@ namespace Materia.Nodes.Atomic
             Outputs.Clear();
             Output = op;
             Outputs.Add(op);
+            TryAndProcess();
         }
 
         private void Input_OnInputRemoved(NodeInput n)
@@ -179,13 +180,13 @@ namespace Materia.Nodes.Atomic
             previewProcessor.Process(i1.Width, i1.Height, i1, buffer);
             previewProcessor.Complete();
 
-            Updated();
-
             if (Output != null)
             {
                 Output.Data = buffer;
                 Output.Changed();
             }
+
+            Updated();
         }
 
         public override GLTextuer2D GetActiveBuffer()

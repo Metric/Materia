@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.MathHelpers;
+using Materia.Nodes.Attributes;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -15,6 +16,7 @@ namespace Materia.Nodes.MathNodes
         MVector vec;
 
         protected float x;
+        [Promote(NodeType.Float)]
         public float X
         {
             get
@@ -29,6 +31,7 @@ namespace Materia.Nodes.MathNodes
         }
 
         protected float y;
+        [Promote(NodeType.Float)]
         public float Y
         {
             get
@@ -43,6 +46,7 @@ namespace Materia.Nodes.MathNodes
         }
 
         protected float z;
+        [Promote(NodeType.Float)]
         public float Z
         {
             get
@@ -52,7 +56,7 @@ namespace Materia.Nodes.MathNodes
             set
             {
                 z = value;
-                Updated();
+               Updated();
             }
         }
 
@@ -97,10 +101,6 @@ namespace Materia.Nodes.MathNodes
             x = d.x;
             y = d.y;
             z = d.z;
-
-            SetConnections(nodes, d.outputs);
-
-            Updated();
         }
 
         public override string GetJson()
@@ -114,18 +114,55 @@ namespace Materia.Nodes.MathNodes
             return JsonConvert.SerializeObject(d);
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             var s = shaderId + "0";
 
-            return "vec3 " + s + " = vec3(" + x + "," + y + "," + z + ");\r\n";
+            float px = x;
+            float py = y;
+            float pz = z;
+
+            var p = TopGraph();
+            if (p != null && p.HasParameterValue(Id, "X"))
+            {
+                px = Convert.ToSingle(p.GetParameterValue(Id, "X"));
+            }
+            if (p != null && p.HasParameterValue(Id, "Y"))
+            {
+                py = Convert.ToSingle(p.GetParameterValue(Id, "Y"));
+            }
+            if (p != null && p.HasParameterValue(Id, "Z"))
+            {
+                pz = Convert.ToSingle(p.GetParameterValue(Id, "Z"));
+            }
+
+            return "vec3 " + s + " = vec3(" + px + "," + py + "," + pz + ");\r\n";
         }
 
         void Process()
         {
-            vec.X = x;
-            vec.Y = y;
-            vec.Z = z;
+
+            float px = x;
+            float py = y;
+            float pz = z;
+
+            var p = TopGraph();
+            if (p != null && p.HasParameterValue(Id, "X"))
+            {
+                px = Convert.ToSingle(p.GetParameterValue(Id, "X"));
+            }
+            if (p != null && p.HasParameterValue(Id, "Y"))
+            {
+                py = Convert.ToSingle(p.GetParameterValue(Id, "Y"));
+            }
+            if (p != null && p.HasParameterValue(Id, "Z"))
+            {
+                pz = Convert.ToSingle(p.GetParameterValue(Id, "Z"));
+            }
+
+            vec.X = px;
+            vec.Y = py;
+            vec.Z = pz;
             output.Data = vec;
             output.Changed();
             if (ParentGraph != null)

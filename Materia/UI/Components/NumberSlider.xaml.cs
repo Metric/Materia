@@ -29,6 +29,7 @@ namespace Materia
         object propertyOwner;
         SliderAttribute attributes;
         bool initValue;
+        bool isInt;
 
         public NumberSlider()
         {
@@ -61,16 +62,37 @@ namespace Materia
                 }
             }
 
-            if (attributes.IsInt)
+            isInt = attributes.IsInt;
+
+            if (isInt)
             {
-                SlideInput.Value = (int)p.GetValue(owner);
+                SlideInput.Value = Convert.ToInt32(p.GetValue(owner));
                 InputValue.Text = SlideInput.Value > 0 ? String.Format("{0:0}", SlideInput.Value) : "0";
             }
             else
             {
-                SlideInput.Value = (float)p.GetValue(owner);
-                InputValue.Text = SlideInput.Value >= 0.01 ? String.Format("{0:0.00}", SlideInput.Value) : "0";
+                SlideInput.Value = Convert.ToSingle(p.GetValue(owner));
+                InputValue.Text = SlideInput.Value >= 0.01 ? String.Format("{0:0.000}", SlideInput.Value) : "0";
             }
+        }
+
+        public void Set(float min, float max, PropertyInfo p, object owner)
+        {
+            property = p;
+            propertyOwner = owner;
+
+            initValue = true;
+
+            SlideInput.Minimum = min;
+
+            initValue = true;
+
+            SlideInput.Maximum = max;
+
+            initValue = true;
+
+            SlideInput.Value = Convert.ToSingle(p.GetValue(owner));
+            InputValue.Text = SlideInput.Value >= 0.01 ? String.Format("{0:0.000}", SlideInput.Value) : "0";
         }
 
         private void SlideInput_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -78,7 +100,7 @@ namespace Materia
 
             if (!initValue)
             {
-                if (attributes.IsInt)
+                if (isInt)
                 {
                     InputValue.Text = SlideInput.Value > 0 ? String.Format("{0:0}", SlideInput.Value) : "0";
                     int v = (int)SlideInput.Value;
@@ -103,7 +125,7 @@ namespace Materia
                 }
                 else
                 {
-                    InputValue.Text = SlideInput.Value >= 0.01 ? String.Format("{0:0.00}", SlideInput.Value) : "0";
+                    InputValue.Text = SlideInput.Value >= 0.01 ? String.Format("{0:0.000}", SlideInput.Value) : "0";
                     float v = (float)SlideInput.Value;
 
                     if (ctk != null)

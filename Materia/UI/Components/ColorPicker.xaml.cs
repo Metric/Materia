@@ -288,19 +288,19 @@ namespace Materia.UI.Components
             isInputAText = true;
 
             float h = (hsv.H / 359.0f);
-            HInput.Text = h >= 0.01 ? String.Format("{0:0.00}", h) : "0";
-            SInput.Text = hsv.S >= 0.01 ? String.Format("{0:0.00}", hsv.S) : "0";
-            VInput.Text = hsv.V >= 0.01 ? String.Format("{0:0.00}", hsv.V) : "0";
+            HInput.Text = h >= 0.01 ? String.Format("{0:0.000}", h) : "0";
+            SInput.Text = hsv.S >= 0.01 ? String.Format("{0:0.000}", hsv.S) : "0";
+            VInput.Text = hsv.V >= 0.01 ? String.Format("{0:0.000}", hsv.V) : "0";
 
             float r = (current.R / 255.0f);
             float g = (current.G / 255.0f);
             float b = (current.B / 255.0f);
 
-            RInput.Text = r >= 0.01 ? String.Format("{0:0.00}", r) : "0";
-            GInput.Text = g >= 0.01 ? String.Format("{0:0.00}", g) : "0";
-            BInput.Text = b >= 0.01 ? String.Format("{0:0.00}", b) : "0";
+            RInput.Text = r >= 0.01 ? String.Format("{0:0.000}", r) : "0";
+            GInput.Text = g >= 0.01 ? String.Format("{0:0.000}", g) : "0";
+            BInput.Text = b >= 0.01 ? String.Format("{0:0.000}", b) : "0";
 
-            AInput.Text = alpha >= 0.01 ? String.Format("{0:0.00}", alpha) : "0";
+            AInput.Text = alpha >= 0.01 ? String.Format("{0:0.000}", alpha) : "0";
         }
 
         void UpdateSliders()

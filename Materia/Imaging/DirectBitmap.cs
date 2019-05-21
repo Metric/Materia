@@ -20,6 +20,12 @@ namespace Materia.Imaging
             V = v;
         }
 
+        public FloatColor ToFloatColor(float a = 1)
+        {
+            var c = ToColor();
+            return new FloatColor(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, a);
+        }
+
         public Color ToColor()
         {
             float h = H;
@@ -106,6 +112,19 @@ namespace Materia.Imaging
             G = Math.Min(255, Math.Max(0, G * 255));
             B = Math.Min(255, Math.Max(0, B * 255));
 
+            if(float.IsNaN(R))
+            {
+                R = 0;
+            }
+            if(float.IsNaN(G))
+            {
+                G = 0;
+            }
+            if(float.IsNaN(B))
+            {
+                B = 0;
+            }
+
             return Color.FromArgb(255, (int)R, (int)G, (int)B);
         }
 
@@ -117,6 +136,43 @@ namespace Materia.Imaging
             int min = Math.Min(c.R, Math.Min(c.G, c.B));
 
             hsv.H = c.GetHue();
+            hsv.S = (max == 0) ? 0 : 1.0f - (1.0f * (float)min / (float)max);
+            hsv.V = max / 255.0f;
+
+            return hsv;
+        }
+
+        public static HsvColor FromFloatColor(ref FloatColor c)
+        {
+            HsvColor hsv = new HsvColor();
+
+            int r = (int)(c.r * 255);
+            int g = (int)(c.g * 255);
+            int b = (int)(c.b * 255);
+
+            int max = Math.Max(r, Math.Max(g, b));
+            int min = Math.Min(r, Math.Min(g, b));
+
+            float delta = max - min;
+            float h = 0;
+
+            if (delta > float.Epsilon)
+            {
+                if (r == max)
+                {
+                    h = (g - b) / delta;
+                }
+                else if (g == max)
+                {
+                    h = 2f + (b - r) / delta;
+                }
+                else if (b == max)
+                {
+                    h = 4f + (r - g) / delta;
+                }
+            }
+
+            hsv.H = h * 360; 
             hsv.S = (max == 0) ? 0 : 1.0f - (1.0f * (float)min / (float)max);
             hsv.V = max / 255.0f;
 

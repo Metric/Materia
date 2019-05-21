@@ -13,7 +13,7 @@ namespace Materia.Nodes.MathNodes
         NodeInput input3;
         NodeOutput output;
 
-        public IfElseNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public IfElseNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -29,7 +29,6 @@ namespace Materia.Nodes.MathNodes
 
             output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
             Inputs.Add(input3);
@@ -43,7 +42,6 @@ namespace Materia.Nodes.MathNodes
             input3.OnInputAdded += Input_OnInputAdded;
             input3.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -54,7 +52,35 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
+            UpdateOutputType();
             Updated();
+        }
+
+        public override void UpdateOutputType()
+        {
+            if (Inputs.Count == 0) return;
+            if (Inputs[2].HasInput && Inputs[3].HasInput)
+            {
+                NodeType t1 = Inputs[2].Input.Type;
+                NodeType t2 = Inputs[3].Input.Type;
+
+                if (t1 == NodeType.Float && t2 == NodeType.Float)
+                {
+                    output.Type = NodeType.Float;
+                }
+                else if (t1 == NodeType.Float2 && t2 == NodeType.Float2)
+                {
+                    output.Type = NodeType.Float2;
+                }
+                else if (t1 == NodeType.Float3 && t2 == NodeType.Float3)
+                {
+                    output.Type = NodeType.Float3;
+                }
+                else if (t1 == NodeType.Float4 && t2 == NodeType.Float4)
+                {
+                    output.Type = NodeType.Float4;
+                }
+            }
         }
 
         public override void TryAndProcess()
@@ -65,10 +91,10 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput || !input2.HasInput || !input3.HasInput) return "";
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
             var n2id = (input2.Input.Node as MathNode).ShaderId;
             var n3id = (input3.Input.Node as MathNode).ShaderId;
@@ -124,12 +150,17 @@ namespace Materia.Nodes.MathNodes
         {
             if (input2.Input.Data == null && input3.Input.Data == null) return;
 
+            if (input2.Input.Type != input3.Input.Type) return;
+
             bool c = false;
 
             if (input.Input.Data != null && input.Input.Data is bool) c = (bool)input.Input.Data;
 
             output.Data = c ? input2.Input.Data : input3.Input.Data;
-            output.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {

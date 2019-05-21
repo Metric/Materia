@@ -10,6 +10,7 @@ using Materia.Nodes.Attributes;
 using Newtonsoft.Json;
 using Materia.Textures;
 using Materia.Imaging.GLProcessing;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.Atomic
 {
@@ -36,7 +37,10 @@ namespace Materia.Nodes.Atomic
         Saturation = 18,
         Color = 19,
         Luminosity = 20,
-        LinearLight = 21
+        LinearLight = 21,
+        PinLight = 22,
+        HardMix = 23,
+        Exclusion = 24
     }
 
     public class BlendNode : ImageNode

@@ -30,6 +30,10 @@ namespace Materia.Imaging.GLProcessing
 
             if (shader != null)
             {
+                ResizeViewTo(tex, output, tex.Width, tex.Height, width, height);
+                tex = output;
+                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
                 Vector2 tiling = new Vector2(TileX, TileY);
 
                 shader.Use();

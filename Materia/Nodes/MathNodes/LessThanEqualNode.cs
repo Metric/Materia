@@ -12,7 +12,7 @@ namespace Materia.Nodes.MathNodes
         NodeInput input2;
         NodeOutput output;
 
-        public LessThanEqualNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public LessThanEqualNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -27,7 +27,6 @@ namespace Materia.Nodes.MathNodes
 
             output = new NodeOutput(NodeType.Bool, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
 
@@ -37,7 +36,6 @@ namespace Materia.Nodes.MathNodes
             input2.OnInputAdded += Input_OnInputAdded;
             input2.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -59,10 +57,10 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput || !input2.HasInput) return "";
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
             var n2id = (input2.Input.Node as MathNode).ShaderId;
 
@@ -85,7 +83,10 @@ namespace Materia.Nodes.MathNodes
             float y = (float)input2.Input.Data;
 
             output.Data = x <= y;
-            output.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {

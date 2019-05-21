@@ -12,7 +12,7 @@ namespace Materia.Nodes.MathNodes
         NodeInput input;
         NodeOutput output;
 
-        public FloorNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public FloorNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -25,13 +25,11 @@ namespace Materia.Nodes.MathNodes
             input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Float Input");
             output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -42,7 +40,16 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
+            UpdateOutputType();
             Updated();
+        }
+
+        public override void UpdateOutputType()
+        {
+            if(input.HasInput)
+            {
+                output.Type = input.Input.Type;
+            }
         }
 
         public override void TryAndProcess()
@@ -53,44 +60,36 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput) return "";
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
 
             var index = input.Input.Node.Outputs.IndexOf(input.Input);
 
             n1id += index;
 
-            Console.WriteLine("floor prev input: " + n1id);
-
             if (input.Input.Type == NodeType.Float4)
             {
-                Console.WriteLine("floor Float4");
                 output.Type = NodeType.Float4;
                 return "vec4 " + s + " = floor(" + n1id + ");\r\n";
             }
             else if (input.Input.Type == NodeType.Float3)
             {
-                Console.WriteLine("floor Float3");
                 output.Type = NodeType.Float3;
                 return "vec3 " + s + " = floor(" + n1id + ");\r\n";
             }
             else if (input.Input.Type == NodeType.Float2)
             {
-                Console.WriteLine("floor Float2");
                 output.Type = NodeType.Float2;
                 return "vec2 " + s + " = floor(" + n1id + ");\r\n";
             }
             else if (input.Input.Type == NodeType.Float)
             {
-                Console.WriteLine("floor Float");
                 output.Type = NodeType.Float;
                 return "float " + s + " = floor(" + n1id + ");\r\n";
             }
-
-            Console.WriteLine("floor nothing");
 
             return "";
         }
@@ -105,7 +104,10 @@ namespace Materia.Nodes.MathNodes
             {
                 float v = (float)o;
                 output.Data = (float)Math.Floor(v);
-                output.Changed();
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
             else if (o is MVector)
             {
@@ -117,12 +119,18 @@ namespace Materia.Nodes.MathNodes
                 d.W = (float)Math.Floor(v.W);
 
                 output.Data = d;
-                output.Changed();
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
             else
             {
                 output.Data = 0;
-                output.Changed();
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
 
             if (ParentGraph != null)

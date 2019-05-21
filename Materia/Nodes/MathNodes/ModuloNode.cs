@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Materia.MathHelpers;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -12,7 +13,7 @@ namespace Materia.Nodes.MathNodes
         NodeInput input2;
         NodeOutput output;
 
-        public ModuloNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public ModuloNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -22,12 +23,11 @@ namespace Materia.Nodes.MathNodes
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
-            input = new NodeInput(NodeType.Float, this, "Float Input");
+            input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Float Input");
             input2 = new NodeInput(NodeType.Float, this, "Mod (Float) Input");
 
-            output = new NodeOutput(NodeType.Float, this);
+            output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
 
@@ -37,7 +37,6 @@ namespace Materia.Nodes.MathNodes
             input2.OnInputAdded += Input_OnInputAdded;
             input2.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -48,7 +47,16 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
+            UpdateOutputType();
             Updated();
+        }
+
+        public override void UpdateOutputType()
+        {
+            if(input.HasInput)
+            {
+                output.Type = input.Input.Type;
+            }
         }
 
         public override void TryAndProcess()
@@ -59,10 +67,10 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput || !input2.HasInput) return "";
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
             var n2id = (input2.Input.Node as MathNode).ShaderId;
 
@@ -74,18 +82,55 @@ namespace Materia.Nodes.MathNodes
 
             n2id += index2;
 
-            return "float " + s + " = " + n1id + " % " + n2id + ";\r\n";
+            var type = input.Input.Type;
+
+            if (type == NodeType.Float)
+            {
+                return "float " + s + " = mod(" + n1id + "," + n2id + ");\r\n";
+            }
+            else if(type == NodeType.Float2)
+            {
+                return "vec2 " + s + " = mod(" + n1id + "," + n2id + ");\r\n";
+            }
+            else if (type == NodeType.Float3)
+            {
+                return "vec3 " + s + " = mod(" + n1id + "," + n2id + ");\r\n";
+            }
+            else if (type == NodeType.Float4)
+            {
+                return "vec4 " + s + " = mod(" + n1id + "," + n2id + ");\r\n";
+            }
+
+            return "";
         }
 
         void Process()
         {
             if (input.Input.Data == null || input2.Input.Data == null) return;
 
-            float x = (float)input.Input.Data;
+            object x = input.Input.Data;
             float y = (float)input2.Input.Data;
 
-            output.Data = x % y;
-            output.Changed();
+            if (x is float || x is int || x is double)
+            {
+                output.Data = Convert.ToSingle(x) % y;
+            }
+            else if(x is MVector)
+            {
+                MVector m = (MVector)x;
+
+                m.X = m.X % y;
+                m.Y = m.Y % y;
+                m.Z = m.Z % y;
+                m.W = m.W % y;
+
+                output.Data = m;
+            }
+
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {

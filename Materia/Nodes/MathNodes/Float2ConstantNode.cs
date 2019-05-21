@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.MathHelpers;
+using Materia.Nodes.Attributes;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -15,6 +16,7 @@ namespace Materia.Nodes.MathNodes
         MVector vec;
 
         protected float x;
+        [Promote(NodeType.Float)]
         public float X
         {
             get
@@ -29,6 +31,7 @@ namespace Materia.Nodes.MathNodes
         }
 
         protected float y;
+        [Promote(NodeType.Float)]
         public float Y
         {
             get
@@ -81,10 +84,6 @@ namespace Materia.Nodes.MathNodes
             SetBaseNodeDate(d);
             x = d.x;
             y = d.y;
-
-            SetConnections(nodes, d.outputs);
-
-            Updated();
         }
 
         public override string GetJson()
@@ -97,16 +96,43 @@ namespace Materia.Nodes.MathNodes
             return JsonConvert.SerializeObject(d);
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             var s = shaderId + "0";
-            return "vec2 " + s + " = vec2(" + x + "," + y + ");\r\n";
+
+            float px = x;
+            float py = y;
+
+            var p = TopGraph();
+            if (p != null && p.HasParameterValue(Id, "X"))
+            {
+                px = Convert.ToSingle(p.GetParameterValue(Id, "X"));
+            }
+            if(p != null && p.HasParameterValue(Id, "Y"))
+            {
+                py = Convert.ToSingle(p.GetParameterValue(Id, "Y"));
+            }
+
+            return "vec2 " + s + " = vec2(" + px + "," + py + ");\r\n";
         }
 
         void Process()
         {
-            vec.X = x;
-            vec.Y = Y;
+            float px = x;
+            float py = y;
+
+            var p = TopGraph();
+            if (p != null && p.HasParameterValue(Id, "X"))
+            {
+                px = Convert.ToSingle(p.GetParameterValue(Id, "X"));
+            }
+            if (p != null && p.HasParameterValue(Id, "Y"))
+            {
+                py = Convert.ToSingle(p.GetParameterValue(Id, "Y"));
+            }
+
+            vec.X = px;
+            vec.Y = py;
             output.Data = vec;
             output.Changed();
             if (ParentGraph != null)

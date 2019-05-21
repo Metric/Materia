@@ -14,7 +14,7 @@ namespace Materia.Nodes.MathNodes
         NodeOutput output2;
         NodeOutput output3;
 
-        public BreakFloat3Node(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public BreakFloat3Node(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -29,13 +29,11 @@ namespace Materia.Nodes.MathNodes
             output2 = new NodeOutput(NodeType.Float, this, "Y");
             output3 = new NodeOutput(NodeType.Float, this, "Z");
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
             Outputs.Add(output2);
             Outputs.Add(output3);
@@ -59,16 +57,16 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
-            if (!Inputs[0].HasInput) return "";
-            var s1 = shaderId + "0";
-            var s2 = shaderId + "1";
-            var s3 = shaderId + "2";
+            if (!Inputs[1].HasInput) return "";
+            var s1 = shaderId + "1";
+            var s2 = shaderId + "2";
+            var s3 = shaderId + "3";
 
-            var n1id = (Inputs[0].Input.Node as MathNode).ShaderId;
+            var n1id = (Inputs[1].Input.Node as MathNode).ShaderId;
 
-            var index = Inputs[0].Input.Node.Outputs.IndexOf(Inputs[0].Input);
+            var index = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
 
             n1id += index;
 
@@ -90,9 +88,10 @@ namespace Materia.Nodes.MathNodes
             output2.Data = v.Y;
             output3.Data = v.Z;
 
-            output.Changed();
-            output2.Changed();
-            output3.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
         }
     }
 }

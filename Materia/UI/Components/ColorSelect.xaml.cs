@@ -23,7 +23,7 @@ namespace Materia.UI.Components
     /// </summary>
     public partial class ColorSelect : UserControl
     {
-        Vector4 current;
+        MVector current;
         D.Color c;
         PropertyInfo property;
         object propertyOwner;
@@ -34,21 +34,13 @@ namespace Materia.UI.Components
             SelectColor.Background = new SolidColorBrush(Colors.Black);
         }
 
-        public ColorSelect(PropertyInfo p, object owner, bool isMVector = false)
+        public ColorSelect(PropertyInfo p, object owner)
         {
             InitializeComponent();
             property = p;
             propertyOwner = owner;
 
-            if (isMVector)
-            {
-                MVector m = (MVector)p.GetValue(owner);
-                current = new Vector4(m.X, m.Y, m.Z, m.W);
-            }
-            else
-            {
-                current = (Vector4)p.GetValue(owner);
-            }
+            MVector m = (MVector)p.GetValue(owner);
 
             c = D.Color.FromArgb((int)(current.W * 255), (int)(current.X * 255), (int)(current.Y * 255), (int)(current.Z * 255));
             SelectColor.Background = new SolidColorBrush(Color.FromArgb(c.A, c.R, c.G, c.B));

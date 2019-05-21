@@ -103,10 +103,16 @@ namespace Materia.UI
         {
             HdriManager.Scan();
             HdriManager.OnHdriLoaded += HdriManager_OnHdriLoaded;
+            Camera.OnCameraChanged += Camera_OnCameraChanged;
             InitializeComponent();
             Instance = this;
             InitGL();
             Console.WriteLine("3d view inited");
+        }
+
+        private void Camera_OnCameraChanged()
+        {
+            Invalidate();
         }
 
         private void HdriManager_OnHdriLoaded(GLTextuer2D irradiance, GLTextuer2D prefiltered)
@@ -933,6 +939,14 @@ namespace Materia.UI
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             Console.WriteLine("3d view loaded");
+        }
+
+        private void CameraSettings_Click(object sender, RoutedEventArgs e)
+        {
+            if(UINodeParameters.Instance != null)
+            {
+                UINodeParameters.Instance.SetActive(camera);
+            }
         }
     }
 }

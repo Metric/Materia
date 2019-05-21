@@ -41,7 +41,7 @@ namespace Materia.Nodes.Atomic
         int elevation;
 
         [Promote(NodeType.Float)]
-        [Slider(IsInt = true, Max = 180, Min = 0, Snap = false, Ticks = new float[0])]
+        [Slider(IsInt = true, Max = 90, Min = 0, Snap = false, Ticks = new float[0])]
         public int Elevation
         {
             get

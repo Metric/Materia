@@ -11,7 +11,7 @@ namespace Materia.Nodes.MathNodes
     {
         NodeOutput output;
 
-        public AddNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public AddNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -20,8 +20,6 @@ namespace Materia.Nodes.MathNodes
             Name = "Add";
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
-
-            Inputs = new List<NodeInput>();
 
             output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
 
@@ -33,30 +31,9 @@ namespace Materia.Nodes.MathNodes
 
                 input.OnInputAdded += Input_OnInputAdded;
                 input.OnInputChanged += Input_OnInputChanged;
-                input.OnInputRemoved += Input_OnInputRemoved;
             }
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            var noinputs = Inputs.FindAll(m => !m.HasInput);
-
-            if(noinputs != null && noinputs.Count >= 2 && Inputs.Count > 2)
-            {
-                var inp = noinputs[noinputs.Count - 1];
-
-                inp.OnInputChanged -= Input_OnInputChanged;
-                inp.OnInputRemoved -= Input_OnInputRemoved;
-                inp.OnInputAdded -= Input_OnInputAdded;
-
-                Inputs.Remove(inp);
-                RemovedInput(inp);
-            }
-
-            Updated();
         }
 
         private void Input_OnInputChanged(NodeInput n)
@@ -66,7 +43,47 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
+            UpdateOutputType();
             Updated();
+        }
+
+        public override void UpdateOutputType()
+        {
+            if (Inputs.Count == 0) return;
+            if (Inputs[1].HasInput && Inputs[2].HasInput)
+            {
+                NodeType t1 = Inputs[1].Input.Type;
+                NodeType t2 = Inputs[2].Input.Type;
+
+                if (t1 == NodeType.Float && t2 == NodeType.Float)
+                {
+                    output.Type = NodeType.Float;
+                }
+                else if ((t1 == NodeType.Float && t2 == NodeType.Float2) || (t1 == NodeType.Float2 && t2 == NodeType.Float))
+                {
+                    output.Type = NodeType.Float2;
+                }
+                else if ((t1 == NodeType.Float && t2 == NodeType.Float3) || (t1 == NodeType.Float3 && t2 == NodeType.Float))
+                {
+                    output.Type = NodeType.Float3;
+                }
+                else if ((t1 == NodeType.Float && t2 == NodeType.Float4) || (t1 == NodeType.Float4 && t2 == NodeType.Float))
+                {
+                    output.Type = NodeType.Float4;
+                }
+                else if (t1 == NodeType.Float2 && t2 == NodeType.Float2)
+                {
+                    output.Type = NodeType.Float2;
+                }
+                else if (t1 == NodeType.Float3 && t2 == NodeType.Float3)
+                {
+                    output.Type = NodeType.Float3;
+                }
+                else if (t1 == NodeType.Float4 && t2 == NodeType.Float4)
+                {
+                    output.Type = NodeType.Float4;
+                }
+            }
         }
 
         protected override void AddPlaceholderInput()
@@ -75,7 +92,6 @@ namespace Materia.Nodes.MathNodes
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
 
             Inputs.Add(input);
             AddedInput(input);
@@ -87,10 +103,13 @@ namespace Materia.Nodes.MathNodes
 
             foreach(NodeInput inp in Inputs)
             {
-                if(inp.HasInput)
+                if (inp != executeInput)
                 {
-                    hasInput = true;
-                    break;
+                    if (inp.HasInput)
+                    {
+                        hasInput = true;
+                        break;
+                    }
                 }
             }
 
@@ -100,24 +119,24 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
-            if (!Inputs[0].HasInput || !Inputs[1].HasInput) return "";
+            if (!Inputs[1].HasInput || !Inputs[2].HasInput) return "";
 
-            var s = shaderId + "0";
-            var n1id = (Inputs[0].Input.Node as MathNode).ShaderId;
-            var n2id = (Inputs[1].Input.Node as MathNode).ShaderId;
+            var s = shaderId + "1";
+            var n1id = (Inputs[1].Input.Node as MathNode).ShaderId;
+            var n2id = (Inputs[2].Input.Node as MathNode).ShaderId;
 
-            var index = Inputs[0].Input.Node.Outputs.IndexOf(Inputs[0].Input);
+            var index = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
 
             n1id += index;
 
-            var index2 = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
+            var index2 = Inputs[2].Input.Node.Outputs.IndexOf(Inputs[2].Input);
 
             n2id += index2;
 
-            var t1 = Inputs[0].Input.Type;
-            var t2 = Inputs[1].Input.Type;
+            var t1 = Inputs[1].Input.Type;
+            var t2 = Inputs[2].Input.Type;
 
             if (t1 == NodeType.Float && t2 == NodeType.Float)
             {
@@ -164,12 +183,15 @@ namespace Materia.Nodes.MathNodes
 
             foreach(NodeInput inp in Inputs)
             {
-                if(inp.HasInput)
+                if (inp != executeInput)
                 {
-                    if(inp.Input.Data is MVector)
+                    if (inp.HasInput)
                     {
-                        hasVector = true;
-                        break;
+                        if (inp.Input.Data is MVector)
+                        {
+                            hasVector = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -180,32 +202,39 @@ namespace Materia.Nodes.MathNodes
 
                 foreach(NodeInput inp in Inputs)
                 {
-                    if(inp.HasInput)
+                    if (inp != executeInput)
                     {
-                        object o = inp.Input.Data;
-                        if (o == null) continue;
+                        if (inp.HasInput)
+                        {
+                            object o = inp.Input.Data;
+                            if (o == null) continue;
 
-                        if(o is float || o is int)
-                        {
-                            float f = (float)o;
-                            v.X += f;
-                            v.Y += f;
-                            v.Z += f;
-                            v.W += f;
-                        }
-                        else if(o is MVector)
-                        {
-                            MVector f = (MVector)o;
-                            v.X += f.X;
-                            v.Y += f.Y;
-                            v.Z += f.Z;
-                            v.W += f.W;
+                            if (o is float || o is int)
+                            {
+                                float f = (float)o;
+                                v.X += f;
+                                v.Y += f;
+                                v.Z += f;
+                                v.W += f;
+                            }
+                            else if (o is MVector)
+                            {
+                                MVector f = (MVector)o;
+                                v.X += f.X;
+                                v.Y += f.Y;
+                                v.Z += f.Z;
+                                v.W += f.W;
+                            }
                         }
                     }
                 }
 
                 output.Data = v;
-                output.Changed();
+
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
             else
             {
@@ -213,21 +242,28 @@ namespace Materia.Nodes.MathNodes
 
                 foreach(NodeInput inp in Inputs)
                 {
-                    if(inp.HasInput)
+                    if (inp != executeInput)
                     {
-                        object o = inp.Input.Data;
-                        if (o == null) continue;
-
-                        if (o is float || o is int)
+                        if (inp.HasInput)
                         {
-                            float f = (float)o;
-                            v += f;
+                            object o = inp.Input.Data;
+                            if (o == null) continue;
+
+                            if (o is float || o is int)
+                            {
+                                float f = (float)o;
+                                v += f;
+                            }
                         }
                     }
                 }
 
                 output.Data = v;
-                output.Changed();
+
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
         }
     }

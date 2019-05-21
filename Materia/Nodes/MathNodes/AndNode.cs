@@ -10,7 +10,7 @@ namespace Materia.Nodes.MathNodes
     {
         NodeOutput output;
 
-        public AndNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public AndNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -18,11 +18,9 @@ namespace Materia.Nodes.MathNodes
 
             Name = "And";
             Id = Guid.NewGuid().ToString();
-            Inputs = new List<NodeInput>();
             shaderId = "S" + Id.Split('-')[0];
 
             output = new NodeOutput(NodeType.Bool, this);
-
 
             for (int i = 0; i < 2; i++)
             {
@@ -33,8 +31,6 @@ namespace Materia.Nodes.MathNodes
                 input.OnInputChanged += Input_OnInputChanged;
                 input.OnInputRemoved += Input_OnInputRemoved;
             }
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -42,7 +38,7 @@ namespace Materia.Nodes.MathNodes
         {
             var noinputs = Inputs.FindAll(m => !m.HasInput);
 
-            if (noinputs != null && noinputs.Count >= 2 && Inputs.Count > 2)
+            if (noinputs != null && noinputs.Count >= 3 && Inputs.Count > 3)
             {
                 var inp = noinputs[noinputs.Count - 1];
 
@@ -90,10 +86,13 @@ namespace Materia.Nodes.MathNodes
 
             foreach (NodeInput inp in Inputs)
             {
-                if (inp.HasInput)
+                if (inp != executeInput)
                 {
-                    hasInput = true;
-                    break;
+                    if (inp.HasInput)
+                    {
+                        hasInput = true;
+                        break;
+                    }
                 }
             }
 
@@ -103,24 +102,27 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
-            var s = shaderId + "0";
+            var s = shaderId + "1";
 
             string compute = "";
             string sep = "";
 
             foreach (var inp in Inputs)
             {
-                if (inp.HasInput)
+                if (inp != executeInput)
                 {
-                    var index = inp.Input.Node.Outputs.IndexOf(inp.Input);
-                    var n1id = (inp.Input.Node as MathNode).ShaderId;
+                    if (inp.HasInput)
+                    {
+                        var index = inp.Input.Node.Outputs.IndexOf(inp.Input);
+                        var n1id = (inp.Input.Node as MathNode).ShaderId;
 
-                    n1id += index;
+                        n1id += index;
 
-                    compute += sep + n1id;
-                    sep = " && ";
+                        compute += sep + n1id;
+                        sep = " && ";
+                    }
                 }
             }
 
@@ -134,25 +136,32 @@ namespace Materia.Nodes.MathNodes
             bool v = true;
             foreach (NodeInput inp in Inputs)
             {
-                if (inp.HasInput)
+                if (inp != executeInput)
                 {
-                    object o = inp.Input.Data;
-                    if (o == null) continue;
-
-                    if (o is bool)
+                    if (inp.HasInput)
                     {
-                        bool f = (bool)o;
-                        if(!f)
+                        object o = inp.Input.Data;
+                        if (o == null) continue;
+
+                        if (o is bool)
                         {
-                            v = false;
-                            break;
+                            bool f = (bool)o;
+                            if (!f)
+                            {
+                                v = false;
+                                break;
+                            }
                         }
                     }
                 }
             }
 
             output.Data = v;
-            output.Changed();
+
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {

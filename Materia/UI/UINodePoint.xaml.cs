@@ -26,6 +26,7 @@ namespace Materia
         private List<UINodePoint> to;
 
         private Dictionary<UINodePoint, Path> paths;
+        private Dictionary<UINodePoint, TextBlock> numbers;
 
         public static UINodePoint SelectOrigin
         {
@@ -80,12 +81,38 @@ namespace Materia
         //not both
         //as a node point can either be an input or an output
         public NodeInput Input { get; set; }
-        public NodeOutput Output { get; set; }
+
+        protected NodeOutput output;
+        public NodeOutput Output
+        {
+            get
+            {
+                return output;
+            }
+            set
+            {
+                if(output != null)
+                {
+                    output.OnTypeChanged -= Output_OnTypeChanged;
+                }
+
+                output = value;
+
+                output.OnTypeChanged += Output_OnTypeChanged;
+                UpdateColor();
+            }
+        }
+
+        private void Output_OnTypeChanged(NodeOutput inp)
+        {
+            UpdateColor();
+        }
 
         public UINodePoint()
         {
             InitializeComponent();
             Name = "NodePoint" + nodeCount++;
+            numbers = new Dictionary<UINodePoint, TextBlock>();
             paths = new Dictionary<UINodePoint, Path>();
             to = new List<UINodePoint>();
 
@@ -102,6 +129,7 @@ namespace Materia
             InitializeComponent();
             graph = pc;
             Name = "NodePoint" + nodeCount++;
+            numbers = new Dictionary<UINodePoint, TextBlock>();
             paths = new Dictionary<UINodePoint, Path>();
             to = new List<UINodePoint>();
             Node = n;
@@ -122,6 +150,19 @@ namespace Materia
                 {
                     node.Background = (SolidColorBrush)Resources["AnyFloatInputOutput"];
                 }
+                else if((Input.Type & NodeType.Float2) != 0
+                    && (Input.Type & NodeType.Float3) != 0 && (Input.Type & NodeType.Float4) != 0)
+                {
+                    node.Background = (SolidColorBrush)Resources["AnyFloatInputOutput"];
+                }
+                else if((Input.Type & NodeType.Float2) != 0 && (Input.Type & NodeType.Float) != 0)
+                {
+                    node.Background = (SolidColorBrush)Resources["AnyFloatInputOutput"];
+                }
+                else if(Input.Type == NodeType.Execute)
+                {
+                    node.Background = new SolidColorBrush(Colors.Red);
+                }
                 else
                 {
                     node.Background = (SolidColorBrush)Resources[Input.Type.ToString() + "InputOutput"];
@@ -137,6 +178,21 @@ namespace Materia
                     && (Output.Type & NodeType.Float3) != 0 && (Output.Type & NodeType.Float4) != 0)
                 {
                     node.Background = (SolidColorBrush)Resources["AnyFloatInputOutput"];
+                }
+                else if((Output.Type & NodeType.Float2) != 0
+                    && (Output.Type & NodeType.Float3) != 0 && (Output.Type & NodeType.Float4) != 0)
+                {
+                    //need to update this color
+                    node.Background = (SolidColorBrush)Resources["AnyFloatInputOutput"];
+                }
+                else if((Output.Type & NodeType.Float2) != 0 && (Output.Type & NodeType.Float) != 0)
+                {
+                    //really need to update this color
+                    node.Background = (SolidColorBrush)Resources["AnyFloatInputOutput"];
+                }
+                else if(Output.Type == NodeType.Execute)
+                {
+                    node.Background = new SolidColorBrush(Colors.Red);
                 }
                 else
                 {
@@ -222,7 +278,7 @@ namespace Materia
             return circ;
         }
 
-        public void ConnectToNode(UINodePoint p)
+        public void ConnectToNode(UINodePoint p, bool loading = false)
         {
             if (!CanConnect(p))
             {
@@ -239,9 +295,25 @@ namespace Materia
                 p.ParentNode.RemoveNode(p);
             }
 
-            Output.Add(p.Input);
+            if (!loading)
+            {
+                Output.Add(p.Input);
+            }
 
             Path path = new Path();
+
+
+            if(output != null && output.Type == NodeType.Execute)
+            {
+                TextBlock number = new TextBlock();
+                number.HorizontalAlignment = HorizontalAlignment.Left;
+                number.VerticalAlignment = VerticalAlignment.Top;
+                number.Foreground = new SolidColorBrush(Colors.LightGray);
+                number.FontSize = 12;
+                numbers[p] = number;
+                graph.ViewPort.Children.Add(number);
+            }
+
             path.Stroke = new SolidColorBrush(Colors.Gray);
             path.StrokeThickness = 2;
             paths[p] = path;
@@ -258,8 +330,15 @@ namespace Materia
             {
                 graph.ViewPort.Children.Remove(path);
             }
+            TextBlock num = null;
+            if(numbers.TryGetValue(p, out num))
+            {
+                graph.ViewPort.Children.Remove(num);
+            }
 
             paths.Remove(p);
+
+            numbers.Remove(p);
 
             to.Remove(p);
 
@@ -271,6 +350,30 @@ namespace Materia
                 }
 
                 p.ParentNode = null;
+            }
+
+            UpdatePaths();
+        }
+
+        public void UpdateSelected(bool selected)
+        {
+            foreach (UINodePoint n in to)
+            {
+                Path path = null;
+
+                paths.TryGetValue(n, out path);
+
+                if (path != null)
+                {
+                    if (selected)
+                    {
+                        path.Stroke = new SolidColorBrush(Colors.Red);
+                    }
+                    else
+                    {
+                        path.Stroke = new SolidColorBrush(Colors.LightGray);
+                    }
+                }
             }
         }
 
@@ -288,6 +391,10 @@ namespace Materia
 
                 Point r1 = this.TransformToAncestor(graph.ViewPort).Transform(new Point(ActualWidth, 8f));
 
+                //need to add a text drawing of Order for lines
+                //as the order is important
+                //to know when connecting for functions
+                int i = 1;
                 foreach (UINodePoint n in to)
                 {
                     if (n.Parent == null) continue;
@@ -307,8 +414,14 @@ namespace Materia
 
                     Point mid = new Point((r2.X + r1.X) * 0.5f, (r2.Y + r1.Y) * 0.5f + dy * 0.5f);
 
+                    TextBlock num = null;
+
+                    numbers.TryGetValue(n, out num);
+
                     if (path != null)
                     {
+                        path.IsHitTestVisible = false;
+                        Canvas.SetZIndex(path, -1);
                         if (path.Data == null)
                         {
                             path.VerticalAlignment = VerticalAlignment.Top;
@@ -322,6 +435,7 @@ namespace Materia
                             pf.Segments.Add(seg);
                             p.Figures.Add(pf);
                             path.Data = p;
+                           
                         }
                         else
                         {
@@ -334,6 +448,18 @@ namespace Materia
                             seg.Point3 = r2;
                         }
                     }
+
+                    if(num != null)
+                    {
+                        Point p = CatmullRomSpline.GetPointOnBezierCurve(r1, mid, r2, 0.25f);
+                        num.Text = i.ToString();
+                        num.IsHitTestVisible = false;
+                        Canvas.SetZIndex(num, -1);
+                        Canvas.SetLeft(num, p.X);
+                        Canvas.SetTop(num, p.Y);
+                    }
+
+                    i++;
                 }
             }
             catch { }
@@ -400,17 +526,40 @@ namespace Materia
 
         public void Dispose()
         {
-            if (Output != null)
+            if (output != null)
             {
+                output.OnTypeChanged -= Output_OnTypeChanged;
+
                 List<UINodePoint> toRemove = new List<UINodePoint>();
-                foreach (UINodePoint p in paths.Keys)
+
+                try
                 {
-                    toRemove.Add(p);
+                    foreach (UINodePoint p in paths.Keys)
+                    {
+                        toRemove.Add(p);
+                    }
+
+                }
+                catch (Exception e)
+                {
+                    //it is possible to hit here
+                    //in certain situations on deleting a node
+                    //as the iterator is deleted
+                    //while traversing it in either toRemove
+                    //or path.keys
+                    Console.WriteLine(e.Message + " | " + e.StackTrace);
                 }
 
-                foreach (UINodePoint p in toRemove)
+                try
                 {
-                    RemoveNode(p);
+                    foreach (UINodePoint p in toRemove)
+                    {
+                        RemoveNode(p);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message + " | " + e.StackTrace);
                 }
             }
             else

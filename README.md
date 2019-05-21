@@ -34,19 +34,14 @@ Currently only runs on Windows as some Win32Api is used.
 
 Major TODO
 ============== 
-  * Unload graphs when switching tabs and reloading when going back into the tab. This will help optimize vram usage. Currently all graphs are kept in vram. (Still testing changes)
   * Various UI tweeks and UI feedback mechanisms need adding (Some have been implemented).
   * More keyboard shortcuts.
   * Popup node explorer via space bar with context sensitivity & searching.
-  * Search for shelf
   * FxMap style nodes & graph.
   * Various shape nodes.
-  * Graph instance node parameter exposure. (Still testing changes)
-  * Function creation for node parameters. (Still testing changes)
   * Function graph export & import for sharing.
   * Re-creation of various substance graph instances.
-  * Need to add Cartesian to Polar math node.
-  * Need to add gradient and gradient mapping nodes
+  * Need to add gradient graphs
   * New Graph Dialog for setting some initial settings of the graph.
   * Splash screen - because why not.
   * More Undo and Redo tracking operations - currently only handles undo and redo of creating and deleting nodes.
@@ -54,11 +49,13 @@ Major TODO
     * Sampler nodes will only work in Pixel Processor Function Graph
   * Icons for function / math nodes.
   * Allow custom icons for shelf display of nodes
-  * HDRI Environment Selector
   * Importing custom geometry for 3D preview
   * SSS PBR Shader
-  * Option to modify 3D Camera Settings etc.
+  * Option to modify various material settings: height scale, refractive index, etc.
   * Multi node texture resize capability
+  * Add a real log file logger
+  * Add a log window, allow log window verbosity to be modified
+  * Keep track of most recently opened / used graphs properly
 
 Known Bugs
 ====================
@@ -66,19 +63,28 @@ Known Bugs
 
  * Work around for now is to set scaling for all displays to 100% in Windows 10.
 
+ * Undo and redo do not work in function graphs currently
+ * Parameters with text boxes do not unfocus properly when clicking off of it
+
+How-To and Various Info
+========================
+How-to and various info on available features can be found in the github wiki: https://github.com/Metric/Materia/wiki
+
+
 Build Dependencies
 ===================
  * .Net 4.6.1
  * OpenTK via Nuget
  * OpenTK.GLControl via Nuget
  * Assimp via Nuget
+ * Newtonsoft JSON via Nuget
  * All other dependencies are in this repository
  * Uses a custom build of the free ExtendedWpfToolkit that fixes some bugs in AvalonDock, uses proper WPF GridSplitter controls in AvalonDock and customizes AvalonDock Metro Theme.
 
 Build Instructions
 =====================
  * Load up the main solution
- * Make sure OpenTK and OpenTK control is referenced properly in Materia project
+ * Make sure OpenTK, OpenTK control, and Newtonsoft JSON is referenced properly in Materia project
  * Make sure OpenTK and Assimp is referenced properly in RSMI (Really Simple Mesh Importer) project
  * Build
  * Copy items from AddToOutputDir to where the final built .exe is located

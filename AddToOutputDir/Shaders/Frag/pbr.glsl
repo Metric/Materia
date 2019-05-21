@@ -28,8 +28,8 @@ uniform sampler2D irradianceMap;
 uniform sampler2D prefilterMap;
 
 //Light Data
-uniform vec3 lightPosition;
-uniform vec3 lightColor;
+uniform vec3 lightPosition = vec3(0,1,1);
+uniform vec3 lightColor = vec3(1,1,1);
 
 //POM Data
 uniform float heightScale = 0.2;
@@ -253,7 +253,7 @@ void main()
     F0 = shading.dielectric = mix(F0, ldiffuse.rgb, metallic);
 
     vec3 Lo = vec3(0.0);
-    //Lo = lighting(Lo, lightPosition, lightColor, o.WorldPos, shading);
+    Lo = lighting(Lo, lightPosition, lightColor, o.WorldPos, shading);
 
     vec3 iKs = fresnelSchlickRoughness(NdotV, F0, roughness);
     vec3 iKd = 1.0 - iKs;

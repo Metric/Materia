@@ -13,7 +13,7 @@ namespace Materia.Nodes.MathNodes
         NodeOutput output;
         NodeOutput output2;
 
-        public PolarNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public PolarNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -28,7 +28,6 @@ namespace Materia.Nodes.MathNodes
             output = new NodeOutput(NodeType.Float, this, "Radius Output");
             output2 = new NodeOutput(NodeType.Float, this, "Angle Output");
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
 
@@ -38,7 +37,6 @@ namespace Materia.Nodes.MathNodes
             input2.OnInputAdded += Input_OnInputAdded;
             input2.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
             Outputs.Add(output2);
         }
@@ -61,11 +59,11 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!Inputs[0].HasInput || !Inputs[1].HasInput) return "";
-            var s1 = shaderId + "0";
-            var s2 = shaderId + "1";
+            var s1 = shaderId + "1";
+            var s2 = shaderId + "2";
 
             var n1id = (Inputs[0].Input.Node as MathNode).ShaderId;
             var n2id = (Inputs[1].Input.Node as MathNode).ShaderId;
@@ -97,9 +95,11 @@ namespace Materia.Nodes.MathNodes
 
 
             output.Data = radius;
-            output.Changed();
             output2.Data = theta;
-            output2.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
 
             if (ParentGraph != null)
             {

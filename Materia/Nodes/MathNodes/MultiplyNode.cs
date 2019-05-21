@@ -11,7 +11,7 @@ namespace Materia.Nodes.MathNodes
     {
         NodeOutput output;
 
-        public MultiplyNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public MultiplyNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -20,10 +20,7 @@ namespace Materia.Nodes.MathNodes
             Name = "Multiply";
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
-
-            Inputs = new List<NodeInput>();
-
-            
+     
             output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
 
             for (int i = 0; i < 2; i++)
@@ -36,7 +33,6 @@ namespace Materia.Nodes.MathNodes
                 input.OnInputRemoved += Input_OnInputRemoved;
             }
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -44,7 +40,7 @@ namespace Materia.Nodes.MathNodes
         {
             var noinputs = Inputs.FindAll(m => !m.HasInput);
 
-            if (noinputs != null && noinputs.Count >= 2 && Inputs.Count > 2)
+            if (noinputs != null && noinputs.Count >= 3 && Inputs.Count > 3)
             {
                 var inp = noinputs[noinputs.Count - 1];
 
@@ -64,7 +60,47 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
+            UpdateOutputType();
             Updated();
+        }
+
+        public override void UpdateOutputType()
+        {
+            if (Inputs.Count == 0) return;
+            if (Inputs[1].HasInput && Inputs[2].HasInput)
+            {
+                NodeType t1 = Inputs[1].Input.Type;
+                NodeType t2 = Inputs[2].Input.Type;
+
+                if (t1 == NodeType.Float && t2 == NodeType.Float)
+                {
+                    output.Type = NodeType.Float;
+                }
+                else if ((t1 == NodeType.Float && t2 == NodeType.Float2) || (t1 == NodeType.Float2 && t2 == NodeType.Float))
+                {
+                    output.Type = NodeType.Float2;
+                }
+                else if ((t1 == NodeType.Float && t2 == NodeType.Float3) || (t1 == NodeType.Float3 && t2 == NodeType.Float))
+                {
+                    output.Type = NodeType.Float3;
+                }
+                else if ((t1 == NodeType.Float && t2 == NodeType.Float4) || (t1 == NodeType.Float4 && t2 == NodeType.Float))
+                {
+                    output.Type = NodeType.Float4;
+                }
+                else if (t1 == NodeType.Float2 && t2 == NodeType.Float2)
+                {
+                    output.Type = NodeType.Float2;
+                }
+                else if (t1 == NodeType.Float3 && t2 == NodeType.Float3)
+                {
+                    output.Type = NodeType.Float3;
+                }
+                else if (t1 == NodeType.Float4 && t2 == NodeType.Float4)
+                {
+                    output.Type = NodeType.Float4;
+                }
+            }
         }
 
         protected override void AddPlaceholderInput()
@@ -85,10 +121,13 @@ namespace Materia.Nodes.MathNodes
 
             foreach (NodeInput inp in Inputs)
             {
-                if (inp.HasInput)
+                if (inp != executeInput)
                 {
-                    hasInput = true;
-                    break;
+                    if (inp.HasInput)
+                    {
+                        hasInput = true;
+                        break;
+                    }
                 }
             }
 
@@ -98,24 +137,24 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
-            if (!Inputs[0].HasInput || !Inputs[1].HasInput) return "";
+            if (!Inputs[1].HasInput || !Inputs[2].HasInput) return "";
 
-            var s = shaderId + "0";
-            var n1id = (Inputs[0].Input.Node as MathNode).ShaderId;
-            var n2id = (Inputs[1].Input.Node as MathNode).ShaderId;
+            var s = shaderId + "1";
+            var n1id = (Inputs[1].Input.Node as MathNode).ShaderId;
+            var n2id = (Inputs[2].Input.Node as MathNode).ShaderId;
 
-            var index = Inputs[0].Input.Node.Outputs.IndexOf(Inputs[0].Input);
+            var index = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
 
             n1id += index;
 
-            var index2 = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
+            var index2 = Inputs[2].Input.Node.Outputs.IndexOf(Inputs[2].Input);
 
             n2id += index2;
 
-            var t1 = Inputs[0].Input.Type;
-            var t2 = Inputs[1].Input.Type;
+            var t1 = Inputs[1].Input.Type;
+            var t2 = Inputs[2].Input.Type;
 
             if (t1 == NodeType.Float && t2 == NodeType.Float)
             {
@@ -162,12 +201,15 @@ namespace Materia.Nodes.MathNodes
 
             foreach (NodeInput inp in Inputs)
             {
-                if (inp.HasInput)
+                if (inp != executeInput)
                 {
-                    if (inp.Input.Data is MVector)
+                    if (inp.HasInput)
                     {
-                        hasVector = true;
-                        break;
+                        if (inp.Input.Data is MVector)
+                        {
+                            hasVector = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -179,53 +221,59 @@ namespace Materia.Nodes.MathNodes
                 int i = 0;
                 foreach (NodeInput inp in Inputs)
                 {
-                    if (inp.HasInput)
+                    if (inp != executeInput)
                     {
-                        object o = inp.Input.Data;
-                        if (o == null) continue;
+                        if (inp.HasInput)
+                        {
+                            object o = inp.Input.Data;
+                            if (o == null) continue;
 
-                        if (o is float || o is int)
-                        {
-                            if (i == 0)
+                            if (o is float || o is int)
                             {
-                                float f = (float)o;
-                                v.X = v.Y = v.Z = v.W = f;
+                                if (i == 0)
+                                {
+                                    float f = (float)o;
+                                    v.X = v.Y = v.Z = v.W = f;
+                                }
+                                else
+                                {
+                                    float f = (float)o;
+                                    v.X *= f;
+                                    v.Y *= f;
+                                    v.Z *= f;
+                                    v.W *= f;
+                                }
                             }
-                            else
+                            else if (o is MVector)
                             {
-                                float f = (float)o;
-                                v.X *= f;
-                                v.Y *= f;
-                                v.Z *= f;
-                                v.W *= f;
+                                if (i == 0)
+                                {
+                                    var d = (MVector)o;
+                                    v.X = d.X;
+                                    v.Y = d.Y;
+                                    v.Z = d.Z;
+                                    v.W = d.W;
+                                }
+                                else
+                                {
+                                    MVector f = (MVector)o;
+                                    v.X *= f.X;
+                                    v.Y *= f.Y;
+                                    v.Z *= f.Z;
+                                    v.W *= f.W;
+                                }
                             }
                         }
-                        else if (o is MVector)
-                        {
-                            if (i == 0)
-                            {
-                                var d = (MVector)o;
-                                v.X = d.X;
-                                v.Y = d.Y;
-                                v.Z = d.Z;
-                                v.W = d.W;
-                            }
-                            else
-                            {
-                                MVector f = (MVector)o;
-                                v.X *= f.X;
-                                v.Y *= f.Y;
-                                v.Z *= f.Z;
-                                v.W *= f.W;
-                            }
-                        }
+
+                        i++;
                     }
-
-                    i++;
                 }
 
                 output.Data = v;
-                output.Changed();
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
             else
             {
@@ -233,31 +281,37 @@ namespace Materia.Nodes.MathNodes
                 int i = 0;
                 foreach (NodeInput inp in Inputs)
                 {
-                    if (inp.HasInput)
+                    if (inp != executeInput)
                     {
-                        object o = inp.Input.Data;
-                        if (o == null) continue;
-
-                        if (o is float || o is int)
+                        if (inp.HasInput)
                         {
-                            if (i == 0)
+                            object o = inp.Input.Data;
+                            if (o == null) continue;
+
+                            if (o is float || o is int)
                             {
-                                v = (float)o;
-                            }
-                            else
-                            {
-                                float f = (float)o;
-                                if (f == 0) continue;
-                                v *= f;
+                                if (i == 0)
+                                {
+                                    v = (float)o;
+                                }
+                                else
+                                {
+                                    float f = (float)o;
+                                    if (f == 0) continue;
+                                    v *= f;
+                                }
                             }
                         }
-                    }
 
-                    i++;
+                        i++;
+                    }
                 }
 
                 output.Data = v;
-                output.Changed();
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
 
             if (ParentGraph != null)

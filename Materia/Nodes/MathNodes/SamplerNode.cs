@@ -34,7 +34,7 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public SamplerNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public SamplerNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             CanPreview = false;
 
@@ -47,22 +47,14 @@ namespace Materia.Nodes.MathNodes
             output = new NodeOutput(NodeType.Float4, this);
 
             sampleIndex = 0;
-
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            Updated();
-        }
 
         private void Input_OnInputChanged(NodeInput n)
         {
@@ -82,10 +74,10 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput) return "";
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
 
             var index = input.Input.Node.Outputs.IndexOf(input.Input);
@@ -140,7 +132,10 @@ namespace Materia.Nodes.MathNodes
                         System.GC.Collect();
 
                         output.Data = new MVector(r, g, b, a);
-                        output.Changed();
+                        if (Outputs.Count > 0)
+                        {
+                            Outputs[0].Changed();
+                        }
 
                         return;
                     }
@@ -148,7 +143,10 @@ namespace Materia.Nodes.MathNodes
             }
 
             output.Data = new MVector();
-            output.Changed();
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Changed();
+            }
         }
 
         public class SamplerNodeData : NodeData

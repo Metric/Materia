@@ -32,6 +32,9 @@ uniform sampler2D Mask;
 //Color = 19,
 //Luminosity = 20
 //LinearLight = 21
+//PinLight = 22
+//HardMix = 23
+//Exclusion = 24
 
 uniform int blendMode = 1;
 uniform float alpha = 1;
@@ -136,6 +139,15 @@ vec3 FromHSL(vec3 c) {
 
 //END HSL HELPERS
 
+vec3 Copy(vec4 a, vec4 b) {
+    if(a.a >= b.a) {
+        return a.rgb;
+    }
+    else {
+        return b.rgb;
+    }
+}
+
 float AddSub(float a, float b) {
     if(a < 0.5) {
         return min(1, max(0, a + b));
@@ -143,10 +155,6 @@ float AddSub(float a, float b) {
     else {
         return min(1, max(0, b - a));
     }
-}
-
-float Copy(float a, float b, float ba) {
-    return mix(a,b,ba);
 }
 
 float Multiple(float a, float b) {
@@ -158,34 +166,11 @@ float Screen(float a, float b) {
 }
 
 float Divide(float a, float b) {
-    return min(1, max(0, a / (b + 0.0001)));
+    return min(1, max(0, b / a));
 }
 
-float Overlay(float a, float b) {
-    if(a < 0.5) {
-        return min(1, max(0, 2 * a * b));
-    }
-    else {
-        return min(1, max(0, 1 - 2 * (1 - a) * (1 - b)));
-    }
-}
-
-float HardLight(float a, float b) {
-    if(a < 0.5) {
-        return min(1, max(0, 1 - 2 * (1 - b) * (1 - a)));
-    }
-    else {
-        return min(1, max(0, b * a * 2));
-    }
-}
-
-float SoftLight(float a, float b) {
-    return min(1, max(0, (1.0 - 2.0 * b) * (a * a) + 2 * b * a));
-}
-
-//0.0001 to prevent division by 0
 float ColorDodge(float a, float b) {
-    return min(1, max(0, b / (1 - (a + 0.0001))));
+    return min(1, max(0, b / (1 - a)));
 }
 
 float LinearDodge(float a, float b) {
@@ -193,28 +178,80 @@ float LinearDodge(float a, float b) {
 }
 
 float ColorBurn(float a, float b) {
-    return min(1, max(0, 1 - (1 - b) / (a + 0.0001)));
+    return min(1, max(0, 1 - (1 - b) / a));
 }
 
 float LinearBurn(float a, float b) {
     return min(1, max(0, a + b - 1));
 }
 
+float Overlay(float a, float b) {
+    if(b < 0.5) {
+        return 2 * a * b;
+    }
+    else {
+        return 1 - 2 * (1 - a) * (1 - b);
+    }
+}
+
+float SoftLight(float a, float b) {
+    if(a < 0.5) {
+        return (2 * a - 1) * (b * (b * b)) + b;
+    }
+    else {
+        return (2 * a - 1) * (sqrt(b) - b) + b;
+    }
+}
+
+float HardLight(float a, float b) {
+    if(a < 0.5) {
+        return 2 * a * b;
+    }
+    else {
+        return 1 - 2 * (1 - a) * (1- b);
+    }
+}
+
 float LinearLight(float a, float b) {
-    return min(1, max(0, 2 * a + b - 1));
+    return b + 2 * a - 1;
 }
 
 float VividLight(float a, float b) {
-    if(a < 0.5) {
-        return min(1, max(0, 1 - (1-b) / (2 * a)));
+   if(a < 0.5) {
+       return 1 - (1 - b) / (2 * a);
+   }
+   else {
+       return b / (2 * (1 - a));
+   }
+}
+
+float PinLight(float a, float b) {
+    if(b < 2 * a - 1) {
+        return 2 * a - 1;
     }
+    else if(2 * a - 1 < b && b < 2 * a) {
+        return b;
+    } 
     else {
-        return min(1, max(0, b / (1 - 2 * a)));
+        return 2 * a;
     }
 }
 
+float HardMix(float a, float b) {
+    if(a < 1 - b) {
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+float Exclusion(float a, float b) {
+    return a + b - 2 * a * b;
+}
+
 float Subtract(float a, float b) {
-    return min(1, max(0, b + a - 1));
+    return min(1, max(0, b - a));
 }
 
 float Difference(float a, float b) {
@@ -233,7 +270,7 @@ vec3 Hue(vec3 a, vec3 b) {
     vec3 h = ToHSL(a);
     vec3 h2 = ToHSL(b);
 
-    h2.r = h.r;
+    h.r = h2.r;
 
     return FromHSL(h2);
 }
@@ -242,7 +279,7 @@ vec3 Saturation(vec3 a, vec3 b) {
     vec3 h = ToHSL(a);
     vec3 h2 = ToHSL(b);
 
-    h2.g = h.g;
+    h.g = h2.g;
 
     return FromHSL(h2);
 }
@@ -251,8 +288,8 @@ vec3 Color(vec3 a, vec3 b) {
     vec3 h = ToHSL(a);
     vec3 h2 = ToHSL(b);
 
-    h2.r = h.r;
-    h2.g = h.g;
+    h.r = h2.r;
+    h.g = h2.g;
 
     return FromHSL(h2);
 }
@@ -261,7 +298,7 @@ vec3 Luminosity(vec3 a, vec3 b) {
     vec3 h = ToHSL(a);
     vec3 h2 = ToHSL(b);
 
-    h2.b = h.b;
+    h.b = h2.b;
 
     return FromHSL(h2);
 }
@@ -273,113 +310,126 @@ void main() {
     vec4 final = vec4(0);
 
     if(blendMode == 0) {
-        final.r = AddSub(b.r * alpha, a.r * alpha);
-        final.g = AddSub(b.g * alpha, a.g * alpha);
-        final.b = AddSub(b.b * alpha, a.b * alpha);
+        final.r = AddSub(a.r * alpha, b.r);
+        final.g = AddSub(a.g * alpha, b.g);
+        final.b = AddSub(a.b * alpha, b.b);
     }
     else if(blendMode == 1) {
-        final.r = Copy(b.r * alpha, a.r * alpha, a.a);
-        final.g = Copy(b.g * alpha, a.g * alpha, a.a);
-        final.b = Copy(b.b * alpha, a.b * alpha, a.a);
+        final.rgb = Copy(a,b);
     }
     else if(blendMode == 2) {
-        final.r = Multiple(b.r * alpha, a.r * alpha);
-        final.g = Multiple(b.g * alpha, a.g * alpha);
-        final.b = Multiple(b.b * alpha, a.b * alpha);
+        final.r = Multiple(a.r * alpha, b.r);
+        final.g = Multiple(a.g * alpha, b.g);
+        final.b = Multiple(a.b * alpha, b.b);
     }
     else if(blendMode == 3) {
-        final.r = Screen(b.r * alpha, a.r * alpha);
-        final.g = Screen(b.g * alpha, a.g * alpha);
-        final.b = Screen(b.b * alpha, a.b * alpha);
+        final.r = Screen(a.r * alpha, b.r);
+        final.g = Screen(a.g * alpha, b.g);
+        final.b = Screen(a.b * alpha, b.b);
     }
     else if(blendMode == 4) {
-        final.r = Overlay(b.r * alpha, a.r * alpha);
-        final.g = Overlay(b.g * alpha, a.g * alpha);
-        final.b = Overlay(b.b * alpha, a.b * alpha);
+        final.r = Overlay(a.r * alpha, b.r);
+        final.g = Overlay(a.g * alpha, b.g);
+        final.b = Overlay(a.b * alpha, b.b);
     }
     else if(blendMode == 5) {
-        final.r = HardLight(b.r * alpha, a.r * alpha);
-        final.g = HardLight(b.g * alpha, a.g * alpha);
-        final.b = HardLight(b.b * alpha, a.b * alpha);
+        final.r = HardLight(a.r * alpha, b.r);
+        final.g = HardLight(a.g * alpha, b.g);
+        final.b = HardLight(a.b * alpha, b.b);
     }
     else if(blendMode == 6) {
-        final.r = SoftLight(b.r * alpha, a.r * alpha);
-        final.g = SoftLight(b.g * alpha, a.g * alpha);
-        final.b = SoftLight(b.b * alpha, a.b * alpha);
+        final.r = SoftLight(a.r * alpha, b.r);
+        final.g = SoftLight(a.g * alpha, b.g);
+        final.b = SoftLight(a.b * alpha, b.b);
     }
     else if(blendMode == 7) {
-        final.r = ColorDodge(b.r * alpha, a.r * alpha);
-        final.g = ColorDodge(b.g * alpha, a.g * alpha);
-        final.b = ColorDodge(b.b * alpha, a.b * alpha);
+        final.r = ColorDodge(a.r * alpha, b.r);
+        final.g = ColorDodge(a.g * alpha, b.g);
+        final.b = ColorDodge(a.b * alpha, b.b);
     }
     else if(blendMode == 8) {
-        final.r = LinearDodge(b.r * alpha, a.r * alpha);
-        final.g = LinearDodge(b.g * alpha, a.g * alpha);
-        final.b = LinearDodge(b.b * alpha, a.b * alpha);
+        final.r = LinearDodge(a.r * alpha, b.r);
+        final.g = LinearDodge(a.g * alpha, b.g);
+        final.b = LinearDodge(a.b * alpha, b.b);
     }
     else if(blendMode == 9) {
-        final.r = ColorBurn(b.r * alpha, a.r * alpha);
-        final.g = ColorBurn(b.g * alpha, a.g * alpha);
-        final.b = ColorBurn(b.b * alpha, a.b * alpha);
+        final.r = ColorBurn(a.r * alpha, b.r);
+        final.g = ColorBurn(a.g * alpha, b.g);
+        final.b = ColorBurn(a.b * alpha, b.b);
     }
     else if(blendMode == 10) {
-        final.r = LinearBurn(b.r * alpha, a.r * alpha);
-        final.g = LinearBurn(b.g * alpha, a.g * alpha);
-        final.b = LinearBurn(b.b * alpha, a.b * alpha);
+        final.r = LinearBurn(a.r * alpha, b.r);
+        final.g = LinearBurn(a.g * alpha, b.g);
+        final.b = LinearBurn(a.b * alpha, b.b);
     }
     else if(blendMode == 11) {
-        final.r = VividLight(b.r * alpha, a.r * alpha);
-        final.g = VividLight(b.g * alpha, a.g * alpha);
-        final.b = VividLight(b.b * alpha, a.b * alpha);
+        final.r = VividLight(a.r * alpha, b.r);
+        final.g = VividLight(a.g * alpha, b.g);
+        final.b = VividLight(a.b * alpha, b.b);
     }
     else if(blendMode == 12) {
-        final.r = Divide(b.r * alpha, a.r * alpha);
-        final.g = Divide(b.g * alpha, a.g * alpha);
-        final.b = Divide(b.b * alpha, a.b * alpha);
+        final.r = Divide(a.r * alpha, b.r);
+        final.g = Divide(a.g * alpha, b.g);
+        final.b = Divide(a.b * alpha, b.b);
     }
     else if(blendMode == 13) {
-        final.r = Subtract(b.r * alpha, a.r * alpha);
-        final.g = Subtract(b.g * alpha, a.g * alpha);
-        final.b = Subtract(b.b * alpha, a.b * alpha);
+        final.r = Subtract(a.r * alpha, b.r);
+        final.g = Subtract(a.g * alpha, b.g);
+        final.b = Subtract(a.b * alpha, b.b);
     }
     else if(blendMode == 14) {
-        final.r = Difference(b.r * alpha, a.r * alpha);
-        final.g = Difference(b.g * alpha, a.g * alpha);
-        final.b = Difference(b.b * alpha, a.b * alpha);
+        final.r = Difference(a.r * alpha, b.r);
+        final.g = Difference(a.g * alpha, b.g);
+        final.b = Difference(a.b * alpha, b.b);
     }
     else if(blendMode == 15) {
-        final.r = Darken(b.r * alpha, a.r * alpha);
-        final.g = Darken(b.g * alpha, a.g * alpha);
-        final.b = Darken(b.b * alpha, a.b * alpha);
+        final.r = Darken(a.r * alpha, b.r);
+        final.g = Darken(a.g * alpha, b.g);
+        final.b = Darken(a.b * alpha, b.b);
     }
     else if(blendMode == 16) {
-        final.r = Lighten(b.r * alpha, a.r * alpha);
-        final.g = Lighten(b.g * alpha, a.g * alpha);
-        final.b = Lighten(b.b * alpha, a.b * alpha);
+        final.r = Lighten(a.r * alpha, b.r);
+        final.g = Lighten(a.g * alpha, b.g);
+        final.b = Lighten(a.b * alpha, b.b);
     }
     else if(blendMode == 17) {
-        final.rgb = Hue(b.rgb * alpha,a.rgb * alpha);
+        final.rgb = Hue(a.rgb * alpha,b.rgb);
     }
     else if(blendMode == 18) {
-        final.rgb = Saturation(b.rgb * alpha, a.rgb * alpha);   
+        final.rgb = Saturation(a.rgb * alpha, b.rgb);   
     }
     else if(blendMode == 19) {
-        final.rgb = Color(b.rgb * alpha, a.rgb * alpha);
+        final.rgb = Color(a.rgb * alpha, b.rgb);
     }
     else if(blendMode == 20) {
-        final.rgb = Luminosity(b.rgb * alpha, a.rgb * alpha);
+        final.rgb = Luminosity(a.rgb * alpha, b.rgb);
     }
     else if(blendMode == 21) {
-        final.r = LinearLight(b.r * alpha, a.r * alpha);
-        final.g = LinearLight(b.g * alpha, a.g * alpha);
-        final.b = LinearLight(b.b * alpha, a.b * alpha);
+        final.r = LinearLight(a.r * alpha, b.r);
+        final.g = LinearLight(a.g * alpha, b.g);
+        final.b = LinearLight(a.b * alpha, b.b);
+    }
+    else if(blendMode == 22) {
+        final.r = PinLight(a.r * alpha, b.r);
+        final.g = PinLight(a.g * alpha, b.g);
+        final.b = PinLight(a.b * alpha, b.b);
+    }
+    else if(blendMode == 23) {
+        final.r = HardMix(a.r * alpha, b.r);
+        final.g = HardMix(a.g * alpha, b.g);
+        final.b = HardMix(a.b * alpha, b.b);
+    }
+    else if(blendMode == 24) {
+        final.r = Exclusion(a.r * alpha, b.r);
+        final.g = Exclusion(a.g * alpha, b.g);
+        final.b = Exclusion(a.b * alpha, b.b);
     }
 
     float m = 1;
     if(hasMask == 1) {
         m = texture(Mask, UV).r;        
     }
-    final.a = Copy(b.a, a.a, a.a);
+    final.a = max(b.a,a.a);
     final *= m;
     FragColor = final;
 }

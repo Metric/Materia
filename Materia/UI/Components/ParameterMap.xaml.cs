@@ -30,7 +30,34 @@ namespace Materia.UI.Components
             InitializeComponent();
         }
 
-        public ParameterMap(Graph g, Dictionary<string, GraphParameterValue> values)
+        public ParameterMap(List<GraphParameterValue> values, bool useBasic = false)
+        {
+            InitializeComponent();
+
+            foreach(var v in values)
+            {
+                if(!v.IsFunction())
+                {
+                    if (v.Type != NodeType.Bool)
+                    {
+                        PropertyLabel lbl = new PropertyLabel();
+                        lbl.Title = v.Name;
+                        Stack.Children.Add(lbl);
+                    }
+
+                    if (!useBasic)
+                    {
+                        BuildParameterCustom(v);
+                    }
+                    else
+                    {
+                        BuildParameter(v);
+                    }
+                }
+            }
+        }
+
+        public ParameterMap(Dictionary<string, GraphParameterValue> values)
         {
             InitializeComponent();
 
@@ -41,74 +68,89 @@ namespace Materia.UI.Components
 
                 if (!v.IsFunction())
                 {
-                    Node n = null;
-                    g.NodeLookup.TryGetValue(split[0], out n);
-
-                    if(n == null)
-                    {
-                        n = g.FindSubNodeById(split[0]);
-                    }
-
-                    if(n != null)
+                    if (v.Type != NodeType.Bool)
                     {
                         PropertyLabel lbl = new PropertyLabel();
                         lbl.Title = v.Name;
                         Stack.Children.Add(lbl);
-                        BuildParameter(split[1], v, n);
                     }
+                    BuildParameter(v);
                 }
             }
         }
 
-        protected void BuildParameter(string parameter, GraphParameterValue v, Node n)
+        protected void BuildParameterCustom(GraphParameterValue v)
         {
             try
             {
-                PropertyInfo info1 = n.GetType().GetProperty(parameter);
                 PropertyInfo info2 = v.GetType().GetProperty("Value");
 
-                if (info1 != null)
+                if (v.Value is double || v.Value is float || v.Value is int || v.Type == NodeType.Float)
                 {
-                    if (v.Value is double || v.Value is float || v.Value is int)
-                    {
-                        SliderAttribute sl = info1.GetCustomAttribute<SliderAttribute>();
+                    NumberSlider sp = new NumberSlider();
+                    sp.Set(v.Min, v.Max, info2, v);
+                    Stack.Children.Add(sp);
+                }
+                else if (v.Value is bool || v.Type == NodeType.Bool)
+                {
+                    ToggleControl tc = new ToggleControl(v.Name, info2, v);
+                    Stack.Children.Add(tc);
+                }
+                else if (v.Type == NodeType.Float2 || v.Type == NodeType.Float3 || v.Type == NodeType.Float4)
+                {
+                    VectorSlider vs = new VectorSlider(info2, v, v.Min, v.Max, v.Type);
+                    Stack.Children.Add(vs);
+                }
+                else if (v.Value is MVector || v.Type == NodeType.Color || v.Type == NodeType.Gray)
+                {
+                    ColorSelect cs = new ColorSelect(info2, v);
+                    Stack.Children.Add(cs);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
+            }
+        }
 
-                        if (sl != null)
-                        {
-                            NumberSlider inp = new NumberSlider(sl, info2, v);
-                            Stack.Children.Add(inp);
-                        }
-                        else if(v.Value is double)
-                        {
-                            NumberInput np = new NumberInput(NumberInputType.Float, v, info2);
-                            Stack.Children.Add(np);
-                        }
-                        else if(v.Value is float)
-                        {
-                            NumberInput np = new NumberInput(NumberInputType.Float, v, info2);
-                            Stack.Children.Add(np);
-                        }
-                        else if(v.Value is int)
-                        {
-                            NumberInput np = new NumberInput(NumberInputType.Int, v, info2);
-                            Stack.Children.Add(np);
-                        }
-                    }
-                    else if(v.Value is bool)
+        protected void BuildParameter(GraphParameterValue v)
+        {
+            try
+            {
+                PropertyInfo info2 = v.GetType().GetProperty("Value");
+
+                if (v.Value is double || v.Value is float || v.Value is int)
+                {
+                    if(v.Value is double)
                     {
-                        ToggleControl tc = new ToggleControl(v.Name, info2, v);
-                        Stack.Children.Add(tc);
+                        NumberInput np = new NumberInput(NumberInputType.Float, v, info2);
+                        Stack.Children.Add(np);
                     }
-                    else if(v.Value is MVector)
+                    else if(v.Value is float)
                     {
-                        ColorSelect cs = new ColorSelect(info2, v, true);
-                        Stack.Children.Add(cs);
+                        NumberInput np = new NumberInput(NumberInputType.Float, v, info2);
+                        Stack.Children.Add(np);
                     }
-                    else if(v.Value is Vector4)
+                    else if(v.Value is int)
                     {
-                        ColorSelect cs = new ColorSelect(info2, v);
-                        Stack.Children.Add(cs);
+                        NumberInput np = new NumberInput(NumberInputType.Int, v, info2);
+                        Stack.Children.Add(np);
                     }
+                }
+                else if(v.Value is bool || v.Type == NodeType.Bool)
+                {
+                    ToggleControl tc = new ToggleControl(v.Name, info2, v);
+                    Stack.Children.Add(tc);
+                }
+                else if(v.Type == NodeType.Float2 || v.Type == NodeType.Float3 || v.Type == NodeType.Float4)
+                {
+                    VectorSlider vs = new VectorSlider(info2, v, v.Min, v.Max, v.Type);
+                    Stack.Children.Add(vs);
+                }
+                else if(v.Value is MVector || v.Type == NodeType.Color || v.Type == NodeType.Gray)
+                {
+                    ColorSelect cs = new ColorSelect(info2, v);
+                    Stack.Children.Add(cs);
                 }
             }
             catch (Exception e)

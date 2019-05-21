@@ -19,7 +19,7 @@
                 <Rectangle RadiusX="9" RadiusY="9" Width="9" Height="9" Stroke="White" IsHitTestVisible="False" />
             </Grid>
         </Grid>
-        <Button Name="Dropper" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Click="Dropper_Click"  VerticalAlignment="Top" Width="24" Height="24" Margin="0,14,20,0">
+        <Button Name="Dropper" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Click="Dropper_Click"  VerticalAlignment="Top" Width="24" Height="24" Margin="0,14,20,0" Style="{DynamicResource ImageTextButton}">
             <Button.Content>
                 <Image Source="/Materia;component/Images/dropper.png" />
             </Button.Content>
@@ -82,7 +82,7 @@
                 </Grid>
             </StackPanel>
         </Grid>
-        <Button x:Name="SelectButton" IsDefault="True" Click="SelectButton_Click"  Background="#444" Foreground="LightGray" Content="SELECT" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="57" Height="24" Margin="0,0,20,20" BorderThickness="0" />
-        <Button x:Name="CancelButton" Click="CancelButton_Click"  Background="#444" Foreground="LightGray" Content="CANCEL" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="57" Height="24" Margin="0,0,126,20" BorderThickness="0" />
+        <Button x:Name="SelectButton" IsDefault="True" Click="SelectButton_Click"  Background="#444" Foreground="LightGray" Content="SELECT" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="57" Height="24" Margin="0,0,20,20" BorderThickness="0" Style="{DynamicResource ImageTextButton}" />
+        <Button x:Name="CancelButton" Click="CancelButton_Click"  Background="#444" Foreground="LightGray" Content="CANCEL" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="57" Height="24" Margin="0,0,126,20" BorderThickness="0" Style="{DynamicResource ImageTextButton}" />
     </Grid>
 </Window>

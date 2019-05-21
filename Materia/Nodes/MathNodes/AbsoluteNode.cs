@@ -12,7 +12,7 @@ namespace Materia.Nodes.MathNodes
         NodeInput input;
         NodeOutput output;
 
-        public AbsoluteNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public AbsoluteNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -25,20 +25,11 @@ namespace Materia.Nodes.MathNodes
             input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Float Type");
             output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            Updated();
         }
 
         private void Input_OnInputChanged(NodeInput n)
@@ -46,8 +37,17 @@ namespace Materia.Nodes.MathNodes
             TryAndProcess();
         }
 
+        public override void UpdateOutputType()
+        {
+            if(input.HasInput)
+            {
+                output.Type = input.Input.Type;
+            }
+        }
+
         private void Input_OnInputAdded(NodeInput n)
         {
+            UpdateOutputType();
             Updated();
         }
 
@@ -59,10 +59,10 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput) return "";
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
 
             var index = input.Input.Node.Outputs.IndexOf(input.Input);
@@ -77,7 +77,7 @@ namespace Materia.Nodes.MathNodes
             else if (input.Input.Type == NodeType.Float3)
             {
                 output.Type = NodeType.Float3;
-                return "vec2 " + s + " = abs(" + n1id + ");\r\n";
+                return "vec3 " + s + " = abs(" + n1id + ");\r\n";
             }
             else if (input.Input.Type == NodeType.Float2)
             {
@@ -104,7 +104,11 @@ namespace Materia.Nodes.MathNodes
                 float v = (float)o;
 
                 output.Data = Math.Abs(v);
-                output.Changed();
+
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
             else if(o is MVector)
             {
@@ -116,12 +120,20 @@ namespace Materia.Nodes.MathNodes
                 d.W = Math.Abs(v.W);
 
                 output.Data = d;
-                output.Changed();
+
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
             else
             {
                 output.Data = 0;
-                output.Changed();
+
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
 
             if (ParentGraph != null)

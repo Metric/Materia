@@ -7,6 +7,7 @@ using Materia.Imaging;
 using Materia.Nodes.Attributes;
 using Materia.Imaging.GLProcessing;
 using Materia.Textures;
+using System.Reflection;
 
 namespace Materia.Nodes
 {
@@ -229,8 +230,39 @@ namespace Materia.Nodes
             }
         }
 
+        protected virtual void RemoveParameters()
+        {
+            var p = ParentGraph;
+
+            while(p != null && p is FunctionGraph)
+            {
+                var np = (p as FunctionGraph).ParentNode;
+
+                if(np != null)
+                {
+                    p = np.parentGraph;
+                }
+                else
+                {
+                    p = null;
+                }
+            }
+
+            if(p != null)
+            {
+                PropertyInfo[] infos = GetType().GetProperties();
+
+                foreach(var info in infos)
+                {
+                    p.RemoveParameterValue(Id, info.Name);
+                }
+            }
+        }
+
         public virtual void Dispose()
         {
+            RemoveParameters();
+
             ParentGraph = null;
 
             if(buffer != null)
@@ -247,44 +279,6 @@ namespace Materia.Nodes
         }
         public abstract string GetJson();
         public abstract void FromJson(Dictionary<string, Node> nodes, string data);
-        public List<NodeOutputConnection> GetConnections()
-        {
-            List<NodeOutputConnection> outputs = new List<NodeOutputConnection>();
-
-            int i = 0;
-            foreach (NodeOutput Output in Outputs)
-            {
-                foreach (NodeInput n in Output.To)
-                {
-                    int index = n.Node.Inputs.IndexOf(n);
-
-                    if (index > -1)
-                    {
-                        NodeOutputConnection nc = new NodeOutputConnection(n.Node.Id, i, index);
-                        outputs.Add(nc);
-                    }
-                }
-                i++;
-            }
-
-            return outputs;
-        }
-
-        public List<Tuple<string, List<NodeOutputConnection>>> GetParentsConnections()
-        {
-            List<Tuple<string, List<NodeOutputConnection>>> items = new List<Tuple<string, List<NodeOutputConnection>>>();
-
-            foreach(NodeInput n in Inputs)
-            {
-                if(n.HasInput)
-                {
-                    var cons = n.Input.Node.GetConnections();
-                    items.Add(new Tuple<string, List<NodeOutputConnection>>(n.Input.Node.Id, cons));
-                }
-            }
-
-            return items;
-        }
 
         public virtual void CopyResources(string CWD) { }
 
@@ -436,6 +430,45 @@ namespace Materia.Nodes
                 }
                 GLTextuer2D.Unbind();
             }
+        }
+
+        public List<NodeOutputConnection> GetConnections()
+        {
+            List<NodeOutputConnection> outputs = new List<NodeOutputConnection>();
+
+            int i = 0;
+            foreach (NodeOutput Output in Outputs)
+            {
+                foreach (NodeInput n in Output.To)
+                {
+                    int index = n.Node.Inputs.IndexOf(n);
+
+                    if (index > -1)
+                    {
+                        NodeOutputConnection nc = new NodeOutputConnection(n.Node.Id, i, index);
+                        outputs.Add(nc);
+                    }
+                }
+                i++;
+            }
+
+            return outputs;
+        }
+
+        public List<Tuple<string, List<NodeOutputConnection>>> GetParentsConnections()
+        {
+            List<Tuple<string, List<NodeOutputConnection>>> items = new List<Tuple<string, List<NodeOutputConnection>>>();
+
+            foreach (NodeInput n in Inputs)
+            {
+                if (n.HasInput)
+                {
+                    var cons = n.Input.Node.GetConnections();
+                    items.Add(new Tuple<string, List<NodeOutputConnection>>(n.Input.Node.Id, cons));
+                }
+            }
+
+            return items;
         }
 
         /// <summary>

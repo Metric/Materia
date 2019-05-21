@@ -12,9 +12,7 @@ namespace Materia.Nodes.MathNodes
         NodeInput input;
         NodeOutput output;
 
-        protected Random r;
-
-        public RandomNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public RandomNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
@@ -24,37 +22,15 @@ namespace Materia.Nodes.MathNodes
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
-            input = new NodeInput(NodeType.Float, this, "Float Input");
+            input = new NodeInput(NodeType.Float | NodeType.Float2, this, "Float Input");
             output = new NodeOutput(NodeType.Float, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
-
-            OnGraphParentSet += RandomNode_OnGraphParentSet;
-        }
-
-        private void RandomNode_OnGraphParentSet()
-        {
-            if (ParentGraph != null)
-            {
-                r = new Random(ParentGraph.RandomSeed);
-
-                ParentGraph.OnGraphUpdated += ParentGraph_OnGraphUpdated;
-            }
-        }
-
-        private void ParentGraph_OnGraphUpdated(Graph g)
-        {
-            if(g == ParentGraph && ParentGraph != null)
-            {
-                r = new Random(ParentGraph.RandomSeed);
-            }
         }
 
         private void Input_OnInputChanged(NodeInput n)
@@ -75,7 +51,7 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override string GetShaderPart()
+        public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput) return "";
 
@@ -86,44 +62,72 @@ namespace Materia.Nodes.MathNodes
                 seed = ParentGraph.RandomSeed;
             }
 
-            var s = shaderId + "0";
+            var s = shaderId + "1";
             var n1id = (input.Input.Node as MathNode).ShaderId;
 
             var index = input.Input.Node.Outputs.IndexOf(input.Input);
 
             n1id += index;
 
-            return "float " + s + " = abs(rand(pos + "  + seed + ")) * " + n1id + ";\r\n";
+            if (input.Input.Type == NodeType.Float2)
+            {
+                return "float " + s + " = abs(rand(" + n1id + " + " + seed + "));\r\n";
+            }
+            else
+            { 
+                return "float " + s + " = abs(rand(pos + " + seed + ")) * " + n1id + ";\r\n";
+            }
+        }
+
+        float fract(float f)
+        {
+            return f - (float)Math.Floor(f);
+        }
+
+        float rand(ref MVector vec2)
+        {
+            return fract((float)Math.Sin(MVector.Dot(vec2, new MVector(12.9898f, 78.233f))) * 43758.5453f);
         }
 
         void Process()
         {
-            if (r == null)
-            {
-                if (ParentGraph != null)
-                {
-                    r = new Random(ParentGraph.RandomSeed);
-                }
-                else
-                {
-                    r = new Random();
-                }
-            }
-
             if (input.Input.Data == null) return;
 
             object o = input.Input.Data;
 
-            if (o is float || o is int)
+            float seed = 0;
+
+            if(ParentGraph != null)
             {
-                float v = (float)o;
-                output.Data = (float)r.NextDouble() * v;
-                output.Changed();
+                seed = ParentGraph.RandomSeed;
+            }
+
+            if (o is float || o is int || o is double)
+            {
+                float v = Convert.ToSingle(o);
+                MVector v2 = new MVector(v, 1.0f - v) + seed;
+                output.Data = rand(ref v2);
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
+            }
+            else if(o is MVector)
+            {
+                MVector v = (MVector)o + seed;
+                output.Data = rand(ref v);
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
             else
             {
                 output.Data = 0;
-                output.Changed();
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
             }
 
             if (ParentGraph != null)

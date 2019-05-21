@@ -43,7 +43,7 @@ namespace Materia.Nodes.Atomic
             function = new FunctionGraph("Pixel Processor Function");
             function.ParentNode = this;
 
-            function.ExpectedOutput = NodeType.Float4;
+            function.ExpectedOutput = NodeType.Float4 | NodeType.Float;
             function.OnGraphUpdated += Function_OnGraphUpdated;
 
             previewProcessor = new BasicImageRenderer();
@@ -72,7 +72,6 @@ namespace Materia.Nodes.Atomic
             Inputs.Add(input);
 
             input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
             input.OnInputAdded += Input_OnInputAdded;
 
             AddedInput(input);
@@ -81,28 +80,6 @@ namespace Materia.Nodes.Atomic
         private void Input_OnInputAdded(NodeInput n)
         {
             TryAndProcess();
-
-            //if (!HasEmptyInput)
-            //{
-            //    AddPlaceholderInput();
-            //}
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            var noinputs = Inputs.FindAll(m => !m.HasInput);
-
-            if (noinputs != null && noinputs.Count >= 2 && Inputs.Count > 2)
-            {
-                var inp = noinputs[noinputs.Count - 1];
-
-                inp.OnInputChanged -= Input_OnInputChanged;
-                inp.OnInputRemoved -= Input_OnInputRemoved;
-                inp.OnInputAdded -= Input_OnInputAdded;
-
-                Inputs.Remove(inp);
-                RemovedInput(inp);
-            }
         }
 
         private void Input_OnInputChanged(NodeInput n)
@@ -133,7 +110,10 @@ namespace Materia.Nodes.Atomic
                 i2 = (GLTextuer2D)Inputs[1].Input.Data;
             }
 
-            if (!function.BuildShader()) return;
+            if (!function.BuildShader())
+            {
+                return;
+            }
 
             CreateBufferIfNeeded();
 
@@ -162,10 +142,11 @@ namespace Materia.Nodes.Atomic
             }
 
             function = new FunctionGraph("Pixel Processor Function");
-            function.ExpectedOutput = NodeType.Float4;
+            function.ExpectedOutput = NodeType.Float4 | NodeType.Float;
             function.OnGraphUpdated += Function_OnGraphUpdated;
             function.FromJson(d.functionGraph);
             function.ParentNode = this;
+            function.SetConnections();
         }
 
         public override string GetJson()

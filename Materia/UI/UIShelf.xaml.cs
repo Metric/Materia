@@ -13,6 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.IO;
+using Materia.UI.Components;
+using Materia.UI.Helpers;
 
 namespace Materia.UI
 {
@@ -21,126 +23,84 @@ namespace Materia.UI
     /// </summary>
     public partial class UIShelf : UserControl
     {
-        protected class TItem
-        {
-            protected Dictionary<string, TItem> Items { get; set; }
-            public TreeViewItem Item { get; protected set;  }
-
-            public TItem(TreeViewItem r)
-            {
-                Item = r;
-                Items = new Dictionary<string, TItem>();
-            }
-
-            public void Add(string k, TItem t)
-            {
-                Items[k] = t;
-            }
-
-            public TItem Get(string k)
-            {
-                TItem t = null;
-
-                Items.TryGetValue(k, out t);
-
-                return t;
-            }
-        }
-
         CancellationTokenSource ctk;
 
-        TItem root;
+        ShelfItem root;
+
+        ShelfItem selected;
+        string selectedPath;
+        ShelfBuilder builder;
+        
 
         public UIShelf()
         {
             InitializeComponent();
-            root = new TItem(null);
-            LoadShelf();
+            builder = new ShelfBuilder();
+            builder.OnBuildComplete += Builder_OnBuildComplete;
+            ShelfItem.OnSelected += ShelfItem_OnSelected;
+            root = new ShelfItem("Categories");
+            root.Toggle();
+            ShelfPaths.Content = root;
+            builder.Build();
         }
 
-        void LoadShelf()
+        private void Builder_OnBuildComplete(ShelfBuilder builder)
         {
-            string dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shelf");
+            var r = builder.Root;
+            Stack<ShelfBuilder.ShelfBuilderItem> stack = new Stack<ShelfBuilder.ShelfBuilderItem>();
+            stack.Push(r);
 
-            if (Directory.Exists(dir))
+            while(stack.Count > 0)
             {
-                string[] path = Directory.GetFiles(dir, "*.mtg", SearchOption.AllDirectories);
+                var n = stack.Pop();
+                var c = root.FindChild(n.Path);
 
-                List<string> sorter = new List<string>();
-                Dictionary<string, string> lookup = new Dictionary<string, string>();
-
-                foreach (string p in path)
+                foreach(var resource in n.Nodes)
                 {
-                    string fname = Path.GetFileNameWithoutExtension(p);
-
-                    if (Path.GetExtension(p).Equals(".mtg"))
-                    {
-                        sorter.Add(fname);
-                        lookup[fname] = p;
-                    }
+                    NodeResource nr = new NodeResource();
+                    nr.Title = resource.Title;
+                    nr.Path = resource.Path;
+                    nr.Type = resource.Type;
+                    c.Add(nr);
                 }
 
-                sorter.Sort();
+                List<ShelfBuilder.ShelfBuilderItem> children = n.Children;
 
-                foreach(string fname in sorter)
+                foreach(var child in children)
                 {
-                    string p = null;
-
-                    if (lookup.TryGetValue(fname, out p))
-                    {
-                        NodeResource nsr = new NodeResource();
-                        nsr.Title = fname;
-                        nsr.Type = p;
-                        string structure = p.Replace(dir, "");
-                        if (structure.IndexOf(Path.DirectorySeparatorChar) > -1) 
-                        {
-                            TItem parent = root;
-
-                            string[] split = structure.Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
-
-                            for(int i = 0; i < split.Length - 1; i++)
-                            {
-                                var s = split[i];
-                                var t = parent.Get(s);
-
-                                if (t == null)
-                                {
-                                    TreeViewItem it = new TreeViewItem();
-                                    it.Foreground = new SolidColorBrush(Colors.LightGray);
-                                    it.Header = s;
-                                    t = new TItem(it);
-
-                                    if (parent == root || parent == null)
-                                    {
-                                        TreeList.Items.Add(it);
-                                    }
-                                    else
-                                    {
-                                        parent.Item.Items.Add(it);
-                                    }
-
-                                    parent.Add(s, t);
-                                }
-
-                                parent = t;
-                            }
-
-
-                            if(parent == root || parent == null)
-                            {
-                                TreeList.Items.Add(nsr);
-                            }
-                            else
-                            {
-                                parent.Item.Items.Add(nsr);
-                            }
-                        }
-                        else
-                        {
-                            TreeList.Items.Add(nsr);
-                        }
-                    }
+                    ShelfItem sh = new ShelfItem(child.BaseName);
+                    c.Add(sh);
+                    stack.Push(child);
                 }
+            }
+
+            if(IsLoaded)
+            {
+                if (string.IsNullOrEmpty(selectedPath))
+                {
+                    PopulateView("Categories");
+                }
+                else
+                {
+                    PopulateView(selectedPath);
+                }
+            }
+        }
+
+        private void ShelfItem_OnSelected(ShelfItem shelf, string path)
+        {
+            selected = shelf;
+            selectedPath = path;
+            PopulateView(path);
+        }
+
+        void PopulateView(string path)
+        {
+            ShelfContent.Children.Clear();
+            var items = ShelfItem.Find(path);
+            foreach(var i in items)
+            {
+                ShelfContent.Children.Add(i);
             }
         }
 
@@ -161,7 +121,7 @@ namespace Materia.UI
                         NodeResource nsr = new NodeResource();
                         nsr.Title = fname;
                         nsr.Type = p;
-                        TreeList.Items.Add(nsr);
+                        root.Add(nsr);
                     }
                 }
             }
@@ -171,7 +131,7 @@ namespace Materia.UI
         {
             string s = SearchBox.Text;
 
-            if (TreeList == null || TreeList.Items == null) return;
+            if (!IsLoaded) return;
 
             if (string.IsNullOrEmpty(s) || string.IsNullOrWhiteSpace(s) || s.Equals("Search..."))
             {
@@ -200,69 +160,18 @@ namespace Materia.UI
         private void SetFilters(string s)
         {
             s = s.ToLower();
-
-            Predicate<object> fn = (object b) =>
-            {
-                if (b is TreeViewItem)
-                {
-                    return true;
-                }
-                else if (b is NodeResource)
-                {
-                    NodeResource nsr = (NodeResource)b;
-
-                    if (nsr.Title.ToLower().Contains(s))
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
-            };
-
-            TreeList.Items.Filter = fn;
-
-            Stack<ItemCollection> stack = new Stack<ItemCollection>();
-            stack.Push(TreeList.Items);
-
-            while (stack.Count > 0)
-            {
-                ItemCollection c = stack.Pop();
-
-                foreach (object o in c)
-                {
-                    if (o is TreeViewItem)
-                    {
-                        TreeViewItem t = (TreeViewItem)o;
-
-                        t.Items.Filter = fn;
-                        stack.Push(t.Items);
-                    }
-                }
-            }
+            PopulateView(s);
         }
 
         private void ClearFilters()
         {
-            TreeList.Items.Filter = null;
-
-            Stack<ItemCollection> stack = new Stack<ItemCollection>();
-            stack.Push(TreeList.Items);
-
-            while (stack.Count > 0)
+            if (string.IsNullOrEmpty(selectedPath))
             {
-                ItemCollection c = stack.Pop();
-
-                foreach (object o in c)
-                {
-                    if (o is TreeViewItem)
-                    {
-                        TreeViewItem t = (TreeViewItem)o;
-
-                        t.Items.Filter = null;
-                        stack.Push(t.Items);
-                    }
-                }
+                PopulateView("Categories");
+            }
+            else
+            {
+                PopulateView(selectedPath);
             }
         }
 
@@ -283,6 +192,18 @@ namespace Materia.UI
             if(string.IsNullOrWhiteSpace(s) || string.IsNullOrWhiteSpace(s))
             {
                 SearchBox.Text = "Search...";
+            }
+        }
+
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(selectedPath))
+            {
+                PopulateView("Categories");
+            }
+            else
+            {
+                PopulateView(selectedPath);
             }
         }
     }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Materia.Nodes.Helpers;
+using Newtonsoft.Json;
 
 namespace Materia.MathHelpers
 {
@@ -14,6 +15,7 @@ namespace Materia.MathHelpers
         public float Z;
         public float W;
 
+        [JsonIgnore]
         public float Length
         {
             get
@@ -22,6 +24,7 @@ namespace Materia.MathHelpers
             }
         }
 
+        [JsonIgnore]
         public float LengthSqr
         {
             get
@@ -30,6 +33,7 @@ namespace Materia.MathHelpers
             }
         }
 
+        [JsonIgnore]
         public MVector Normalized
         {
             get
@@ -105,6 +109,41 @@ namespace Materia.MathHelpers
 
                 return k;
             }
+        }
+
+        public float[] ToArray()
+        {
+            return new float[] { X, Y, Z, W };
+        }
+
+        public static MVector FromArray(float[] arr)
+        {
+            MVector m = new MVector();
+
+            if(arr.Length == 1)
+            {
+                m.X = arr[0];
+            }
+            else if(arr.Length == 2)
+            {
+                m.X = arr[0];
+                m.Y = arr[1];
+            }
+            else if(arr.Length == 3)
+            {
+                m.X = arr[0];
+                m.Y = arr[1];
+                m.Z = arr[2];
+            }
+            else if(arr.Length >= 4)
+            {
+                m.X = arr[0];
+                m.Y = arr[1];
+                m.Z = arr[2];
+                m.W = arr[3];
+            }
+
+            return m;
         }
 
         public static MVector operator *(float t, MVector v1)
