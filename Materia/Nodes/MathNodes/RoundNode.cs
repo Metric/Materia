@@ -22,8 +22,8 @@ namespace Materia.Nodes.MathNodes
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
-            input = new NodeInput(NodeType.Float, this, "Float Input");
-            output = new NodeOutput(NodeType.Float, this);
+            input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Float Input");
+            output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
 
             Inputs.Add(input);
 
@@ -40,7 +40,16 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
+            UpdateOutputType();
             Updated();
+        }
+
+        public override void UpdateOutputType()
+        {
+            if(input.HasInput)
+            {
+                output.Type = input.Input.Type;
+            }
         }
 
         public override void TryAndProcess()
@@ -61,7 +70,26 @@ namespace Materia.Nodes.MathNodes
 
             n1id += index;
 
-            return "float " + s + " = round(" + n1id + ");\r\n";
+            NodeType t = input.Input.Type;
+
+            if (t == NodeType.Float)
+            {
+                return "float " + s + " = round(" + n1id + ");\r\n";
+            }
+            else if(t == NodeType.Float2)
+            {
+                return "vec2 " + s + " = round(" + n1id + ");\r\n";
+            }
+            else if(t == NodeType.Float3)
+            {
+                return "vec3 " + s + " = round(" + n1id + ");\r\n";
+            }
+            else if(t == NodeType.Float4)
+            {
+                return "vec4 " + s + " = round(" + n1id + ");\r\n";
+            }
+
+            return "";
         }
 
         void Process()
@@ -74,6 +102,20 @@ namespace Materia.Nodes.MathNodes
             {
                 float v = (float)o;
                 output.Data = (float)Math.Round(v);
+                if (Outputs.Count > 0)
+                {
+                    Outputs[0].Changed();
+                }
+            }
+            else if(o is MVector)
+            {
+                MVector m = (MVector)o;
+                m.X = (float)Math.Round(m.X);
+                m.Y = (float)Math.Round(m.Y);
+                m.Z = (float)Math.Round(m.Z);
+                m.W = (float)Math.Round(m.W);
+
+                output.Data = m;
                 if (Outputs.Count > 0)
                 {
                     Outputs[0].Changed();

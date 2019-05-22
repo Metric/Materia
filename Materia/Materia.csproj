@@ -202,6 +202,7 @@
     <Compile Include="Nodes\MathNodes\GreaterThanEqualNode.cs" />
     <Compile Include="Nodes\MathNodes\GreaterThanNode.cs" />
     <Compile Include="Nodes\MathNodes\IfElseNode.cs" />
+    <Compile Include="Nodes\MathNodes\LengthNode.cs" />
     <Compile Include="Nodes\MathNodes\LerpNode.cs" />
     <Compile Include="Nodes\MathNodes\LessThanEqualNode.cs" />
     <Compile Include="Nodes\MathNodes\LessThanNode.cs" />

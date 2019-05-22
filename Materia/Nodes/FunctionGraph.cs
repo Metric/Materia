@@ -403,10 +403,16 @@ namespace Materia.Nodes
             Stack<Node> stack = new Stack<Node>();
             List<Node> forward = new List<Node>();
 
+            //oops forgot to check this!
+            if(OutputNode == null)
+            {
+                return forward;
+            }
+
             reverse.Push(OutputNode);
 
             while (reverse.Count > 0)
-            {
+            { 
                 Node n = reverse.Pop();
                 stack.Push(n);
 

@@ -7,29 +7,28 @@ using Materia.MathHelpers;
 
 namespace Materia.Nodes.MathNodes
 {
-    public class SineNode : MathNode
+    public class LengthNode : MathNode
     {
         NodeInput input;
         NodeOutput output;
 
-        public SineNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
+        public LengthNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
             CanPreview = false;
 
-            Name = "Sine";
+            Name = "Normalize";
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
-            input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Float Input");
-            output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
+            input = new NodeInput(NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Vector Type");
+            output = new NodeOutput(NodeType.Float, this);
 
             Inputs.Add(input);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
-
             Outputs.Add(output);
         }
 
@@ -40,16 +39,7 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputAdded(NodeInput n)
         {
-            UpdateOutputType();
             Updated();
-        }
-
-        public override void UpdateOutputType()
-        {
-            if(input.HasInput)
-            {
-                output.Type = input.Input.Type;
-            }
         }
 
         public override void TryAndProcess()
@@ -70,28 +60,8 @@ namespace Materia.Nodes.MathNodes
 
             n1id += index;
 
-            NodeType t = input.Input.Type;
-
-            if(t == NodeType.Float)
-            {
-                return "float " + s + " = sin(" + n1id + ");\r\n";
-            }
-            else if(t == NodeType.Float2)
-            {
-                return "vec2 " + s + " = sin(" + n1id + ");\r\n";
-            }
-            else if(t == NodeType.Float3)
-            {
-                return "vec3 " + s + " = sin(" + n1id + ");\r\n";
-            }
-            else if(t == NodeType.Float4)
-            {
-                return "vec4 " + s + " = sin(" + n1id + ");\r\n";
-            }
-
-            return "";
+            return "float " + s + " = length(" + n1id + ");\r\n";
         }
-
 
         void Process()
         {
@@ -99,24 +69,14 @@ namespace Materia.Nodes.MathNodes
 
             object o = input.Input.Data;
 
-            if (o is float || o is int)
+            if (o is MVector)
             {
-                float v = (float)o;
-                output.Data = (float)Math.Sin(v);
+                MVector v = (MVector)o;
+                float len = v.Length;
+
+                output.Data = len;
+
                 if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
-            }
-            else if(o is MVector)
-            {
-                MVector m = (MVector)o;
-                m.X = (float)Math.Sin(m.X);
-                m.Y = (float)Math.Sin(m.Y);
-                m.Z = (float)Math.Sin(m.Z);
-                m.W = (float)Math.Sin(m.W);
-                output.Data = m;
-                if(Outputs.Count > 0)
                 {
                     Outputs[0].Changed();
                 }
@@ -124,6 +84,7 @@ namespace Materia.Nodes.MathNodes
             else
             {
                 output.Data = 0;
+
                 if (Outputs.Count > 0)
                 {
                     Outputs[0].Changed();
