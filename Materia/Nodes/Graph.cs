@@ -475,9 +475,9 @@ namespace Materia.Nodes
 
                 foreach(FunctionGraph g in CustomFunctions)
                 {
-                    //finally set parent graph
-                    //and set connections
+                    //set parent graph
                     g.ParentGraph = this;
+                    //finally set connections
                     g.SetConnections();
                 }
             }

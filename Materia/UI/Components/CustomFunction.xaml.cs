@@ -57,13 +57,17 @@ namespace Materia.UI.Components
         private void RemoveFunction_Click(object sender, RoutedEventArgs e)
         {
             var g = graph.TopGraph();
-            if(g != null)
+
+            if (MessageBox.Show("Remove Function: " + graph.Name + "?", "", MessageBoxButton.OKCancel) == MessageBoxResult.OK)
             {
-                if(g.CustomFunctions.Remove(graph))
+                if (g != null)
                 {
-                    if(OnRemove != null)
+                    if (g.CustomFunctions.Remove(graph))
                     {
-                        OnRemove.Invoke(this);
+                        if (OnRemove != null)
+                        {
+                            OnRemove.Invoke(this);
+                        }
                     }
                 }
             }

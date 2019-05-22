@@ -124,5 +124,13 @@ namespace Materia
         {
             
         }
+
+        private void Input_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.Enter)
+            {
+                Keyboard.ClearFocus();
+            }
+        }
     }
 }

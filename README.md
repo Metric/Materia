@@ -64,7 +64,6 @@ Known Bugs
  * Work around for now is to set scaling for all displays to 100% in Windows 10.
 
  * Undo and redo do not work in function graphs currently
- * Parameters with text boxes do not unfocus properly when clicking off of it
 
 How-To and Various Info
 ========================

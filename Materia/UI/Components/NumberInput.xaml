@@ -11,6 +11,6 @@
             <ColumnDefinition MinWidth="125" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="Input" TextChanged="Input_TextChanged" PreviewTextInput="Input_PreviewTextInput" Grid.Column="1" HorizontalAlignment="Right" Width="48" Margin="0,5,10,5"></TextBox>
+        <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="Input" TextChanged="Input_TextChanged" PreviewTextInput="Input_PreviewTextInput" Grid.Column="1" HorizontalAlignment="Right" Width="48" Margin="0,5,10,5" KeyDown="Input_KeyDown"></TextBox>
     </Grid>
 </UserControl>

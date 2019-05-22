@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="256">
     <Grid Height="32">
-        <TextBox Name="IField" Margin="5" Background="#222" Foreground="LightGray" TextChanged="TextInput_TextChanged" />
+        <TextBox Name="IField" Margin="5" Background="#222" Foreground="LightGray" TextChanged="TextInput_TextChanged" KeyDown="IField_KeyDown" />
     </Grid>
 </UserControl>

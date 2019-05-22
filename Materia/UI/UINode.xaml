@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia"
              mc:Ignorable="d" 
-             d:DesignHeight="100" d:DesignWidth="100" MouseLeave="UserControl_MouseLeave" ClipToBounds="False" Loaded="UserControl_Loaded">
+             d:DesignHeight="100" d:DesignWidth="100" MouseLeave="UserControl_MouseLeave" ClipToBounds="False" Loaded="UserControl_Loaded" Focusable="True">
     <UserControl.Resources>
         <ContextMenu x:Key="ImageContext">
             <MenuItem Header="_Preview As">

@@ -56,5 +56,13 @@ namespace Materia.UI.Components
 
             property.SetValue(propertyOwner, IField.Text);
         }
+
+        private void IField_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.Enter)
+            {
+                Keyboard.ClearFocus();
+            }
+        }
     }
 }

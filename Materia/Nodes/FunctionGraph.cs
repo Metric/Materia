@@ -119,6 +119,7 @@ namespace Materia.Nodes
         private void G_OnGraphUpdated(Graph g)
         {
             randomSeed = g.RandomSeed;
+            SetVar("RandomSeed", randomSeed);
         }
 
         [HideProperty]
@@ -153,6 +154,7 @@ namespace Materia.Nodes
             SetVar("PI", 3.14159265359f);
             SetVar("Rad2Deg", (180.0f / 3.14159265359f));
             SetVar("Deg2Rad", (3.14159265359f / 180.0f));
+            SetVar("RandomSeed", randomSeed);
         }
 
         public Graph TopGraph()
@@ -543,6 +545,7 @@ namespace Materia.Nodes
                          + "const float PI = 3.14159265359;\r\n"
                          + "const float Rad2Deg = (180.0 / PI);\r\n"
                          + "const float Deg2Rad = (PI / 180.0);\r\n"
+                         + "const float RandomSeed = " + randomSeed + ";\r\n"
                          + "uniform sampler2D Input0;\r\n"
                          + "uniform sampler2D Input1;\r\n"
                          + GLSLHash;
@@ -680,7 +683,7 @@ namespace Materia.Nodes
             }
 
             string prefix = "p_";
-            string s1 = prefix + param.Name.Replace(" ", "") + " = ";
+            string s1 = prefix + param.Name.Replace(" ", "").Replace("-", "") + " = ";
 
             builder.Append(type);
             builder.Append(s1);
@@ -797,7 +800,7 @@ namespace Materia.Nodes
                 {
                     if (!param.IsFunction())
                     {
-                        SetVar("p_" + param.Name.Replace(" ", ""), param.Value);
+                        SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value);
                     }
                 }
 
@@ -805,7 +808,7 @@ namespace Materia.Nodes
                 {
                     if(!param.IsFunction())
                     {
-                        SetVar("p_" + param.Name.Replace(" ", ""), param.Value);
+                        SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value);
                     }
                 }
             }
@@ -873,7 +876,7 @@ namespace Materia.Nodes
 
                         if(t != null)
                         {
-                            varName = t.Title.Replace(" ", "");
+                            varName = t.Title.Replace(" ", "").Replace("-", "");
                         }
                         else
                         {
@@ -934,7 +937,7 @@ namespace Materia.Nodes
 
                         if (t != null)
                         {
-                            varName = t.Title.Replace(" ", "");
+                            varName = t.Title.Replace(" ", "").Replace("-", "");
                         }
                         else
                         {

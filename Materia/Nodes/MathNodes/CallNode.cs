@@ -29,16 +29,49 @@ namespace Materia.Nodes.MathNodes
                     {
                         if (selectedFunction != null)
                         {
+                            var o = selectedFunction.OutputNode;
                             selectedFunction.OnGraphUpdated -= SelectedFunction_OnGraphUpdated;
+
+                            if(o != null)
+                            {
+                                if(o.Outputs.Count > 1)
+                                {
+                                    o.Outputs[1].OnTypeChanged -= CallNode_OnTypeChanged;
+                                }
+                                else if(o.Outputs.Count > 0)
+                                {
+                                    o.Outputs[0].OnTypeChanged -= CallNode_OnTypeChanged;
+                                }
+                            }
                         }
 
                         selectedFunction = topGraph.CustomFunctions[selectedIndex];
                         selectedFunction.OnGraphUpdated += SelectedFunction_OnGraphUpdated;
+
+                        var ou = selectedFunction.OutputNode;
+
+                        if(ou != null)
+                        {
+                            if(ou.Outputs.Count > 1)
+                            {
+                                ou.Outputs[1].OnTypeChanged += CallNode_OnTypeChanged;
+                            }
+                            else if(ou.Outputs.Count > 0)
+                            {
+                                ou.Outputs[0].OnTypeChanged += CallNode_OnTypeChanged;
+                            }
+                        }
+
                         selectedName = selectedFunction.Name;
                         UpdateInputs();
                     }
                 }
             }
+        }
+
+        private void CallNode_OnTypeChanged(NodeOutput inp)
+        {
+            UpdateOutputType();
         }
 
         private void SelectedFunction_OnGraphUpdated(Graph g)
@@ -92,14 +125,41 @@ namespace Materia.Nodes.MathNodes
 
                     if(f.Name.Equals(selectedName) || string.IsNullOrEmpty(selectedName))
                     {
-                        if(selectedFunction != null)
+                        if (selectedFunction != null)
                         {
+                            var o = selectedFunction.OutputNode;
                             selectedFunction.OnGraphUpdated -= SelectedFunction_OnGraphUpdated;
+
+                            if (o != null)
+                            {
+                                if (o.Outputs.Count > 1)
+                                {
+                                    o.Outputs[1].OnTypeChanged -= CallNode_OnTypeChanged;
+                                }
+                                else if (o.Outputs.Count > 0)
+                                {
+                                    o.Outputs[0].OnTypeChanged -= CallNode_OnTypeChanged;
+                                }
+                            }
                         }
                         selectedName = f.Name;
                         selectedIndex = i;
                         selectedFunction = f;
                         selectedFunction.OnGraphUpdated += SelectedFunction_OnGraphUpdated;
+
+                        var ou = selectedFunction.OutputNode;
+
+                        if (ou != null)
+                        {
+                            if (ou.Outputs.Count > 1)
+                            {
+                                ou.Outputs[1].OnTypeChanged += CallNode_OnTypeChanged;
+                            }
+                            else if (ou.Outputs.Count > 0)
+                            {
+                                ou.Outputs[0].OnTypeChanged += CallNode_OnTypeChanged;
+                            }
+                        }
                     }
 
                     function[i] = f.Name;
@@ -126,12 +186,39 @@ namespace Materia.Nodes.MathNodes
                     {
                         if (selectedFunction != null)
                         {
+                            var o = selectedFunction.OutputNode;
                             selectedFunction.OnGraphUpdated -= SelectedFunction_OnGraphUpdated;
+
+                            if (o != null)
+                            {
+                                if (o.Outputs.Count > 1)
+                                {
+                                    o.Outputs[1].OnTypeChanged -= CallNode_OnTypeChanged;
+                                }
+                                else if (o.Outputs.Count > 0)
+                                {
+                                    o.Outputs[0].OnTypeChanged -= CallNode_OnTypeChanged;
+                                }
+                            }
                         }
                         selectedName = f.Name;
                         selectedIndex = i;
                         selectedFunction = f;
                         selectedFunction.OnGraphUpdated += SelectedFunction_OnGraphUpdated;
+
+                        var ou = selectedFunction.OutputNode;
+
+                        if (ou != null)
+                        {
+                            if (ou.Outputs.Count > 1)
+                            {
+                                ou.Outputs[1].OnTypeChanged += CallNode_OnTypeChanged;
+                            }
+                            else if (ou.Outputs.Count > 0)
+                            {
+                                ou.Outputs[0].OnTypeChanged += CallNode_OnTypeChanged;
+                            }
+                        }
                     }
 
                     function[i] = f.Name;
@@ -184,6 +271,7 @@ namespace Materia.Nodes.MathNodes
             }
 
             Inputs.Add(executeInput);
+            AddedInput(executeInput);
                     
 
             if(selectedFunction != null)
@@ -196,7 +284,7 @@ namespace Materia.Nodes.MathNodes
                 {
                     NodeInput input = new NodeInput(arg.InputType, this, arg.InputName);
 
-                    if (previousOutputs.Count > 0 && i < previousOutputs.Count)
+                    if (previousOutputs.Count > 1 && i < previousOutputs.Count)
                     {
                         var prev = previousOutputs[i];
                         var idx = indices[i];

@@ -463,6 +463,8 @@ namespace Materia
 
         public void ShowBorder()
         {
+            Keyboard.ClearFocus();
+
             BorderBrush = new SolidColorBrush(Colors.White);
             BorderThickness = new Thickness(2, 2, 2, 2);
 
@@ -498,6 +500,8 @@ namespace Materia
 
         private void Preview_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            Focus();
+
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 if(new TimeSpan(DateTime.Now.Ticks - lastClickTime).TotalMilliseconds > 200)
