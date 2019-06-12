@@ -252,6 +252,7 @@ namespace Materia.Nodes.Atomic
         NodeInput inputOcclusion;
         NodeInput inputHeight;
         NodeInput inputNormal;
+        NodeInput inputThickness;
 
         static Matrix4 Proj = Matrix4.CreatePerspectiveFieldOfView(40 * ((float)Math.PI / 180.0f), 1, 0.03f, 1000.0f);
         static PBRMaterial mat = new PBRMaterial();
@@ -287,6 +288,7 @@ namespace Materia.Nodes.Atomic
             inputRoughness = new NodeInput(NodeType.Gray, this, "Roughness");
             inputOcclusion = new NodeInput(NodeType.Gray, this, "Occlusion");
             inputNormal = new NodeInput(NodeType.Color, this, "Normal");
+            inputThickness = new NodeInput(NodeType.Gray, this, "Thickness");
 
             Inputs.Add(inputAlbedo);
             Inputs.Add(inputMetallic);
@@ -294,6 +296,7 @@ namespace Materia.Nodes.Atomic
             Inputs.Add(inputNormal);
             Inputs.Add(inputHeight);
             Inputs.Add(inputOcclusion);
+            Inputs.Add(inputThickness);
 
             inputAlbedo.OnInputAdded += Input_OnInputAdded;
             inputAlbedo.OnInputChanged += Input_OnInputChanged;
@@ -318,6 +321,10 @@ namespace Materia.Nodes.Atomic
             inputHeight.OnInputAdded += Input_OnInputAdded;
             inputHeight.OnInputChanged += Input_OnInputChanged;
             inputHeight.OnInputRemoved += Input_OnInputRemoved;
+
+            inputThickness.OnInputAdded += Input_OnInputAdded;
+            inputThickness.OnInputChanged += Input_OnInputChanged;
+            inputThickness.OnInputRemoved += Input_OnInputRemoved;
 
             Output = new NodeOutput(NodeType.Gray, this);
 
@@ -439,6 +446,7 @@ namespace Materia.Nodes.Atomic
                 GLTextuer2D normal = (inputNormal.HasInput) ? (GLTextuer2D)inputNormal.Input.Data : null;
                 GLTextuer2D heightm = (inputHeight.HasInput) ? (GLTextuer2D)inputHeight.Input.Data : null;
                 GLTextuer2D occlusion = (inputOcclusion.HasInput) ? (GLTextuer2D)inputOcclusion.Input.Data : null;
+                GLTextuer2D thickness = (inputThickness.HasInput) ? (GLTextuer2D)inputThickness.Input.Data : null;
 
                 UI3DPreview v = UI3DPreview.Instance;
 
@@ -471,6 +479,11 @@ namespace Materia.Nodes.Atomic
                     {
                         normal = v.defaultBlack;
                     }
+                    if(thickness == null)
+                    {
+                        thickness = v.defaultBlack;
+                    }
+                    
                 }
 
                 mat.Albedo = albedo;
@@ -479,6 +492,7 @@ namespace Materia.Nodes.Atomic
                 mat.Metallic = metallic;
                 mat.Occlusion = occlusion;
                 mat.Roughness = roughness;
+                mat.Thickness = thickness;
 
                 mesh.View = view;
                 mesh.CameraPosition = pos;

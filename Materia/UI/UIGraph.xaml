@@ -5,11 +5,35 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" AllowDrop="True" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged" Unloaded="UserControl_Unloaded">
+             d:DesignHeight="450" d:DesignWidth="800" AllowDrop="True" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged" Unloaded="UserControl_Unloaded" Focusable="True">
+    <UserControl.Resources>
+        <ContextMenu x:Key="FunctionContextMenu">
+            <MenuItem Header="_Export Function" Click="MenuItem_Click" />
+            <MenuItem Header="_Import Function" Click="MenuItem_Click" />
+        </ContextMenu>
+    </UserControl.Resources>
     <Grid ClipToBounds="True" MouseWheel="ViewPort_MouseWheel" MouseDown="ViewPort_MouseDown" Background="#333" MouseUp="ViewPort_MouseUp" MouseMove="ViewPort_MouseMove">
         <Canvas Name="ViewPort" ClipToBounds="True" Margin="0,0,0,0">
         </Canvas>
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" FlowDirection="RightToLeft">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,32,0,0" FlowDirection="RightToLeft">
+            <Button Name="ApplySize" Click="ApplySize_Click" Width="48" Background="Transparent" Margin="5" BorderThickness="1" BorderBrush="#666" ToolTip="Apply Size to Selected Nodes" Style="{DynamicResource ImageTextButton}">
+                <TextBlock Foreground="LightGray" Text="APPLY" />
+            </Button>
+            <ComboBox Foreground="LightGray" SelectedIndex="0" Style="{StaticResource ComboBoxFlatStyle}" SelectionChanged="DefaultNodeSize_SelectionChanged" Name="DefaultNodeSize" FlowDirection="LeftToRight" Width="100"  Margin="4,4,4,4">
+                <ComboBox.Items>
+                    <ComboBoxItem Content="8" />
+                    <ComboBoxItem Content="16" />
+                    <ComboBoxItem Content="32" />
+                    <ComboBoxItem Content="64" />
+                    <ComboBoxItem Content="128" />
+                    <ComboBoxItem Content="256" />
+                    <ComboBoxItem Content="512" />
+                    <ComboBoxItem Content="1024" />
+                    <ComboBoxItem Content="2048" />
+                    <ComboBoxItem Content="4096" />
+                </ComboBox.Items>
+            </ComboBox>
+            <TextBlock Name="ApplySizeLabel" Text="Size" Foreground="LightGray" VerticalAlignment="Center"  Margin="5,5,20,5"/>
             <Button Name="ZoomIn" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomIn_Click" ToolTip="Zoom in" Style="{DynamicResource ImageTextButton}">
                 <Image Source="/Materia;component/Images/add.png" />
             </Button>
@@ -30,7 +54,7 @@
                 <Image Source="/Materia;component/Images/align-horiz.png" />
             </Button>
         </StackPanel>
-        <local:BreadCrumbs x:Name="Crumbs" VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="32" />
+        <local:BreadCrumbs x:Name="Crumbs" VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="32" Background="#222" />
         <TextBlock Name="OutputRequirementsLabel" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="5" Foreground="YellowGreen" FontSize="16" />
     </Grid>
 </UserControl>

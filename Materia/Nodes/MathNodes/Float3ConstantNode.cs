@@ -164,7 +164,7 @@ namespace Materia.Nodes.MathNodes
             vec.Y = py;
             vec.Z = pz;
             output.Data = vec;
-            output.Changed();
+
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;

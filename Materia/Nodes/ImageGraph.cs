@@ -19,6 +19,10 @@ namespace Materia.Nodes
             {
                 return base.Add(n);
             }
+            else if(n is ItemNode)
+            {
+                return base.Add(n);
+            }
 
             return false;
         }
@@ -26,7 +30,7 @@ namespace Materia.Nodes
         public override Node CreateNode(string type)
         {
             //math based nodes are not allowed on image graphs
-            if (type.Contains("MathNodes") && !type.Contains(System.IO.Path.PathSeparator)) return null;
+            if (type.Contains("MathNodes") && !type.Contains(System.IO.Path.DirectorySeparatorChar)) return null;
 
             return base.CreateNode(type);
         }

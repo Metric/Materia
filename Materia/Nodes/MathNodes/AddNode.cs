@@ -209,9 +209,9 @@ namespace Materia.Nodes.MathNodes
                             object o = inp.Input.Data;
                             if (o == null) continue;
 
-                            if (o is float || o is int)
+                            if (o is float || o is int || o is double || o is long)
                             {
-                                float f = (float)o;
+                                float f = Convert.ToSingle(o);
                                 v.X += f;
                                 v.Y += f;
                                 v.Z += f;
@@ -230,11 +230,6 @@ namespace Materia.Nodes.MathNodes
                 }
 
                 output.Data = v;
-
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
             else
             {
@@ -249,9 +244,9 @@ namespace Materia.Nodes.MathNodes
                             object o = inp.Input.Data;
                             if (o == null) continue;
 
-                            if (o is float || o is int)
+                            if (o is float || o is int || o is double || o is long)
                             {
-                                float f = (float)o;
+                                float f = Convert.ToSingle(o);
                                 v += f;
                             }
                         }
@@ -259,10 +254,15 @@ namespace Materia.Nodes.MathNodes
                 }
 
                 output.Data = v;
+            }
 
-                if (Outputs.Count > 0)
+            if (ParentGraph != null)
+            {
+                FunctionGraph g = (FunctionGraph)ParentGraph;
+
+                if (g != null && g.OutputNode == this)
                 {
-                    Outputs[0].Changed();
+                    g.Result = output.Data;
                 }
             }
         }

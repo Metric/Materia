@@ -239,5 +239,16 @@ namespace Materia.Nodes.Helpers
                 }
             }
         }
+
+
+        public static float Fract(float f)
+        {
+            return f - (float)Math.Floor(f);
+        }
+
+        public static float Rand(ref MVector vec2)
+        {
+            return Fract((float)Math.Sin(MVector.Dot(vec2, new MVector(12.9898f, 78.233f))) * 43758.5453f) * 2.0f - 1.0f;
+        }
     }
 }

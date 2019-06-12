@@ -79,14 +79,10 @@ namespace Materia.Nodes.MathNodes
         {
             if (input.Input.Data == null || input2.Input.Data == null) return;
 
-            float x = (float)input.Input.Data;
-            float y = (float)input2.Input.Data;
+            float x = Convert.ToSingle(input.Input.Data);
+            float y = Convert.ToSingle(input2.Input.Data);
 
             output.Data = x < y;
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
 
             if (ParentGraph != null)
             {

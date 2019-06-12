@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Materia.Nodes;
+using Materia.Nodes.Items;
 using Materia.Imaging;
 using Materia.Nodes.Atomic;
 using Materia.Nodes.Helpers;
@@ -21,6 +22,9 @@ using Newtonsoft.Json;
 using Materia.Undo;
 using Materia.UI.Components;
 using Materia.Hdri;
+using Materia.UI;
+using Materia.UI.ItemNodes;
+using NLog;
 
 namespace Materia
 {
@@ -28,27 +32,40 @@ namespace Materia
     {
         Parameter,
         Pixel,
-        FX,
         CustomFunction
     }
+
     /// <summary>
     /// Interaction logic for UIGraph.xaml
     /// </summary>
     public partial class UIGraph : UserControl
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
+        private const float CONNECTION_POINT_SIZE = 16;
+
+        public struct GraphCopyData
+        {
+            public List<string> nodes;
+        }
+
         bool moving;
         Point start;
+        Point insertPos;
+
+        public delegate void GraphUpdate(UIGraph graph);
+        public static event GraphUpdate OnGraphNameChanged;
 
         public string Id { get; protected set; }
 
         public float Scale { get; protected set; }
         public float PrevScale { get; protected set; }
 
-        public List<UINode> GraphNodes { get; protected set; }
+        public List<IUIGraphNode> GraphNodes { get; protected set; }
 
         public Graph Graph { get; protected set; }
 
-        protected Dictionary<string, UINode> lookup;
+        protected Dictionary<string, IUIGraphNode> lookup;
 
         public double XShift { get; protected set; }
         public double YShift { get; protected set; }
@@ -57,7 +74,8 @@ namespace Materia
 
         public bool Modified { get; protected set; }
 
-        public List<UINode> SelectedNodes { get; protected set; }
+        public List<IUIGraphNode> SelectedNodes { get; protected set; }
+        public HashSet<string> SelectedIds { get; protected set; }
         protected Rectangle selectionRect;
 
         protected Graph Original { get; set; }
@@ -71,6 +89,9 @@ namespace Materia
         public string StoredGraphCWD { get; protected set; }
         public string[] StoredGraphStack { get; protected set; }
         protected string StoredGraphName { get; set; }
+
+        protected int pinIndex;
+        protected List<UIPinNode> Pins;
 
         public string GraphName
         {
@@ -100,6 +121,11 @@ namespace Materia
         protected Rectangle ConnectionPointPreview = new Rectangle();
 
         protected Stack<GraphStackItem> GraphStack;
+
+        protected bool graphIsLoadingSizeSelect;
+        protected bool graphInitedWithTemplate;
+
+        protected HashSet<string> selectedStartedIn;
 
         public class GraphStackItem
         {
@@ -155,17 +181,21 @@ namespace Materia
             }
         }
 
-        public UIGraph()
+        public UIGraph(Graph template = null)
         {
             InitializeComponent();
 
             Id = Guid.NewGuid().ToString();
 
             GraphStack = new Stack<GraphStackItem>();
-            SelectedNodes = new List<UINode>();
+            SelectedNodes = new List<IUIGraphNode>();
+            SelectedIds = new HashSet<string>();
+            selectedStartedIn = new HashSet<string>();
+            Pins = new List<UIPinNode>();
+            pinIndex = 0;
 
             selectionRect = new Rectangle();
-            selectionRect.Stroke = new SolidColorBrush(Colors.DarkRed);
+            selectionRect.Stroke = (SolidColorBrush)new BrushConverter().ConvertFrom("#0087e5");
             selectionRect.StrokeDashArray.Add(2);
             selectionRect.StrokeDashArray.Add(2);
             selectionRect.StrokeDashCap = PenLineCap.Round;
@@ -177,23 +207,30 @@ namespace Materia
             selectionRect.Fill = null;
             selectionRect.RenderTransformOrigin = new Point(0, 0);
 
-            lookup = new Dictionary<string, UINode>();
+            lookup = new Dictionary<string, IUIGraphNode>();
             Scale = 1;
             PrevScale = 1;
 
             moving = false;
-            GraphNodes = new List<UINode>();
+            GraphNodes = new List<IUIGraphNode>();
+
+            if (template != null)
+            {
+                graphInitedWithTemplate = true;
+                StoredGraph = template.GetJson();
+            }
+
             Original = Graph = new ImageGraph("Untitled");
 
             UpdateGrid();
 
             Crumbs.Clear();
 
-            ConnectionPointPreview.RadiusX = 8;
-            ConnectionPointPreview.RadiusY = 8;
+            ConnectionPointPreview.RadiusX = CONNECTION_POINT_SIZE * 0.5;
+            ConnectionPointPreview.RadiusY = CONNECTION_POINT_SIZE * 0.5;
 
-            ConnectionPointPreview.Width = 16;
-            ConnectionPointPreview.Height = 16;
+            ConnectionPointPreview.Width = CONNECTION_POINT_SIZE;
+            ConnectionPointPreview.Height = CONNECTION_POINT_SIZE;
 
             ConnectionPointPreview.Fill = new SolidColorBrush(Colors.DarkRed);
 
@@ -211,19 +248,104 @@ namespace Materia
             BreadCrumb cb = new BreadCrumb(Crumbs, "Root", this, null);
         }
 
+        public void TryAndLoadGraphStack(string[] stack)
+        {
+            if (stack == null) return;
+
+            StoredGraphStack = stack;
+            GraphStack.Clear();
+            Crumbs.Clear();
+
+            BreadCrumb cb = new BreadCrumb(Crumbs, "Root", this, null);
+            RestoreStack();
+        }
+
         public void MarkModified()
         {
             Modified = true;
         }
 
-        public struct GraphCopyData
+        public void TryAndPin()
         {
-            public List<string> nodes;
+            Point m = Mouse.GetPosition(ViewPort);
+            ToWorld(ref m);
+
+            Node node = Graph.CreateNode(typeof(PinNode).ToString());
+            if(node == null)
+            {
+                return;
+            }
+
+            node.ViewOriginX = m.X - 32;
+            node.ViewOriginY = m.Y - 32;
+
+            Graph.Add(node);
+
+            UIPinNode unode = new UIPinNode(node, this, node.ViewOriginX, node.ViewOriginY, XShift, YShift, Scale);
+            unode.HorizontalAlignment = HorizontalAlignment.Left;
+            unode.VerticalAlignment = VerticalAlignment.Top;
+            lookup[node.Id] = unode;
+            ViewPort.Children.Add(unode);
+            GraphNodes.Add(unode);
+
+            Pins.Add(unode);
+
+            UndoRedoManager.AddUndo(new CreateNode(Id, unode.Id, this));
+        }
+
+        public void TryAndComment()
+        {
+            Rect area = GetSelectedNodeBounds();
+
+            if(area.Width <= 0 || area.Height <= 0)
+            {
+                Point m = Mouse.GetPosition(ViewPort);
+                ToWorld(ref m);
+
+                area.X = m.X;
+                area.Y = m.Y;
+                area.Width = 256;
+                area.Height = 256;
+            }
+
+            Node node = Graph.CreateNode(typeof(CommentNode).ToString());
+            if (node == null)
+            {
+                return;
+            }
+
+            //add padding
+            node.Width = (int)area.Width + 64;
+            node.Height = (int)area.Height + 90;
+
+            node.ViewOriginX = area.Left - 32;
+            node.ViewOriginY = area.Top - 52;
+
+            Graph.Add(node);
+
+            UICommentNode unode = new UICommentNode(node, this, area.Left - 32, area.Top - 52, XShift, YShift, Scale);
+            unode.HorizontalAlignment = HorizontalAlignment.Left;
+            unode.VerticalAlignment = VerticalAlignment.Top;
+            lookup[node.Id] = unode;
+            ViewPort.Children.Add(unode);
+            GraphNodes.Add(unode);
+
+            UndoRedoManager.AddUndo(new CreateNode(Id, unode.Id, this));
+        }
+
+        public void TryAndUndo()
+        {
+            UndoRedoManager.Undo(Id);
+        }
+
+        public void TryAndRedo()
+        {
+            UndoRedoManager.Redo(Id);
         }
 
         public void TryAndDelete()
         {
-            foreach (UINode n in SelectedNodes)
+            foreach (IUIGraphNode n in SelectedNodes)
             {
                 if(UINodeParameters.Instance != null)
                 {
@@ -245,9 +367,22 @@ namespace Materia
             {
                 List<string> nodes = new List<string>();
 
-                foreach (UINode n in SelectedNodes)
+                foreach (IUIGraphNode n in SelectedNodes)
                 {
                     nodes.Add(n.Node.GetJson());
+
+                    //handles copying of the entire
+                    //entire comment group block
+                    if(n is UICommentNode)
+                    {
+                        UICommentNode cn = n as UICommentNode;
+                        List<IUIGraphNode> contains = cn.GetContained();
+
+                        foreach(IUIGraphNode cnode in contains)
+                        {
+                            nodes.Add(cnode.Node.GetJson());
+                        }
+                    }
                 }
 
                 GraphCopyData cd = new GraphCopyData()
@@ -294,7 +429,7 @@ namespace Materia
                 if (cd.nodes == null || cd.nodes.Count == 0) return;
 
 
-                List<UINode> added = new List<UINode>();
+                List<IUIGraphNode> added = new List<IUIGraphNode>();
                 Dictionary<string, string> jsonContent = new Dictionary<string, string>();
                 Dictionary<string, Node> realLookup = new Dictionary<string, Node>();
 
@@ -313,7 +448,7 @@ namespace Materia
                 double minY = float.MaxValue;
 
                 //find minx and miny
-                foreach (UINode n in added)
+                foreach (IUIGraphNode n in added)
                 {
                     if(minX > n.Node.ViewOriginX)
                     {
@@ -326,7 +461,7 @@ namespace Materia
                 }
 
                 //offset nodes origin by mouse point position
-                foreach(UINode n in added)
+                foreach(IUIGraphNode n in added)
                 {
                     double dx = n.Node.ViewOriginX - minX;
                     double dy = n.Node.ViewOriginY - minY;
@@ -346,7 +481,7 @@ namespace Materia
                 {
                     App.Current.Dispatcher.Invoke(() =>
                     {
-                        foreach (UINode n in added)
+                        foreach (IUIGraphNode n in added)
                         {
                             //finally load visual connections
                             n.LoadConnections(lookup);
@@ -362,7 +497,7 @@ namespace Materia
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.StackTrace);
+                Log.Error(ex);
             }
         }
 
@@ -385,7 +520,10 @@ namespace Materia
             if (g == Graph) return;
             if (g == null) return;
 
+            pinIndex = 0;
+
             Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
+            Graph.OnGraphNameChanged -= Graph_OnGraphNameChanged;
 
             ClearView();
 
@@ -398,10 +536,16 @@ namespace Materia
             ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
 
             Graph.OnGraphUpdated += Graph_OnGraphUpdated;
+            Graph.OnGraphNameChanged += Graph_OnGraphNameChanged;
 
             ReadOnly = Graph.ReadOnly;
             Graph.ReadOnly = false;
             LoadGraphUI();
+        }
+
+        private void Graph_OnGraphNameChanged(Graph g)
+        {
+            Modified = true;
         }
 
         private void Graph_OnGraphUpdated(Graph g)
@@ -419,10 +563,6 @@ namespace Materia
                 {
                     graph = (n as PixelProcessorNode).Function;
                 }
-            }
-            else if(type == GraphStackType.FX)
-            {
-
             }
 
             Push(n, graph, type);
@@ -493,6 +633,7 @@ namespace Materia
             ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
 
             Graph.OnGraphUpdated += Graph_OnGraphUpdated;
+            Graph.OnGraphNameChanged += Graph_OnGraphNameChanged;
 
             ReadOnly = Graph.ReadOnly;
             Graph.ReadOnly = false;
@@ -567,32 +708,28 @@ namespace Materia
                                 return;
                             }
                         }
-                        else if(item.type == GraphStackType.FX)
+                        else
                         {
-                            //do same as pixel basically
+                            StoredGraphStack = null;
+                            return;
                         }
-                        else if(item.type == GraphStackType.CustomFunction)
+                    }
+                    else if (item.type == GraphStackType.CustomFunction)
+                    {
+                        FunctionGraph fn = graph.CustomFunctions.Find(m => m.Name.Equals(item.id));
+
+                        if (fn != null)
                         {
-                            FunctionGraph fn = graph.CustomFunctions.Find(m => m.Name.Equals(item.id));
+                            graph = item.graph = fn;
 
-                            if(fn != null)
+                            if (!GraphStack.Contains(item))
                             {
-                                graph = item.graph = fn;
+                                GraphStack.Push(item);
 
-                                if(!GraphStack.Contains(item))
+                                if (!Crumbs.Contains(item.id))
                                 {
-                                    GraphStack.Push(item);
-
-                                    if(!Crumbs.Contains(item.id))
-                                    {
-                                        BreadCrumb c = new BreadCrumb(Crumbs, fn.Name, this, item.id);
-                                    }
+                                    BreadCrumb c = new BreadCrumb(Crumbs, fn.Name, this, item.id);
                                 }
-                            }
-                            else
-                            {
-                                StoredGraphStack = null;
-                                return;
                             }
                         }
                         else
@@ -615,6 +752,19 @@ namespace Materia
 
                 StoredGraphStack = null;
             }
+        }
+
+        public string[] GetGraphStack()
+        {
+            string[] n = new string[GraphStack.Count];
+            GraphStackItem[] stack = GraphStack.ToArray();
+
+            for (int i = 0; i < stack.Length; i++)
+            {
+                n[i] = stack[i].GetJson();
+            }
+
+            return n;
         }
 
         protected void CaptureStack()
@@ -676,6 +826,8 @@ namespace Materia
                 return;
             }
 
+            pinIndex = 0;
+
             Original = Graph;
 
             Graph.CWD = CWD;
@@ -708,37 +860,109 @@ namespace Materia
             return Original.GetJson();
         }
 
+        protected void LoadGraphSizeSelect()
+        {
+            graphIsLoadingSizeSelect = true;
+
+            int index = Array.IndexOf(Graph.GRAPH_SIZES, Math.Max(Graph.Width, Graph.Height));
+            if(index == -1)
+            {
+                index = Array.IndexOf(Graph.GRAPH_SIZES, Graph.DEFAULT_SIZE);
+            }
+           
+            if(index > -1)
+            {
+                DefaultNodeSize.SelectedIndex = index;
+            }
+        }
+
         protected void LoadGraphUI()
         {
-            if(Graph is FunctionGraph)
+            if (Graph is FunctionGraph)
             {
                 FunctionGraph fg = (FunctionGraph)Graph;
 
-                OutputRequirementsLabel.Text = "Required Output Node Type: " + fg.ExpectedOutput.ToString();
+                if ((fg.ExpectedOutput & NodeType.Float) != 0 && (fg.ExpectedOutput & NodeType.Float4) != 0)
+                {
+                    OutputRequirementsLabel.Text = "Required Output Node Type: Float or Float4";
+                }
+                else if ((int)fg.ExpectedOutput == 0)
+                {
+                    OutputRequirementsLabel.Text = "Required Output Node Type: Any";
+                }
+                else
+                {
+                    OutputRequirementsLabel.Text = "Required Output Node Type: " + fg.ExpectedOutput.ToString();
+                }
+
+                ApplySize.Visibility = Visibility.Collapsed;
+                DefaultNodeSize.Visibility = Visibility.Collapsed;
+                ApplySizeLabel.Visibility = Visibility.Collapsed;
+
+                ContextMenu = (ContextMenu)Resources["FunctionContextMenu"];
             }
             else
             {
+                ApplySize.Visibility = Visibility.Visible;
+                DefaultNodeSize.Visibility = Visibility.Visible;
+                ApplySizeLabel.Visibility = Visibility.Visible;
+
+                LoadGraphSizeSelect();
+
                 OutputRequirementsLabel.Text = "";
+
+                ContextMenu = null;
             }
 
             foreach (Node n in Graph.Nodes)
             {
-                UINode unode = new UINode(n, this, n.ViewOriginX, n.ViewOriginY, XShift, YShift, Scale);
+                if (n is CommentNode)
+                {
+                    UICommentNode unode = new UICommentNode(n, this, n.ViewOriginX, n.ViewOriginY, XShift, YShift, Scale);
+                    unode.HorizontalAlignment = HorizontalAlignment.Left;
+                    unode.VerticalAlignment = VerticalAlignment.Top;
+                    ViewPort.Children.Add(unode);
+                    GraphNodes.Add(unode);
+                    lookup[n.Id] = unode;
+                }
+                else if(n is PinNode)
+                {
+                    UIPinNode unode = new UIPinNode(n, this, n.ViewOriginX, n.ViewOriginY, XShift, YShift, Scale);
+                    unode.HorizontalAlignment = HorizontalAlignment.Left;
+                    unode.VerticalAlignment = VerticalAlignment.Top;
+                    ViewPort.Children.Add(unode);
+                    GraphNodes.Add(unode);
+                    lookup[n.Id] = unode;
+                    Pins.Add(unode);
+                }
+                else
+                {
+                    UINode unode = new UINode(n, this, n.ViewOriginX, n.ViewOriginY, XShift, YShift, Scale);
 
-                unode.HorizontalAlignment = HorizontalAlignment.Left;
-                unode.VerticalAlignment = VerticalAlignment.Top;
-                ViewPort.Children.Add(unode);
-                GraphNodes.Add(unode);
+                    unode.HorizontalAlignment = HorizontalAlignment.Left;
+                    unode.VerticalAlignment = VerticalAlignment.Top;
+                    ViewPort.Children.Add(unode);
+                    GraphNodes.Add(unode);
 
-                lookup[n.Id] = unode;
+                    if (graphInitedWithTemplate)
+                    {
+                        unode.Offset(ViewPort.ActualWidth * 0.5, ViewPort.ActualHeight * 0.5);
+                    }
+
+                    TryAndLinkOutputPreview(unode);
+
+                    lookup[n.Id] = unode;
+                }
             }
+
+            graphInitedWithTemplate = false;
 
             Task.Delay(250).ContinueWith((Task t) =>
             {
                 App.Current.Dispatcher.Invoke(() =>
                 {
                     //foreach uinode connect up
-                    foreach (UINode n in GraphNodes)
+                    foreach (IUIGraphNode n in GraphNodes)
                     {
                         n.LoadConnections(lookup);
                     }
@@ -746,6 +970,44 @@ namespace Materia
                     Graph.ReadOnly = ReadOnly;
                 });
             });
+        }
+
+        protected void TryAndLinkOutputPreview(UINode node)
+        {
+            UI3DPreview preview = UI3DPreview.Instance;
+            if(node.Node is OutputNode && preview != null)
+            {
+                OutputNode n = node.Node as OutputNode;
+
+                if(n.OutType == OutputType.basecolor)
+                {
+                    preview.SetAlbedoNode(node);
+                }
+                else if(n.OutType == OutputType.metallic)
+                {
+                    preview.SetMetallicNode(node);
+                }
+                else if(n.OutType == OutputType.roughness)
+                {
+                    preview.SetRoughnessNode(node);
+                }
+                else if(n.OutType == OutputType.normal)
+                {
+                    preview.SetNormalNode(node);
+                }
+                else if(n.OutType == OutputType.occlusion)
+                {
+                    preview.SetOcclusionNode(node);
+                }
+                else if(n.OutType == OutputType.height)
+                {
+                    preview.SetHeightNode(node);
+                }
+                else if(n.OutType == OutputType.thickness)
+                {
+                    preview.SetThicknessNode(node);
+                }
+            }
         }
 
         public void Save(string f)
@@ -766,7 +1028,12 @@ namespace Materia
             string cwd = System.IO.Path.GetDirectoryName(f);
             string name = System.IO.Path.GetFileNameWithoutExtension(f);
 
-            Original.Name = name;
+            if (Original.Name.Equals("Untitled"))
+            {
+                Original.Name = name;
+            }
+
+            FilePath = f;
 
             Original.CopyResources(cwd);
 
@@ -804,14 +1071,17 @@ namespace Materia
 
         public void ClearView()
         {
+            SelectedNodes.Clear();
+            SelectedIds.Clear();
+
             //reset viewport etc
             XShift = 0;
             YShift = 0;
             Scale = 1;
 
-            foreach(UINode n in GraphNodes)
+            foreach(IUIGraphNode n in GraphNodes)
             {
-                ViewPort.Children.Remove(n);
+                ViewPort.Children.Remove(n as UIElement);
             }
 
             lookup.Clear();
@@ -826,13 +1096,16 @@ namespace Materia
                 UINodeParameters.Instance.ClearView();
             }
 
-            foreach (UINode n in GraphNodes)
+            foreach (IUIGraphNode n in GraphNodes)
             {
-                ViewPort.Children.Remove(n);
+                ViewPort.Children.Remove(n as UIElement);
             }
 
             lookup.Clear();
             GraphNodes.Clear();
+            SelectedIds.Clear();
+            SelectedNodes.Clear();
+            Pins.Clear();
 
             if (Graph != null)
             {
@@ -852,9 +1125,9 @@ namespace Materia
         }
 
 
-        public UINode GetNode(string id)
+        public IUIGraphNode GetNode(string id)
         {
-            UINode n = null;
+            IUIGraphNode n = null;
 
             lookup.TryGetValue(id, out n);
 
@@ -876,11 +1149,20 @@ namespace Materia
             {
                 result = new Tuple<string, Point, List<Tuple<string, List<NodeOutputConnection>>>>(n.Node.GetJson(), n.Origin, n.Node.GetParentsConnections());
 
+                if(n is UIPinNode)
+                {
+                    Pins.Remove(n as UIPinNode);
+                    if(pinIndex >= Pins.Count)
+                    {
+                        pinIndex = Pins.Count - 1;
+                    }
+                }
+
                 //to remove connections but not to remove from graph
                 n.DisposeNoRemove();
 
                 GraphNodes.Remove(n);
-                ViewPort.Children.Remove(n);
+                ViewPort.Children.Remove(n as UIElement);
                 lookup.Remove(n.Id);
 
                 //remove from underlying graph
@@ -898,7 +1180,7 @@ namespace Materia
         /// <param name="json"></param>
         /// <param name="p"></param>
         /// <returns></returns>
-        public UINode AddNodeFromJson(string json, Point p)
+        public IUIGraphNode AddNodeFromJson(string json, Point p)
         {
             try
             {
@@ -907,35 +1189,46 @@ namespace Materia
                 if (nd == null) return null;
 
                 Node n = null;
-                UINode unode = null;
+                IUIGraphNode unode = null;
 
                 n = Graph.CreateNode(nd.type);
 
                 if(n != null)
                 {
                     n.Id = nd.id;
-
-                    n.Width = nd.width;
-                    n.Height = nd.height;
-
                     n.FromJson(Graph.NodeLookup, json);
-
                     Graph.Add(n);
 
                     n.SetConnections(Graph.NodeLookup, nd.outputs);
 
-                    unode = new UINode(n, this, p.X, p.Y, XShift, YShift, Scale);
-                    unode.HorizontalAlignment = HorizontalAlignment.Left;
-                    unode.VerticalAlignment = VerticalAlignment.Top;
+                    if (n is CommentNode)
+                    {
+                        unode = new UICommentNode(n, this, p.X, p.Y, XShift, YShift, Scale);
+                    }
+                    else if(n is PinNode)
+                    {
+                        unode = new UIPinNode(n, this, p.X, p.Y, XShift, YShift, Scale);
+                        Pins.Add(unode as UIPinNode);
+                    }
+                    else
+                    {
+                        unode = new UINode(n, this, p.X, p.Y, XShift, YShift, Scale);
+                    }
+
+                    (unode as UserControl).HorizontalAlignment = HorizontalAlignment.Left;
+                    (unode as UserControl).VerticalAlignment = VerticalAlignment.Top;
                     lookup[n.Id] = unode;
-                    ViewPort.Children.Add(unode);
+                    ViewPort.Children.Add(unode as UIElement);
                     GraphNodes.Add(unode);
 
                     Modified = true;
 
                     Task.Delay(250).ContinueWith(t =>
                     {
-                        unode.LoadConnections(lookup);
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            unode.LoadConnections(lookup);
+                        });
                     });
                 }
 
@@ -943,7 +1236,7 @@ namespace Materia
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Log.Error(e);
             }
 
             return null;
@@ -958,7 +1251,7 @@ namespace Materia
         /// <param name="json"></param>
         /// <param name="realLookup"></param>
         /// <returns></returns>
-        protected UINode AddNodeFromJson(string json, Dictionary<string, Node> realLookup)
+        protected IUIGraphNode AddNodeFromJson(string json, Dictionary<string, Node> realLookup)
         {
             try
             {
@@ -967,7 +1260,7 @@ namespace Materia
                 if (nd == null) return null;
 
                 Node n = null;
-                UINode unode = null;
+                IUIGraphNode unode = null;
 
                 n = Graph.CreateNode(nd.type);
 
@@ -975,17 +1268,29 @@ namespace Materia
                 {
                     realLookup[nd.id] = n;
                     n.FromJson(realLookup, json);
-
                     Graph.Add(n);
 
-                    unode = new UINode(n, this, 0, 0, XShift, YShift, Scale);
-                    unode.HorizontalAlignment = HorizontalAlignment.Left;
-                    unode.VerticalAlignment = VerticalAlignment.Top;
+                    if (n is CommentNode)
+                    {
+                        unode = new UICommentNode(n, this, 0, 0, XShift, YShift, Scale);
+                    }
+                    else if(n is PinNode)
+                    {
+                        unode = new UIPinNode(n, this, 0, 0, XShift, YShift, Scale);
+                        Pins.Add(unode as UIPinNode);
+                    }
+                    else
+                    {
+                        unode = new UINode(n, this, 0, 0, XShift, YShift, Scale);
+                    }
+
+                    (unode as UserControl).HorizontalAlignment = HorizontalAlignment.Left;
+                    (unode as UserControl).VerticalAlignment = VerticalAlignment.Top;
                     lookup[n.Id] = unode;
-                    ViewPort.Children.Add(unode);
+                    ViewPort.Children.Add(unode as UIElement);
                     GraphNodes.Add(unode);
 
-                    UndoRedoManager.AddUndo(new UndoCreateNode(Id, unode.Id, this));
+                    UndoRedoManager.AddUndo(new CreateNode(Id, unode.Id, this));
 
                     Modified = true;
                 }
@@ -994,15 +1299,15 @@ namespace Materia
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Log.Error(e);
                 return null;
             }
         }
 
-        protected void AddNode(string type, Point p)
+        protected IUIGraphNode AddNode(string type, Point p)
         {
             Node n = null;
-            UINode unode = null;
+            IUIGraphNode unode = null;
 
             n = Graph.CreateNode(type);
 
@@ -1013,6 +1318,12 @@ namespace Materia
                     GraphInstanceNode gn = (GraphInstanceNode)n;
                     gn.Load(type);
                 }
+                else if(n is CommentNode)
+                {
+                    //add padding
+                    n.Width = 256 + 16;
+                    n.Height = 256 + 38;
+                }
 
                 Modified = true;
 
@@ -1020,26 +1331,134 @@ namespace Materia
                 n.ViewOriginY = p.Y;
 
                 Graph.Add(n);
-                unode = new UINode(n, this, p.X, p.Y, XShift, YShift, Scale);
-                unode.HorizontalAlignment = HorizontalAlignment.Left;
-                unode.VerticalAlignment = VerticalAlignment.Top;
+                if (n is CommentNode)
+                {
+                    unode = new UICommentNode(n, this, p.X, p.Y, XShift, YShift, Scale);
+                }
+                else if(n is PinNode)
+                {
+                    unode = new UIPinNode(n, this, p.X, p.Y, XShift, YShift, Scale);
+                    Pins.Add(unode as UIPinNode);
+                }
+                else
+                {
+                    unode = new UINode(n, this, p.X, p.Y, XShift, YShift, Scale);
+                }
+
+                (unode as UserControl).HorizontalAlignment = HorizontalAlignment.Left;
+                (unode as UserControl).VerticalAlignment = VerticalAlignment.Top;
                 lookup[n.Id] = unode;
-                ViewPort.Children.Add(unode);
+                ViewPort.Children.Add(unode as UIElement);
                 GraphNodes.Add(unode);
 
-                UndoRedoManager.AddUndo(new UndoCreateNode(Id, unode.Id, this));
+                UndoRedoManager.AddUndo(new CreateNode(Id, unode.Id, this));
+
+                return unode;
+            }
+
+            return null;
+        }
+
+        public void PrepareInsert()
+        {
+            insertPos = Mouse.GetPosition(ViewPort);
+            ToWorld(ref insertPos);
+        }
+
+        public void Insert(string type)
+        {
+            IUIGraphNode n = AddNode(type, insertPos);
+
+            if (n == null) return;
+
+            if(UINodePoint.SelectOrigin != null)
+            {
+                UINodePoint p = UINodePoint.SelectOrigin;
+
+                if(p.To != null && p.Output != null)
+                {
+                    if(p.To.Count == 1)
+                    {
+                        var input = p.To[0];
+
+                        //try and find similar connection point
+                        //the input will disconnect from parent
+                        foreach(var opoint in n.OutputNodes)
+                        {
+                            if(opoint.CanConnect(input))
+                            {
+                                opoint.ConnectToNode(input);
+                                break;
+                            }
+                        }
+                    }
+
+                    //try and find similar connection point
+                    foreach(var ipoint in n.InputNodes)
+                    {
+                        if(p.CanConnect(ipoint))
+                        {
+                            p.ConnectToNode(ipoint);
+                            break;
+                        }
+                    }
+                }
+                else if(p.Input != null)
+                {
+                    UINodePoint origin = null;
+                    if (p.ParentNode != null)
+                    {
+                        origin = p.ParentNode;
+                    }
+
+                    //try and find similar
+                    //don't worry it will disconnect
+                    //from parent if there is one
+                    foreach (var opoint in n.OutputNodes)
+                    {
+                        if(opoint.CanConnect(p))
+                        {
+                            opoint.ConnectToNode(p);
+                            break;
+                        }
+                    }
+
+                    if(origin != null)
+                    {
+                        foreach(var ipoint in n.InputNodes)
+                        {
+                            if(origin.CanConnect(ipoint))
+                            {
+                                origin.ConnectToNode(ipoint);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                UINodePoint.SelectOrigin = null;
             }
         }
 
-        public void RemoveNode(UINode n)
+        public void RemoveNode(IUIGraphNode n)
         {
             string json = n.Node.GetJson();
             Point p = n.Origin;
 
-            UndoRedoManager.AddUndo(new UndoDeleteNode(Id, json, p, n.Node.GetParentsConnections(), this));
+            UndoRedoManager.AddUndo(new DeleteNode(Id, json, p, n.Node.GetParentsConnections(), this));
+
+            //update pin references
+            if(n is UIPinNode)
+            {
+                Pins.Remove(n as UIPinNode);
+                if(pinIndex >= Pins.Count)
+                {
+                    pinIndex = Pins.Count - 1;
+                }
+            }
 
             GraphNodes.Remove(n);
-            ViewPort.Children.Remove(n);
+            ViewPort.Children.Remove(n as UIElement);
             lookup.Remove(n.Id);
 
             //remove from underlying graph
@@ -1099,31 +1518,39 @@ namespace Materia
                 //catch for when the node is removed and layout update is still triggered
                 try
                 {
+                    ConnectionPointPreview.Width = CONNECTION_POINT_SIZE * Scale;
+                    ConnectionPointPreview.Height = CONNECTION_POINT_SIZE * Scale;
+                    ConnectionPointPreview.RadiusX = CONNECTION_POINT_SIZE * Scale * 0.5;
+                    ConnectionPointPreview.RadiusY = CONNECTION_POINT_SIZE * Scale * 0.5;
+
                     UINodePoint origin = UINodePoint.SelectOrigin;
                     UINodePoint dest = UINodePoint.SelectOver;
+
+                    double w2 = CONNECTION_POINT_SIZE * 0.5;
+                    double w2s = w2 * Scale;
 
                     Point r1 = new Point();
 
                     if (origin.Output != null)
                     {
-                        r1 = origin.TransformToAncestor(ViewPort).Transform(new Point(origin.ActualWidth, 8f));
+                        r1 = origin.TransformToAncestor(ViewPort).Transform(new Point(origin.ActualWidth, w2));
                     }
                     else if (origin.Input != null)
                     {
-                        r1 = origin.TransformToAncestor(ViewPort).Transform(new Point(0f, 8f));
+                        r1 = origin.TransformToAncestor(ViewPort).Transform(new Point(0f, w2));
                     }
 
                     Point r2 = Mouse.GetPosition(ViewPort);
-
+  
                     if (dest != null)
                     {
                         if (origin.Output != null)
                         {
-                            r2 = dest.TransformToAncestor(ViewPort).Transform(new Point(dest.ActualWidth, 8f));
+                            r2 = dest.TransformToAncestor(ViewPort).Transform(new Point(dest.ActualWidth, w2));
                         }
                         else if (origin.Input != null)
                         {
-                            r2 = dest.TransformToAncestor(ViewPort).Transform(new Point(0f, 8f));
+                            r2 = dest.TransformToAncestor(ViewPort).Transform(new Point(0f, w2));
                         }
                     }
 
@@ -1169,8 +1596,8 @@ namespace Materia
                     }
                     else
                     {
-                        r2.X -= 8;
-                        r2.Y -= 8;
+                        r2.X -= w2s;
+                        r2.Y -= w2s;
                     }
 
                     Canvas.SetLeft(ConnectionPointPreview, r2.X);
@@ -1195,13 +1622,32 @@ namespace Materia
                 Grid g = sender as Grid;
                 Point p = e.GetPosition(g);
 
+                selectedStartedIn.Clear();
+
                 //we don't want to start selection
                 //if we are already over a node
-                foreach(UINode n in GraphNodes)
+                //except if we are in a comment node
+                foreach(IUIGraphNode n in GraphNodes)
                 {
-                    if(n.ContainsPoint(p))
+                    if (!(n is UICommentNode))
                     {
-                        return;
+                        if (n.ContainsPoint(p))
+                        {
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        if (n.ContainsPoint(p))
+                        {
+                            //this is for handling
+                            //where we should only select
+                            //the nodes inside of comment block
+                            //if the selection point was in a comment block
+                            //to start with
+                            //and not to select the comment block itself
+                            selectedStartedIn.Add(n.Id);
+                        }
                     }
                 }
 
@@ -1241,11 +1687,13 @@ namespace Materia
             {
                 if(ConnectionPointPreview.Parent == null)
                 {
+                    ConnectionPointPreview.Fill = UINodePoint.SelectOrigin.ColorBrush;
                     ViewPort.Children.Add(ConnectionPointPreview);
                 }
 
                 if(ConnectionPathPreview.Parent == null)
                 {
+                    ConnectionPathPreview.Stroke = UINodePoint.SelectOrigin.ColorBrush;
                     ViewPort.Children.Add(ConnectionPathPreview);
                 }
 
@@ -1277,7 +1725,7 @@ namespace Materia
                 Graph.ShiftX = XShift;
                 Graph.ShiftY = YShift;
 
-                foreach (UINode n in GraphNodes)
+                foreach (IUIGraphNode n in GraphNodes)
                 {
                     n.Move(diff.X, diff.Y);
                 }
@@ -1316,7 +1764,7 @@ namespace Materia
 
         public void MoveMultiSelect(double diffx, double diffy)
         {
-            foreach(UINode n in SelectedNodes)
+            foreach(IUIGraphNode n in SelectedNodes)
             {
                 n.Offset(diffx, diffy);
             }
@@ -1332,7 +1780,7 @@ namespace Materia
             Graph.ShiftY = YShift;
             Graph.Zoom = Scale;
 
-            foreach (UINode n in GraphNodes)
+            foreach (IUIGraphNode n in GraphNodes)
             {
                 n.MoveTo(XShift, YShift);
                 n.UpdateScale(Scale);
@@ -1349,18 +1797,20 @@ namespace Materia
 
             if (SelectedNodes.Count <= 1) return;
 
+            List<IUIGraphNode> selected = SelectedNodes.FindAll(m => m is UINode || m is UIPinNode);
+
             //find average position
-            for (int i = 0; i < SelectedNodes.Count; i++)
+            for (int i = 0; i < selected.Count; i++)
             {
-                midX += SelectedNodes[i].Origin.X;
+                midX += selected[i].Origin.X;
             }
 
-            midX /= SelectedNodes.Count;
+            midX /= selected.Count;
 
-            for (int i = 0; i < SelectedNodes.Count; i++)
+            for (int i = 0; i < selected.Count; i++)
             {
-                Point p = SelectedNodes[i].Origin;
-                SelectedNodes[i].OffsetTo(midX, p.Y);
+                Point p = selected[i].Origin;
+                selected[i].OffsetTo(midX, p.Y);
             }
         }
 
@@ -1370,19 +1820,58 @@ namespace Materia
 
             if (SelectedNodes.Count <= 1) return;
 
+            List<IUIGraphNode> selected = SelectedNodes.FindAll(m => m is UINode || m is UIPinNode);
+
             //find average position
-            for(int i = 0; i < SelectedNodes.Count; i++)
+            for (int i = 0; i < selected.Count; i++)
             {
-                midY += SelectedNodes[i].Origin.Y;
+                midY += selected[i].Origin.Y;
             }
 
-            midY /= SelectedNodes.Count;
+            midY /= selected.Count;
 
-            for(int i = 0; i < SelectedNodes.Count; i++)
+            for(int i = 0; i < selected.Count; i++)
             {
-                Point p = SelectedNodes[i].Origin;
-                SelectedNodes[i].OffsetTo(p.X, midY);
+                Point p = selected[i].Origin;
+                selected[i].OffsetTo(p.X, midY);
             }
+        }
+
+        public void NextPin()
+        {
+            if (Pins.Count == 0) return;
+            if(pinIndex >= Pins.Count)
+            {
+                pinIndex = 0;
+            }
+            UIPinNode n = Pins[pinIndex++];
+            ShiftToNode(n);
+            n.Focus();
+            Keyboard.Focus(n);
+        }
+
+        private void ShiftToNode(IUIGraphNode node)
+        {
+            XShift = 0;
+            YShift = 0;
+
+            Rect b = node.UnscaledBounds;
+
+            double w2 = ViewPort.ActualWidth * 0.5;
+            double h2 = ViewPort.ActualHeight * 0.5;
+
+            XShift = -(b.Left - w2) * Scale - (b.Width * 0.5 * Scale);
+            YShift = -(b.Top - h2) * Scale - (b.Height * 0.5 * Scale);
+
+            foreach(IUIGraphNode n in GraphNodes)
+            {
+                n.MoveTo(XShift, YShift);
+            }
+
+            Graph.ShiftX = XShift;
+            Graph.ShiftY = YShift;
+
+            UpdateGrid();
         }
 
         void FitNodesIntoView()
@@ -1412,7 +1901,7 @@ namespace Materia
             XShift = -(b.Left - w2) * Scale - (b.Width * 0.5 * Scale);
             YShift = -(b.Top - h2) * Scale - (b.Height * 0.5 * Scale);
 
-            foreach(UINode n in GraphNodes)
+            foreach(IUIGraphNode n in GraphNodes)
             {
                 n.MoveTo(XShift, YShift);
                 n.UpdateScale(Scale);
@@ -1427,6 +1916,44 @@ namespace Materia
             UpdateGrid();
         }
 
+        Rect GetSelectedNodeBounds()
+        {
+            if(SelectedNodes.Count == 0)
+            {
+                return new Rect(0, 0, 0, 0);
+            }
+
+            double minX = double.PositiveInfinity;
+            double minY = double.PositiveInfinity;
+            double maxX = double.NegativeInfinity;
+            double maxY = double.NegativeInfinity;
+
+            foreach (IUIGraphNode n in SelectedNodes)
+            {
+                Rect b = n.UnscaledBounds;
+
+                if (b.Left < minX)
+                {
+                    minX = b.Left;
+                }
+                if (b.Right > maxX)
+                {
+                    maxX = b.Right;
+                }
+
+                if (b.Top < minY)
+                {
+                    minY = b.Top;
+                }
+                if (b.Bottom > maxY)
+                {
+                    maxY = b.Bottom;
+                }
+            }
+
+            return new Rect(minX, minY, Math.Abs(maxX - minX), Math.Abs(maxY - minY));
+        }
+
         Rect GetNodeBounds()
         {
             if(GraphNodes.Count == 0)
@@ -1439,7 +1966,7 @@ namespace Materia
             double maxX = double.NegativeInfinity;
             double maxY = double.NegativeInfinity;
 
-            foreach(UINode n in GraphNodes)
+            foreach(IUIGraphNode n in GraphNodes)
             {
                 Rect b = n.UnscaledBounds;
 
@@ -1471,11 +1998,11 @@ namespace Materia
 
             int count = 0;
 
-            foreach(UINode n in GraphNodes)
+            foreach(IUIGraphNode n in GraphNodes)
             {
-                if(n.IsInRect(r))
+                if (n.IsInRect(r) && !selectedStartedIn.Contains(n.Id))
                 {
-                    if(SelectedNodes.Contains(n))
+                    if (SelectedNodes.Contains(n))
                     {
                         SelectedNodes.Remove(n);
                         n.HideBorder();
@@ -1490,22 +2017,25 @@ namespace Materia
                 }
             }
 
+            selectedStartedIn.Clear();
+
             if(count == 0)
             {
                 ClearMultiSelect();
             }
         }
 
-        public void ToggleMultiSelect(UINode n)
+        public void ToggleMultiSelect(IUIGraphNode n)
         {
             if (SelectedNodes.Contains(n))
             {
+                SelectedIds.Remove(n.Id);
                 SelectedNodes.Remove(n);
-                n.HideBorder();
-                
+                n.HideBorder();           
             }
             else
             {
+                SelectedIds.Add(n.Id);
                 SelectedNodes.Add(n);
                 n.ShowBorder();
             }
@@ -1513,11 +2043,12 @@ namespace Materia
 
         public void ClearMultiSelect()
         {
-            List<UINode> toRemove = SelectedNodes.ToList();
+            List<IUIGraphNode> toRemove = SelectedNodes.ToList();
 
             SelectedNodes.Clear();
+            SelectedIds.Clear();
 
-            foreach (UINode n in toRemove)
+            foreach (IUIGraphNode n in toRemove)
             {
                 n.HideBorder();
             }
@@ -1547,7 +2078,7 @@ namespace Materia
 
             ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
 
-            foreach (UINode n in GraphNodes)
+            foreach (IUIGraphNode n in GraphNodes)
             {
                 n.UpdateScale(Scale);
             }
@@ -1569,7 +2100,7 @@ namespace Materia
 
             ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
 
-            foreach (UINode n in GraphNodes)
+            foreach (IUIGraphNode n in GraphNodes)
             {
                 n.UpdateScale(Scale);
             }
@@ -1653,6 +2184,116 @@ namespace Materia
         private void AlignVert_Click(object sender, RoutedEventArgs e)
         {
             AlignSelectedNodesVertical();
+        }
+
+        private void DefaultNodeSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if(graphIsLoadingSizeSelect)
+            {
+                graphIsLoadingSizeSelect = false;
+                return;
+            }
+
+            if (!IsLoaded || Graph == null) return;
+            
+            int index = DefaultNodeSize.SelectedIndex;
+
+            if(index > -1)
+            {
+                int size = Graph.GRAPH_SIZES[index];
+
+                Graph.Width = Graph.Height = size;
+            }
+        }
+
+        private void ApplySize_Click(object sender, RoutedEventArgs e)
+        {
+            for(int i = 0; i < SelectedNodes.Count; i++)
+            {
+                IUIGraphNode n = SelectedNodes[i];
+                if (n is UINode)
+                {
+                    n.Node.Width = Graph.Width;
+                    n.Node.Height = Graph.Height;
+                }
+            }
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem item = sender as MenuItem;
+
+            if (Graph is FunctionGraph)
+            {
+                if (item.Header.ToString().ToLower().Contains("import func"))
+                {
+                    HandleFunctionImport();
+                }
+                else if (item.Header.ToString().ToLower().Contains("export func"))
+                {
+                    HandleFunctionExport();
+                }
+            }
+        }
+
+        private void HandleFunctionExport()
+        {
+            System.Windows.Forms.SaveFileDialog dialog = new System.Windows.Forms.SaveFileDialog();
+            dialog.CheckPathExists = true;
+            dialog.CheckFileExists = false;
+            dialog.Filter = "Materia Function Graph (*.mtfg)|*.mtfg";
+
+            if(dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                try
+                {
+                    string data = Graph.GetJson();
+                    System.IO.File.WriteAllText(dialog.FileName, data);
+                    Log.Info("Function Graph Exported: {0}", System.IO.Path.GetFileNameWithoutExtension(dialog.FileName));
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                }
+            }
+        }
+
+        private void HandleFunctionImport()
+        {
+            if (MessageBox.Show("All current nodes will be replaced, continue with import?", "", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                System.Windows.Forms.OpenFileDialog dialog = new System.Windows.Forms.OpenFileDialog();
+                dialog.CheckFileExists = true;
+                dialog.CheckPathExists = true;
+                dialog.Filter = "Materia Function Graph (*.mtfg)|*.mtfg";
+                dialog.Multiselect = false;
+
+                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    try
+                    {
+                        string txt = System.IO.File.ReadAllText(dialog.FileName);
+
+                        if (string.IsNullOrEmpty(txt)) return;
+
+                        ClearView();
+
+                        Graph.Dispose();
+                        Graph.FromJson(txt);
+                        Graph.SetConnections();
+
+                        LoadGraphUI();
+
+                        FitNodesIntoView();
+
+                        Log.Info("Function Graph Imported: {0}", System.IO.Path.GetFileNameWithoutExtension(dialog.FileName));
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e);
+                    }
+                }
+            }
         }
     }
 }

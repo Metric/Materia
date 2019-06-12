@@ -5,11 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Materia.Shaders;
 using System.IO;
+using NLog;
 
 namespace Materia.Material
 {
     public abstract class Material
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         protected static Dictionary<string, GLShaderProgram> Shaders = new Dictionary<string, GLShaderProgram>();
         public string Name { get; set; }
         public GLShaderProgram Shader { get; protected set; }
@@ -30,7 +33,7 @@ namespace Materia.Material
             if (!frag.Compile(out log))
             {
                 frag.Release();
-                Console.WriteLine(log);
+                Log.Error(log);
                 return null;
             }
 
@@ -38,7 +41,7 @@ namespace Materia.Material
             if (!vert.Compile(out log))
             {
                 vert.Release();
-                Console.WriteLine(log);
+                Log.Error(log);
                 return null;
             }
 
@@ -49,7 +52,7 @@ namespace Materia.Material
             if (!shader.Link(out log))
             {
                 shader.Release();
-                Console.WriteLine(log);
+                Log.Error(log);
                 return null;
             }
 
@@ -79,7 +82,7 @@ namespace Materia.Material
             if (!frag.Compile(out log))
             {
                 frag.Release();
-                Console.WriteLine(log);
+                Log.Error(log);
                 return null;
             }
 
@@ -87,7 +90,7 @@ namespace Materia.Material
             if (!vert.Compile(out log))
             {
                 vert.Release();
-                Console.WriteLine(log);
+                Log.Error(log);
                 return null;
             }
 
@@ -98,7 +101,7 @@ namespace Materia.Material
             if (!shader.Link(out log))
             {
                 shader.Release();
-                Console.WriteLine(log);
+                Log.Error(log);
                 return null;
             }
 

@@ -5,16 +5,17 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia"
              mc:Ignorable="d" 
-             d:DesignHeight="100" d:DesignWidth="100" MouseLeave="UserControl_MouseLeave" ClipToBounds="False" Loaded="UserControl_Loaded" Focusable="True">
+             d:DesignHeight="100" d:DesignWidth="80" MouseLeave="UserControl_MouseLeave" ClipToBounds="False" Loaded="UserControl_Loaded" Focusable="True">
     <UserControl.Resources>
         <ContextMenu x:Key="ImageContext">
             <MenuItem Header="_Preview As">
-                <MenuItem Header="_Albedo" Click="MenuItem_Click"></MenuItem>
-                <MenuItem Header="_Height" Click="MenuItem_Click"></MenuItem>
-                <MenuItem Header="_Normal" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Base Color" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Metallic" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Roughness" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Normal" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Occlusion" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Height" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Thickness" Click="MenuItem_Click"></MenuItem>
             </MenuItem>
             <MenuItem Header="_Export Image" Click="MenuItem_Click"></MenuItem>
         </ContextMenu>
@@ -23,19 +24,35 @@
         </ContextMenu>
         <ContextMenu x:Key="PixelProcContext">
             <MenuItem Header="_Preview As">
-                <MenuItem Header="_Albedo" Click="MenuItem_Click"></MenuItem>
-                <MenuItem Header="_Height" Click="MenuItem_Click"></MenuItem>
-                <MenuItem Header="_Normal" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Base Color" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Metallic" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Roughness" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Normal" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Occlusion" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Height" Click="MenuItem_Click"></MenuItem>
             </MenuItem>
             <MenuItem Header="_Edit" Click="MenuItem_Click" />
         </ContextMenu>
     </UserControl.Resources>
-    <Grid Background="#FF0a0a0a" ClipToBounds="False" MouseUp="Grid_MouseUp" MouseDown="Preview_MouseDown" MouseMove="Preview_MouseMove">
-        <Grid Margin="2,2,2,2">
-            <Image Name="Preview" Margin="0,17,0,0" />
+    <Grid Name="BorderGrid" Background="#000" ClipToBounds="False" MouseUp="Grid_MouseUp" MouseDown="Preview_MouseDown" MouseMove="Preview_MouseMove">
+        <Grid Margin="2,2,1.5,1.5">
+            <Grid Name="PreviewWrapper" Margin="0,17,0,0">
+                <Grid.Background>
+                    <VisualBrush TileMode="Tile" 
+                             Viewport="0,0,8,8" ViewportUnits="Absolute" 
+                             Viewbox="0,0,8,8"  ViewboxUnits="Absolute">
+                        <VisualBrush.Visual>
+                            <Grid Height="8">
+                                <Rectangle Fill="White" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0" />
+                                <Rectangle Fill="LightGray" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,0,0,0" />
+                                <Rectangle Fill="LightGray" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,4,0,0" />
+                                <Rectangle Fill="White" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,4,0,0" />
+                            </Grid>
+                        </VisualBrush.Visual>
+                    </VisualBrush>
+                </Grid.Background>
+                <Image Name="Preview" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"  />
+            </Grid>
             <StackPanel Name="InputStack"  VerticalAlignment="Center" ClipToBounds="False" Margin="-8,0,0,0" HorizontalAlignment="Left" Width="16" />
             <StackPanel Name="OutputStack" HorizontalAlignment="Right"  VerticalAlignment="Center" Width="16" ClipToBounds="False" Margin="0,0,-8,0" />
             <Grid VerticalAlignment="Top" Height="16">

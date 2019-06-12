@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Reflection;
+using NLog;
 
 namespace Materia
 {
@@ -21,6 +22,8 @@ namespace Materia
     /// </summary>
     public partial class DropDown : UserControl, IParameter
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         PropertyInfo property;
         object propertyOwner;
         string output;
@@ -65,13 +68,12 @@ namespace Materia
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.StackTrace);
+                        Log.Error(ex);
                     }
                 }
 
                 if (b == null || data == null)
                 {
-                    Dropdown.SelectedIndex = 0;
                     return;
                 }
 
@@ -83,9 +85,9 @@ namespace Materia
                 }
                 else
                 {
-                    if(b.GetType().Equals(typeof(int)))
+                    if(b.GetType().Equals(typeof(int)) || b.GetType().Equals(typeof(float)) || b.GetType().Equals(typeof(double)) || b.GetType().Equals(typeof(long)))
                     {
-                        int g = (int)b;
+                        int g = (int)Convert.ToSingle(b);
 
                         if(g >= 0 && g < data.Length)
                         {
@@ -123,96 +125,13 @@ namespace Materia
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.StackTrace);
-                }
-            }
-            else if(property.PropertyType.Equals(typeof(float)))
-            {
-                if (s.GetType().Equals(typeof(float)))
-                {
-                    try
-                    {
-                        property.SetValue(propertyOwner, s);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.StackTrace);
-                    }
-                }
-                else
-                {
-                    float v = 0;
-                    if (float.TryParse(s.ToString(), out v))
-                    {
-                        try
-                        {
-                            property.SetValue(propertyOwner, v);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.StackTrace);
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var index = Dropdown.SelectedIndex;
-                            property.SetValue(propertyOwner, (float)index);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.StackTrace);
-                        }
-                    }
-                }
-            }
-            else if(property.PropertyType.Equals(typeof(int)))
-            {
-                if (s.GetType().Equals(typeof(int)))
-                {
-                    try
-                    {
-                        property.SetValue(propertyOwner, s);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.StackTrace);
-                    }
-                }
-                else
-                {
-                    int t = 0;
-                    if (int.TryParse(s.ToString(), out t))
-                    { 
-                        try
-                        {
-                            property.SetValue(propertyOwner, t);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.StackTrace);
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var index = Dropdown.SelectedIndex;
-                            property.SetValue(propertyOwner, index);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.StackTrace);
-                        }
-                    }
+                    Log.Error(ex);
                 }
             }
             else if(property.PropertyType.Equals(typeof(string[])))
             {
                 if(!string.IsNullOrEmpty(output))
                 {
-
                     try
                     {
                         var index = Dropdown.SelectedIndex;
@@ -229,9 +148,20 @@ namespace Materia
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.StackTrace);
+                        Log.Error(ex);
                     }
 
+                }
+            }
+            else
+            {
+                try
+                {
+                    property.SetValue(propertyOwner, Dropdown.SelectedIndex);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex);
                 }
             }
         }

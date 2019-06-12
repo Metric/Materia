@@ -18,7 +18,7 @@ namespace Materia.Imaging.GLProcessing
         {
         }
 
-        public void Process(int width, int height, GLTextuer2D tex, GLTextuer2D tex2, GLTextuer2D output)
+        public void Process(int width, int height, GLTextuer2D tex, GLTextuer2D tex2, GLTextuer2D tex3, GLTextuer2D tex4, GLTextuer2D output)
         {
             base.Process(width, height, tex, output);
 
@@ -41,6 +41,23 @@ namespace Materia.Imaging.GLProcessing
                 if(tex2 != null)
                 {
                     tex2.Bind();
+                }
+
+
+                Shader.SetUniform("Input2", 2);
+                GL.ActiveTexture(TextureUnit.Texture2);
+
+                if(tex3 != null)
+                {
+                    tex3.Bind();
+                }
+
+                Shader.SetUniform("Input3", 3);
+                GL.ActiveTexture(TextureUnit.Texture3);
+
+                if(tex4 != null)
+                {
+                    tex4.Bind();
                 }
 
                 if (renderQuad != null)

@@ -1,0 +1,61 @@
+﻿<UserControl x:Class="Materia.UI.ItemNodes.UICommentNode"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Materia.UI.ItemNodes"
+             mc:Ignorable="d" 
+             d:DesignHeight="256" d:DesignWidth="256" Focusable="True" MouseMove="UserControl_MouseMove" MouseLeave="UserControl_MouseLeave" MouseUp="UserControl_MouseUp" Loaded="UserControl_Loaded">
+    <Grid>
+        <Border Name="BorderArea" BorderThickness="1" Background="#22445566" BorderBrush="#22ffffff" IsHitTestVisible="False">
+           
+        </Border>
+        <TextBox LostFocus="CommentText_LostFocus" CaretBrush="White" Name="CommentText" TextChanged="CommentText_TextChanged" PreviewKeyDown="CommentText_KeyDown" Text="Comment..." VerticalAlignment="Top" Height="32" FontSize="16" Padding="4" Background="#22000000" BorderThickness="1" BorderBrush="#22ffffff" Margin="5,5,5,0" Foreground="LightGray" />
+        <Border Name="Holder" Background="#22000000" Height="42" VerticalAlignment="Top" MouseDown="UserControl_MouseDown">
+
+        </Border>
+        <Thumb VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="16" Height="16" DragDelta="Corner_DragDelta">
+            <Thumb.Template>
+                <ControlTemplate>
+                    <Image Source="/Materia;component/Images/drag.png" Margin="0" />
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+        <Thumb VerticalAlignment="Center" HorizontalAlignment="Right" Width="16" Height="16" DragDelta="Right_DragDelta">
+            <Thumb.Template>
+                <ControlTemplate>
+                    <Image Source="/Materia;component/Images/drag.png" Margin="0" />
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+        <Thumb VerticalAlignment="Center" HorizontalAlignment="Left" Width="16" Height="16" DragDelta="Left_DragDelta">
+            <Thumb.Template>
+                <ControlTemplate>
+                    <Image Source="/Materia;component/Images/drag.png" Margin="0" />
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+        <Thumb VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="16" Height="16" DragDelta="Bottom_DragDelta">
+            <Thumb.Template>
+                <ControlTemplate>
+                    <Image Source="/Materia;component/Images/drag.png" Margin="0">
+                        <Image.RenderTransform>
+                            <RotateTransform Angle="90" CenterX="8" CenterY="8" />
+                        </Image.RenderTransform>
+                    </Image>
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+        <Thumb VerticalAlignment="Top" HorizontalAlignment="Center" Width="16" Height="16" DragDelta="Top_DragDelta">
+            <Thumb.Template>
+                <ControlTemplate>
+                    <Image Source="/Materia;component/Images/drag.png" Margin="0">
+                        <Image.RenderTransform>
+                            <RotateTransform Angle="90" CenterX="8" CenterY="8" />
+                        </Image.RenderTransform>
+                    </Image>
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+    </Grid>
+</UserControl>

@@ -10,22 +10,38 @@ using Materia.Shaders;
 using OpenTK.Graphics.OpenGL;
 using Materia.Imaging;
 using Materia.UI;
+using NLog;
 
 namespace Materia.Material
 {
     public class PBRMaterial : Material
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         public GLTextuer2D Albedo { get; set; }
         public GLTextuer2D Normal { get; set; }
         public GLTextuer2D Metallic { get; set; }
         public GLTextuer2D Roughness { get; set; }
         public GLTextuer2D Occlusion { get; set; }
         public GLTextuer2D Height { get; set; }
+        public GLTextuer2D Thickness { get; set; }
         public static GLTextuer2D BRDFLut { get; protected set; }
         public static bool BRDFLoaded { get; protected set; }
 
+        /// <summary>
+        /// SSS Related Properties
+        /// </summary>
+        public float SSSDistortion { get; set; }
+        public float SSSAmbient { get; set; }
+        public float SSSPower { get; set; }
+
         public PBRMaterial()
         {
+
+            SSSDistortion = 0.5f;
+            SSSAmbient = 0f;
+            SSSPower = 1f;
+
             if (BRDFLut == null)
             {
                 BRDFLut = new GLTextuer2D(PixelInternalFormat.Rgba8);
@@ -40,7 +56,7 @@ namespace Materia.Material
 
             if(Shader == null)
             {
-                Console.WriteLine("Failed to load pbr shader");
+                Log.Error("Failed to load pbr shader");
             }
 
             LoadBRDF();
@@ -107,6 +123,11 @@ namespace Materia.Material
                     Occlusion.Release();
                     Occlusion = null;
                 }
+                if(Thickness != null && Thickness != prev.defaultBlack && Thickness != prev.defaultDarkGray && Thickness != prev.defaultGray && Thickness != prev.defaultWhite)
+                {
+                    Thickness.Release();
+                    Thickness = null;
+                }
             }
             else
             {
@@ -139,6 +160,11 @@ namespace Materia.Material
                 {
                     Occlusion.Release();
                     Occlusion = null;
+                }
+                if(Thickness != null)
+                {
+                    Thickness.Release();
+                    Thickness = null;
                 }
             }
         }

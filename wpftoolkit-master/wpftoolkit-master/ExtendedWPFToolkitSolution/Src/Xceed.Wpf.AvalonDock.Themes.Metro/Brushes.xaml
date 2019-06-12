@@ -25,7 +25,7 @@
                      Color="Black"/>
 
     <SolidColorBrush x:Key="AvalonDock_ThemeMetro_BaseColor3" 
-                     Color="#41B1E1"/>
+                     Color="#0087e5"/>
 
     <SolidColorBrush x:Key="AvalonDock_ThemeMetro_BaseColor4" 
                      Color="#5EA1C0"/>

@@ -154,13 +154,9 @@ namespace Materia.Nodes.MathNodes
 
             bool c = false;
 
-            if (input.Input.Data != null && input.Input.Data is bool) c = (bool)input.Input.Data;
+            if (input.Input.Data != null && input.Input.Data is bool) c = Convert.ToBoolean(input.Input.Data);
 
             output.Data = c ? input2.Input.Data : input3.Input.Data;
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
 
             if (ParentGraph != null)
             {

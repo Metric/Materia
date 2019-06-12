@@ -18,109 +18,110 @@ using Materia.MathHelpers;
 
 namespace Materia.UI.Components
 {
+    public class VectorPropertyContainer
+    {
+        public delegate void Updated();
+        public event Updated OnUpdate;
+
+        protected float xprop;
+        public float XProp
+        {
+            get
+            {
+                return xprop;
+            }
+            set
+            {
+                xprop = value;
+                if (OnUpdate != null)
+                {
+                    OnUpdate.Invoke();
+                }
+            }
+        }
+
+        protected float yprop;
+        public float YProp
+        {
+            get
+            {
+                return yprop;
+            }
+            set
+            {
+                yprop = value;
+                if (OnUpdate != null)
+                {
+                    OnUpdate.Invoke();
+                }
+            }
+        }
+        protected float zprop;
+        public float ZProp
+        {
+            get
+            {
+                return zprop;
+            }
+            set
+            {
+                zprop = value;
+                if (OnUpdate != null)
+                {
+                    OnUpdate.Invoke();
+                }
+            }
+        }
+        protected float wprop;
+        public float WProp
+        {
+            get
+            {
+                return xprop;
+            }
+            set
+            {
+                xprop = value;
+                if (OnUpdate != null)
+                {
+                    OnUpdate.Invoke();
+                }
+            }
+        }
+
+        public VectorPropertyContainer(MVector v)
+        {
+            xprop = v.X;
+            yprop = v.Y;
+            zprop = v.Z;
+            wprop = v.W;
+        }
+
+        public MVector Vector
+        {
+            get
+            {
+                return new MVector(xprop, yprop, zprop, wprop);
+            }
+        }
+    }
+
     /// <summary>
     /// Interaction logic for VectorSlider.xaml
     /// </summary>
     public partial class VectorSlider : UserControl
-    {
-        public class PropertyContainer
-        {
-            public delegate void Updated();
-            public event Updated OnUpdate;
-
-            protected float xprop;
-            public float XProp
-            {
-                get
-                {
-                    return xprop;
-                }
-                set
-                {
-                    xprop = value;
-                    if(OnUpdate != null)
-                    {
-                        OnUpdate.Invoke();
-                    }
-                }
-            }
-
-            protected float yprop;
-            public float YProp
-            {
-                get
-                {
-                    return yprop;
-                }
-                set
-                {
-                    yprop = value;
-                    if (OnUpdate != null)
-                    {
-                        OnUpdate.Invoke();
-                    }
-                }
-            }
-            protected float zprop;
-            public float ZProp
-            {
-                get
-                {
-                    return zprop;
-                }
-                set
-                {
-                    zprop = value;
-                    if (OnUpdate != null)
-                    {
-                        OnUpdate.Invoke();
-                    }
-                }
-            }
-            protected float wprop;
-            public float WProp
-            {
-                get
-                {
-                    return xprop;
-                }
-                set
-                {
-                    xprop = value;
-                    if (OnUpdate != null)
-                    {
-                        OnUpdate.Invoke();
-                    }
-                }
-            }
-
-            public PropertyContainer(MVector v)
-            {
-                xprop = v.X;
-                yprop = v.Y;
-                zprop = v.Z;
-                wprop = v.W;
-            }
-
-            public MVector Vector
-            {
-                get
-                {
-                    return new MVector(xprop, yprop, zprop, wprop);
-                }
-            }
-        }
+    { 
 
         object propertyOwner;
         float min;
         float max;
         PropertyInfo property;
-        PropertyContainer pc;
+        VectorPropertyContainer pc;
 
         public VectorSlider()
         {
             InitializeComponent();
-            pc = new PropertyContainer(new MVector());
+            pc = new VectorPropertyContainer(new MVector());
         }
 
         public VectorSlider(PropertyInfo prop, object owner, float min = 0, float max = 1, NodeType type = NodeType.Float4)
@@ -151,12 +152,12 @@ namespace Materia.UI.Components
 
             if (b == null)
             {
-                pc = new PropertyContainer(new MVector());
+                pc = new VectorPropertyContainer(new MVector());
             }
             else
             {
                 MVector vec = (MVector)b;
-                pc = new PropertyContainer(vec);
+                pc = new VectorPropertyContainer(vec);
             }
 
             pc.OnUpdate += Pc_OnUpdate;

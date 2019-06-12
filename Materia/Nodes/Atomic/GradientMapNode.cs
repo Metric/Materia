@@ -135,6 +135,8 @@ namespace Materia.Nodes.Atomic
             if (i1 == null) return;
             if (i1.Id == 0) return;
 
+            if (processor == null) return;
+
             if(colorLUT == null || colorLUT.Id == 0)
             {
                 colorLUT = new GLTextuer2D(PixelInternalFormat.Rgba8);

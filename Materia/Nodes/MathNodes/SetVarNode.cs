@@ -113,11 +113,6 @@ namespace Materia.Nodes.MathNodes
             }
 
             output.Data = input.Input.Data;
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
-
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;

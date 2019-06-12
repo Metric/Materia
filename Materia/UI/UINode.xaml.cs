@@ -19,14 +19,20 @@ using Materia.Nodes.Atomic;
 using Materia.UI.Components;
 using Materia.Imaging;
 using System.IO;
+using NLog;
 
 namespace Materia
 {
     /// <summary>
     /// Interaction logic for UINode.xaml
     /// </summary>
-    public partial class UINode : UserControl
+    public partial class UINode : UserControl, IUIGraphNode
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
+        static SolidColorBrush HighlightBrush = (SolidColorBrush)new BrushConverter().ConvertFrom("#0087e5");
+        static SolidColorBrush DefaultBrush = new SolidColorBrush(Colors.Black);
+
         double xShift;
         double yShift;
 
@@ -47,16 +53,17 @@ namespace Materia
 
         bool mouseDown;
 
-        public Node Node { get; protected set; }
+        public Node Node { get; set; }
 
-        public UIGraph Graph { get; protected set; }
+        public UIGraph Graph { get; set; }
 
-        public string Id { get; protected set; }
+        public string Id { get; set; }
 
         public delegate void NodeUIEvent();
         public event NodeUIEvent OnNodeUIChanged;
-        public List<UINodePoint> InputNodes { get; protected set; }
-        public List<UINodePoint> OutputNodes { get; protected set; }
+
+        public List<UINodePoint> InputNodes { get; set; }
+        public List<UINodePoint> OutputNodes { get; set; }
 
         int clickCount = 0;
         long lastClickTime = 0;
@@ -111,7 +118,7 @@ namespace Materia
         {
             InitializeComponent();
 
-            Width = defaultSize;
+            Width = defaultSize - 10;
             Height = defaultSize;
 
             Focusable = true;
@@ -243,7 +250,7 @@ namespace Materia
                     int idx = con.index;
                     int odx = con.outIndex;
 
-                    UINode on = Graph.GetNode(nid);
+                    IUIGraphNode on = Graph.GetNode(nid);
 
                     if (on != null)
                     {
@@ -260,17 +267,19 @@ namespace Materia
                         else
                         {
                             //log error
+                            Log.Warn("Failed to connect a node's output to input");
                         }
                     }
                     else
                     {
                         //log error
+                        Log.Warn("Node does not exist for connection");
                     }
                 }
             }
         }
 
-        public void LoadConnections(Dictionary<string, UINode> lookup)
+        public void LoadConnections(Dictionary<string, IUIGraphNode> lookup)
         {
             var connections = Node.GetConnections();
 
@@ -280,7 +289,7 @@ namespace Materia
                 int idx = con.index;
                 int odx = con.outIndex;
 
-                UINode on = null;
+                IUIGraphNode on = null;
 
                 if (lookup.TryGetValue(nid, out on))
                 {
@@ -297,11 +306,13 @@ namespace Materia
                     else
                     {
                         //log error
+                        Log.Warn("Failed to connect a node's output to input");
                     }
                 }
                 else
                 {
                     //log error
+                    Log.Warn("Node does not exist for connection");
                 }
             }
         }
@@ -310,31 +321,34 @@ namespace Materia
         {
             try
             {
+                if (!IsLoaded) return;
+                if (PreviewWrapper.ActualHeight == 0 || PreviewWrapper.ActualWidth == 0) return;
+
                 NodeName.Text = n.Name;
 
-                int pw = 100;
-                int ph = 100;
+                int pw = (int)Math.Max(PreviewWrapper.ActualWidth, 100);
+                int ph = (int)Math.Max(PreviewWrapper.ActualHeight, 100);
 
                 //we transform the preview size based
                 //based on actual size
                 if(n.Width > n.Height)
                 {
-                    ph = (int)Math.Min(100, (ph * ((float)n.Height / (float)n.Width)));
+                    ph = (int)Math.Min(PreviewWrapper.ActualHeight, (ph * ((float)n.Height / (float)n.Width)));
                 }
                 else if(n.Height > n.Width)
                 {
-                    pw = (int)Math.Min(100, (pw * ((float)n.Width / (float)n.Height)));
+                    pw = (int)Math.Min(PreviewWrapper.ActualWidth, (pw * ((float)n.Width / (float)n.Height)));
                 }
 
                 byte[] small = n.GetPreview(pw, ph);
 
                 if (small != null) {
-                    Preview.Source = BitmapSource.Create(pw, ph, 72, 72, PixelFormats.Bgr32, null, small, pw * 4);
+                    Preview.Source = BitmapSource.Create(pw, ph, 72, 72, PixelFormats.Bgra32, null, small, pw * 4);
                 }
             }
             catch (Exception e) 
             {
-                Console.WriteLine(e.StackTrace);
+                Log.Error(e);
             }
         }
 
@@ -443,7 +457,7 @@ namespace Materia
 
         public void HideBorder()
         {
-            BorderThickness = new Thickness(0, 0, 0, 0);
+            BorderGrid.Background = DefaultBrush;
 
             foreach(UINodePoint n in InputStack.Children)
             {
@@ -463,10 +477,9 @@ namespace Materia
 
         public void ShowBorder()
         {
-            Keyboard.ClearFocus();
+            BorderGrid.Background = HighlightBrush;
 
-            BorderBrush = new SolidColorBrush(Colors.White);
-            BorderThickness = new Thickness(2, 2, 2, 2);
+            Focus();
 
             foreach (UINodePoint n in InputStack.Children)
             {
@@ -501,6 +514,7 @@ namespace Materia
         private void Preview_MouseDown(object sender, MouseButtonEventArgs e)
         {
             Focus();
+            Keyboard.Focus(this);
 
             if (e.LeftButton == MouseButtonState.Pressed)
             {
@@ -525,7 +539,7 @@ namespace Materia
                     return;
                 }
 
-                if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.LeftCtrl))
+                if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
                 {
                     Graph.ToggleMultiSelect(this);
                     return;
@@ -621,7 +635,11 @@ namespace Materia
 
         public void Dispose()
         {
-            foreach(UINodePoint p in OutputStack.Children)
+            //register remove node first
+            //for undo
+            Graph.RemoveNode(this);
+
+            foreach (UINodePoint p in OutputStack.Children)
             {
                 p.Dispose();
             }
@@ -640,8 +658,6 @@ namespace Materia
             {
                 UIPreviewPane.Instance.TryAndRemovePreviewNode(this);
             }
-
-            Graph.RemoveNode(this);
         }
 
         private void Grid_MouseUp(object sender, MouseButtonEventArgs e)
@@ -658,7 +674,7 @@ namespace Materia
             var prev = UI3DPreview.Instance;
             MenuItem item = sender as MenuItem;
 
-            if(item.Header.ToString().ToLower().Contains("albedo"))
+            if(item.Header.ToString().ToLower().Contains("base color"))
             {
                 if (prev != null)
                 {
@@ -698,6 +714,13 @@ namespace Materia
                 if (prev != null)
                 {
                     prev.SetOcclusionNode(this);
+                }
+            }
+            else if(item.Header.ToString().ToLower().Contains("thickness"))
+            {
+                if(prev != null)
+                {
+                    prev.SetThicknessNode(this);
                 }
             }
             else if(item.Header.ToString().ToLower().Contains("edit"))
@@ -740,19 +763,26 @@ namespace Materia
 
                 Task.Run(() =>
                 {
-                    RawBitmap bmp = null;
-                    if (bits != null)
+                    try
                     {
-                        bmp = new RawBitmap(Node.Width, Node.Height, bits);
-                        var src = bmp.ToImageSource();
-                        PngBitmapEncoder encoder = new PngBitmapEncoder();
-                        BitmapFrame frame = BitmapFrame.Create(src);
-                        encoder.Frames.Add(frame);
-
-                        using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate))
+                        RawBitmap bmp = null;
+                        if (bits != null)
                         {
-                            encoder.Save(fs);
+                            bmp = new RawBitmap(Node.Width, Node.Height, bits);
+                            var src = bmp.ToImageSource();
+                            PngBitmapEncoder encoder = new PngBitmapEncoder();
+                            BitmapFrame frame = BitmapFrame.Create(src);
+                            encoder.Frames.Add(frame);
+
+                            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate))
+                            {
+                                encoder.Save(fs);
+                            }
                         }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e);
                     }
                 });
             }
@@ -765,12 +795,17 @@ namespace Materia
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            Width = defaultSize;
+            Width = defaultSize - 17;
             Height = defaultSize;
 
             ResizeHeight();
 
             UpdateViewArea();
+
+            if (Node != null)
+            {
+                N_OnUpdate(Node);
+            }
         }
     }
 }

@@ -148,16 +148,16 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            int prays = rays;
+            float prays = rays;
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Rays"))
             {
-                prays = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Rays"));
+                prays = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Rays"));
             }
 
             blur.TileX = 1;
             blur.TileY = 1;
-            blur.Intensity = prays;
+            blur.Intensity = (int)prays;
             blur.Process(width, height, i1, buffer);
             blur.Complete();
             processor.TileX = tileX;

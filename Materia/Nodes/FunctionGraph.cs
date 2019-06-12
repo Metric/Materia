@@ -11,13 +11,16 @@ using Materia.MathHelpers;
 using Materia.Nodes.Attributes;
 using System.Reflection;
 using OpenTK;
+using NLog;
 
 namespace Materia.Nodes
 {
     public class FunctionGraph : Graph
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         static string GLSLHash = "float rand(vec2 co) {\r\n"
-                                 + "return fract(sin(dot(co, vec2(12.9898,78.233))) * 43758.5453);\r\n"
+                                 + "return fract(sin(dot(co, vec2(12.9898,78.233))) * 43758.5453) * 2.0 - 1.0;\r\n"
                                  + "}\r\n\r\n";
 
         public Node OutputNode { get; protected set; }
@@ -461,8 +464,16 @@ namespace Materia.Nodes
 
             if (parentNode != null)
             {
-                int w = parentNode.Width;
-                int h = parentNode.Height;
+                Node n = parentNode.TopNode();
+                int w = n.Width;
+                int h = n.Height;
+
+                sizePart = "vec2 size = vec2(" + w + "," + h + ");\r\n";
+            }
+            else if(parentGraph != null)
+            {
+                int w = parentGraph.Width;
+                int h = parentGraph.Height;
 
                 sizePart = "vec2 size = vec2(" + w + "," + h + ");\r\n";
             }
@@ -529,16 +540,6 @@ namespace Materia.Nodes
 
             List<Node> ordered = OrderNodesForShader();
 
-            string sizePart = "vec2 size = vec2(0);\r\n";
-
-            if(parentNode != null)
-            {
-                int w = parentNode.Width;
-                int h = parentNode.Height;
-
-                sizePart = "vec2 size = vec2(" + w + "," + h + ");\r\n";
-            }
-
             string frag = "#version 330 core\r\n"
                          + "out vec4 FragColor;\r\n"
                          + "in vec2 UV;\r\n"
@@ -548,6 +549,8 @@ namespace Materia.Nodes
                          + "const float RandomSeed = " + randomSeed + ";\r\n"
                          + "uniform sampler2D Input0;\r\n"
                          + "uniform sampler2D Input1;\r\n"
+                         + "uniform sampler2D Input2;\r\n"
+                         + "uniform sampler2D Input3;\r\n"
                          + GLSLHash;
 
 
@@ -583,7 +586,7 @@ namespace Materia.Nodes
 
             frag += intern + "}";
 
-            //Console.WriteLine(frag);
+            //Log.Info("Function Frag Shader Code: {0}", frag);
 
             //one last check to verify the output actually has the expected output
             if (!HasExpectedOutput)
@@ -622,6 +625,28 @@ namespace Materia.Nodes
         {
             if(n is MathNode)
             {
+                MathNode mn = n as MathNode;
+                bool suc = base.Add(n);
+
+                //this handles a case where a node
+                //is added from undo / redo / paste
+                //for certain nodes such as call node
+                if(suc)
+                {
+                    if(parentNode != null)
+                    {
+                        mn.ParentNode = parentNode;
+                    }
+                    else if(parentGraph != null)
+                    {
+                        mn.OnFunctionParentSet();
+                    }
+                }
+
+                return suc;
+            }
+            else if(n is ItemNode)
+            {
                 return base.Add(n);
             }
 
@@ -632,12 +657,16 @@ namespace Materia.Nodes
         //and the type must be coming from MathNodes path
         public override Node CreateNode(string type)
         {
-            if (type.Contains("MathNodes") && !type.Contains(System.IO.Path.PathSeparator))
+            if (type.Contains("MathNodes") && !type.Contains(System.IO.Path.DirectorySeparatorChar))
             {
                 MathNode n = base.CreateNode(type) as MathNode;
                 n.ParentNode = parentNode;
                 n.ParentGraph = this;
                 return n;
+            }
+            else if(type.Contains("Items") && !type.Contains(System.IO.Path.DirectorySeparatorChar))
+            {
+                return base.CreateNode(type);
             }
 
             return null;
@@ -687,7 +716,15 @@ namespace Materia.Nodes
 
             builder.Append(type);
             builder.Append(s1);
-            BuildShaderParamValue(param, builder, useMinMaxValue);
+
+            if (param.IsFunction())
+            {
+                BuildShaderFunctionValue(param, builder);
+            }
+            else
+            {
+                BuildShaderParamValue(param, builder, useMinMaxValue);
+            }
         }
 
         protected void BuildShaderParamValue(GraphParameterValue param, StringBuilder builder, bool useMinMaxValue = false)
@@ -698,7 +735,7 @@ namespace Materia.Nodes
             }
             else if (param.Type == NodeType.Float)
             {
-                builder.Append(Convert.ToSingle(param.Value).ToString() + ";\r\n");
+                builder.Append(param.FloatValue.ToString() + ";\r\n");
             }
             else if (param.Type == NodeType.Float4 || param.Type == NodeType.Gray || param.Type == NodeType.Color)
             {
@@ -756,33 +793,88 @@ namespace Materia.Nodes
             }
         }
 
+        protected void BuildShaderFunctionValue(GraphParameterValue param, StringBuilder builder)
+        {
+            FunctionGraph fn = param.Value as FunctionGraph;
+            fn.TryAndProcess();
+            object value = fn.Result;
+
+            if (param.Type == NodeType.Bool)
+            {
+                builder.Append(Convert.ToBoolean(param.Value).ToString().ToLower() + ";\r\n");
+            }
+            else if (param.Type == NodeType.Float)
+            {
+                builder.Append(Convert.ToSingle(value).ToString() + ";\r\n");
+            }
+            else if (param.Type == NodeType.Float4 || param.Type == NodeType.Gray || param.Type == NodeType.Color)
+            {
+                MVector vec = new MVector();
+
+                if (value is MVector)
+                {
+                    vec = (MVector)value;
+                }
+
+                builder.Append("vec4(" + vec.X + "," + vec.Y + "," + vec.Z + "," + vec.W + ");\r\n");
+            }
+            else if (param.Type == NodeType.Float2)
+            {
+                MVector vec = new MVector();
+
+                if (value is MVector)
+                {
+                    vec = (MVector)value;
+                }
+
+                builder.Append("vec2(" + vec.X + "," + vec.Y + ");\r\n");
+            }
+            else if (param.Type == NodeType.Float3)
+            {
+                MVector vec = new MVector();
+
+                if (value is MVector)
+                {
+                    vec = (MVector)value;
+                }
+
+                builder.Append("vec3(" + vec.X + "," + vec.Y + "," + vec.Z + ");\r\n");
+            }
+        }
 
         protected string GetParentGraphShaderParams()
         {
             StringBuilder builder = new StringBuilder();
 
-            if (parentNode != null)
+            try
             {
-                var p = TopGraph();
 
-                if (p != null)
+                if (parentNode != null)
                 {
-                    foreach(var param in p.Parameters.Values)
+                    var p = TopGraph();
+
+                    if (p != null)
                     {
-                        if(!param.IsFunction())
+                        foreach (var param in p.Parameters.Values)
                         {
                             BuildShaderParam(param, builder);
                         }
-                    }
 
-                    foreach(var param in p.CustomParameters)
-                    {
-                        if(!param.IsFunction())
+                        foreach (var param in p.CustomParameters)
                         {
-                            BuildShaderParam(param, builder, true);
+                            if (!param.IsFunction())
+                            {
+                                BuildShaderParam(param, builder, true);
+                            }
                         }
                     }
                 }
+            }
+            catch (StackOverflowException e)
+            {
+                Log.Error(e);
+                Log.Error("There is an infinite function reference loop in promoted graph parameters.");
+                return "";
             }
 
             return builder.ToString();
@@ -792,174 +884,190 @@ namespace Materia.Nodes
         {
             if (g == null) return;
 
-            var p = g;
-
-            if(p != null)
+            try
             {
-                foreach(var param in p.Parameters.Values)
-                {
-                    if (!param.IsFunction())
-                    {
-                        SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value);
-                    }
-                }
+                var p = g;
 
-                foreach(var param in p.CustomParameters)
+                if (p != null)
                 {
-                    if(!param.IsFunction())
+                    foreach (var k in p.Parameters.Keys)
                     {
-                        SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value);
+                        var param = p.Parameters[k];
+
+                        if (!param.IsFunction())
+                        {
+                            SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value);
+                        }
+                    }
+
+                    foreach (var param in p.CustomParameters)
+                    {
+                        if (!param.IsFunction())
+                        {
+                            SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value);
+                        }
                     }
                 }
+            }
+            catch (StackOverflowException e)
+            {
+                //possible
+                Log.Error(e);
+                Log.Error("There is an infinite function reference loop in promoted graph parameters.");
             }
         }
 
         protected void SetParentNodeVars(Graph g)
         {
-            if (g == null || parentNode == null) return;
-
-            var props = parentNode.GetType().GetProperties();
-
-            var p = g;
-
-            if (p != null)
+            try
             {
-                foreach (var prop in props)
+                if (g == null || parentNode == null) return;
+
+                var props = parentNode.GetType().GetProperties();
+
+                var p = g;
+
+                if (p != null)
                 {
-                    if(!prop.PropertyType.Equals(typeof(int))
-                        && !prop.PropertyType.Equals(typeof(float))
-                        && !prop.PropertyType.Equals(typeof(MVector))
-                        && !prop.PropertyType.Equals(typeof(bool))
-                        && !prop.PropertyType.Equals(typeof(double))
-                        && !prop.PropertyType.Equals(typeof(Vector4)))
+                    foreach (var prop in props)
                     {
-                        continue;
-                    }
-
-                    try
-                    {
-                        HidePropertyAttribute hb = prop.GetCustomAttribute<HidePropertyAttribute>();
-
-                        if(hb != null)
+                        if (!prop.PropertyType.Equals(typeof(int))
+                            && !prop.PropertyType.Equals(typeof(float))
+                            && !prop.PropertyType.Equals(typeof(MVector))
+                            && !prop.PropertyType.Equals(typeof(bool))
+                            && !prop.PropertyType.Equals(typeof(double))
+                            && !prop.PropertyType.Equals(typeof(Vector4)))
                         {
                             continue;
                         }
-                    }
-                    catch
-                    {
 
-                    }
-
-                    object v = null;
-                    if (p.HasParameterValue(parentNode.Id, prop.Name))
-                    {
-                        var gp = p.GetParameterRaw(parentNode.Id, prop.Name);
-                        if (!gp.IsFunction())
+                        try
                         {
-                            v = gp.Value;
+                            HidePropertyAttribute hb = prop.GetCustomAttribute<HidePropertyAttribute>();
+
+                            if (hb != null)
+                            {
+                                continue;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e);
+                        }
+
+                        object v = null;
+                        string varName = "";
+
+                        if (p.HasParameterValue(parentNode.Id, prop.Name))
+                        {
+                            var gp = p.GetParameterRaw(parentNode.Id, prop.Name);
+                            if (!gp.IsFunction())
+                            {
+                                v = gp.Value;
+                            }
                         }
                         else
                         {
                             v = prop.GetValue(parentNode);
                         }
-                    }
-                    else
-                    {
-                        v = prop.GetValue(parentNode);
-                    }
 
-                    string varName = "";
-
-                    try
-                    {
-                        TitleAttribute t = prop.GetCustomAttribute<TitleAttribute>();
-
-                        if(t != null)
+                        try
                         {
-                            varName = t.Title.Replace(" ", "").Replace("-", "");
+                            TitleAttribute t = prop.GetCustomAttribute<TitleAttribute>();
+
+                            if (t != null)
+                            {
+                                varName = t.Title.Replace(" ", "").Replace("-", "");
+                            }
+                            else
+                            {
+                                varName = prop.Name;
+                            }
                         }
-                        else
+                        catch
                         {
                             varName = prop.Name;
                         }
-                    }
-                    catch
-                    {
-                        varName = prop.Name;
-                    }
 
-                    if(v != null)
-                    {
-                        if(v is Vector4)
+                        if (v != null)
                         {
-                            Vector4 vec = (Vector4)v;
-                            v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
-                        }
+                            if (v is Vector4)
+                            {
+                                Vector4 vec = (Vector4)v;
+                                v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
+                            }
 
-                        SetVar(varName, v);
+                            SetVar(varName, v);
+                        }
                     }
                 }
-            }
-            else
-            {
-                foreach(var prop in props)
+                else
                 {
-                    if (!prop.PropertyType.Equals(typeof(int))
-                        && !prop.PropertyType.Equals(typeof(float))
-                        && !prop.PropertyType.Equals(typeof(MVector))
-                        && !prop.PropertyType.Equals(typeof(bool))
-                        && !prop.PropertyType.Equals(typeof(double))
-                        && !prop.PropertyType.Equals(typeof(Vector4)))
+                    foreach (var prop in props)
                     {
-                        continue;
-                    }
-
-                    try
-                    {
-                        HidePropertyAttribute hb = prop.GetCustomAttribute<HidePropertyAttribute>();
-
-                        if (hb != null)
+                        if (!prop.PropertyType.Equals(typeof(int))
+                            && !prop.PropertyType.Equals(typeof(float))
+                            && !prop.PropertyType.Equals(typeof(MVector))
+                            && !prop.PropertyType.Equals(typeof(bool))
+                            && !prop.PropertyType.Equals(typeof(double))
+                            && !prop.PropertyType.Equals(typeof(Vector4)))
                         {
                             continue;
                         }
-                    }
-                    catch
-                    {
 
-                    }
-
-                    object v = prop.GetValue(parentNode);
-                    string varName = "";
-
-                    try
-                    {
-                        TitleAttribute t = prop.GetCustomAttribute<TitleAttribute>();
-
-                        if (t != null)
+                        try
                         {
-                            varName = t.Title.Replace(" ", "").Replace("-", "");
+                            HidePropertyAttribute hb = prop.GetCustomAttribute<HidePropertyAttribute>();
+
+                            if (hb != null)
+                            {
+                                continue;
+                            }
                         }
-                        else
+                        catch (Exception e)
+                        {
+                            Log.Error(e);
+                        }
+
+                        object v = prop.GetValue(parentNode);
+                        string varName = "";
+
+                        try
+                        {
+                            TitleAttribute t = prop.GetCustomAttribute<TitleAttribute>();
+
+                            if (t != null)
+                            {
+                                varName = t.Title.Replace(" ", "").Replace("-", "");
+                            }
+                            else
+                            {
+                                varName = prop.Name;
+                            }
+                        }
+                        catch
                         {
                             varName = prop.Name;
                         }
-                    }
-                    catch
-                    {
-                        varName = prop.Name;
-                    }
 
-                    if (v != null)
-                    {
-                        if (v is Vector4)
+                        if (v != null)
                         {
-                            Vector4 vec = (Vector4)v;
-                            v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
-                        }
+                            if (v is Vector4)
+                            {
+                                Vector4 vec = (Vector4)v;
+                                v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
+                            }
 
-                        SetVar(varName, v);
+                            SetVar(varName, v);
+                        }
                     }
                 }
+            }
+            catch (StackOverflowException e)
+            {
+                Log.Error(e);
+                //stackoverflow possible if you do a loop of function parameter values
+                Log.Error("There is an infinite function reference loop between node parameters");
             }
         }
 
@@ -975,10 +1083,15 @@ namespace Materia.Nodes
 
             if(parentNode != null)
             {
-                int w = parentNode.Width;
-                int h = parentNode.Height;
+                var n = parentNode.TopNode();
+                int w = n.Width;
+                int h = n.Height;
 
                 SetVar("size", new MVector(w, h));
+            }
+            else if(parentGraph != null)
+            {
+                SetVar("size", new MVector(parentGraph.Width, parentGraph.Height));
             }
             else
             {
@@ -993,7 +1106,10 @@ namespace Materia.Nodes
             //just as if it was running in the shader code
             if(ordered.Count > 0)
             {
-                ordered[0].TryAndProcess();
+                for(int i = 0; i < ordered.Count; i++)
+                {
+                    ordered[i].TryAndProcess();
+                } 
             }
         }
 

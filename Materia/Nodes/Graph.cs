@@ -11,6 +11,8 @@ using Materia.Nodes.Attributes;
 using OpenTK.Graphics.OpenGL;
 using Materia.MathHelpers;
 using System.Threading;
+using Materia.Nodes.Items;
+using NLog;
 
 namespace Materia.Nodes
 {
@@ -28,8 +30,14 @@ namespace Materia.Nodes
 
     public class Graph : IDisposable
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
+        public static int[] GRAPH_SIZES = new int[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
+        public const int DEFAULT_SIZE = 256;
+
         public delegate void GraphUpdate(Graph g);
         public event GraphUpdate OnGraphUpdated;
+        public event GraphUpdate OnGraphNameChanged;
 
         [HideProperty]
         public bool ReadOnly { get; set; }
@@ -61,7 +69,23 @@ namespace Materia.Nodes
         [GraphFunctionEditor]
         public List<FunctionGraph> CustomFunctions { get; protected set; }
 
-        public string Name { get; set; }
+        protected string name;
+        [TextInput]
+        public string Name
+        {
+            get
+            {
+                return name;
+            }
+            set
+            {
+                name = value;
+                if(OnGraphNameChanged != null)
+                {
+                    OnGraphNameChanged.Invoke(this);
+                }
+            }
+        }
 
         [HideProperty]
         public double ShiftX { get; set; }
@@ -165,8 +189,8 @@ namespace Materia.Nodes
 
         protected int width;
         protected int height;
-        [Slider(IsInt = true, Max = 4096, Min = 8, Snap = true, Ticks = new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
-        [Section(Section = "Standard")]
+
+        [HideProperty]
         public int Width
         {
             get
@@ -180,8 +204,7 @@ namespace Materia.Nodes
             }
         }
 
-        [Slider(IsInt = true, Max = 4096, Min = 8, Snap = true, Ticks = new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
-        [Section(Section = "Standard")]
+        [HideProperty]
         public int Height
         {
             get
@@ -195,7 +218,7 @@ namespace Materia.Nodes
             }
         }
 
-        public Graph(string name, int w = 256, int h = 256)
+        public Graph(string name, int w = DEFAULT_SIZE, int h = DEFAULT_SIZE)
         {
             tempData = new Dictionary<string, Node.NodeData>();
             hdriIndex = Hdri.HdriManager.Selected;
@@ -234,9 +257,36 @@ namespace Materia.Nodes
         public Node FindSubNodeById(string id)
         {
             Node n = null;
+
+            //first try this graph
+            if(NodeLookup.TryGetValue(id, out n))
+            {
+                return n;
+            }
+
+
+            var graphinsts = Nodes.FindAll(m => m is GraphInstanceNode);
+
+            //try and retrieve from graph inst
+            for(int i = 0; i < graphinsts.Count; i++)
+            {
+                var proc = graphinsts[i] as GraphInstanceNode;
+
+                if (proc.GraphInst != null)
+                {
+                    n = proc.GraphInst.FindSubNodeById(id);
+
+                    if(n != null)
+                    {
+                        return n;
+                    }
+                }
+            }
+
             var procnodes = Nodes.FindAll(m => m is PixelProcessorNode);
 
-            for(int i = 0; i < procnodes.Count; i++)
+            //try and find in pixel processors
+            for (int i = 0; i < procnodes.Count; i++)
             {
                 var proc = procnodes[i] as PixelProcessorNode;
 
@@ -249,6 +299,7 @@ namespace Materia.Nodes
                 }
             }
 
+            //try and find in parameter functions
             foreach(string k in Parameters.Keys)
             {
                 var parameter = Parameters[k];
@@ -263,6 +314,7 @@ namespace Materia.Nodes
                 }
             }
 
+            //try and find in custom functions
             foreach(FunctionGraph g in CustomFunctions)
             {
                 if(g.NodeLookup.TryGetValue(id, out n))
@@ -276,6 +328,7 @@ namespace Materia.Nodes
 
         public virtual void RemoveVar(string k)
         {
+            if (string.IsNullOrEmpty(k)) return;
             Variables.Remove(k);
         }
 
@@ -369,7 +422,7 @@ namespace Materia.Nodes
                     BitmapNode bn = (BitmapNode)n;
                     bn.TryAndProcess();
                 }
-                else
+                else if(!(n is ItemNode))
                 {
                     Point osize;
 
@@ -425,7 +478,7 @@ namespace Materia.Nodes
             return JsonConvert.SerializeObject(d);
         }
 
-        public virtual List<string> GetJsonReadyCustomFunctions()
+        protected virtual List<string> GetJsonReadyCustomFunctions()
         {
             List<string> funcs = new List<string>();
 
@@ -437,7 +490,22 @@ namespace Materia.Nodes
             return funcs;
         }
 
-        public virtual Dictionary<string, string> GetJsonReadyParameters()
+        public virtual Dictionary<string, object> GetConstantParameters()
+        {
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+
+            foreach(var k in Parameters.Keys)
+            {
+                if(!Parameters[k].IsFunction())
+                {
+                    parameters[k] = Parameters[k].Value;
+                }
+            }
+
+            return parameters;
+        }
+
+        protected virtual Dictionary<string, string> GetJsonReadyParameters()
         {
             Dictionary<string, string> parameters = new Dictionary<string, string>();
 
@@ -450,7 +518,7 @@ namespace Materia.Nodes
         }
 
 
-        public List<string> GetJsonReadyCustomParameters()
+        protected List<string> GetJsonReadyCustomParameters()
         {
             List<string> parameters = new List<string>();
             foreach (var g in CustomParameters)
@@ -460,7 +528,20 @@ namespace Materia.Nodes
             return parameters;
         }
 
-        public virtual void SetJsonReadyCustomFunctions(List<string> functions)
+        public virtual Dictionary<string, object> GetCustomParameters()
+        {
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+
+            for(int i = 0; i < CustomParameters.Count; i++)
+            {
+                var param = CustomParameters[i];
+                parameters[param.Id] = param.Value;
+            }
+
+            return parameters;
+        }
+
+        protected virtual void SetJsonReadyCustomFunctions(List<string> functions)
         {
             if(functions != null)
             {
@@ -483,10 +564,62 @@ namespace Materia.Nodes
             }
         }
 
-        public virtual void SetJsonReadyParameters(Dictionary<string, string> parameters)
+        public virtual void AssignParameters(Dictionary<string, object> parameters)
         {
+            if(parameters != null)
+            {
+                foreach(var k in parameters.Keys)
+                {
+                    GraphParameterValue gparam = null;
+
+                    if(Parameters.TryGetValue(k, out gparam))
+                    {
+                        if(!gparam.IsFunction())
+                        {
+                            gparam.Value = parameters[k];
+                        }
+                    }
+                }
+            }
+        }
+
+        public virtual void AssignCustomParameters(Dictionary<string, object> parameters)
+        {
+            if(parameters != null)
+            {
+                foreach(var k in parameters.Keys)
+                {
+                    var param = CustomParameters.Find(m => m.Id.Equals(k));
+
+                    if(param != null)
+                    {
+                        if (!param.IsFunction())
+                        {
+                            param.Value = parameters[k];
+                        }
+                    }
+                } 
+            }
+        }
+
+        protected virtual void SetJsonReadyParameters(Dictionary<string, string> parameters)
+        { 
             if (parameters != null)
             {
+                //remove previous listeners
+                //for function graphs
+                if (Parameters != null && Parameters.Count > 0)
+                {
+                    foreach (var param in Parameters.Values)
+                    {
+                        if(param.IsFunction())
+                        {
+                            var f = param.Value as FunctionGraph;
+                            f.OnGraphUpdated -= Graph_OnGraphUpdated;
+                        }
+                    }
+                }
+
                 Parameters = new Dictionary<string, GraphParameterValue>();
 
                 foreach (var k in parameters.Keys)
@@ -496,9 +629,10 @@ namespace Materia.Nodes
                     Node n = null;
                     NodeLookup.TryGetValue(split[0], out n);
 
-                    Parameters[k] = GraphParameterValue.FromJson(parameters[k], n);
-                    if(Parameters[k].IsFunction())
-                    {
+                    var param  = GraphParameterValue.FromJson(parameters[k], n);
+                    Parameters[k] = param;
+                    if (param.IsFunction())
+                    { 
                         var f = Parameters[k].Value as FunctionGraph;
                         f.OnGraphUpdated += Graph_OnGraphUpdated;
                     }
@@ -506,7 +640,7 @@ namespace Materia.Nodes
             }
         }
 
-        public virtual void SetJsonReadyCustomParameters(List<string> parameters)
+        protected virtual void SetJsonReadyCustomParameters(List<string> parameters)
         {
             if(parameters != null)
             {
@@ -596,7 +730,7 @@ namespace Materia.Nodes
                 return null;
             }
 
-            if(type.Contains(System.IO.Path.PathSeparator))
+            if(type.Contains(System.IO.Path.DirectorySeparatorChar))
             {
                 var n = new GraphInstanceNode(width, height);
                 n.ParentGraph = this;
@@ -620,6 +754,12 @@ namespace Materia.Nodes
                         n.ParentGraph = this;
                         return n;
                     }
+                    else if(t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
+                    {
+                        Node n = (Node)Activator.CreateInstance(t);
+                        n.ParentGraph = this;
+                        return n;
+                    }
                     else
                     {
                         Node n = (Node)Activator.CreateInstance(t, width, height, defaultTextureType);
@@ -636,7 +776,7 @@ namespace Materia.Nodes
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Log.Error(e);
                 return null;
             }
         }
@@ -705,6 +845,19 @@ namespace Materia.Nodes
                                         nodeData[nd.id] = s;
                                         tempData[nd.id] = nd;
                                     }
+                                    else if (t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
+                                    {
+                                        Node n = (Node)Activator.CreateInstance(t);
+                                        if(n != null)
+                                        {
+                                            n.ParentGraph = this;
+                                            n.Id = nd.id;
+                                            lookup[nd.id] = n;
+                                            Nodes.Add(n);
+                                            nodeData[nd.id] = s;
+                                            tempData[nd.id] = nd;
+                                        }
+                                    }
                                     else
                                     {
                                         Node n = (Node)Activator.CreateInstance(t, nd.width, nd.height, defaultTextureType);
@@ -749,6 +902,25 @@ namespace Materia.Nodes
                     {
                         n.FromJson(lookup, ndata);
 
+                        //this handles a case where
+                        //the function graph is already created
+                        //and possible being reloaded
+                        //after being cleared and then FromJson is called again
+                        if(n is MathNode && this is FunctionGraph)
+                        {
+                            FunctionGraph t = this as FunctionGraph;
+                            MathNode mn = n as MathNode;
+
+                            if (t.ParentNode != null)
+                            {
+                                mn.ParentNode = t.ParentNode;
+                            }
+                            else if(t.ParentGraph != null)
+                            {
+                                mn.OnFunctionParentSet();
+                            }
+                        }
+
                         //origin sizes are only for graph instances
                         //not actually used in the current one being edited
                         //it is used in the ResizeWith
@@ -776,12 +948,6 @@ namespace Materia.Nodes
                 }
             }
 
-            //then add event handlers!
-            foreach(Node n in Nodes)
-            {
-                n.OnUpdate += N_OnUpdate;
-            }
-
             //release temp data
             tempData.Clear();
 
@@ -792,6 +958,12 @@ namespace Materia.Nodes
             else
             {
                 TryAndProcess();
+            }
+
+            //then add event handlers!
+            foreach (Node n in Nodes)
+            {
+                n.OnUpdate += N_OnUpdate;
             }
         }
 
@@ -806,6 +978,50 @@ namespace Materia.Nodes
             this.CWD = cwd;
         }
 
+        protected virtual void ClearParameters()
+        {
+            if(CustomParameters != null)
+            {
+                //just a quick sanity check
+                foreach (var param in CustomParameters)
+                {
+                    if (param.IsFunction())
+                    {
+                        FunctionGraph fn = param.Value as FunctionGraph;
+                        fn.OnGraphUpdated -= Graph_OnGraphUpdated;
+                        fn.Dispose();
+                    }
+                }
+
+                CustomParameters.Clear();
+            }
+
+            if(CustomFunctions != null)
+            {
+                foreach(var f in CustomFunctions)
+                {
+                    f.Dispose();
+                }
+
+                CustomFunctions.Clear();
+            }
+
+            if(Parameters != null)
+            {
+                foreach(var param in Parameters.Values)
+                {
+                    if(param.IsFunction())
+                    {
+                        FunctionGraph fn = param.Value as FunctionGraph;
+                        fn.OnGraphUpdated -= Graph_OnGraphUpdated;
+                        fn.Dispose();
+                    }
+                }
+
+                Parameters.Clear();
+            }
+        }
+
         public virtual void Dispose()
         {
             if (Nodes != null)
@@ -816,8 +1032,24 @@ namespace Materia.Nodes
                 }
 
                 Nodes.Clear();
-                Nodes = null;
             }
+
+            if (NodeLookup != null)
+            {
+                NodeLookup.Clear();
+            }
+
+            if (OutputNodes != null)
+            {
+                OutputNodes.Clear();
+            }
+
+            if (InputNodes != null)
+            {
+                InputNodes.Clear();
+            }
+
+            ClearParameters();
         }
 
         protected void Updated()

@@ -109,9 +109,9 @@ namespace Materia.Nodes.MathNodes
             if (input.Input.Data == null || input2.Input.Data == null) return;
 
             object x = input.Input.Data;
-            float y = (float)input2.Input.Data;
+            float y = Convert.ToSingle(input2.Input.Data);
 
-            if (x is float || x is int || x is double)
+            if (x is float || x is int || x is double || x is long)
             {
                 output.Data = Convert.ToSingle(x) % y;
             }
@@ -125,11 +125,6 @@ namespace Materia.Nodes.MathNodes
                 m.W = m.W % y;
 
                 output.Data = m;
-            }
-
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
             }
 
             if (ParentGraph != null)

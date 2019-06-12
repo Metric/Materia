@@ -5,14 +5,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Helpers"
              mc:Ignorable="d" 
-             d:DesignHeight="16" d:DesignWidth="8">
-    <Grid MouseDown="Grid_MouseDown" Width="8" Height="16">
-        <Border BorderBrush="White" HorizontalAlignment="Left" VerticalAlignment="Top" Name="Max" Width="8" Height="8" BorderThickness="0">
-            <Path HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 0 6 L 6 0">
+             d:DesignHeight="32" d:DesignWidth="16">
+    <Grid MouseDown="Grid_MouseDown" Width="16">
+        <Border BorderBrush="White" HorizontalAlignment="Left" VerticalAlignment="Top" Name="Max" Width="16" Height="16" BorderThickness="0">
+            <Path HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 0 12 L 12 0">
                 <Path.RenderTransform>
                     <TransformGroup>
                         <RotateTransform Angle="45" />
-                        <TranslateTransform X="3.25" />
+                        <TranslateTransform X="6.35" Y="0" />
                     </TransformGroup>
                 </Path.RenderTransform>
                 <Path.Fill>
@@ -20,6 +20,6 @@
                 </Path.Fill>
             </Path>
         </Border>
-        <Border Name="SelectedColor" BorderBrush="#888" Margin="0,5,0,0" Background="#888" />
+        <Border Name="SelectedColor" BorderBrush="#888" Margin="0,10,0,0" Background="#888" />
     </Grid>
 </UserControl>

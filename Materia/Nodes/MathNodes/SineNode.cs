@@ -99,14 +99,10 @@ namespace Materia.Nodes.MathNodes
 
             object o = input.Input.Data;
 
-            if (o is float || o is int)
+            if (o is float || o is int || o is double || o is long)
             {
-                float v = (float)o;
+                float v = Convert.ToSingle(o);
                 output.Data = (float)Math.Sin(v);
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
             else if(o is MVector)
             {
@@ -116,18 +112,10 @@ namespace Materia.Nodes.MathNodes
                 m.Z = (float)Math.Sin(m.Z);
                 m.W = (float)Math.Sin(m.W);
                 output.Data = m;
-                if(Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
             else
             {
                 output.Data = 0;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
 
             if (ParentGraph != null)

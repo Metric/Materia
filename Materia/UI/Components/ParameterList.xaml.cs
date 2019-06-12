@@ -19,6 +19,7 @@ using Materia.MathHelpers;
 using Materia.Nodes.Atomic;
 using Materia.Imaging;
 using Materia.Nodes.Containers;
+using NLog;
 
 namespace Materia.UI.Components
 {
@@ -27,6 +28,8 @@ namespace Materia.UI.Components
     /// </summary>
     public partial class ParameterList : UserControl
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         object node;
 
         Dictionary<string, PropertyInfo> propertyLookup;
@@ -168,6 +171,7 @@ namespace Materia.UI.Components
             PromoteAttribute pro = p.GetCustomAttribute<PromoteAttribute>();
             ParameterEditorAttribute pe = p.GetCustomAttribute<ParameterEditorAttribute>();
             GraphFunctionEditorAttribute fe = p.GetCustomAttribute<GraphFunctionEditorAttribute>();
+            VectorAttribute vc = p.GetCustomAttribute<VectorAttribute>();
 
             //handle very special stuff
             //exposed constant parameter variable names
@@ -212,13 +216,13 @@ namespace Materia.UI.Components
 
                     if (p.PropertyType.Equals(typeof(List<GraphParameterValue>)))
                     {
-                        ParameterMap pm = new ParameterMap(gin.CustomParameters);
+                        ParameterMap pm = new ParameterMap(gin, gin.CustomParameters);
                         Stack.Children.Add(pm);
                         elementLookup[name] = pm;
                     }
                     else
                     {
-                        ParameterMap pm = new ParameterMap(gin.Parameters);
+                        ParameterMap pm = new ParameterMap(gin.GraphInst, gin.Parameters);
                         Stack.Children.Add(pm);
                         elementLookup[name] = pm;
                     }
@@ -250,7 +254,7 @@ namespace Materia.UI.Components
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Log.Error(e);
             }
 
             if(t.Equals(typeof(Gradient)))
@@ -286,6 +290,26 @@ namespace Materia.UI.Components
                     ColorSelect cs = new ColorSelect(p, node);
                     Stack.Children.Add(cs);
                     elementLookup[name] = cs;
+                }
+                else if(vc != null)
+                {
+                    PropertyLabel l = null;
+                    if (pro != null && node is Node)
+                    {
+                        l = new PropertyLabel(title, node as Node, name);
+                    }
+                    else
+                    {
+                        l = new PropertyLabel();
+                        l.Title = title;
+                    }
+
+                    labels.Add(l);
+                    Stack.Children.Add(l);
+
+                    VectorInput vi = new VectorInput(p, node, vc.Type);
+                    Stack.Children.Add(vi);
+                    elementLookup[name] = vi;
                 }
             }
             else if (t.Equals(typeof(string[])))
@@ -497,13 +521,29 @@ namespace Materia.UI.Components
             }
             else if (t.IsEnum)
             {
-                PropertyLabel l = new PropertyLabel();
-                l.Title = title;
+                PropertyLabel l = null;
+                if (pro != null && node is Node) {
+                    l = new PropertyLabel(title, node as Node, name);
+                }
+                else
+                {
+                    l = new PropertyLabel();
+                    l.Title = title;
+                }
+
                 labels.Add(l);
                 Stack.Children.Add(l);
+                DropDown inp = null;
 
-                string[] names = Enum.GetNames(t);
-                DropDown inp = new DropDown(names, node, p);
+                if (dp != null && dp.Values != null && dp.Values.Length > 0)
+                {
+                    inp = new DropDown(dp.Values, node, p);
+                }
+                else
+                {
+                    string[] names = Enum.GetNames(t);
+                    inp = new DropDown(names, node, p);
+                }
                 Stack.Children.Add(inp);
                 elementLookup[name] = inp;
             }

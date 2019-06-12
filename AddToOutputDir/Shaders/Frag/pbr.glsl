@@ -7,6 +7,7 @@ struct AppData {
     vec3 WorldPos;
     mat3 TBN;
     vec3 ObjectPos;
+    vec4 ClipPos;
     vec3 T;
     vec3 B;
     vec3 N;
@@ -26,10 +27,12 @@ uniform sampler2D heightMap;
 uniform sampler2D brdfLUT;
 uniform sampler2D irradianceMap;
 uniform sampler2D prefilterMap;
+uniform sampler2D thicknessMap;
 
 //Light Data
 uniform vec3 lightPosition = vec3(0,1,1);
 uniform vec3 lightColor = vec3(1,1,1);
+uniform float lightPower = 1;
 
 //POM Data
 uniform float heightScale = 0.2;
@@ -42,6 +45,17 @@ uniform float refraction = 0.04;
 const float INV_PI = 0.31830988618;
 const float PI = 3.14159265359;
 
+uniform float near = 0.03;
+uniform float far = 1000;
+
+//SSS Related based on Dice Presentation: https://colinbarrebrisebois.com/2011/03/07/gdc-2011-approximating-translucency-for-a-fast-cheap-and-convincing-subsurface-scattering-look/
+//this is the sigma distortion variable from the above slides
+uniform float SSS_Distortion = 0.5;
+//this is the extra ambient from the above slides
+uniform float SSS_Ambient = 0;
+//this is the intensity of the SSS
+uniform float SSS_Power = 1;
+
 struct Shading {
     vec3 diffuse;
     float metallic;
@@ -49,6 +63,9 @@ struct Shading {
     vec3 dielectric;
     vec3 normal;
     vec3 view;
+    vec3 sss;
+    vec2 uv;
+    float attenuation;
 };
 
 vec3 getPOMOffset(AppData o, vec2 texCoords, vec3 viewDir)
@@ -192,6 +209,7 @@ vec3 lighting(vec3 lo, vec3 pos, vec3 color, vec3 wPos, Shading shading) {
     vec3 ldiffuse = shading.diffuse;
     float roughness = shading.roughness;
     float metallic = shading.metallic;
+    float atten = shading.attenuation;
 
     vec3 Lo = lo;
 
@@ -202,9 +220,7 @@ vec3 lighting(vec3 lo, vec3 pos, vec3 color, vec3 wPos, Shading shading) {
     float NdotL = max(dot(N,L), 0.0);
     float NdotV = max(dot(N,V), 0.0);
 
-    float dist = length(pos - wPos);
-    float attenuation = 1.0 / (dist * dist);
-    vec3 radiance = color * attenuation;
+    vec3 radiance = color * atten;
 
     float NDF = distrubtionGGX(N,H,roughness);
     float G = geometrySmith(N,V,L, roughness);
@@ -222,6 +238,24 @@ vec3 lighting(vec3 lo, vec3 pos, vec3 color, vec3 wPos, Shading shading) {
     return Lo;
 }
 
+float subsurfaceScattering(float atten, float thickness, vec3 L, vec3 N)
+{
+    vec3 vLTLight = normalize(L + N * SSS_Distortion);
+
+    //the formula for the fLTDot provided in the slides produces weird artifacts
+    //since it uses the View Dir and thus based on the viewing angle
+    //weird light shadowing artifacts can occur as if the SSS is cutting off
+    //To get proper world based SSS with the same formula
+    //the view dir is simply replaced with the incoming normal
+    //this produces excellent results from any angle
+    //with no artifacts
+
+    //we also removed the ltScale from the formula
+    //and simply rely on the atten from the light
+    float fLTDot = pow(max(0, dot(N,-vLTLight)), SSS_Power);
+    float fLT = atten * (fLTDot + SSS_Ambient) * thickness;
+    return fLT;
+}
 
 void main() 
 {
@@ -230,6 +264,7 @@ void main()
 
     vec3 V = shading.view = normalize(cameraPosition - o.WorldPos);
     vec2 uv = o.UV;
+
     uv = parallaxWorldMapping(o, cameraPosition - o.WorldPos, heightMap);
 
     if(occlusionClipBias > -1) {
@@ -237,11 +272,13 @@ void main()
             discard;
     }
 
-    vec3 N = shading.normal = unpackNormal(o, uv, normalMap);
+    shading.uv = uv;
 
+    vec3 N = shading.normal = unpackNormal(o, uv, normalMap);
     vec3 R = normalize(reflect(V, N).xyz);
 
     float NdotV = max(dot(N,V), 0.001);
+
     vec4 color = texture(albedo, uv);
     vec3 ldiffuse = shading.diffuse = pow(color.rgb, vec3(2.2));
 
@@ -252,8 +289,21 @@ void main()
     vec3 F0 = vec3(refraction);
     F0 = shading.dielectric = mix(F0, ldiffuse.rgb, metallic);
 
+    vec3 final = vec3(0);
+
+    ////Lighting for Point Light
+    float dist = length(lightPosition - o.WorldPos);
+    float attenuation = 1.0 / (dist * dist) * lightPower;
+    shading.attenuation = attenuation;
+    vec3 L = normalize(lightPosition - o.WorldPos);
     vec3 Lo = vec3(0.0);
     Lo = lighting(Lo, lightPosition, lightColor, o.WorldPos, shading);
+    ////
+
+    ///SSS for point light
+    float sss = subsurfaceScattering(attenuation, texture(thicknessMap, uv).r, L, N);
+    final += ldiffuse * lightColor * sss;
+    ///
 
     vec3 iKs = fresnelSchlickRoughness(NdotV, F0, roughness);
     vec3 iKd = 1.0 - iKs;
@@ -267,7 +317,7 @@ void main()
     vec3 specularIBL = prefilteredColor * (iKs * envBRDF.x + envBRDF.y);
 
     vec3 ambient = (iKd * diffuseIBL + specularIBL) * ao;
-    vec3 final = ambient + Lo;
+    final += (ambient + Lo);
 
     //HDR
     final = final / (final + vec3(1.0)); 

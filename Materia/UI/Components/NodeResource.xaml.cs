@@ -57,6 +57,19 @@ namespace Materia
             InitializeComponent();
         }
 
+        public NodeResource(NodeResource r)
+        {
+            InitializeComponent();
+            Type = r.Type;
+            Title = r.Title;
+            Path = r.Path;
+        }
+
+        public NodeResource Clone()
+        {
+            return new NodeResource(this);
+        }
+
         private void Grid_MouseMove(object sender, MouseEventArgs e)
         {
             if(e.LeftButton == MouseButtonState.Pressed)

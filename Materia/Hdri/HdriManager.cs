@@ -8,11 +8,14 @@ using System.IO;
 using Materia.Textures;
 using DDSReader;
 using OpenTK.Graphics.OpenGL;
+using NLog;
 
 namespace Materia.Hdri
 {
     public class HdriManager
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+        
         public delegate void HdriLoaded(GLTextuer2D irradiance, GLTextuer2D prefiltered);
 
         public static event HdriLoaded OnHdriLoaded;
@@ -193,7 +196,7 @@ namespace Materia.Hdri
                 }
                 catch (Exception e)
                 {
-
+                    Log.Error(e);   
                 }
             }
         }

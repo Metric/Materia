@@ -7,6 +7,6 @@ out vec2 UV;
 uniform vec2 tiling = vec2(1);
 
 void main() {
-    UV = uv0 * tiling;
-    gl_Position = vec4(pos.x,pos.y,pos.z, 1);
+    UV = pos.xy * 0.5 + 0.5;
+    gl_Position = vec4(pos.x,pos.y, 0, 1);
 }

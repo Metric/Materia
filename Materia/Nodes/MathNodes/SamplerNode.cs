@@ -20,7 +20,7 @@ namespace Materia.Nodes.MathNodes
         protected int sampleIndex;
 
         [Title(Title = "Input")]
-        [Dropdown(null, "Input0", "Input1")]
+        [Dropdown(null, "Input0", "Input1", "Input2", "Input3")]
         public int SampleIndex
         {
             get
@@ -114,7 +114,6 @@ namespace Materia.Nodes.MathNodes
                             previewProcessor = new BasicImageRenderer();
                         }
 
-
                         MVector pos = (MVector)inp;
 
                         int dx = (int)Math.Abs(pos.X * i1.Width) % i1.Width;
@@ -132,9 +131,15 @@ namespace Materia.Nodes.MathNodes
                         System.GC.Collect();
 
                         output.Data = new MVector(r, g, b, a);
-                        if (Outputs.Count > 0)
+
+                        if (ParentGraph != null)
                         {
-                            Outputs[0].Changed();
+                            FunctionGraph gr = (FunctionGraph)ParentGraph;
+
+                            if (gr != null && gr.OutputNode == this)
+                            {
+                                gr.Result = output.Data;
+                            }
                         }
 
                         return;
@@ -143,9 +148,15 @@ namespace Materia.Nodes.MathNodes
             }
 
             output.Data = new MVector();
-            if (Outputs.Count > 0)
+
+            if (ParentGraph != null)
             {
-                Outputs[0].Changed();
+                FunctionGraph g = (FunctionGraph)ParentGraph;
+
+                if (g != null && g.OutputNode == this)
+                {
+                    g.Result = output.Data;
+                }
             }
         }
 

@@ -126,19 +126,15 @@ namespace Materia.Nodes.MathNodes
                     object o = inp.Input.Data;
                     if (o == null) continue;
 
-                    if (o is float || o is int)
+                    if (o is float || o is int || o is double || o is long)
                     {
-                        float f = (float)o;
+                        float f = Convert.ToSingle(o);
                         v = Math.Min(f, v);
                     }
                 }
             }
 
             output.Data = v;
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
 
             if (ParentGraph != null)
             {

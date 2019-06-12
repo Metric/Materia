@@ -55,6 +55,8 @@ namespace Materia.Nodes.Atomic
 
             AddPlaceholderInput();
             AddPlaceholderInput();
+            AddPlaceholderInput();
+            AddPlaceholderInput();
 
             Outputs = new List<NodeOutput>();
             output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
@@ -99,6 +101,8 @@ namespace Materia.Nodes.Atomic
         {
             GLTextuer2D i1 = null;
             GLTextuer2D i2 = null;
+            GLTextuer2D i3 = null;
+            GLTextuer2D i4 = null;
 
             if(Inputs[0].HasInput)
             {
@@ -110,6 +114,16 @@ namespace Materia.Nodes.Atomic
                 i2 = (GLTextuer2D)Inputs[1].Input.Data;
             }
 
+            if(Inputs[2].HasInput)
+            {
+                i3 = (GLTextuer2D)Inputs[2].Input.Data;
+            }
+
+            if(Inputs[3].HasInput)
+            {
+                i4 = (GLTextuer2D)Inputs[3].Input.Data;
+            }
+
             if (!function.BuildShader())
             {
                 return;
@@ -118,7 +132,7 @@ namespace Materia.Nodes.Atomic
             CreateBufferIfNeeded();
 
             processor.Shader = function.Shader;
-            processor.Process(width, height, i1, i2, buffer);
+            processor.Process(width, height, i1, i2, i3, i4, buffer);
             processor.Complete();
 
             output.Data = buffer;

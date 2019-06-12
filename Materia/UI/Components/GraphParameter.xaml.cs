@@ -62,7 +62,7 @@ namespace Materia.UI.Components
         protected void DisplayDefaultParam()
         {
             ParamDefaultStack.Children.Clear();
-            var p = new ParameterMap(new List<GraphParameterValue>(new GraphParameterValue[] { Param }), true);
+            var p = new ParameterMap(null, new List<GraphParameterValue>(new GraphParameterValue[] { Param }), true);
             ParamDefaultStack.Children.Add(p);
         }
 

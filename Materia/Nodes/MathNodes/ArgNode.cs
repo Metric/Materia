@@ -26,6 +26,7 @@ namespace Materia.Nodes.MathNodes
         }
 
         protected NodeType inputType;
+        [Dropdown(null, "Bool", "Float", "Float2", "Float3", "Float4")]
         public NodeType InputType
         {
             get

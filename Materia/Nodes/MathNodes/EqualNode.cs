@@ -81,12 +81,6 @@ namespace Materia.Nodes.MathNodes
 
             output.Data = input.Input.Data.Equals(input2.Input.Data);
 
-            //output 0 should always be an executor pin
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
-
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;

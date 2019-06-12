@@ -12,11 +12,14 @@ using Materia.Nodes.Attributes;
 using Materia.Textures;
 using Materia.Imaging.GLProcessing;
 using Newtonsoft.Json;
+using NLog;
 
 namespace Materia.Nodes.Atomic
 {
     public class BitmapNode : ImageNode
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         NodeOutput Output;
 
         string relativePath;
@@ -160,7 +163,7 @@ namespace Materia.Nodes.Atomic
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.StackTrace);
+                    Log.Error(e);
                 }
 
                 System.GC.Collect();

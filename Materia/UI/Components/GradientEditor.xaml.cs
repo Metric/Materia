@@ -18,6 +18,7 @@ using Materia.Nodes.Containers;
 using Materia.UI.Helpers;
 using Materia.Imaging;
 using Materia.Nodes.Helpers;
+using NLog;
 
 namespace Materia.UI.Components
 {
@@ -26,6 +27,8 @@ namespace Materia.UI.Components
     /// </summary>
     public partial class GradientEditor : UserControl
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         List<GradientHandle> handles;
 
         PropertyInfo property;
@@ -81,7 +84,7 @@ namespace Materia.UI.Components
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message + " | " + e.StackTrace);
+                Log.Error(e);
             }
         }
 
@@ -102,19 +105,6 @@ namespace Materia.UI.Components
         private void H_OnColorChanged()
         {
             UpdateGradientPreview(true);
-        }
-
-        protected override void OnMouseLeave(MouseEventArgs e)
-        {
-            base.OnMouseLeave(e);
-
-            if (selected != null)
-            {
-                Canvas.SetZIndex(selected, 0);
-                selected = null;
-            }
-
-            mouseDown = false;
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
@@ -223,7 +213,7 @@ namespace Materia.UI.Components
                     }
                     catch (Exception e)
                     {
-
+                        Log.Error(e);
                     }
                 }
             }

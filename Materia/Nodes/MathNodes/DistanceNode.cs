@@ -122,18 +122,10 @@ namespace Materia.Nodes.MathNodes
                 MVector f2 = (MVector)d2;
 
                 output.Data = (f1 - f2).Length;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
             else
             {
                 output.Data = 0;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
 
             if (ParentGraph != null)

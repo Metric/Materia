@@ -79,10 +79,6 @@ namespace Materia.Nodes.MathNodes
             if (input.Input.Data == null || input2.Input.Data == null) return;
 
             output.Data = !input.Input.Data.Equals(input2.Input.Data);
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
 
             if (ParentGraph != null)
             {

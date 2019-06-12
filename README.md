@@ -3,6 +3,10 @@ Materia
 
 An open source alternative to Substance Designer written in C#. 
 
+Alpha RC 0.0.2 - Eye Example
+--------------------------
+![image](https://github.com/Metric/Materia/blob/master/alpha-rc.0.0.2.png)
+
 A simple setup
 -----------------
 ![image](https://github.com/Metric/Materia/blob/master/screenshot1.png)
@@ -34,36 +38,27 @@ Currently only runs on Windows as some Win32Api is used.
 
 Major TODO
 ============== 
-  * Various UI tweeks and UI feedback mechanisms need adding (Some have been implemented).
-  * More keyboard shortcuts.
-  * Popup node explorer via space bar with context sensitivity & searching.
-  * FxMap style nodes & graph.
+  * Various UI feedback mechanisms
   * Various shape nodes.
-  * Function graph export & import for sharing.
+  * Keyboard Shortcuts
   * Re-creation of various substance graph instances.
-  * Need to add gradient graphs
-  * New Graph Dialog for setting some initial settings of the graph.
-  * Splash screen - because why not.
-  * More Undo and Redo tracking operations - currently only handles undo and redo of creating and deleting nodes.
+  * Need to add gradient graphs.
+  * More Undo and Redo tracking operations.
   * Thorough testing of function graphs for both CPU and GPU.
-    * Sampler nodes will only work in Pixel Processor Function Graph
-  * Icons for function / math nodes.
-  * Allow custom icons for shelf display of nodes
-  * Importing custom geometry for 3D preview
-  * SSS PBR Shader
-  * Option to modify various material settings: height scale, refractive index, etc.
-  * Multi node texture resize capability
-  * Add a real log file logger
-  * Add a log window, allow log window verbosity to be modified
-  * Keep track of most recently opened / used graphs properly
+  * Icons for math nodes.
+  * Allow custom icons for shelf display
+  * Keep track of most recently opened
 
 Known Bugs
 ====================
  * Color selector magnifier window fails to update on multiple displays when they are different scaling and resolution on Windows 10. This is an internal bug of the .Net framework. Already reported to the .Net developer forum. However, the actual color being selected is the correct color, even if the magnifier window fails to update.
 
- * Work around for now is to set scaling for all displays to 100% in Windows 10.
+  * Work around for now is to set scaling for all displays to 100% in Windows 10.
 
- * Undo and redo do not work in function graphs currently
+ * Hue, Saturation, Luminosity, and Color Blend modes are not working as expected.
+ * The gradient editor positions are very finicky when trying to move them.
+  * The gradient editor positions do not update their color icon in real time properly.
+ * Various other finicky movements related to some other UI areas.
 
 How-To and Various Info
 ========================
@@ -77,13 +72,14 @@ Build Dependencies
  * OpenTK.GLControl via Nuget
  * Assimp via Nuget
  * Newtonsoft JSON via Nuget
+ * NLog via Nuget
  * All other dependencies are in this repository
  * Uses a custom build of the free ExtendedWpfToolkit that fixes some bugs in AvalonDock, uses proper WPF GridSplitter controls in AvalonDock and customizes AvalonDock Metro Theme.
 
 Build Instructions
 =====================
  * Load up the main solution
- * Make sure OpenTK, OpenTK control, and Newtonsoft JSON is referenced properly in Materia project
+ * Make sure OpenTK, OpenTK control, Newtonsoft JSON, and NLog is referenced properly in Materia project
  * Make sure OpenTK and Assimp is referenced properly in RSMI (Really Simple Mesh Importer) project
  * Build
  * Copy items from AddToOutputDir to where the final built .exe is located

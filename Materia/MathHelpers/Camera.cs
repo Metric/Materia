@@ -10,8 +10,8 @@ namespace Materia.MathHelpers
 {
     public class Camera : Transform
     {
-        public delegate void CameraChange();
-        public static event CameraChange OnCameraChanged;
+        public delegate void CameraChange(Camera sender);
+        public event CameraChange OnCameraChanged;
 
         [HideProperty]
         public float Aspect { get; set; }
@@ -29,7 +29,7 @@ namespace Materia.MathHelpers
                 if (fov < 1) fov = 1;
                 if (OnCameraChanged != null)
                 {
-                    OnCameraChanged.Invoke();
+                    OnCameraChanged.Invoke(this);
                 }
             }
         }
@@ -47,7 +47,7 @@ namespace Materia.MathHelpers
                 if (near == 0) near = 0.0001f;
                 if (OnCameraChanged != null)
                 {
-                    OnCameraChanged.Invoke();
+                    OnCameraChanged.Invoke(this);
                 }
             }
         }
@@ -65,7 +65,7 @@ namespace Materia.MathHelpers
                 if (far == 0) far = 0.0001f;
                 if(OnCameraChanged != null)
                 {
-                    OnCameraChanged.Invoke();
+                    OnCameraChanged.Invoke(this);
                 }
             }
         }
@@ -98,7 +98,7 @@ namespace Materia.MathHelpers
         }
 
         [HideProperty]
-        public Vector3 EyePosition
+        public virtual Vector3 EyePosition
         {
             get
             {

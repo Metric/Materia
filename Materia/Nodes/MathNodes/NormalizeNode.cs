@@ -105,20 +105,10 @@ namespace Materia.Nodes.MathNodes
                 MVector d = v.Normalized;
 
                 output.Data = d;
-
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
             else
             {
                 output.Data = 0;
-
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
 
             if (ParentGraph != null)

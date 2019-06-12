@@ -145,7 +145,7 @@ namespace Materia.Nodes.MathNodes
 
                         if (o is bool)
                         {
-                            bool f = (bool)o;
+                            bool f = Convert.ToBoolean(o);
                             if (f)
                             {
                                 v = true;
@@ -157,10 +157,6 @@ namespace Materia.Nodes.MathNodes
             }
 
             output.Data = v;
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
 
             if (ParentGraph != null)
             {

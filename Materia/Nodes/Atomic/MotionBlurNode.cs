@@ -114,17 +114,17 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            int pintensity = magnitude;
-            int pdirection = direction;
+            float pintensity = magnitude;
+            float pdirection = direction;
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
             {
-                pintensity = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Intensity"));
+                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
             }
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Direction"))
             {
-                pdirection = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Direction"));
+                pdirection = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Direction"));
             }
 
             processor.TileX = 1;

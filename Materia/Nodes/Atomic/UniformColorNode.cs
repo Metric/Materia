@@ -82,6 +82,9 @@ namespace Materia.Nodes.Atomic
             Outputs = new List<NodeOutput>();
             Outputs.Add(output);
 
+            //this is a special case for uniform color node
+            //so it will render the node preview on drag drop
+            TryAndProcess();
         }
 
         public override void TryAndProcess()

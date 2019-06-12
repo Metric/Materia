@@ -99,7 +99,6 @@ namespace Materia.Nodes.MathNodes
             }
 
             output.Data = v;
-            output.Changed();
 
             if (ParentGraph != null)
             {

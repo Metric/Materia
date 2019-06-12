@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using Materia.Nodes;
 using System.Reflection;
 using Materia.Nodes.Attributes;
+using Materia.Nodes.Atomic;
 
 namespace Materia.UI.Components
 {
@@ -58,25 +59,16 @@ namespace Materia.UI.Components
 
                 var p = Node.ParentGraph;
 
-                while(p != null && p is FunctionGraph)
+                if(p is FunctionGraph)
                 {
-                    var np = (p as FunctionGraph).ParentNode;
-
-                    if(np != null)
-                    {
-                        p = np.ParentGraph;
-                    }
-                    else
-                    {
-                        p = null;
-                    }
+                    p = (p as FunctionGraph).TopGraph();
                 }
 
                 if(p != null)
                 {
                     var g = p;
 
-                    if(g.HasParameterValue(Node.Id, Parameter))
+                    if(g.HasParameterValue(Node.Id, Parameter.Replace("$Custom.", "")))
                     {
                         ConstantVar.IsEnabled = false;
                         FunctionVar.IsEnabled = false;
@@ -102,39 +94,57 @@ namespace Materia.UI.Components
 
             try
             {
-                PropertyInfo info = Node.GetType().GetProperty(Parameter);
+                PropertyInfo info = null;
 
-                if(info != null)
+                if (Parameter.StartsWith("$Custom."))
                 {
-                    var v = info.GetValue(Node);
-
-                    var p = Node.ParentGraph;
-
-                    while (p != null && p is FunctionGraph)
+                    if (Node is GraphInstanceNode)
                     {
-                        var np = (p as FunctionGraph).ParentNode;
+                        GraphInstanceNode gn = Node as GraphInstanceNode;
 
-                        if (np != null)
+                        string cparam = Parameter.Replace("$Custom.", "");
+
+                        var param = gn.CustomParameters.Find(m => m.Name.Equals(cparam));
+
+                        var cparent = Node.ParentGraph;
+
+                        if(cparent != null)
                         {
-                            p = np.ParentGraph;
+                            cparent.SetParameterValue(Node.Id, cparam, param.Value);
+
+                            DefaultVar.IsEnabled = true;
+                            ConstantVar.IsEnabled = false;
+                            FunctionVar.IsEnabled = false;
                         }
-                        else
-                        {
-                            p = null;
-                        }
-                    }
-
-                    if (p != null)
-                    {
-                        var pg = p;
-
-                        pg.SetParameterValue(Node.Id, Parameter, v);
-
-                        DefaultVar.IsEnabled = true;
-                        ConstantVar.IsEnabled = false;
-                        FunctionVar.IsEnabled = false;
                     }
                 }
+                else {
+                    info = Node.GetType().GetProperty(Parameter);
+
+                    if (info != null)
+                    {
+                        var v = info.GetValue(Node);
+
+                        var p = Node.ParentGraph;
+
+                        if (p is FunctionGraph)
+                        {
+                            p = (p as FunctionGraph).TopGraph();
+                        }
+
+                        if (p != null)
+                        {
+                            var pg = p;
+
+                            pg.SetParameterValue(Node.Id, Parameter, v);
+
+                            DefaultVar.IsEnabled = true;
+                            ConstantVar.IsEnabled = false;
+                            FunctionVar.IsEnabled = false;
+                        }
+                    }
+                }
+
             }
             catch { }
         }
@@ -143,43 +153,63 @@ namespace Materia.UI.Components
         {
             if (Node == null || string.IsNullOrEmpty(Parameter)) return;
 
-            FunctionGraph g = new FunctionGraph(Node.Name + " - " + Parameter + " Function");
+            FunctionGraph g = new FunctionGraph(Node.Name + " - " + Parameter.Replace("$Custom.", "") + " Function");
             g.ParentNode = Node;
 
             try
             {
-                PropertyInfo info = Node.GetType().GetProperty(Parameter);
-                if (info == null) return;
-
-                var pro = info.GetCustomAttribute<PromoteAttribute>();
-
-                g.ExpectedOutput = pro.ExpectedType;
-
-                var p = Node.ParentGraph;
-
-                while (p != null && p is FunctionGraph)
+                PropertyInfo info = null;
+                if (Parameter.StartsWith("$Custom."))
                 {
-                    var np = (p as FunctionGraph).ParentNode;
+                    if (Node is GraphInstanceNode)
+                    {
+                        GraphInstanceNode gn = Node as GraphInstanceNode;
 
-                    if (np != null)
-                    {
-                        p = np.ParentGraph;
-                    }
-                    else
-                    {
-                        p = null;
+                        string cparam = Parameter.Replace("$Custom.", "");
+
+                        var param = gn.CustomParameters.Find(m => m.Name.Equals(cparam));
+
+                        var cparent = Node.ParentGraph;
+
+                        g.ExpectedOutput = param.Type;
+
+                        if (cparent != null)
+                        {
+                            cparent.SetParameterValue(Node.Id, cparam, g);
+
+                            DefaultVar.IsEnabled = true;
+                            ConstantVar.IsEnabled = false;
+                            FunctionVar.IsEnabled = false;
+                        }
                     }
                 }
-
-                if (p != null)
+                else
                 {
-                    var pg = p;
 
-                    pg.SetParameterValue(Node.Id, Parameter, g);
+                    info = Node.GetType().GetProperty(Parameter);
+                    if (info == null) return;
 
-                    DefaultVar.IsEnabled = true;
-                    ConstantVar.IsEnabled = false;
-                    FunctionVar.IsEnabled = false;
+                    var pro = info.GetCustomAttribute<PromoteAttribute>();
+
+                    g.ExpectedOutput = pro.ExpectedType;
+
+                    var p = Node.ParentGraph;
+
+                    if (p is FunctionGraph)
+                    {
+                        p = (p as FunctionGraph).TopGraph();
+                    }
+
+                    if (p != null)
+                    {
+                        var pg = p;
+
+                        pg.SetParameterValue(Node.Id, Parameter, g);
+
+                        DefaultVar.IsEnabled = true;
+                        ConstantVar.IsEnabled = false;
+                        FunctionVar.IsEnabled = false;
+                    }
                 }
             }
             catch { }
@@ -191,25 +221,16 @@ namespace Materia.UI.Components
 
             var p = Node.ParentGraph;
 
-            while (p != null && p is FunctionGraph)
+            if(p != null && p is FunctionGraph)
             {
-                var np = (p as FunctionGraph).ParentNode;
-
-                if (np != null)
-                {
-                    p = np.ParentGraph;
-                }
-                else
-                {
-                    p = null;
-                }
+                p = (p as FunctionGraph).TopGraph();
             }
 
             if (p != null)
             {
                 var g = p;
 
-                g.RemoveParameterValue(Node.Id, Parameter);
+                g.RemoveParameterValue(Node.Id, Parameter.Replace("$Custom.", ""));
 
                 ConstantVar.IsEnabled = true;
                 FunctionVar.IsEnabled = true;
@@ -223,28 +244,20 @@ namespace Materia.UI.Components
 
             var p = Node.ParentGraph;
 
-            while (p != null && p is FunctionGraph)
+            if(p != null && p is FunctionGraph)
             {
-                var np = (p as FunctionGraph).ParentNode;
-
-                if (np != null)
-                {
-                    p = np.ParentGraph;
-                }
-                else
-                {
-                    p = null;
-                }
+                p = (p as FunctionGraph).TopGraph();
             }
 
             if (p != null)
             {
                 var g = p;
-                if(g.HasParameterValue(Node.Id, Parameter))
+                var realParam = Parameter.Replace("$Custom.", "");
+                if (g.HasParameterValue(Node.Id, realParam))
                 {
-                    if(g.IsParameterValueFunction(Node.Id, Parameter))
+                    if(g.IsParameterValueFunction(Node.Id, realParam))
                     {
-                        var v = g.GetParameterRaw(Node.Id, Parameter);
+                        var v = g.GetParameterRaw(Node.Id, realParam);
 
                         if(MainWindow.Instance != null)
                         {

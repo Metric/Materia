@@ -18,7 +18,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Normalize";
+            Name = "Length";
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
@@ -75,20 +75,10 @@ namespace Materia.Nodes.MathNodes
                 float len = v.Length;
 
                 output.Data = len;
-
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
             else
             {
                 output.Data = 0;
-
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
 
             if (ParentGraph != null)

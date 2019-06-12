@@ -26,6 +26,7 @@ using Xceed.Wpf.AvalonDock.Layout.Serialization;
 using Materia.Undo;
 using Materia.Nodes;
 using Materia.UI;
+using NLog;
 
 namespace Materia
 {
@@ -35,6 +36,8 @@ namespace Materia
     ///
     public partial class MainWindow : Window
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         public static MainWindow Instance { get; protected set; }
 
         protected List<UIGraph> graphs;
@@ -42,6 +45,8 @@ namespace Materia
         protected List<LayoutDocument> documents;
 
         protected Dictionary<UIGraph, string> paths;
+
+        protected UIPopupShelf popupShelf;
 
         public MainWindow()
         {
@@ -60,32 +65,6 @@ namespace Materia
 
             mnuRedo.IsEnabled = false;
             mnuUndo.IsEnabled = false;
-
-            KeyDown += MainWindow_KeyDown;
-        }
-
-        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (graphs.Count > 0)
-            {
-                var g = graphs[GraphDocuments.SelectedContentIndex];
-                if (e.Key == Key.Delete)
-                {
-                    g.TryAndDelete();
-                }
-                else if (e.Key == Key.C && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
-                {
-                    g.TryAndCopy();
-                }
-                else if (e.Key == Key.V && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
-                {
-                    g.TryAndPaste();
-                }
-                else if(e.Key == Key.Escape)
-                {
-                    UINodePoint.SelectOrigin = null;
-                }
-            }
         }
 
         private void UndoRedoManager_OnUndoAdded(string id, int count)
@@ -158,6 +137,10 @@ namespace Materia
         {
             if(e.PropertyName.Equals("SelectedContentIndex"))
             {
+                //clear this if we are changing tabs
+                //but still have a node selected
+                UINodePoint.SelectOrigin = null;
+
                 if(graphs.Count > 0 && GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
                     var g = graphs[GraphDocuments.SelectedContentIndex];
@@ -224,6 +207,22 @@ namespace Materia
                     }
                 }
             }
+            else if(item.Header.ToString().ToLower().Contains("redo"))
+            {
+                if (GraphDocuments.SelectedContentIndex > -1)
+                {
+                    var graph = graphs[GraphDocuments.SelectedContentIndex];
+                    graph.TryAndRedo();
+                }
+            }
+            else if(item.Header.ToString().ToLower().Contains("undo"))
+            {
+                if (GraphDocuments.SelectedContentIndex > -1)
+                {
+                    var graph = graphs[GraphDocuments.SelectedContentIndex];
+                    graph.TryAndUndo();
+                }
+            }
             ///windows
             else if(item.Header.ToString().ToLower().Contains("3d"))
             {
@@ -267,6 +266,25 @@ namespace Materia
                 else
                 {
                     ShelfPane.Show();
+                }
+            }
+            else if(item.Header.ToString().ToLower().Contains("log"))
+            {
+                if(LogPane.IsVisible)
+                {
+                    LogPane.Hide();
+                }
+                else
+                {
+                    LogPane.Show();
+                }
+            }
+            else if (item.Header.ToString().ToLower().Contains("close all graph"))
+            {
+                for (int i = 0; i < documents.Count; i++)
+                {
+                    var doc = documents[i];
+                    doc.Close();
                 }
             }
             //file menu
@@ -317,7 +335,17 @@ namespace Materia
             }
             else if(item.Header.ToString().ToLower().Contains("new"))
             {
-                NewGraph();
+                UINewGraph ngraphDialog = new UINewGraph();
+
+                ngraphDialog.Owner = this;
+
+                if(ngraphDialog.ShowDialog() == false)
+                {
+                    return;
+                }
+
+                NewGraph(ngraphDialog.Result);
+                Log.Info("New Graph Created");
             }
             else if(item.Header.ToString().ToLower().Contains("export output"))
             {
@@ -342,6 +370,8 @@ namespace Materia
 
                     var doc = documents[GraphDocuments.SelectedContentIndex];
                     doc.Title = g.GraphName;
+
+                    Log.Info("Opened Graph {0}", g.GraphName);
                 }
             }
         }
@@ -370,11 +400,13 @@ namespace Materia
                     g.Save();
                 }
             }
+
+            Log.Info("Saved Graph {0}", g.GraphName);
         }
 
-        UIGraph NewGraph()
+        UIGraph NewGraph(Graph template = null)
         {
-            UIGraph g = new UIGraph();
+            UIGraph g = new UIGraph(template);
             LayoutDocument doc = new LayoutDocument();
             doc.Content = g;
             doc.Title = g.GraphName;
@@ -478,6 +510,9 @@ namespace Materia
 
             //save layout
             SaveLayout();
+
+            popupShelf.Close();
+            popupShelf = null;
         }
 
         private void SaveLayout()
@@ -507,11 +542,37 @@ namespace Materia
                 Preview2DPane = anchorables.FirstOrDefault(m => m.ContentId.Equals("2dpreview"));
                 ShelfPane = anchorables.FirstOrDefault(m => m.ContentId.Equals("shelf"));
                 ParametersPane = anchorables.FirstOrDefault(m => m.ContentId.Equals("parameters"));
+
+                //have to do this for saved layouts in case the layout does not have the original
+                var tmpLog = anchorables.FirstOrDefault(m => m.ContentId.Equals("log"));
+
+                if(tmpLog == null)
+                {
+                    var firstLayout = Docker.Layout.Descendents().OfType<LayoutPanel>().FirstOrDefault();
+                    
+                    if(firstLayout != null)
+                    {
+                        firstLayout.Children.Add(LogAnchor);
+                    }
+                }
+                else
+                {
+                    LogPane = tmpLog;
+                }
+
+                Log.Info("Previouse Layout Loaded");
             }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            MateriaInputManager.Init();
+            RegisterInputActions();
+
+            popupShelf = new UIPopupShelf();
+            popupShelf.Owner = this;
+            popupShelf.Hide();
+
             if (App.Current.Properties.Contains("OpenFile"))
             {
                 try
@@ -525,6 +586,164 @@ namespace Materia
 
                 }
             }
+
+            Log.Info("Main Window Loaded");
+        }
+
+        private void RegisterInputActions()
+        {
+            MateriaInputManager.Add(InputManagerCommand.Clear, (e) =>
+            {
+                UINodePoint.SelectOrigin = null;
+                if(popupShelf != null)
+                {
+                    popupShelf.Hide();
+                }
+            });
+            MateriaInputManager.Add(InputManagerCommand.Copy, (e) =>
+            {
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+                    g.TryAndCopy();
+                }
+            });
+            MateriaInputManager.Add(InputManagerCommand.Paste, (e) =>
+            {
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+                    g.TryAndPaste();
+                }
+            });
+            MateriaInputManager.Add(InputManagerCommand.Save, (e) =>
+            {
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+                    HandleSave(g);
+                }
+            });
+            MateriaInputManager.Add(InputManagerCommand.Delete, (e) =>
+            {
+                if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
+                   && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                {
+                    return;
+                }
+
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+                    g.TryAndDelete();
+                }
+            });
+            MateriaInputManager.Add(InputManagerCommand.Undo, (e) =>
+            {
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+                    g.TryAndUndo();
+                }
+            });
+            MateriaInputManager.Add(InputManagerCommand.Redo, (e) =>
+            {
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+                    g.TryAndRedo();
+                }
+            });
+            MateriaInputManager.Add(InputManagerCommand.PopupShelf, (e) =>
+            {
+                if (popupShelf == null || popupShelf.Visibility == Visibility.Visible) return;
+
+                if(!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph) 
+                    && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                {
+                    return;
+                }
+
+                if(GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+                    g.PrepareInsert();
+                    var pop = popupShelf;
+                    pop.Graph = g;
+                    Point m = Mouse.GetPosition(this);
+                    Point m2 = Mouse.GetPosition(g.ViewPort);
+
+                    if(m2.X < 0 || m2.Y < 0 || m2.X > g.ViewPort.ActualWidth || m2.Y > g.ViewPort.ActualHeight)
+                    {
+                        return;
+                    }
+
+                    pop.Left = m.X;
+                    pop.Top = m.Y;
+                    pop.Show();
+                    pop.Focus();
+                }
+            });
+            MateriaInputManager.Add(InputManagerCommand.Comment, (e) =>
+            {
+
+                if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
+                    && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                {
+                    return;
+                }
+
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+
+                    Point m2 = Mouse.GetPosition(g.ViewPort);
+
+                    if (m2.X < 0 || m2.Y < 0 || m2.X > g.ViewPort.ActualWidth || m2.Y > g.ViewPort.ActualHeight)
+                    {
+                        return;
+                    }
+
+                    g.TryAndComment();
+                }
+            });
+            MateriaInputManager.Add(InputManagerCommand.Pin, (e) =>
+            {
+                if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
+                   && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                {
+                    return;
+                }
+
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+
+                    Point m2 = Mouse.GetPosition(g.ViewPort);
+
+                    if (m2.X < 0 || m2.Y < 0 || m2.X > g.ViewPort.ActualWidth || m2.Y > g.ViewPort.ActualHeight)
+                    {
+                        return;
+                    }
+
+                    g.TryAndPin();
+                }
+            });
+            MateriaInputManager.Add(InputManagerCommand.NextPin, (e) =>
+            {
+                if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
+                   && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                {
+                    return;
+                }
+
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+                    e.Handled = true;
+                    g.NextPin();
+                }
+            });
         }
     }
 }

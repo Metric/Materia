@@ -23,11 +23,21 @@ namespace Materia.Geometry
         public Vector3 CameraPosition { get; set; }
         public Vector3 LightPosition { get; set; }
         public Vector3 LightColor { get; set; }
+        public float LightPower { get; set; }
 
         public Matrix4 Projection { get; set; }
         public Matrix4 View { get; set; }
         public Matrix4 Model { get; set; }
         public Vector2 Tiling { get; set; }
+
+        public float IOR { get; set; }
+        public float HeightScale { get; set; }
+
+        public float Near { get; set; }
+        public float Far { get; set; }
+
+        public bool ClipHeight { get; set; }
+        public float ClipHeightBias { get; set; }
 
         protected GLArrayBuffer vbo;
         protected GLVertexArray vao;
@@ -114,6 +124,40 @@ namespace Materia.Geometry
             }
         }
 
+        public virtual void DrawAsLight()
+        {
+            if(Mat != null && Mat.Shader != null)
+            {
+                GLShaderProgram shader = Mat.Shader;
+
+                shader.Use();
+
+                Matrix4 proj = Projection;
+                Matrix4 view = View;
+                Matrix4 m = Model;
+                Matrix4 norm = Matrix4.Invert(m);
+                norm.Transpose();
+
+                shader.SetUniformMatrix4("projectionMatrix", ref proj);
+                shader.SetUniformMatrix4("viewMatrix", ref view);
+                shader.SetUniformMatrix4("modelMatrix", ref m);
+                shader.SetUniformMatrix4("normalMatrix", ref norm);
+
+                Vector2 tiling = Tiling;
+
+                Vector4 lightColor = new Vector4(LightColor, 1);
+
+                shader.SetUniform2("tiling", ref tiling);
+
+                shader.SetUniform4F("color", ref lightColor);
+
+                ///draw
+                vao.Bind();
+                GL.DrawElements(BeginMode.Triangles, indicesCount, DrawElementsType.UnsignedInt, 0);
+                GLVertexArray.Unbind();
+            }
+        }
+
         public override void Draw()
         {
             if(Mat != null && Mat.Shader != null)
@@ -171,6 +215,12 @@ namespace Materia.Geometry
                     PrefilterMap.Bind();
                 }
 
+                GL.ActiveTexture(TextureUnit.Texture9);
+                if(Mat.Thickness != null)
+                {
+                    Mat.Thickness.Bind();
+                }
+
                 //use shader
                 shader.Use();
 
@@ -184,6 +234,7 @@ namespace Materia.Geometry
                 shader.SetUniform("brdfLUT", 6);
                 shader.SetUniform("irradianceMap", 7);
                 shader.SetUniform("prefilterMap", 8);
+                shader.SetUniform("thicknessMap", 9);
 
                 Vector3 lpos = LightPosition;
                 Vector3 lc = LightColor;
@@ -194,6 +245,7 @@ namespace Materia.Geometry
                 shader.SetUniform3("cameraPosition", ref cam);
                 shader.SetUniform3("lightPosition", ref lpos);
                 shader.SetUniform3("lightColor", ref lc);
+                shader.SetUniform("lightPower", LightPower);
 
                 //setup MVP and N matrices
                 Matrix4 proj = Projection;
@@ -206,6 +258,28 @@ namespace Materia.Geometry
                 shader.SetUniformMatrix4("viewMatrix", ref view);
                 shader.SetUniformMatrix4("modelMatrix", ref m);
                 shader.SetUniformMatrix4("normalMatrix", ref norm);
+
+                shader.SetUniform("far", Far);
+                shader.SetUniform("near", Near);
+
+                shader.SetUniform("heightScale", HeightScale);
+                shader.SetUniform("refraction", IOR);
+
+                ///SSS Related
+                shader.SetUniform("SSS_Distortion", Mat.SSSDistortion);
+                shader.SetUniform("SSS_Ambient", Mat.SSSAmbient);
+                shader.SetUniform("SSS_Power", Mat.SSSPower);
+
+
+
+                if(ClipHeight)
+                {
+                    shader.SetUniform("occlusionClipBias", ClipHeightBias);
+                }
+                else
+                {
+                    shader.SetUniform("occlusionClipBias", -1.0f);
+                }
 
                 Vector2 tiling = Tiling;
 

@@ -168,38 +168,38 @@ namespace Materia.Nodes.Atomic
             processor.TileX = tileX;
             processor.TileY = TileY;
 
-            int predChannel = redChannel;
-            int pgreenChannel = greenChannel;
-            int pblueChannel = blueChannel;
-            int palphaChannel = alphaChannel;
+            float predChannel = redChannel;
+            float pgreenChannel = greenChannel;
+            float pblueChannel = blueChannel;
+            float palphaChannel = alphaChannel;
 
             if(ParentGraph != null)
             {
                 if(ParentGraph.HasParameterValue(Id, "RedChannel"))
                 {
-                    predChannel = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "RedChannel"));
+                    predChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "RedChannel"));
                 }
 
                 if(ParentGraph.HasParameterValue(Id, "GreenChannel"))
                 {
-                    pgreenChannel = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "GreenChannel"));
+                    pgreenChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "GreenChannel"));
                 }
 
                 if(ParentGraph.HasParameterValue(Id, "BlueChannel"))
                 {
-                    pblueChannel = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "BlueChannel"));
+                    pblueChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "BlueChannel"));
                 }
 
                 if(ParentGraph.HasParameterValue(Id, "AlphaChannel"))
                 {
-                    palphaChannel = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "AlphaChannel"));
+                    palphaChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "AlphaChannel"));
                 }
             }
 
-            processor.RedChannel = predChannel;
-            processor.GreenChannel = pgreenChannel;
-            processor.BlueChannel = pblueChannel;
-            processor.AlphaChannel = palphaChannel;
+            processor.RedChannel = (int)predChannel;
+            processor.GreenChannel = (int)pgreenChannel;
+            processor.BlueChannel = (int)pblueChannel;
+            processor.AlphaChannel = (int)palphaChannel;
             processor.Process(width, height, i1, i2, buffer);
             processor.Complete();
 

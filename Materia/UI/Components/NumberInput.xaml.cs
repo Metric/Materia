@@ -56,6 +56,15 @@ namespace Materia
             Input.Text = p.GetValue(owner).ToString();
         }
 
+        public void Set(NumberInputType t, object owner, PropertyInfo p)
+        {
+            initing = true;
+            NumberType = t;
+            property = p;
+            propertyOwner = owner;
+            Input.Text = p.GetValue(owner).ToString();
+        }
+
         private void Input_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             switch(NumberType)
@@ -127,9 +136,13 @@ namespace Materia
 
         private void Input_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.Key == Key.Enter)
+            if(e.Key == Key.Enter || e.Key == Key.Escape)
             {
-                Keyboard.ClearFocus();
+                if (MainWindow.Instance != null)
+                {
+                    Keyboard.ClearFocus();
+                    Keyboard.Focus(MainWindow.Instance);
+                }
             }
         }
     }

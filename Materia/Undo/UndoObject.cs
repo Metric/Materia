@@ -7,131 +7,70 @@ using System.Windows;
 
 namespace Materia.Undo
 {
-    public abstract class RedoObject
-    {
-        public string StackId { get; set; }
-        public abstract UndoObject Redo();
-    }
-
     public abstract class UndoObject
     {
         public string StackId { get; set; }
-        public abstract RedoObject Undo();
+        public abstract UndoObject Undo();
     }
 
-    public class RedoDeleteNode : RedoObject
-    {
-        public string id;
-        public UIGraph graph;
-
-        public RedoDeleteNode(string stackId, string i, UIGraph g)
-        {
-            id = i;
-            graph = g;
-            StackId = stackId;
-        }
-
-        public override UndoObject Redo()
-        {
-            if(graph != null)
-            {
-                Tuple<string, Point, List<Tuple<string, List<Nodes.NodeOutputConnection>>>> result = graph.RemoveNode(id);
-
-                if(result != null)
-                {
-                    return new UndoDeleteNode(StackId, result.Item1, result.Item2, result.Item3, graph);
-                }
-            }
-
-            return null;
-        }
-    }
-
-    public class RedoCreateNode : RedoObject
+    public class DeleteNode : UndoObject
     {
         public string json;
         public Point point;
         public List<Tuple<string, List<Nodes.NodeOutputConnection>>> parents;
         public UIGraph graph;
 
-        public RedoCreateNode(string stackId, string js, Point p, List<Tuple<string, List<Nodes.NodeOutputConnection>>> pars, UIGraph g)
+        protected string[] stack;
+
+        public DeleteNode(string stackId, string js, Point p, List<Tuple<string, List<Nodes.NodeOutputConnection>>> pars, UIGraph g, string[] gstack = null)
         {
             json = js;
             graph = g;
             point = p;
             parents = pars;
             StackId = stackId;
-        }
 
-        public override UndoObject Redo()
-        {
-            if (graph != null && !string.IsNullOrEmpty(json))
+            if (gstack == null)
             {
-                UINode n = graph.AddNodeFromJson(json, point);
-
-                if (n != null)
-                {
-                    foreach (var p in parents)
-                    {
-                        var id = p.Item1;
-                        var cons = p.Item2;
-
-                        UINode unode = graph.GetNode(id);
-
-                        if (unode != null)
-                        {
-                            unode.Node.SetConnection(graph.Graph.NodeLookup, cons, n.Id);
-                            unode.LoadConnection(n.Id);
-                        }
-                    }
-
-                    return new UndoCreateNode(StackId, n.Id, graph);
-                }
+                stack = graph.GetGraphStack();
             }
-
-            return null;
-        }
-    }
-
-    public class UndoDeleteNode : UndoObject
-    {
-        public string json;
-        public Point point;
-        public List<Tuple<string, List<Nodes.NodeOutputConnection>>> parents;
-        public UIGraph graph;
-
-        public UndoDeleteNode(string stackId, string js, Point p, List<Tuple<string, List<Nodes.NodeOutputConnection>>> pars, UIGraph g)
-        {
-            json = js;
-            graph = g;
-            point = p;
-            parents = pars;
-            StackId = stackId;
+            else
+            {
+                stack = gstack;
+            }
         }
 
-        public override RedoObject Undo()
+        public override UndoObject Undo()
         {
             if(graph != null && !string.IsNullOrEmpty(json))
             {
-                UINode n = graph.AddNodeFromJson(json, point);
+                graph.TryAndLoadGraphStack(stack);
 
-                if(n != null)
+                UI.IUIGraphNode n = graph.AddNodeFromJson(json, point);
+
+                if(n != null && parents.Count > 0)
                 {
-                    foreach (var p in parents)
+                    Task.Delay(250).ContinueWith(t =>
                     {
-                        var id = p.Item1;
-                        var cons = p.Item2;
-
-                        UINode unode = graph.GetNode(id);
-
-                        if(unode != null)
+                        App.Current.Dispatcher.Invoke(() =>
                         {
-                            unode.Node.SetConnection(graph.Graph.NodeLookup, cons, n.Id);
-                            unode.LoadConnection(n.Id);
-                        }
-                    }
+                            foreach (var p in parents)
+                            {
+                                var id = p.Item1;
+                                var cons = p.Item2;
 
-                    return new RedoDeleteNode(StackId, n.Id, graph);
+                                UI.IUIGraphNode unode = graph.GetNode(id);
+
+                                if (unode != null)
+                                {
+                                    unode.Node.SetConnection(graph.Graph.NodeLookup, cons, n.Id);
+                                    unode.LoadConnection(n.Id);
+                                }
+                            }
+                        });
+                    });
+
+                    return new CreateNode(StackId, n.Id, graph, stack);
                 }
             }
 
@@ -139,27 +78,38 @@ namespace Materia.Undo
         }
     }
 
-    public class UndoCreateNode : UndoObject
+    public class CreateNode : UndoObject
     {
         public string id;
         public UIGraph graph;
+        protected string[] stack;
 
-        public UndoCreateNode(string stackId, string i, UIGraph g)
+        public CreateNode(string stackId, string i, UIGraph g, string[] gstack = null)
         {
             id = i;
             graph = g;
             StackId = stackId;
+            if (gstack == null)
+            {
+                stack = graph.GetGraphStack();
+            }
+            else
+            {
+                stack = gstack;
+            }
         }
 
-        public override RedoObject Undo()
+        public override UndoObject Undo()
         {
             if (graph != null)
             {
+                graph.TryAndLoadGraphStack(stack);
+
                 Tuple<string, Point, List<Tuple<string, List<Nodes.NodeOutputConnection>>>> result = graph.RemoveNode(id);
 
                 if (result != null)
                 {
-                    return new RedoCreateNode(StackId, result.Item1, result.Item2, result.Item3, graph);
+                    return new DeleteNode(StackId, result.Item1, result.Item2, result.Item3, graph, stack);
                 }
             }
 

@@ -1,0 +1,16 @@
+﻿<UserControl x:Class="Materia.UI.Components.VectorInput"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Materia.UI.Components"
+             xmlns:ui="clr-namespace:Materia"
+             mc:Ignorable="d" 
+             d:DesignHeight="32" d:DesignWidth="800">
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+        <ui:NumberInput x:Name="XPos" Height="32" />
+        <ui:NumberInput x:Name="YPos" Height="32" />
+        <ui:NumberInput x:Name="ZPos" Height="32" />
+        <ui:NumberInput x:Name="WPos" Height="32" />
+    </StackPanel>
+</UserControl>

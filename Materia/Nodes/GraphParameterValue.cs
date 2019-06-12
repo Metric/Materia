@@ -9,6 +9,12 @@ using Newtonsoft.Json;
 
 namespace Materia.Nodes
 {
+    public enum ParameterInputType
+    {
+        Slider,
+        Input
+    }
+
     public class GraphParameterValue
     {
         public delegate void GraphParameterUpdate(GraphParameterValue param);
@@ -18,8 +24,10 @@ namespace Materia.Nodes
         [TextInput]
         public string Name { get; set; }
 
+        public string Id { get; set; }
+
         protected NodeType type;
-        [Dropdown(null)]
+        [Dropdown(null, "Bool", "Float", "Float2", "Float3", "Float4")]
         public NodeType Type
         {
             get
@@ -41,6 +49,24 @@ namespace Materia.Nodes
                 {
                     v = new MVector();
                 }
+
+                if (OnGraphParameterTypeChanged != null)
+                {
+                    OnGraphParameterTypeChanged.Invoke(this);
+                }
+            }
+        }
+
+        protected ParameterInputType inputType;
+        public ParameterInputType InputType
+        {
+            get
+            {
+                return inputType;
+            }
+            set
+            {
+                inputType = value;
 
                 if (OnGraphParameterTypeChanged != null)
                 {
@@ -97,6 +123,9 @@ namespace Materia.Nodes
             set
             {
                 v = value;
+
+                ValidateValue();
+
                 if (OnGraphParameterUpdate != null)
                 {
                     OnGraphParameterUpdate.Invoke(this);
@@ -171,30 +200,57 @@ namespace Materia.Nodes
             public int type;
             public float min;
             public float max;
+            public int inputType;
+            public string id;
         }
 
         public GraphParameterValue(string name, object value,
-            string desc = "", NodeType type = NodeType.Float, float min = 0, float max = 1)
+            string desc = "", NodeType type = NodeType.Float, float min = 0, float max = 1, ParameterInputType itype = ParameterInputType.Input, string id = null)
         {
             Name = name;
+            inputType = itype;
             v = value;
+            Id = id;
             Description = desc;
             this.type = type;
 
-            if (!(value is float) && !(value is double) && !(value is int) && type == NodeType.Float)
+            if (string.IsNullOrEmpty(Id))
+            {
+                Id = Guid.NewGuid().ToString();
+            }
+
+            ValidateValue();
+
+            this.min = min;
+            this.max = max;
+        }
+
+        private void ValidateValue()
+        {
+            if (v is FunctionGraph)
+            {
+                type = (v as FunctionGraph).ExpectedOutput;
+                return;
+            }
+
+            if(v != null && v.GetType().IsEnum)
+            {
+                v = (float)(int)v;
+            }
+            else if (!(v is float) && !(v is double) && !(v is int) && !(v is long) && type == NodeType.Float)
             {
                 v = 0;
             }
-            else if (!(value is bool) && type == NodeType.Bool)
+            else if (!(v is bool) && type == NodeType.Bool)
             {
                 v = false;
             }
-            else if (!(value is MVector) && (type == NodeType.Float2 || type == NodeType.Float3 || type == NodeType.Float4 || type == NodeType.Gray || type == NodeType.Color))
+            else if (!(v is MVector) && (type == NodeType.Float2 || type == NodeType.Float3 || type == NodeType.Float4 || type == NodeType.Gray || type == NodeType.Color))
             {
                 //for right now the only possible JObject is a MVector
-                if (value is Newtonsoft.Json.Linq.JObject)
+                if (v is Newtonsoft.Json.Linq.JObject)
                 {
-                    Newtonsoft.Json.Linq.JObject jp = value as Newtonsoft.Json.Linq.JObject;
+                    Newtonsoft.Json.Linq.JObject jp = v as Newtonsoft.Json.Linq.JObject;
 
                     try
                     {
@@ -216,15 +272,12 @@ namespace Materia.Nodes
                     v = new MVector();
                 }
             }
-
-            this.min = min;
-            this.max = max;
         }
 
         public bool IsFunction()
         {
-            if (Value == null) return false;
-            return Value is FunctionGraph;
+            if (v == null) return false;
+            return v is FunctionGraph;
         }
 
         public string GetJson()
@@ -236,6 +289,8 @@ namespace Materia.Nodes
             d.type = (int)Type;
             d.min = Min;
             d.max = Max;
+            d.inputType = (int)inputType;
+            d.id = Id;
 
             if (d.isFunction)
             {
@@ -257,18 +312,16 @@ namespace Materia.Nodes
 
             if (d.isFunction)
             {
-                //we have a chicken and egg problem here...
-                //which comes first the node population
-                //or the parameter population?
                 FunctionGraph t = new FunctionGraph("temp");
                 t.FromJson((string)d.value);
+                t.ExpectedOutput = (NodeType)d.type;
                 t.ParentNode = n;
                 t.SetConnections();
-                return new GraphParameterValue(d.name, t, d.description, (NodeType)d.type, d.min, d.max);
+                return new GraphParameterValue(d.name, t, d.description, (NodeType)d.type, d.min, d.max, (ParameterInputType)d.inputType, d.id);
             }
 
 
-            return new GraphParameterValue(d.name, d.value, d.description, (NodeType)d.type, d.min, d.max);
+            return new GraphParameterValue(d.name, d.value, d.description, (NodeType)d.type, d.min, d.max, (ParameterInputType)d.inputType, d.id);
         }
     }
 }

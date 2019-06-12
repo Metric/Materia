@@ -9,19 +9,23 @@ using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
 using Materia.Textures;
 using System.Threading;
+using NLog;
 
 namespace Materia.Nodes.Atomic
 {
     public class GraphInstanceNode : ImageNode
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         public Graph GraphInst { get; protected set; }
 
         CancellationTokenSource ctk;
 
         protected string path;
-        protected Dictionary<string, string> jsonParameters;
-        protected List<string> jsonCustomParameters;
+        protected Dictionary<string, object> jsonParameters;
+        protected Dictionary<string, object> jsonCustomParameters;
         protected int randomSeed;
+        protected bool updatingParams;
 
         [FileSelector]
         [Section(Section = "Content")]
@@ -149,12 +153,45 @@ namespace Materia.Nodes.Atomic
 
         private void GraphParameterValue_OnGraphParameterUpdate(GraphParameterValue param)
         {
-            if(GraphInst != null)
+            if(GraphInst != null && !updatingParams)
             {
                 if(GraphInst.Parameters.Values.Contains(param) || GraphInst.CustomParameters.Contains(param))
                 {
-                    GraphInst.TryAndProcess();
+                    TryAndProcess();
                 }
+            }
+        }
+
+        public override void TryAndProcess()
+        {
+            if(GraphInst != null)
+            {
+                //handle assignment of upper parameter reassignment
+                Graph p = ParentGraph;
+                updatingParams = true;
+                if (p != null)
+                {
+                    foreach (var k in Parameters.Keys)
+                    {
+                        string[] split = k.Split('.');
+
+                        if(p.HasParameterValue(split[0], split[1]))
+                        {
+                            GraphInst.SetParameterValue(split[0], split[1], p.GetParameterValue(split[0], split[1]));
+                        }
+                    }
+
+                    foreach(var param in CustomParameters)
+                    {
+                        if(p.HasParameterValue(Id, param.Name))
+                        {
+                            param.Value = p.GetParameterValue(Id, param.Name);
+                        }
+                    }
+                }
+
+                GraphInst.TryAndProcess();
+                updatingParams = false;
             }
         }
 
@@ -184,8 +221,9 @@ namespace Materia.Nodes.Atomic
                 GraphData = File.ReadAllText(path);
 
                 GraphInst.FromJson(GraphData);
-                GraphInst.SetJsonReadyParameters(jsonParameters);
-                GraphInst.SetJsonReadyCustomParameters(jsonCustomParameters);
+                GraphInst.AssignParameters(jsonParameters);
+                GraphInst.AssignCustomParameters(jsonCustomParameters);
+     
                 GraphInst.RandomSeed = randomSeed;
 
                 //now do real initial resize
@@ -268,7 +306,7 @@ namespace Materia.Nodes.Atomic
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    Log.Error(e);
                 }
             }
 
@@ -316,8 +354,8 @@ namespace Materia.Nodes.Atomic
         public class GraphInstanceNodeData : NodeData
         {
             public List<string> inputIds;
-            public Dictionary<string, string> parameters;
-            public List<string> customParameters;
+            public Dictionary<string, object> parameters;
+            public Dictionary<string, object> customParameters;
             public int randomSeed;
             public string rawData;
             public string path;
@@ -354,8 +392,8 @@ namespace Materia.Nodes.Atomic
             {
                 GraphInst = new Graph(Name);
                 GraphInst.FromJson(GraphData);
-                GraphInst.SetJsonReadyParameters(jsonParameters);
-                GraphInst.SetJsonReadyCustomParameters(jsonCustomParameters);
+                GraphInst.AssignParameters(jsonParameters);
+                GraphInst.AssignCustomParameters(jsonCustomParameters);
                 GraphInst.RandomSeed = randomSeed;
                 GraphInst.ResizeWith(width, height);
 
@@ -369,8 +407,8 @@ namespace Materia.Nodes.Atomic
             FillBaseNodeData(d);
             d.rawData = GraphData;
             d.path = path;
-            d.parameters = GraphInst.GetJsonReadyParameters();
-            d.customParameters = GraphInst.GetJsonReadyCustomParameters();
+            d.parameters = GraphInst.GetConstantParameters();
+            d.customParameters = GraphInst.GetCustomParameters();
             d.randomSeed = RandomSeed;
 
             return JsonConvert.SerializeObject(d);

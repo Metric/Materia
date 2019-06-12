@@ -190,7 +190,6 @@ namespace Materia.Nodes.MathNodes
             vec.Z = pz;
             vec.W = pw;
             output.Data = vec;
-            output.Changed();
 
             if (ParentGraph != null)
             {

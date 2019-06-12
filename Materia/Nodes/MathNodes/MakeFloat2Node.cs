@@ -4,11 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Materia.MathHelpers;
+using NLog;
 
 namespace Materia.Nodes.MathNodes
 {
     public class MakeFloat2Node : MathNode
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         NodeInput input;
         NodeInput input2;
         NodeOutput output;
@@ -87,25 +90,21 @@ namespace Materia.Nodes.MathNodes
 
             if (!(input.Input.Data is float))
             {
-                Console.WriteLine(input.Input.Node.Name + " is a vec2 and trying to connect to a float");
+                Log.Debug(input.Input.Node.Name + " is a vec2 and trying to connect to a float");
                 return;
             }
             if(!(input2.Input.Data is float))
             {
-                Console.WriteLine(input2.Input.Node.Name + " is a vec2 and trying to connect to a float");
+                Log.Debug(input2.Input.Node.Name + " is a vec2 and trying to connect to a float");
                 return;
             }
 
-            float x = (float)input.Input.Data;
-            float y = (float)input2.Input.Data;
+            float x = Convert.ToSingle(input.Input.Data);
+            float y = Convert.ToSingle(input2.Input.Data);
 
             vec.X = x;
             vec.Y = y;
             output.Data = vec;
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
 
             if (ParentGraph != null)
             {

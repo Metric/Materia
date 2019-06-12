@@ -59,9 +59,13 @@ namespace Materia.UI.Components
 
         private void IField_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.Key == Key.Enter)
+            if(e.Key == Key.Enter || e.Key == Key.Escape)
             {
-                Keyboard.ClearFocus();
+                if(MainWindow.Instance != null)
+                {
+                    Keyboard.ClearFocus();
+                    Keyboard.Focus(MainWindow.Instance);
+                }
             }
         }
     }

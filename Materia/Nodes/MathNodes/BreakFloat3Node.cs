@@ -87,11 +87,6 @@ namespace Materia.Nodes.MathNodes
             output.Data = v.X;
             output2.Data = v.Y;
             output3.Data = v.Z;
-
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
         }
     }
 }

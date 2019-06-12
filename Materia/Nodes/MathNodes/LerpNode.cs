@@ -155,53 +155,33 @@ namespace Materia.Nodes.MathNodes
 
             object from = input.Input.Data;
             object to = input2.Input.Data;
-            float delta = (float)input3.Input.Data;
+            float delta = Convert.ToSingle(input3.Input.Data);
 
 
-            if (from is float && to is MVector)
+            if ((from is float || from is double || from is int || from is long) && to is MVector)
             {
-                MVector f = new MVector((float)from, (float)from, (float)from, (float)from);
+                MVector f = new MVector(Convert.ToSingle(from), Convert.ToSingle(from), Convert.ToSingle(from), Convert.ToSingle(from));
                 MVector r = MVector.Lerp(f, (MVector)to, delta);
                 output.Data = r;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
-            else if (from is float && to is float)
+            else if ((from is float || from is double || from is int || from is long) && (to is float || to is double || to is int || to is long))
             {
-                float r = Utils.Lerp((float)from, (float)to, delta);
+                float r = Utils.Lerp(Convert.ToSingle(from), Convert.ToSingle(to), delta);
                 output.Data = r;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
-            else if (from is MVector && to is float)
+            else if (from is MVector && (to is float || to is double || to is int || to is long))
             {
-                MVector f = new MVector((float)from, (float)from, (float)from, (float)from);
+                MVector f = new MVector(Convert.ToSingle(from), Convert.ToSingle(from), Convert.ToSingle(from), Convert.ToSingle(from));
                 MVector r = MVector.Lerp((MVector)from, f, delta);
                 output.Data = r;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
             else if(from is MVector && to is MVector)
             {
                 output.Data = MVector.Lerp((MVector)from, (MVector)to, delta);
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
             else
             {
                 output.Data = 0;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
 
             if (ParentGraph != null)

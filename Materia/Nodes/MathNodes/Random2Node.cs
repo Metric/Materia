@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Materia.MathHelpers;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -81,16 +82,6 @@ namespace Materia.Nodes.MathNodes
             return "float " + s + " = rand(vec2(rand(" + n1id + " + " + seed + ")," + n2id + ") + " + seed + ");\r\n";
         }
 
-        float fract(float f)
-        {
-            return f - (float)Math.Floor(f);
-        }
-
-        float rand(ref MVector vec2)
-        {
-            return fract((float)Math.Sin(MVector.Dot(vec2, new MVector(12.9898f, 78.233f))) * 43758.5453f);
-        }
-
         void Process()
         {
             if (input.Input.Data == null || input2.Input.Data == null) return;
@@ -105,23 +96,15 @@ namespace Materia.Nodes.MathNodes
             object o = input.Input.Data;
             object o2 = input2.Input.Data;
 
-            if (o is MVector && (o2 is float || o2 is int || o2 is double))
+            if (o is MVector && (o2 is float || o2 is int || o2 is double || o2 is long))
             {
                 MVector v = (MVector)o + seed;
-                MVector v2 = new MVector(rand(ref v), Convert.ToSingle(o2)) + seed;
-                output.Data = rand(ref v2);
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
+                MVector v2 = new MVector(Utils.Rand(ref v), Convert.ToSingle(o2)) + seed;
+                output.Data = Utils.Rand(ref v2);
             }
             else
             {
                 output.Data = 0;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
 
             if (ParentGraph != null)

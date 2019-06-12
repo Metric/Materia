@@ -1,6 +1,40 @@
 CHANGE LOG
 =============
 
+Alpha RC 0.0.2
+-----------------
+
+Fixes
+* Quite a bit of fixes in math nodes
+* Quite a few null reference exceptions taken care of
+* Quite a few fixes in other nodes
+* Fixed issue in blend glsl with alpha not working as expected and adding masking
+* Fixed depth.glsl
+* Various other fixes that I lost track of...
+
+Additions
+* SSS now available in the PBR shader via Thickness map
+* You can now see the light source and reposition it
+* You can now modify some material settings such as height, SSS, refaction index, etc.
+* You can now load custom preview models (They are not saved with the graph currently)
+* You can now export and import function graph nodes via right clicking the graph when in the function graph
+* You can now add custom variables and custom functions
+* Graph instance parameters can now be promoted as well
+* Keyboardd shortcuts added for save (ctrl-s), undo (ctrl-z), redo (ctrl-y), copy (ctrl-c), paste (ctrl-v), add comment (c key), add pin (p key), and next pin navigation (tab key)
+* Popup shelf added - can be accessed via space bar when focused in graph area
+* FXNode added, not quite as powerful as substance's, but getting there
+* New graph dialog added
+* App icon created and added
+* You can now resize multiply nodes at once via the toolbar in the graph
+* You can now add comment nodes and pin nodes. Double click a pin node to set color. Double click header of comment to set comment.
+* Added logging and a log window
+
+Changes:
+* Various UI improvements
+* Underlying code restructure for some areas
+* Graph instances now keep track of the parameter values differently (Your old .mtg file will not load the pre-existing variables of a graph instance)
+    * This was done to save file space and eliminate duplication of data
+* Other various changes here and there that I lost track of...
 
 Pre-Alpha 0.0.1
 -----------------

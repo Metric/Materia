@@ -67,13 +67,9 @@ namespace Materia.Nodes.MathNodes
         {
             if (input.Input.Data == null) return;
 
-            bool v = (bool)input.Input.Data;
+            bool v = Convert.ToBoolean(input.Input.Data);
 
             output.Data = !v;
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
 
             if (ParentGraph != null)
             {

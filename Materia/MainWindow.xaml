@@ -7,7 +7,7 @@
         xmlns:localui = "clr-namespace:Materia.UI"
         mc:Ignorable="d"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
-        Title="Materia" Height="720" Width="1280" Closing="Window_Closing" Loaded="Window_Loaded" WindowState="Maximized">
+        Title="Materia" Height="720" Width="1280" Focusable="True" Closing="Window_Closing" Loaded="Window_Loaded" WindowState="Maximized" Icon="Images/Icons/App/icon.ico">
     <Grid Background="#FF202020">
         <DockPanel Height="20" VerticalAlignment="Top" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
             <Menu Background="#FF333333" DockPanel.Dock="Top" >
@@ -33,6 +33,9 @@
                     <MenuItem Foreground="Black" Header="_3D Preview" Click="MenuItem_Click" />
                     <MenuItem Foreground="Black" Header="_Shelf" Click="MenuItem_Click"/>
                     <MenuItem Foreground="Black" Header="_Parameters" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="_Log" Click="MenuItem_Click" />
+                    <Separator />
+                    <MenuItem Foreground="Black" Header="_Close All Graphs" Click="MenuItem_Click" />
                 </MenuItem>
             </Menu>
         </DockPanel>
@@ -88,6 +91,11 @@
                                 </xcad:LayoutAnchorable>
                             </xcad:LayoutAnchorablePane>
                         </xcad:LayoutPanel>
+                        <xcad:LayoutAnchorablePane DockHeight="0.25*" DockMinHeight="128" x:Name="LogAnchor">
+                            <xcad:LayoutAnchorable ContentId="log" x:Name="LogPane" Title="Log" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                                <localui:UILog />
+                            </xcad:LayoutAnchorable>
+                        </xcad:LayoutAnchorablePane>
                     </xcad:LayoutPanel>
                 </xcad:LayoutRoot>
             </xcad:DockingManager>

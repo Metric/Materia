@@ -10,7 +10,6 @@ using Materia.Nodes.Attributes;
 using Newtonsoft.Json;
 using Materia.Textures;
 using Materia.Imaging.GLProcessing;
-using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.Atomic
 {

@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using Materia.Nodes;
 using System.Threading;
 using Materia.UI.Helpers;
+using NLog;
 
 namespace Materia
 {
@@ -23,6 +24,8 @@ namespace Materia
     /// </summary>
     public partial class UINodePoint : UserControl
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         private List<UINodePoint> to;
 
         private Dictionary<UINodePoint, Path> paths;
@@ -36,6 +39,14 @@ namespace Materia
         public static UINodePoint SelectOver
         {
             get; protected set;
+        }
+
+        public List<UINodePoint> To
+        {
+            get
+            {
+                return to;
+            }
         }
 
         public UINode Node { get; protected set; }
@@ -72,6 +83,14 @@ namespace Materia
             get
             {
                 return paths.Count;
+            }
+        }
+
+        public Brush ColorBrush
+        {
+            get
+            {
+                return node.Background;
             }
         }
 
@@ -314,7 +333,7 @@ namespace Materia
                 graph.ViewPort.Children.Add(number);
             }
 
-            path.Stroke = new SolidColorBrush(Colors.Gray);
+            path.Stroke = ColorBrush;
             path.StrokeThickness = 2;
             paths[p] = path;
             to.Add(p);
@@ -420,6 +439,8 @@ namespace Materia
 
                     if (path != null)
                     {
+                        path.Stroke = ColorBrush;
+
                         path.IsHitTestVisible = false;
                         Canvas.SetZIndex(path, -1);
                         if (path.Data == null)
@@ -547,7 +568,7 @@ namespace Materia
                     //as the iterator is deleted
                     //while traversing it in either toRemove
                     //or path.keys
-                    Console.WriteLine(e.Message + " | " + e.StackTrace);
+                    Log.Error(e);
                 }
 
                 try
@@ -559,7 +580,7 @@ namespace Materia
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message + " | " + e.StackTrace);
+                    Log.Error(e);
                 }
             }
             else

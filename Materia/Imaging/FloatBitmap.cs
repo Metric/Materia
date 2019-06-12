@@ -7,6 +7,7 @@ using Materia.Nodes.Helpers;
 using System.Windows.Media.Imaging;
 using System.Windows.Media;
 using System.Drawing;
+using NLog;
 
 namespace Materia.Imaging
 {
@@ -28,6 +29,8 @@ namespace Materia.Imaging
 
     public class FloatBitmap
     {
+        protected static ILogger Log = LogManager.GetCurrentClassLogger();
+
         public int Width { get; protected set; }
         public int Height { get; protected set; }
 
@@ -269,7 +272,7 @@ namespace Materia.Imaging
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Log.Error(e);
                 return null;
             }
         }

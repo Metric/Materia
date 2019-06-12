@@ -21,7 +21,8 @@ namespace Materia.Nodes.Atomic
         occlusion,
         roughness,
         metallic,
-        normal
+        normal,
+        thickness
     }
 
     /// <summary>

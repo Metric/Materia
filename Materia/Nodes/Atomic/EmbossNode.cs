@@ -147,17 +147,17 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            int pangle = angle;
-            int pelevation = elevation;
+            float pangle = angle;
+            float pelevation = elevation;
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Angle"))
             {
-                pangle = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Angle"));
+                pangle = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Angle"));
             }
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Elevation"))
             {
-                pelevation = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Elevation"));
+                pelevation = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Elevation"));
             }
 
             processor.TileX = tileX;

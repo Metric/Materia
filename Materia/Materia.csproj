@@ -17,6 +17,24 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
     <TargetFrameworkProfile />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ProductName>Materia</ProductName>
+    <PublisherName>arcanistry</PublisherName>
+    <DisallowUrlActivation>true</DisallowUrlActivation>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>0.0.2.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x64</PlatformTarget>
@@ -60,9 +78,15 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Images\Icons\App\icon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.6.4\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="OpenTK, Version=3.0.1.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenTK.3.0.1\lib\net20\OpenTK.dll</HintPath>
@@ -72,10 +96,15 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -115,6 +144,7 @@
     <Compile Include="Imaging\GLProcessing\ChannelSwitchProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\CircleProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\CurvesProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\FXProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\GammaProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\GradientMapProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\MeshDepthProcessor.cs" />
@@ -132,13 +162,17 @@
     <Compile Include="Imaging\GLProcessing\TransformProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\UniformColorProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\WarpProcessor.cs" />
+    <Compile Include="Logging\MateriaLogTarget.cs" />
     <Compile Include="Material\PBRDepth.cs" />
+    <Compile Include="Material\PBRLight.cs" />
     <Compile Include="MathHelpers\Camera.cs" />
+    <Compile Include="MathHelpers\Light.cs" />
     <Compile Include="MathHelpers\MVector.cs" />
     <Compile Include="MathHelpers\Transform.cs" />
     <Compile Include="Nodes\Atomic\BitmapNode.cs" />
     <Compile Include="Nodes\Atomic\ChannelSwitchNode.cs" />
     <Compile Include="Nodes\Atomic\EmbossNode.cs" />
+    <Compile Include="Nodes\Atomic\FXNode.cs" />
     <Compile Include="Nodes\Atomic\GammaNode.cs" />
     <Compile Include="Nodes\Atomic\GradientMapNode.cs" />
     <Compile Include="Nodes\Atomic\GraphInstanceNode.cs" />
@@ -163,11 +197,15 @@
     <Compile Include="Nodes\Attributes\SectionAttribute.cs" />
     <Compile Include="Nodes\Attributes\TextInputAttribute.cs" />
     <Compile Include="Nodes\Attributes\TitleAttribute.cs" />
+    <Compile Include="Nodes\Attributes\VectorAttribute.cs" />
     <Compile Include="Nodes\Containers\Gradient.cs" />
     <Compile Include="Nodes\GraphParameterValue.cs" />
     <Compile Include="Nodes\ImageGraph.cs" />
     <Compile Include="Nodes\ImageNode.cs" />
     <Compile Include="Nodes\FunctionGraph.cs" />
+    <Compile Include="Nodes\ItemNode.cs" />
+    <Compile Include="Nodes\Items\CommentNode.cs" />
+    <Compile Include="Nodes\Items\PinNode.cs" />
     <Compile Include="Nodes\MathNode.cs" />
     <Compile Include="Nodes\MathNodes\AbsoluteNode.cs" />
     <Compile Include="Nodes\MathNodes\AddNode.cs" />
@@ -232,6 +270,9 @@
     <Compile Include="Nodes\MathNodes\SqrtNode.cs" />
     <Compile Include="Nodes\MathNodes\SubtractNode.cs" />
     <Compile Include="Nodes\MathNodes\TangentNode.cs" />
+    <Compile Include="Settings\MaterialSettings.cs" />
+    <Compile Include="Settings\LightingSettings.cs" />
+    <Compile Include="Settings\Settings.cs" />
     <Compile Include="UI\Components\BreadCrumb.xaml.cs">
       <DependentUpon>BreadCrumb.xaml</DependentUpon>
     </Compile>
@@ -300,6 +341,9 @@
     <Compile Include="UI\Components\ToggleControl.xaml.cs">
       <DependentUpon>ToggleControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Components\VectorInput.xaml.cs">
+      <DependentUpon>VectorInput.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\Components\VectorSlider.xaml.cs">
       <DependentUpon>VectorSlider.xaml</DependentUpon>
     </Compile>
@@ -310,9 +354,14 @@
     <Compile Include="UI\Helpers\GradientHandle.xaml.cs">
       <DependentUpon>GradientHandle.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Helpers\MateriaInputManager.cs" />
     <Compile Include="UI\Helpers\MenuItemExtensions.cs" />
     <Compile Include="UI\Helpers\ShelfBuilder.cs" />
     <Compile Include="UI\Helpers\VisualExtensions.cs" />
+    <Compile Include="UI\ItemNodes\UIPinNode.xaml.cs">
+      <DependentUpon>UIPinNode.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\IUIGraphNode.cs" />
     <Compile Include="UI\IParameter.cs" />
     <Compile Include="Material\Material.cs" />
     <Compile Include="Material\PBRMaterial.cs" />
@@ -356,6 +405,9 @@
     <Compile Include="Textures\GLTextuer2D.cs" />
     <Compile Include="Textures\GLTexture.cs" />
     <Compile Include="Textures\GLTextureCube.cs" />
+    <Compile Include="UI\ItemNodes\UICommentNode.xaml.cs">
+      <DependentUpon>UICommentNode.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\UI3DPreview.xaml.cs">
       <DependentUpon>UI3DPreview.xaml</DependentUpon>
     </Compile>
@@ -371,6 +423,12 @@
     <Compile Include="UI\UILevels.xaml.cs">
       <DependentUpon>UILevels.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\UILog.xaml.cs">
+      <DependentUpon>UILog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\UINewGraph.xaml.cs">
+      <DependentUpon>UINewGraph.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\UINode.xaml.cs">
       <DependentUpon>UINode.xaml</DependentUpon>
     </Compile>
@@ -379,6 +437,9 @@
     </Compile>
     <Compile Include="UI\UINodePoint.xaml.cs">
       <DependentUpon>UINodePoint.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\UIPopupShelf.xaml.cs">
+      <DependentUpon>UIPopupShelf.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\UIPreviewPane.xaml.cs">
       <DependentUpon>UIPreviewPane.xaml</DependentUpon>
@@ -512,6 +573,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="UI\Components\VectorInput.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UI\Components\VectorSlider.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -521,6 +586,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\Helpers\GradientHandle.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\ItemNodes\UICommentNode.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\ItemNodes\UIPinNode.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -544,6 +617,14 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="UI\UILog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UINewGraph.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UI\UINode.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -553,6 +634,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\UINodePoint.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UIPopupShelf.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -579,10 +664,19 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <SplashScreen Include="splash.png" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <Resource Include="Images\drag.png" />
+    <Resource Include="Images\pin.png" />
+    <Content Include="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NLog.xsd">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -656,6 +750,37 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\promotevar.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Icons\App\icon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.6.1">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.6.1 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <FileAssociation Include=".mtfg">
+      <Visible>False</Visible>
+      <Description>materia function graph file</Description>
+      <Progid>materia</Progid>
+      <DefaultIcon>Images\Icons\App\icon.ico</DefaultIcon>
+    </FileAssociation>
+    <FileAssociation Include=".mtg">
+      <Visible>False</Visible>
+      <Description>materia graph file</Description>
+      <Progid>materia</Progid>
+      <DefaultIcon>Images\Icons\App\icon.ico</DefaultIcon>
+    </FileAssociation>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

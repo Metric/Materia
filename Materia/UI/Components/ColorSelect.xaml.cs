@@ -41,6 +41,7 @@ namespace Materia.UI.Components
             propertyOwner = owner;
 
             MVector m = (MVector)p.GetValue(owner);
+            current = m;
 
             c = D.Color.FromArgb((int)(current.W * 255), (int)(current.X * 255), (int)(current.Y * 255), (int)(current.Z * 255));
             SelectColor.Background = new SolidColorBrush(Color.FromArgb(c.A, c.R, c.G, c.B));

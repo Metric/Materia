@@ -18,7 +18,7 @@ namespace Materia.Undo
         public static event RedoChanged OnRedoAdded;
 
         protected static Dictionary<string, Stack<UndoObject>> undos = new Dictionary<string, Stack<UndoObject>>();
-        protected static Dictionary<string, Stack<RedoObject>> redos = new Dictionary<string, Stack<RedoObject>>();
+        protected static Dictionary<string, Stack<UndoObject>> redos = new Dictionary<string, Stack<UndoObject>>();
 
         public static int MaxUndos = 200; 
 
@@ -36,7 +36,7 @@ namespace Materia.Undo
 
         public static int RedoCount(string stackId)
         {
-            Stack<RedoObject> stack = null;
+            Stack<UndoObject> stack = null;
 
             if(redos.TryGetValue(stackId, out stack))
             {
@@ -84,17 +84,17 @@ namespace Materia.Undo
             }
         }
 
-        public static void AddRedo(RedoObject o)
+        public static void AddRedo(UndoObject o)
         {
             if(o != null)
             {
                 string id = o.StackId;
 
-                Stack<RedoObject> stack = null;
+                Stack<UndoObject> stack = null;
 
                 if (!redos.TryGetValue(id, out stack))
                 {
-                    stack = new Stack<RedoObject>();
+                    stack = new Stack<UndoObject>();
                     redos[id] = stack;
                 }
 
@@ -107,7 +107,7 @@ namespace Materia.Undo
                     var items = stack.ToArray().Skip(20);
                     stack.Clear();
 
-                    foreach(RedoObject ob in items)
+                    foreach(UndoObject ob in items)
                     {
                         stack.Push(ob);
                     }
@@ -133,7 +133,10 @@ namespace Materia.Undo
                     var p = stack.Pop();
                     var r = p.Undo();
 
-                    AddRedo(r);
+                    if (r != null)
+                    {
+                        AddRedo(r);
+                    }
 
                     if (OnUndo != null)
                     {
@@ -145,16 +148,19 @@ namespace Materia.Undo
 
         public static void Redo(string stackId)
         {
-            Stack<RedoObject> stack = null;
+            Stack<UndoObject> stack = null;
 
             if (redos.TryGetValue(stackId, out stack))
             {
-                if (redos.Count > 0)
+                if (stack.Count > 0)
                 {
                     var p = stack.Pop();
-                    var r = p.Redo();
+                    var r = p.Undo();
 
-                    AddUndo(r);
+                    if (r != null)
+                    {
+                        AddUndo(r);
+                    }
 
                     if (OnRedo != null)
                     {

@@ -234,18 +234,9 @@ namespace Materia.Nodes
         {
             var p = ParentGraph;
 
-            while(p != null && p is FunctionGraph)
+            if(p != null && p is FunctionGraph)
             {
-                var np = (p as FunctionGraph).ParentNode;
-
-                if(np != null)
-                {
-                    p = np.parentGraph;
-                }
-                else
-                {
-                    p = null;
-                }
+                p = (p as FunctionGraph).TopGraph();
             }
 
             if(p != null)
@@ -295,6 +286,23 @@ namespace Materia.Nodes
         public virtual void TryAndProcess()
         {
 
+        }
+
+        public virtual Node TopNode()
+        {
+            Node p = this;
+
+            while(p != null && p is MathNode)
+            {
+                var tmp = (p as MathNode).ParentNode;
+                if(tmp == null)
+                {
+                    return p;
+                }
+                p = tmp;
+            }
+
+            return p;
         }
 
         protected virtual void SetBaseNodeDate(NodeData d)

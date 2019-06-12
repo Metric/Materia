@@ -87,19 +87,14 @@ namespace Materia.Nodes.MathNodes
         {
             if (input.Input.Data == null || input2.Input.Data == null) return;
 
-            float theta = (float)input.Input.Data;
-            float radius = (float)input2.Input.Data;
+            float theta = Convert.ToSingle(input.Input.Data);
+            float radius = Convert.ToSingle(input2.Input.Data);
 
             theta = (float)(Math.PI / 180.0f) * (theta - 90);
 
 
             output.Data = radius * (float)Math.Cos(theta);
             output2.Data = radius * (float)Math.Sin(theta);
-
-            if (Outputs.Count > 0)
-            {
-                Outputs[0].Changed();
-            }
 
             if (ParentGraph != null)
             {

@@ -228,16 +228,16 @@ namespace Materia.Nodes.MathNodes
                             object o = inp.Input.Data;
                             if (o == null) continue;
 
-                            if (o is float || o is int)
+                            if (o is float || o is int || o is double)
                             {
                                 if (i == 0)
                                 {
-                                    float f = (float)o;
+                                    float f = Convert.ToSingle(o);
                                     v.X = v.Y = v.Z = v.W = f;
                                 }
                                 else
                                 {
-                                    float f = (float)o;
+                                    float f = Convert.ToSingle(o);
                                     v.X *= f;
                                     v.Y *= f;
                                     v.Z *= f;
@@ -270,10 +270,6 @@ namespace Materia.Nodes.MathNodes
                 }
 
                 output.Data = v;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
             else
             {
@@ -288,15 +284,15 @@ namespace Materia.Nodes.MathNodes
                             object o = inp.Input.Data;
                             if (o == null) continue;
 
-                            if (o is float || o is int)
+                            if (o is float || o is int || o is double || o is long)
                             {
                                 if (i == 0)
                                 {
-                                    v = (float)o;
+                                    v = Convert.ToSingle(o);
                                 }
                                 else
                                 {
-                                    float f = (float)o;
+                                    float f = Convert.ToSingle(o);
                                     if (f == 0) continue;
                                     v *= f;
                                 }
@@ -308,10 +304,6 @@ namespace Materia.Nodes.MathNodes
                 }
 
                 output.Data = v;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
 
             if (ParentGraph != null)

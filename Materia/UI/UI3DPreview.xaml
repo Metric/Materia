@@ -16,6 +16,7 @@
                 <MenuItem Header="_Rounded Cube" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
                 <MenuItem Header="_Plane" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
                 <MenuItem Header="_Cylinder" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Custom" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
                 <Separator />
                 <MenuItem Header="_Reset" Foreground="#555" Click="ResetScene_Click" />
             </MenuItem>
@@ -33,6 +34,14 @@
                 <Separator />
                 <MenuItem Header="_Settings" Foreground="#555" Click="CameraSettings_Click" />
             </MenuItem>
+            <MenuItem Height="25" Foreground="LightGray" Header="Light">
+                <MenuItem Header="_Default Position" Click="MenuItem_Click" Foreground="#555" />
+                <MenuItem Header="_Set to Origin" Click="MenuItem_Click" Foreground="#555" />
+                <MenuItem Header="_Reset Light" Click="MenuItem_Click" Foreground="#555" />
+                <Separator></Separator>
+                <MenuItem Header="_Light Settings" Click="MenuItem_Click" Foreground="#555" />
+            </MenuItem>
+            <MenuItem Height="25" Foreground="LightGray" Header="_Material" Click="MenuItem_Click" />
         </Menu>
     </Grid>
 </UserControl>

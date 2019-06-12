@@ -17,6 +17,7 @@ using System.Reflection;
 using Materia.Nodes.Attributes;
 using OpenTK;
 using Materia.MathHelpers;
+using NLog;
 
 namespace Materia.UI.Components
 {
@@ -25,12 +26,14 @@ namespace Materia.UI.Components
     /// </summary>
     public partial class ParameterMap : UserControl
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         public ParameterMap()
         {
             InitializeComponent();
         }
 
-        public ParameterMap(List<GraphParameterValue> values, bool useBasic = false)
+        public ParameterMap(Node n, List<GraphParameterValue> values, bool useBasic = false)
         {
             InitializeComponent();
 
@@ -38,12 +41,8 @@ namespace Materia.UI.Components
             {
                 if(!v.IsFunction())
                 {
-                    if (v.Type != NodeType.Bool)
-                    {
-                        PropertyLabel lbl = new PropertyLabel();
-                        lbl.Title = v.Name;
-                        Stack.Children.Add(lbl);
-                    }
+                    PropertyLabel lbl = new PropertyLabel(v.Name, n, "$Custom." + v.Name);
+                    Stack.Children.Add(lbl);
 
                     if (!useBasic)
                     {
@@ -57,7 +56,7 @@ namespace Materia.UI.Components
             }
         }
 
-        public ParameterMap(Dictionary<string, GraphParameterValue> values)
+        public ParameterMap(Graph g, Dictionary<string, GraphParameterValue> values)
         {
             InitializeComponent();
 
@@ -66,15 +65,20 @@ namespace Materia.UI.Components
                 string[] split = k.Split('.');
                 var v = values[k];
 
+                var n = g.FindSubNodeById(split[0]);
+
+                PropertyInfo nodeInfo = null;
+
+                if(n != null)
+                {
+                    nodeInfo = n.GetType().GetProperty(split[1]);
+                }
+
                 if (!v.IsFunction())
                 {
-                    if (v.Type != NodeType.Bool)
-                    {
-                        PropertyLabel lbl = new PropertyLabel();
-                        lbl.Title = v.Name;
-                        Stack.Children.Add(lbl);
-                    }
-                    BuildParameter(v);
+                    PropertyLabel lbl = new PropertyLabel(v.Name, n, split[1]);
+                    Stack.Children.Add(lbl);
+                    BuildParameter(v, nodeInfo);
                 }
             }
         }
@@ -85,11 +89,20 @@ namespace Materia.UI.Components
             {
                 PropertyInfo info2 = v.GetType().GetProperty("Value");
 
-                if (v.Value is double || v.Value is float || v.Value is int || v.Type == NodeType.Float)
+                if (v.Value is double || v.Value is float || v.Value is int || v.Value is long || v.Type == NodeType.Float)
                 {
-                    NumberSlider sp = new NumberSlider();
-                    sp.Set(v.Min, v.Max, info2, v);
-                    Stack.Children.Add(sp);
+                    if (v.InputType == ParameterInputType.Slider)
+                    {
+                        NumberSlider sp = new NumberSlider();
+                        sp.Set(v.Min, v.Max, info2, v);
+                        Stack.Children.Add(sp);
+                    }
+                    else if(v.InputType == ParameterInputType.Input)
+                    {
+                        NumberInput np = new NumberInput();
+                        np.Set(NumberInputType.Float, v, info2);
+                        Stack.Children.Add(np);
+                    }
                 }
                 else if (v.Value is bool || v.Type == NodeType.Bool)
                 {
@@ -98,8 +111,16 @@ namespace Materia.UI.Components
                 }
                 else if (v.Type == NodeType.Float2 || v.Type == NodeType.Float3 || v.Type == NodeType.Float4)
                 {
-                    VectorSlider vs = new VectorSlider(info2, v, v.Min, v.Max, v.Type);
-                    Stack.Children.Add(vs);
+                    if (v.InputType == ParameterInputType.Slider)
+                    {
+                        VectorSlider vs = new VectorSlider(info2, v, v.Min, v.Max, v.Type);
+                        Stack.Children.Add(vs);
+                    }
+                    else if(v.InputType == ParameterInputType.Input)
+                    {
+                        VectorInput vi = new VectorInput(info2, v, v.Type);
+                        Stack.Children.Add(vi);
+                    }
                 }
                 else if (v.Value is MVector || v.Type == NodeType.Color || v.Type == NodeType.Gray)
                 {
@@ -109,29 +130,32 @@ namespace Materia.UI.Components
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Log.Error(e);
             }
         }
 
-        protected void BuildParameter(GraphParameterValue v)
+        protected void BuildParameter(GraphParameterValue v, PropertyInfo nprop = null)
         {
             try
             {
                 PropertyInfo info2 = v.GetType().GetProperty("Value");
 
-                if (v.Value is double || v.Value is float || v.Value is int)
+                if (v.Value is double || v.Value is float || v.Value is int || v.Value is long)
                 {
-                    if(v.Value is double)
+                    if (nprop != null && nprop.PropertyType.IsEnum)
+                    {
+                        DropDown dp = new DropDown(Enum.GetNames(nprop.PropertyType), v, info2);
+                        Stack.Children.Add(dp);
+                        return;
+                    }
+
+                    if (v.Value is float || v.Value is double || v.Value is long)
                     {
                         NumberInput np = new NumberInput(NumberInputType.Float, v, info2);
                         Stack.Children.Add(np);
+                    
                     }
-                    else if(v.Value is float)
-                    {
-                        NumberInput np = new NumberInput(NumberInputType.Float, v, info2);
-                        Stack.Children.Add(np);
-                    }
-                    else if(v.Value is int)
+                    else if (v.Value is int)
                     {
                         NumberInput np = new NumberInput(NumberInputType.Int, v, info2);
                         Stack.Children.Add(np);
@@ -144,8 +168,16 @@ namespace Materia.UI.Components
                 }
                 else if(v.Type == NodeType.Float2 || v.Type == NodeType.Float3 || v.Type == NodeType.Float4)
                 {
-                    VectorSlider vs = new VectorSlider(info2, v, v.Min, v.Max, v.Type);
-                    Stack.Children.Add(vs);
+                    if (v.InputType == ParameterInputType.Slider)
+                    {
+                        VectorSlider vs = new VectorSlider(info2, v, v.Min, v.Max, v.Type);
+                        Stack.Children.Add(vs);
+                    }
+                    else if(v.InputType == ParameterInputType.Input)
+                    {
+                        VectorInput vs = new VectorInput(info2, v, v.Type);
+                        Stack.Children.Add(vs);
+                    }
                 }
                 else if(v.Value is MVector || v.Type == NodeType.Color || v.Type == NodeType.Gray)
                 {
@@ -155,7 +187,7 @@ namespace Materia.UI.Components
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Log.Error(e);
             }
         }
     }

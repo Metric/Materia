@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Materia.MathHelpers;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -79,16 +80,6 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        float fract(float f)
-        {
-            return f - (float)Math.Floor(f);
-        }
-
-        float rand(ref MVector vec2)
-        {
-            return fract((float)Math.Sin(MVector.Dot(vec2, new MVector(12.9898f, 78.233f))) * 43758.5453f);
-        }
-
         void Process()
         {
             if (input.Input.Data == null) return;
@@ -102,32 +93,20 @@ namespace Materia.Nodes.MathNodes
                 seed = ParentGraph.RandomSeed;
             }
 
-            if (o is float || o is int || o is double)
+            if (o is float || o is int || o is double || o is long)
             {
                 float v = Convert.ToSingle(o);
                 MVector v2 = new MVector(v, 1.0f - v) + seed;
-                output.Data = rand(ref v2);
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
+                output.Data = Utils.Rand(ref v2);
             }
             else if(o is MVector)
             {
                 MVector v = (MVector)o + seed;
-                output.Data = rand(ref v);
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
+                output.Data = Utils.Rand(ref v);
             }
             else
             {
                 output.Data = 0;
-                if (Outputs.Count > 0)
-                {
-                    Outputs[0].Changed();
-                }
             }
 
             if (ParentGraph != null)

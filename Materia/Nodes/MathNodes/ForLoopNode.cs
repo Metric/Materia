@@ -241,6 +241,25 @@ namespace Materia.Nodes.MathNodes
             return forward;
         }
 
+        //this is for the cpu route
+        protected List<Node> GetLoopNodes()
+        {
+            List<Node> forward = new List<Node>();
+
+            //output 0 on a for loop should
+            //always be the loop execution pin
+            NodeOutput exc = Outputs[0];
+            HashSet<Node> seen = new HashSet<Node>();
+
+            foreach (var t in exc.To)
+            {
+                var branch = TravelBranch(t.Node, seen);
+                forward.AddRange(branch);
+            }
+
+            return forward;
+        }
+
         protected string GetLoopBodyShaderCode(string parentFrag)
         {
             string frag = "";
@@ -299,25 +318,23 @@ namespace Materia.Nodes.MathNodes
             }
 
             object d = initialInput.Input.Data;
-            float s = (float)startInput.Input.Data;
-            float e = (float)endInput.Input.Data;
-            float incr = (float)incrementInput.Input.Data;
+            float s = Convert.ToSingle(startInput.Input.Data);
+            float e = Convert.ToSingle(endInput.Input.Data);
+            float incr = Convert.ToSingle(incrementInput.Input.Data);
 
+            List<Node> loop = GetLoopNodes();
 
             //handle forwards or backwards loops
             if (s <= e)
             {
                 for (float i = s; i < e; i += incr)
                 {
-                    //we do not throw the incrementOutput changed
-                    //as we throw the executor instead
                     incrementOutput.Data = i;
                     loopOutput.Data = d;
-                    
-                    //output 0 is the loop executor
-                    if(Outputs.Count > 0)
+
+                    foreach(var n in loop)
                     {
-                        Outputs[0].Changed();
+                        n.TryAndProcess();
                     }
                 }
             }
@@ -328,15 +345,12 @@ namespace Materia.Nodes.MathNodes
                     incrementOutput.Data = i;
                     loopOutput.Data = d;
 
-                    if (Outputs.Count > 0)
+                    foreach(var n in loop)
                     {
-                        Outputs[0].Changed();
+                        n.TryAndProcess();
                     }
                 }
             }
-
-            //we have to call the complete executor last
-            completeOutput.Changed();
         }
 
         public class ForLoopNodeData : NodeData

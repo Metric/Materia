@@ -150,7 +150,11 @@ namespace Materia.UI.Components
                 msHook.UnHook();
                 UpdatePreview();
                 tColor.Stop();
-                mag.Hide();
+
+                if (mag != null)
+                {
+                    mag.Hide();
+                }
             }
         }
 

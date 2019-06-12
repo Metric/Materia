@@ -88,6 +88,10 @@ namespace Materia
             {
                 Title.Text = "3D Camera";
             }
+            else if (node is Settings.MaterialSettings)
+            {
+                Title.Text = "Material";
+            }
             else
             {
                 Title.Text = "";

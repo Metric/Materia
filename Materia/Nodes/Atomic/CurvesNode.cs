@@ -11,11 +11,14 @@ using Materia.Nodes.Helpers;
 using Newtonsoft.Json;
 using Materia.Textures;
 using Materia.Imaging.GLProcessing;
+using NLog;
 
 namespace Materia.Nodes.Atomic
 {
     public class CurvesNode : ImageNode
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         NodeInput input;
 
         FloatBitmap lutBrush;
@@ -272,7 +275,7 @@ namespace Materia.Nodes.Atomic
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Log.Error(e);
             }
 
             processor.TileX = tileX;

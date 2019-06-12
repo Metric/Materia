@@ -9,12 +9,16 @@ using Materia.Buffers;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using Materia.Shaders;
+using Materia.MathHelpers;
 using System.IO;
+using NLog;
 
 namespace Materia.Imaging.GLProcessing
 {
     public class ImageProcessor
     {
+        protected static ILogger Log = LogManager.GetCurrentClassLogger();
+
         protected static FullScreenQuad renderQuad;
         protected static GLRenderBuffer renderBuff;
         protected static GLFrameBuffer frameBuff;
@@ -32,12 +36,45 @@ namespace Materia.Imaging.GLProcessing
         public float TileX { get; set; }
         public float TileY { get; set; }
 
+        public float Luminosity { get; set; }
+
         public ImageProcessor()
         {
+            Luminosity = 1.0f;
             Stretch = true;
             TileX = 1;
             TileY = 1;
         }
+
+        protected void ApplyTransform(GLTextuer2D inc, GLTextuer2D o, int owidth, int oheight, MVector translation, MVector scale, float angle, MVector pivot)
+        {
+            Matrix4 proj = Matrix4.CreateOrthographic(owidth, oheight, 0.03f, 1000f);
+            Matrix4 pTrans = Matrix4.CreateTranslation(-pivot.X, -pivot.Y, 0);
+            Matrix4 iPTrans = Matrix4.CreateTranslation(pivot.X, pivot.Y, 0);
+            Matrix4 trans = Matrix4.CreateTranslation(translation.X, translation.Y, 0);
+            Matrix4 sm = Matrix4.CreateScale(((float)inc.Width * 0.5f) * scale.X, ((float)inc.Height * 0.5f) * scale.Y, 1);
+            Matrix4 rot = Matrix4.CreateRotationZ(angle);
+            Matrix4 model = pTrans * sm * rot * iPTrans * trans;
+            Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
+
+            resizeProcessor.Model = model;
+            resizeProcessor.View = view;
+            resizeProcessor.Projection = proj;
+            resizeProcessor.Luminosity = Luminosity;
+
+            resizeProcessor.Bind(inc);
+
+            if(renderQuad != null)
+            {
+                renderQuad.Draw();
+            }
+
+            resizeProcessor.Unbind();
+
+            o.Bind();
+            o.CopyFromFrameBuffer(owidth, oheight);
+            GLTextuer2D.Unbind();
+        } 
 
         protected void ResizeViewTo(GLTextuer2D inc, GLTextuer2D o, int owidth, int oheight, int nwidth, int nheight)
         {
@@ -56,6 +93,7 @@ namespace Materia.Imaging.GLProcessing
             resizeProcessor.Model = model;
             resizeProcessor.View = view;
             resizeProcessor.Projection = proj;
+            resizeProcessor.Luminosity = Luminosity;
 
             resizeProcessor.Bind(inc);
 
@@ -82,7 +120,7 @@ namespace Materia.Imaging.GLProcessing
                 renderBuff = new GLRenderBuffer();
                 renderBuff.Bind();
                 renderBuff.SetBufferStorageAsDepth(4096, 4096);
-                Console.WriteLine("render buff id: " + renderBuff.Id);
+                Log.Debug("render buff id: " + renderBuff.Id);
                 GLRenderBuffer.Unbind();
             }
             if (colorBuff == null)
@@ -93,7 +131,7 @@ namespace Materia.Imaging.GLProcessing
                 colorBuff.Bind();
                 colorBuff.SetData(new float[0], PixelFormat.Rgba, 4096, 4096);
                 colorBuff.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
-                Console.WriteLine("color buff id: " + colorBuff.Id);
+                Log.Debug("color buff id: " + colorBuff.Id);
                 GLTextuer2D.Unbind();
             }
             if (frameBuff == null)
@@ -109,7 +147,7 @@ namespace Materia.Imaging.GLProcessing
                 if (!frameBuff.IsValid)
                 {
                     var status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);  
-                    Console.WriteLine("Framebuffer not complete!!! with status: " + status);
+                    Log.Error("Framebuffer not complete!!! with status: " + status);
                     GLFrameBuffer.Unbind();
                     return;
                 }

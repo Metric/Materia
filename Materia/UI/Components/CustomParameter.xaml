@@ -15,7 +15,7 @@
         </Button>
         <local:ParameterList x:Name="Params" />
         <StackPanel Orientation="Vertical">
-            <TextBlock Text="Default Value" Foreground="LightGray" FontSize="16" />
+            <TextBlock Margin="5" Text="Default Value" Foreground="LightGray" FontSize="16" />
             <StackPanel Name="ParamDefaultStack">
                 
             </StackPanel>

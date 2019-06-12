@@ -16,6 +16,7 @@ struct AppData {
     vec3 WorldPos;
     mat3 TBN;
     vec3 ObjectPos;
+    vec4 ClipPos;
     vec3 T;
     vec3 B;
     vec3 N;
@@ -23,7 +24,8 @@ struct AppData {
 
 out AppData data;
 
-void main() {
+void main() 
+{
     AppData o;
     vec3 T = mat3(normalMatrix) * tangent.xyz;
     vec3 N = mat3(normalMatrix) * normal;
@@ -39,7 +41,11 @@ void main() {
     o.B = B;
     o.N = N;
 
-    data = o;
+    vec4 clip = projectionMatrix * viewMatrix * modelMatrix * vec4(pos, 1);
 
-    gl_Position = (projectionMatrix * viewMatrix * modelMatrix * vec4(pos, 1));
+    data.ClipPos = clip;
+    data = o;
+    
+    gl_Position = clip;
 }
+

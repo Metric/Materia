@@ -114,11 +114,11 @@ namespace Materia.Nodes.Atomic
             processor.TileX = 1;
             processor.TileY = 1;
 
-            int pintensity = intensity;
+            float pintensity = intensity;
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
             {
-                pintensity = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Intensity"));
+                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
             }
 
             processor.Intensity = pintensity;
