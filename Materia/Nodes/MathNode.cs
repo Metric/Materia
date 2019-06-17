@@ -122,7 +122,7 @@ namespace Materia.Nodes
             return p;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             NodeData d = JsonConvert.DeserializeObject<NodeData>(data);
             SetBaseNodeDate(d);
@@ -154,6 +154,11 @@ namespace Materia.Nodes
         public virtual void UpdateOutputType()
         {
 
+        }
+
+        public override bool IsRoot()
+        {
+            return executeInput == null || !executeInput.HasInput;
         }
 
         public virtual string GetShaderPart(string currentFrag)

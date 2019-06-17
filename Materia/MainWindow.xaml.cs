@@ -465,9 +465,10 @@ namespace Materia
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            foreach(UIGraph g in graphs)
+            for(int i = 0; i < graphs.Count; i++)
             {
-                if(g.Modified && !g.ReadOnly)
+                UIGraph g = graphs[i];
+                if (g.Modified && !g.ReadOnly)
                 {
                     var result = MessageBox.Show(this, g.GraphName + " has been modified. Do you want to save the changes?", "Save Changes", MessageBoxButton.YesNoCancel);
                     if (result == MessageBoxResult.Yes)

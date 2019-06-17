@@ -107,7 +107,7 @@ namespace Materia.Nodes
             return false;
         }
 
-        public bool Add(NodeInput inp)
+        public bool Add(NodeInput inp, bool triggerAddEvent = true)
         {
             if((inp.Type & Type) != 0)
             {
@@ -119,9 +119,12 @@ namespace Materia.Nodes
                 inp.Input = this;
                 To.Add(inp);
 
-                if (OnInputAdded != null)
+                if (triggerAddEvent)
                 {
-                    OnInputAdded(this);
+                    if (OnInputAdded != null)
+                    {
+                        OnInputAdded(this);
+                    }
                 }
 
                 return true;

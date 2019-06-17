@@ -14,6 +14,7 @@ namespace Materia.Nodes.Atomic
 {
     public class AONode : ImageNode
     {
+        CancellationTokenSource ctk;
         BlurProcessor blur;
         OcclusionProcessor processor;
 
@@ -93,7 +94,7 @@ namespace Materia.Nodes.Atomic
             public int rays;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             AOData d = JsonConvert.DeserializeObject<AOData>(data);
             SetBaseNodeDate(d);
@@ -133,10 +134,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(input.HasInput)
+            if(ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()

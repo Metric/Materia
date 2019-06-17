@@ -73,7 +73,7 @@ namespace Materia.Nodes.MathNodes
             return JsonConvert.SerializeObject(d);
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             ArgNodeData d = JsonConvert.DeserializeObject<ArgNodeData>(data);
             SetBaseNodeDate(d);

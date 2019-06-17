@@ -15,6 +15,8 @@ namespace Materia.Nodes.Atomic
 {
     public class GrayscaleConversionNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         NodeInput input;
 
         GrayscaleConvProcessor processor;
@@ -134,10 +136,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if (input.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()
@@ -168,7 +185,7 @@ namespace Materia.Nodes.Atomic
             public float alpha;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             GrayscaleConversionNodeData d = JsonConvert.DeserializeObject<GrayscaleConversionNodeData>(data);
             SetBaseNodeDate(d);

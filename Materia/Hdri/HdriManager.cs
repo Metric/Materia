@@ -76,26 +76,27 @@ namespace Materia.Hdri
 
             string[] list = Directory.GetDirectories(dir);
 
-            foreach(string f in list)
+            for(int i = 0; i < list.Length; i++)
             {
-                if(Directory.Exists(f))
+                string f = list[i];
+                if (Directory.Exists(f))
                 {
                     string[] files = Directory.GetFiles(f);
 
                     int fileCount = 0;
 
-                    foreach(string h in files)
+                    foreach (string h in files)
                     {
-                        if(h.Contains("prefiltered.dds") || h.Contains("irradiance.dds"))
+                        if (h.Contains("prefiltered.dds") || h.Contains("irradiance.dds"))
                         {
                             fileCount++;
                         }
                     }
 
-                    if(fileCount >= 2)
+                    if (fileCount >= 2)
                     {
                         available.Add(Path.GetFileNameWithoutExtension(f));
-                    } 
+                    }
                 }
             }
 

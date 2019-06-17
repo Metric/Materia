@@ -58,7 +58,7 @@ namespace Materia.Nodes.MathNodes
             public bool val;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             BoolConstantData d = JsonConvert.DeserializeObject<BoolConstantData>(data);
             SetBaseNodeDate(d);

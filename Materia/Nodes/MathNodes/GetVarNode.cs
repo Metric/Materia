@@ -120,7 +120,7 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             VarData d = JsonConvert.DeserializeObject<VarData>(data);
             SetBaseNodeDate(d);

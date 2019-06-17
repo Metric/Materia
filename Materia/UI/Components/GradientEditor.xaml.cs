@@ -29,28 +29,61 @@ namespace Materia.UI.Components
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
+        const double HANDLE_HALF_WIDTH = 8;
+
         List<GradientHandle> handles;
 
         PropertyInfo property;
         object propertyOwner;
         FloatBitmap fbmp;
 
+        bool mouseDown;
+        GradientHandle selected;
+        Point startPos;
+
         public GradientEditor()
         {
             InitializeComponent();
+            MouseMove += GradientEditor_MouseMove;
+            MouseUp += GradientEditor_MouseUp;
+            MouseLeave += GradientEditor_MouseLeave;
             handles = new List<GradientHandle>();
         }
 
         public GradientEditor(PropertyInfo prop, object owner)
         {
             InitializeComponent();
+            handles = new List<GradientHandle>();
+            MouseMove += GradientEditor_MouseMove;
+            MouseUp += GradientEditor_MouseUp;
+            MouseLeave += GradientEditor_MouseLeave;
             property = prop;
             propertyOwner = owner;
         }
 
-        bool mouseDown;
-        GradientHandle selected;
-        Point startPos;
+        private void GradientEditor_MouseLeave(object sender, MouseEventArgs e)
+        {
+            selected = null;
+            mouseDown = false;
+        }
+
+        private void GradientEditor_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            selected = null;
+            mouseDown = false;
+        }
+
+        private void GradientEditor_MouseMove(object sender, MouseEventArgs e)
+        {
+            if(mouseDown && selected != null)
+            {
+                Point p = e.GetPosition(HandleHolder);
+                double delta = p.X - startPos.X;
+                double pos = UpdateHandleUIPosition(selected, delta);
+                UpdateHandlePosition(selected, (float)Math.Min(1, Math.Max(0, (pos / (HandleHolder.ActualWidth - HANDLE_HALF_WIDTH)))));
+                startPos = p;
+            }
+        }
 
         void InitHandles()
         {
@@ -72,13 +105,13 @@ namespace Materia.UI.Components
                     {
                         for (int i = 0; i < g.positions.Length; i++)
                         {
-                            AddHandle(new Point(g.positions[i] * (HandleHolder.ActualWidth - 4), 0), g.colors[i]);
+                            AddHandle(new Point(g.positions[i] * HandleHolder.ActualWidth - HANDLE_HALF_WIDTH, 0), g.colors[i]);
                         }
                     }
                     else
                     {
-                        AddHandle(new Point(0, 0), new MVector(0, 0, 0, 1));
-                        AddHandle(new Point(HandleHolder.Width - 4, 0), new MVector(1, 1, 1, 1));
+                        AddHandle(new Point(-HANDLE_HALF_WIDTH, 0), new MVector(0, 0, 0, 1));
+                        AddHandle(new Point(HandleHolder.ActualWidth - HANDLE_HALF_WIDTH, 0), new MVector(1, 1, 1, 1));
                     }
                 }
             }
@@ -91,13 +124,15 @@ namespace Materia.UI.Components
         void AddHandle(Point p, MVector c, bool updateProperty = false)
         {
             GradientHandle h = new GradientHandle();
-            h.Position = (float)Math.Min(1, Math.Max(0, (p.X / (HandleHolder.ActualWidth - 4))));
+            h.HorizontalAlignment = HorizontalAlignment.Left;
+            h.VerticalAlignment = VerticalAlignment.Top;
+            h.Position = (float)Math.Min(1, Math.Max(0, ((p.X + HANDLE_HALF_WIDTH) / HandleHolder.ActualWidth)));
             h.SetColor(c);
             h.MouseDown += H_MouseDown;
             h.OnColorChanged += H_OnColorChanged;
             handles.Add(h);
             HandleHolder.Children.Add(h);
-            Canvas.SetLeft(h, h.Position * (HandleHolder.ActualWidth - 4));
+            Canvas.SetLeft(h, h.Position * HandleHolder.ActualWidth - HANDLE_HALF_WIDTH);
 
             UpdateGradientPreview(updateProperty);
         }
@@ -105,37 +140,6 @@ namespace Materia.UI.Components
         private void H_OnColorChanged()
         {
             UpdateGradientPreview(true);
-        }
-
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            base.OnMouseMove(e);
-
-            GradientHandle h = selected;
-
-            if (mouseDown && h != null)
-            {
-                Canvas.SetZIndex(h, 1);
-                Point p = e.GetPosition(HandleHolder);
-                double xdiff = p.X - startPos.X;
-                float npos = (float)Math.Min(1, Math.Max(0, h.Position + (xdiff / (HandleHolder.ActualWidth - 4))));
-                startPos = p;
-                UpdateHandlePosition(h, npos);
-                UpdateGradientPreview(true);
-            }
-        }
-
-        protected override void OnMouseUp(MouseButtonEventArgs e)
-        {
-            base.OnMouseUp(e);
-
-            if(selected != null)
-            {
-                Canvas.SetZIndex(selected, 0);
-                selected = null;
-            }
-
-            mouseDown = false;
         }
 
 
@@ -219,17 +223,26 @@ namespace Materia.UI.Components
             }
         }
 
+        double UpdateHandleUIPosition(GradientHandle h, double dx)
+        {
+            double c = Canvas.GetLeft(h);
+            c += dx;
+            c = Math.Min(HandleHolder.ActualWidth - HANDLE_HALF_WIDTH, Math.Max(-HANDLE_HALF_WIDTH, c));
+            Canvas.SetLeft(h, c);
+            return c;
+        } 
+
         void UpdateHandlePosition(GradientHandle h, float p)
         {
             h.Position = p;
-            Canvas.SetLeft(h, h.Position * (HandleHolder.ActualWidth - 4));
+            UpdateGradientPreview(true);
         }
 
         void UpdateHandlesOnResize()
         {
             foreach(var h in handles)
             {
-                Canvas.SetLeft(h, h.Position * (HandleHolder.ActualWidth - 4));
+                Canvas.SetLeft(h, h.Position * HandleHolder.ActualWidth - HANDLE_HALF_WIDTH);
             }
         }
 
@@ -257,7 +270,31 @@ namespace Materia.UI.Components
             if (e.ClickCount > 1)
             {
                 Point p = e.GetPosition(HandleHolder);
-                AddHandle(p, new MVector(0, 0, 0, 1), true);
+
+                GradientHandle handle = null;
+                double min = double.PositiveInfinity;
+                for(int i = 0; i < handles.Count; i++)
+                {
+                    double x = Canvas.GetLeft(handles[i]);
+                    double dist = Math.Abs(p.X - x);
+
+                    if(dist < min)
+                    {
+                        handle = handles[i];
+                        min = dist;
+                    }
+                }
+
+                p.X -= HANDLE_HALF_WIDTH;
+
+                if (handle == null)
+                {
+                    AddHandle(p, new MVector(0, 0, 0, 1), true);
+                }
+                else
+                {
+                    AddHandle(p, handle.SColor, true);
+                }
             }
         }
     }

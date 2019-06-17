@@ -16,6 +16,7 @@ using Materia.Nodes;
 using System.Reflection;
 using Materia.Nodes.Attributes;
 using Materia.Nodes.Atomic;
+using NLog;
 
 namespace Materia.UI.Components
 {
@@ -24,6 +25,8 @@ namespace Materia.UI.Components
     /// </summary>
     public partial class PropertyLabel : UserControl
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         public string Title
         {
             get
@@ -106,15 +109,23 @@ namespace Materia.UI.Components
 
                         var param = gn.CustomParameters.Find(m => m.Name.Equals(cparam));
 
-                        var cparent = Node.ParentGraph;
-
-                        if(cparent != null)
+                        if (param != null)
                         {
-                            cparent.SetParameterValue(Node.Id, cparam, param.Value);
+                            var cparent = Node.ParentGraph;
 
-                            DefaultVar.IsEnabled = true;
-                            ConstantVar.IsEnabled = false;
-                            FunctionVar.IsEnabled = false;
+                            if (cparent != null)
+                            {
+                                cparent.SetParameterValue(Node.Id, cparam, param.Value, true, param.Type);
+
+                                DefaultVar.IsEnabled = true;
+                                ConstantVar.IsEnabled = false;
+                                FunctionVar.IsEnabled = false;
+                            }
+                        }
+                        else
+                        {
+                            //log error
+                            Log.Error("Could not find custom parameter: " + cparam);
                         }
                     }
                 }
@@ -123,6 +134,14 @@ namespace Materia.UI.Components
 
                     if (info != null)
                     {
+                        var pro = info.GetCustomAttribute<PromoteAttribute>();
+
+                        NodeType t = NodeType.Float;
+                        if(pro != null)
+                        {
+                            t = pro.ExpectedType;
+                        }
+
                         var v = info.GetValue(Node);
 
                         var p = Node.ParentGraph;
@@ -136,7 +155,7 @@ namespace Materia.UI.Components
                         {
                             var pg = p;
 
-                            pg.SetParameterValue(Node.Id, Parameter, v);
+                            pg.SetParameterValue(Node.Id, Parameter, v, pro != null, t);
 
                             DefaultVar.IsEnabled = true;
                             ConstantVar.IsEnabled = false;
@@ -169,17 +188,25 @@ namespace Materia.UI.Components
 
                         var param = gn.CustomParameters.Find(m => m.Name.Equals(cparam));
 
-                        var cparent = Node.ParentGraph;
-
-                        g.ExpectedOutput = param.Type;
-
-                        if (cparent != null)
+                        if (param != null)
                         {
-                            cparent.SetParameterValue(Node.Id, cparam, g);
+                            var cparent = Node.ParentGraph;
 
-                            DefaultVar.IsEnabled = true;
-                            ConstantVar.IsEnabled = false;
-                            FunctionVar.IsEnabled = false;
+                            g.ExpectedOutput = param.Type;
+
+                            if (cparent != null)
+                            {
+                                cparent.SetParameterValue(Node.Id, cparam, g, true, param.Type);
+
+                                DefaultVar.IsEnabled = true;
+                                ConstantVar.IsEnabled = false;
+                                FunctionVar.IsEnabled = false;
+                            }
+                        }
+                        else
+                        {
+                            //log error
+                            Log.Error("Could not find custom parameter: " + cparam);
                         }
                     }
                 }
@@ -191,7 +218,10 @@ namespace Materia.UI.Components
 
                     var pro = info.GetCustomAttribute<PromoteAttribute>();
 
-                    g.ExpectedOutput = pro.ExpectedType;
+                    if (pro != null)
+                    {
+                        g.ExpectedOutput = pro.ExpectedType;
+                    }
 
                     var p = Node.ParentGraph;
 
@@ -204,7 +234,7 @@ namespace Materia.UI.Components
                     {
                         var pg = p;
 
-                        pg.SetParameterValue(Node.Id, Parameter, g);
+                        pg.SetParameterValue(Node.Id, Parameter, g, true, g.ExpectedOutput);
 
                         DefaultVar.IsEnabled = true;
                         ConstantVar.IsEnabled = false;

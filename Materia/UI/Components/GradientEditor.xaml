@@ -5,9 +5,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="48" d:DesignWidth="256" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged">
-    <Grid Height="48" Margin="8,0,8,8">
-        <Grid Name="ImageWrapper" Margin="0,0,0,16"  MouseDown="UserControl_MouseDoubleClick">
+             d:DesignHeight="64" d:DesignWidth="256" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged">
+    <Grid Height="64" Margin="8,0,8,8">
+        <Grid Name="ImageWrapper" Height="32" VerticalAlignment="Top"  MouseDown="UserControl_MouseDoubleClick">
             <Grid.Background>
                 <VisualBrush TileMode="Tile"
                              Viewport="0,0,8,8" ViewportUnits="Absolute" 
@@ -24,7 +24,7 @@
             </Grid.Background>
             <Image Name="GradientImage" />
         </Grid>
-        <Canvas Name="HandleHolder" VerticalAlignment="Bottom" Height="16">
+        <Canvas Name="HandleHolder" VerticalAlignment="Bottom" Height="32">
             
         </Canvas>
     </Grid>

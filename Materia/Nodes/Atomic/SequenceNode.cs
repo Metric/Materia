@@ -6,11 +6,14 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
 using Materia.Textures;
+using System.Threading;
 
 namespace Materia.Nodes.Atomic
 { 
     public class SequenceNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         [HideProperty]
         public new int Height
         {
@@ -154,10 +157,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if (input.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()
@@ -216,7 +234,7 @@ namespace Materia.Nodes.Atomic
             return JsonConvert.SerializeObject(d);
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             NodeData d = JsonConvert.DeserializeObject<NodeData>(data);
             SetBaseNodeDate(d);

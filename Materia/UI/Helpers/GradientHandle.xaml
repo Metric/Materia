@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:Materia.UI.Helpers"
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="16">
-    <Grid MouseDown="Grid_MouseDown" Width="16">
+    <Grid MouseDown="Grid_MouseDown" Width="16" Height="32">
         <Border BorderBrush="White" HorizontalAlignment="Left" VerticalAlignment="Top" Name="Max" Width="16" Height="16" BorderThickness="0">
             <Path HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 0 12 L 12 0">
                 <Path.RenderTransform>

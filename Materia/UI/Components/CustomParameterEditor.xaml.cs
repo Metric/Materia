@@ -49,7 +49,7 @@ namespace Materia.UI.Components
         {
             if(graph != null)
             {
-                graph.CustomParameters.Remove(c.Param);
+                graph.RemoveCustomParameter(c.Param);
             }
 
             Stack.Children.Remove(c);
@@ -62,7 +62,7 @@ namespace Materia.UI.Components
                 int index = graph.CustomParameters.Count;
                 string name = "Param" + index;
                 GraphParameterValue gp = new GraphParameterValue(name, 0, "", NodeType.Float);
-                graph.CustomParameters.Add(gp);
+                graph.AddCustomParameter(gp);
                 CustomParameter cp = new CustomParameter(gp);
                 cp.OnRemove += Cp_OnRemove;
                 Stack.Children.Add(cp);

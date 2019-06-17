@@ -8,11 +8,13 @@ using Materia.Nodes.Attributes;
 using Materia.Textures;
 using OpenTK;
 using Newtonsoft.Json;
+using System.Threading;
 
 namespace Materia.Nodes.Atomic
 {
     public class MotionBlurNode : ImageNode
     {
+        CancellationTokenSource ctk;
         MotionBlurProcessor processor;
 
         int magnitude;
@@ -100,10 +102,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(input.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()
@@ -152,7 +169,7 @@ namespace Materia.Nodes.Atomic
             public int direction;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             MotionBlurData d = JsonConvert.DeserializeObject<MotionBlurData>(data);
             SetBaseNodeDate(d);

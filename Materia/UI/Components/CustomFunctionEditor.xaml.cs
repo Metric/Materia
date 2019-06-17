@@ -58,7 +58,7 @@ namespace Materia.UI.Components
                 string name = "Func" + index;
                 FunctionGraph gp = new FunctionGraph(name);
                 gp.ParentGraph = graph;
-                graph.CustomFunctions.Add(gp);
+                graph.AddCustomFunction(gp);
                 CustomFunction cp = new CustomFunction(gp);
                 cp.OnRemove += Cp_OnRemove;
                 Stack.Children.Add(cp);

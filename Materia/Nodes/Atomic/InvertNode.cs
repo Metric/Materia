@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.Imaging.GLProcessing;
@@ -11,6 +12,8 @@ namespace Materia.Nodes.Atomic
 {
     public class InvertNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         NodeInput input;
         NodeOutput output;
 
@@ -125,10 +128,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(input.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()
@@ -174,7 +192,7 @@ namespace Materia.Nodes.Atomic
             public bool alpha;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             InvertNodeData d = JsonConvert.DeserializeObject<InvertNodeData>(data);
             SetBaseNodeDate(d);

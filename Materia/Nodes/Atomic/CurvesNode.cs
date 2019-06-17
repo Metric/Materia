@@ -19,6 +19,8 @@ namespace Materia.Nodes.Atomic
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
+        CancellationTokenSource ctk;
+
         NodeInput input;
 
         FloatBitmap lutBrush;
@@ -126,10 +128,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if (input.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void InitializeCurves(int idx, List<Point> pts, bool allSame = false)
@@ -139,8 +156,9 @@ namespace Materia.Nodes.Atomic
             int w = 255;
             int h = 255;
 
-            foreach(Point p in pts)
+            for(int i = 0; i < pts.Count; i++)
             {
+                Point p = pts[i];
                 points.Add(new Point(p.X * w, p.Y * h));
             }
 
@@ -228,8 +246,9 @@ namespace Materia.Nodes.Atomic
                 List<Point> reds = curves[1];
                 List<Point> greens = curves[2];
                 List<Point> blues = curves[3];
-                foreach(Point p in reds)
+                for(int j = 0; j < reds.Count; j++)
                 {
+                    Point p = reds[j];
                     int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
                     for (int i = 0; i < 2; i++)
                     {
@@ -238,33 +257,36 @@ namespace Materia.Nodes.Atomic
                     }
                 }
 
-                foreach (Point p in greens)
+                for(int j = 0; j < greens.Count; j++)
                 {
+                    Point p = greens[j];
                     int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
                     for (int i = 0; i < 2; i++)
                     {
                         int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2+1] = (float)p.Y;
+                        lutBrush.Image[idx2 + 1] = (float)p.Y;
                     }
                 }
 
-                foreach (Point p in blues)
+                for(int j = 0; j < blues.Count; j++)
                 {
+                    Point p = blues[j];
                     int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
                     for (int i = 0; i < 2; i++)
                     {
                         int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2+2] = (float)p.Y;
+                        lutBrush.Image[idx2 + 2] = (float)p.Y;
                     }
                 }
 
-                foreach (Point p in mids)
+                for(int j = 0; j < mids.Count; j++)
                 {
+                    Point p = mids[j];
                     int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
                     for (int i = 0; i < 2; i++)
                     {
                         int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2+3] = (float)p.Y;
+                        lutBrush.Image[idx2 + 3] = (float)p.Y;
                     }
                 }
 
@@ -311,7 +333,7 @@ namespace Materia.Nodes.Atomic
             public Dictionary<int, List<Graph.GPoint>> points;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             CurvesData d = JsonConvert.DeserializeObject<CurvesData>(data);
             SetBaseNodeDate(d);

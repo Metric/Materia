@@ -374,7 +374,7 @@ namespace Materia.Nodes.Atomic
             public float cameraZoom;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             MeshDepthNodeData d = JsonConvert.DeserializeObject<MeshDepthNodeData>(data);
             SetBaseNodeDate(d);

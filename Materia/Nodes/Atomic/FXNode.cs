@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Materia.MathHelpers;
 using Materia.Nodes.Attributes;
@@ -25,6 +26,7 @@ namespace Materia.Nodes.Atomic
 
     public class FXNode : ImageNode
     {
+        CancellationTokenSource ctk;
         NodeInput q1;
         NodeInput q2;
         NodeInput q3;
@@ -230,10 +232,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if (q1.HasInput || q2.HasInput || q3.HasInput || q4.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (q1.HasInput || q2.HasInput || q3.HasInput || q4.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         float CalculateRandomLuminosity(float iter, float randLum, float maxLum)
@@ -796,7 +813,7 @@ namespace Materia.Nodes.Atomic
             return JsonConvert.SerializeObject(d);
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             FXNodeData d = JsonConvert.DeserializeObject<FXNodeData>(data);
             SetBaseNodeDate(d);

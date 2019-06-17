@@ -15,6 +15,8 @@ namespace Materia.Nodes.Atomic
 {
     public class NormalNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         protected NodeInput input;
 
         protected float intensity;
@@ -112,10 +114,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(input.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process() 
@@ -162,7 +179,7 @@ namespace Materia.Nodes.Atomic
             return JsonConvert.SerializeObject(d);
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             NormalData d = JsonConvert.DeserializeObject<NormalData>(data);
             SetBaseNodeDate(d);

@@ -8,11 +8,15 @@ using Materia.Nodes.Attributes;
 using Materia.Imaging.GLProcessing;
 using Materia.Textures;
 using System.Reflection;
+using Newtonsoft.Json;
+using NLog;
 
 namespace Materia.Nodes
 {
     public abstract class Node : IDisposable
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         public delegate void UpdateEvent(Node n);
         public delegate void InputChanged(Node n, NodeInput inp);
         public delegate void OutputChanged(Node n, NodeOutput inp);
@@ -36,6 +40,8 @@ namespace Materia.Nodes
         public double ViewOriginY = 0;
 
         protected BasicImageRenderer previewProcessor;
+
+        protected long lastUpdated = 0;
 
         protected GLTextuer2D buffer;
         public GLTextuer2D Buffer
@@ -269,7 +275,17 @@ namespace Materia.Nodes
             }
         }
         public abstract string GetJson();
-        public abstract void FromJson(Dictionary<string, Node> nodes, string data);
+        public abstract void FromJson(string data);
+
+        public virtual void AssignWidth(int w)
+        {
+            width = w;
+        }
+
+        public virtual void AssignHeight(int h)
+        {
+            height = h;
+        }
 
         public virtual void CopyResources(string CWD) { }
 
@@ -508,7 +524,7 @@ namespace Materia.Nodes
             }
         }
 
-        public void SetConnections(Dictionary<string,Node> nodes, List<NodeOutputConnection> connections)
+        public void SetConnections(Dictionary<string,Node> nodes, List<NodeOutputConnection> connections, bool triggerAddEvent = true)
         {
             if (connections != null)
             {
@@ -522,16 +538,27 @@ namespace Materia.Nodes
                             var inp = n.Inputs[nc.index];
                             if (nc.outIndex >= 0 && nc.outIndex < Outputs.Count)
                             {
-                                Outputs[nc.outIndex].Add(inp);
+                                Outputs[nc.outIndex].Add(inp, triggerAddEvent);
                             }
+                        }
+                        else
+                        {
+                            //log to console the fact that we could not connect the node
+                            Log.Warn("Could not restore a node connections on: " + n.name);
                         }
                     }
                     else
                     {
                         //log to console the fact that we could not connect the node
+                        Log.Warn("Could not restore a node connections on: " + n.name);
                     }
                 }
             }
+        }
+
+        public virtual bool IsRoot()
+        {
+            return Inputs == null || Inputs.Count == 0 || Inputs.Find(m => m.HasInput) == null;
         }
     }
 }

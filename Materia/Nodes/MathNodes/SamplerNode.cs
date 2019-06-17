@@ -175,17 +175,11 @@ namespace Materia.Nodes.MathNodes
             return JsonConvert.SerializeObject(d);
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             SamplerNodeData d = JsonConvert.DeserializeObject<SamplerNodeData>(data);
             SetBaseNodeDate(d);
-
             sampleIndex = d.sampleIndex;
-
-            SetConnections(nodes, d.outputs);
-
-            TryAndProcess();
-            Updated();
         }
     }
 }

@@ -18,8 +18,14 @@ namespace Materia.Nodes
     public class GraphParameterValue
     {
         public delegate void GraphParameterUpdate(GraphParameterValue param);
-        public static event GraphParameterUpdate OnGraphParameterUpdate;
-        public static event GraphParameterUpdate OnGraphParameterTypeChanged;
+        public event GraphParameterUpdate OnGraphParameterUpdate;
+        public event GraphParameterUpdate OnGraphParameterTypeChanged;
+
+        [JsonIgnore]
+        public Graph ParentGraph
+        {
+            get; set;
+        }
 
         [TextInput]
         public string Name { get; set; }
@@ -272,6 +278,12 @@ namespace Materia.Nodes
                     v = new MVector();
                 }
             }
+        }
+
+        public void AssignValue(object val)
+        {
+            v = val;
+            ValidateValue();
         }
 
         public bool IsFunction()

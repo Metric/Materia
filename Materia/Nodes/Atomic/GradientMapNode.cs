@@ -18,6 +18,8 @@ namespace Materia.Nodes.Atomic
 {
     public class GradientMapNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         NodeInput input;
         NodeInput input2;
 
@@ -94,10 +96,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if (input.HasInput && gradient != null)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput && gradient != null)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         public override void Dispose()
@@ -175,7 +192,7 @@ namespace Materia.Nodes.Atomic
             public float[] positions;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             GradientMapData d = JsonConvert.DeserializeObject<GradientMapData>(data);
             SetBaseNodeDate(d);
@@ -206,8 +223,9 @@ namespace Materia.Nodes.Atomic
 
             if (gradient != null)
             {
-                foreach (MVector m in gradient.colors)
+                for(int j = 0; j < gradient.colors.Length; j++)
                 {
+                    MVector m = gradient.colors[j];
                     d.colors.Add(m.ToArray());
                 }
 

@@ -85,9 +85,7 @@ namespace Materia.Nodes
             }
         }
 
-
-        protected Node parentNode;
-        public Node ParentNode
+        public override Node ParentNode
         {
             get
             {
@@ -216,8 +214,10 @@ namespace Materia.Nodes
             //this is in case this function references
             //other functions
             List<Node> calls = Nodes.FindAll(m => m is CallNode);
-            foreach (CallNode m in calls)
+            for(int i = 0; i < calls.Count; i++)
             {
+                CallNode m = (CallNode)calls[i];
+
                 //no need to recreate the function
                 //if it is a recursive function!
                 if (m.selectedFunction == this)
@@ -237,7 +237,6 @@ namespace Materia.Nodes
                     frag += s;
                 }
             }
-
 
             NodeType? outtype = GetOutputType();
 
@@ -277,25 +276,27 @@ namespace Materia.Nodes
 
             List<Node> args = Nodes.FindAll(m => m is ArgNode);
 
-            foreach(ArgNode a in args)
+            for(int i = 0; i < args.Count; i++)
             {
-                if(a.InputType == NodeType.Float)
+                ArgNode a = (ArgNode)args[i];
+
+                if (a.InputType == NodeType.Float)
                 {
                     frag += "float " + a.InputName + ",";
                 }
-                else if(a.InputType == NodeType.Float2)
+                else if (a.InputType == NodeType.Float2)
                 {
                     frag += "vec2 " + a.InputName + ",";
                 }
-                else if(a.InputType == NodeType.Float3)
+                else if (a.InputType == NodeType.Float3)
                 {
                     frag += "vec3 " + a.InputName + ",";
                 }
-                else if(a.InputType == NodeType.Float4 || a.InputType == NodeType.Color || a.InputType == NodeType.Gray)
+                else if (a.InputType == NodeType.Float4 || a.InputType == NodeType.Color || a.InputType == NodeType.Gray)
                 {
                     frag += "vec4 " + a.InputName + ",";
                 }
-                else if(a.InputType == NodeType.Bool)
+                else if (a.InputType == NodeType.Bool)
                 {
                     frag += "bool " + a.InputName + ",";
                 }
@@ -340,8 +341,10 @@ namespace Materia.Nodes
 
                 seen.Add(n);
 
-                foreach (var op in n.Inputs)
+                for(int i = 0; i < n.Inputs.Count; i++)
                 {
+                    NodeInput op = n.Inputs[i];
+
                     if (op.HasInput)
                     {
                         bool nodeHasExecute = op.Input.Node.Outputs.Find(m => m.Type == NodeType.Execute) != null;
@@ -366,13 +369,14 @@ namespace Materia.Nodes
                 if (n.Outputs.Count > 0)
                 {
                     int i = 0;
-                    foreach (var op in n.Outputs)
+                    for(i = 0; i < n.Outputs.Count; i++)
                     {
+                        NodeOutput op = n.Outputs[i];
+
                         //we don't care about the actual for loop internals at the momemnt
                         //as each for loop will handle it
                         if (n is ForLoopNode && i == 0)
                         {
-                            i++;
                             continue;
                         }
 
@@ -384,8 +388,9 @@ namespace Materia.Nodes
                                 //from one output
                                 //otherwise we queue up in queue
                                 //and proceed in order
-                                foreach (var t in op.To)
+                                for(int j = 0; j < op.To.Count; j++)
                                 {
+                                    NodeInput t = op.To[j];
                                     var branch = TravelBranch(t.Node, seen);
                                     forward.AddRange(branch);
                                 }
@@ -421,8 +426,9 @@ namespace Materia.Nodes
                 Node n = reverse.Pop();
                 stack.Push(n);
 
-                foreach (var op in n.Inputs)
+                for(int i = 0; i < n.Inputs.Count; i++)
                 {
+                    NodeInput op = n.Inputs[i];
                     if (op.HasInput)
                     {
                         if (op.Type == NodeType.Execute)
@@ -447,8 +453,9 @@ namespace Materia.Nodes
         {
             var nodes = OrderNodesForShader();
 
-            foreach(Node n in nodes)
+            for(int i = 0; i < nodes.Count; i++)
             {
+                Node n = nodes[i];
                 (n as MathNode).UpdateOutputType();
             }
         }
@@ -555,8 +562,9 @@ namespace Materia.Nodes
 
 
             List<Node> calls = Nodes.FindAll(m => m is CallNode);
-            foreach(CallNode m in calls)
+            for(int i = 0; i < calls.Count; i++)
             {
+                CallNode m = (CallNode)calls[i];
                 if (m.selectedFunction == this)
                 {
                     continue;
@@ -860,8 +868,9 @@ namespace Materia.Nodes
                             BuildShaderParam(param, builder);
                         }
 
-                        foreach (var param in p.CustomParameters)
+                        for(int i = 0; i < p.CustomParameters.Count; i++)
                         {
+                            GraphParameterValue param = p.CustomParameters[i];
                             if (!param.IsFunction())
                             {
                                 BuildShaderParam(param, builder, true);
@@ -900,8 +909,10 @@ namespace Materia.Nodes
                         }
                     }
 
-                    foreach (var param in p.CustomParameters)
+                    for(int i = 0; i < p.CustomParameters.Count; i++)
                     {
+                        GraphParameterValue param = p.CustomParameters[i];
+
                         if (!param.IsFunction())
                         {
                             SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value);
@@ -929,8 +940,10 @@ namespace Materia.Nodes
 
                 if (p != null)
                 {
-                    foreach (var prop in props)
+                    for(int i = 0; i < props.Length; i++)
                     {
+                        var prop = props[i];
+
                         if (!prop.PropertyType.Equals(typeof(int))
                             && !prop.PropertyType.Equals(typeof(float))
                             && !prop.PropertyType.Equals(typeof(MVector))
@@ -1003,8 +1016,9 @@ namespace Materia.Nodes
                 }
                 else
                 {
-                    foreach (var prop in props)
+                    for(int i = 0; i < props.Length; i++)
                     {
+                        var prop = props[i];
                         if (!prop.PropertyType.Equals(typeof(int))
                             && !prop.PropertyType.Equals(typeof(float))
                             && !prop.PropertyType.Equals(typeof(MVector))
@@ -1124,8 +1138,9 @@ namespace Materia.Nodes
 
             List<string> data = new List<string>();
 
-            foreach(Node n in Nodes)
+            for(int i = 0; i < Nodes.Count; i++)
             {
+                Node n = Nodes[i];
                 data.Add(n.GetJson());
             }
 

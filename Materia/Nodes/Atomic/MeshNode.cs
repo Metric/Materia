@@ -14,11 +14,14 @@ using Materia.Textures;
 using Materia.UI;
 using Newtonsoft.Json;
 using Materia.Hdri;
+using System.Threading;
 
 namespace Materia.Nodes.Atomic
 {
     public class MeshNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         string relativePath;
 
         string path;
@@ -356,7 +359,22 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            Process();
+            if (ctk != null)
+            {
+                ctk.Cancel();
+            }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    Process();
+                });
+            });
         }
 
         void Process()
@@ -544,7 +562,7 @@ namespace Materia.Nodes.Atomic
             public float meshTileY;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             MeshNodeData d = JsonConvert.DeserializeObject<MeshNodeData>(data);
             SetBaseNodeDate(d);

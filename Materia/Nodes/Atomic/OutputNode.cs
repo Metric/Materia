@@ -11,6 +11,7 @@ using Materia.Nodes.Attributes;
 using Newtonsoft.Json;
 using Materia.Textures;
 using Materia.Imaging.GLProcessing;
+using System.Threading;
 
 namespace Materia.Nodes.Atomic
 {
@@ -34,6 +35,8 @@ namespace Materia.Nodes.Atomic
     /// </summary>
     public class OutputNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         NodeInput input;
 
         OutputType outtype;
@@ -160,10 +163,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(input != null && input.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input != null && input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()
@@ -200,7 +218,7 @@ namespace Materia.Nodes.Atomic
             public OutputType outType;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             OutputNodeData d = JsonConvert.DeserializeObject<OutputNodeData>(data);
             SetBaseNodeDate(d);

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Materia.Textures;
 using Materia.Nodes.Attributes;
@@ -12,6 +13,7 @@ namespace Materia.Nodes.Atomic
 {
     public class ChannelSwitchNode : ImageNode
     {
+        CancellationTokenSource ctk;
         protected ChannelSwitchProcessor processor;
 
         protected NodeInput input;
@@ -149,10 +151,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(input.HasInput && input2.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput && input2.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()
@@ -228,7 +245,7 @@ namespace Materia.Nodes.Atomic
             return JsonConvert.SerializeObject(d);
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             ChannelSwitchData d = JsonConvert.DeserializeObject<ChannelSwitchData>(data);
             SetBaseNodeDate(d);

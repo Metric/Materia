@@ -16,6 +16,8 @@ namespace Materia.Nodes.Atomic
 {
     public class LevelsNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         NodeInput input;
         MultiRange range;
 
@@ -85,10 +87,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(input.HasInput)
+            if (ctk != null)
             {
-                Process();    
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         public override void Dispose()
@@ -130,7 +147,7 @@ namespace Materia.Nodes.Atomic
             public MultiRange range;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             LevelsData d = JsonConvert.DeserializeObject<LevelsData>(data);
             SetBaseNodeDate(d);

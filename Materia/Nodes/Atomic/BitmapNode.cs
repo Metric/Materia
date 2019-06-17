@@ -197,7 +197,7 @@ namespace Materia.Nodes.Atomic
             public bool resource;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             BitmapNodeData d = JsonConvert.DeserializeObject<BitmapNodeData>(data);
             SetBaseNodeDate(d);

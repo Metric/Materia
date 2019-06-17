@@ -140,6 +140,12 @@ namespace Materia.UI.Components
             {
                 PropertyInfo info2 = v.GetType().GetProperty("Value");
 
+                SliderAttribute slide = null;
+                if(nprop != null)
+                {
+                    slide = nprop.GetCustomAttribute<SliderAttribute>();
+                }
+
                 if (v.Value is double || v.Value is float || v.Value is int || v.Value is long)
                 {
                     if (nprop != null && nprop.PropertyType.IsEnum)
@@ -149,17 +155,33 @@ namespace Materia.UI.Components
                         return;
                     }
 
-                    if (v.Value is float || v.Value is double || v.Value is long)
+                    if(slide != null)
                     {
-                        NumberInput np = new NumberInput(NumberInputType.Float, v, info2);
-                        Stack.Children.Add(np);
-                    
+                        NumberSlider ns = new NumberSlider(slide, info2, v);
+                        Stack.Children.Add(ns);
+                        return;
                     }
-                    else if (v.Value is int)
+
+                    NumberInputType nt = NumberInputType.Float;
+
+                    if(v.Value is int)
                     {
-                        NumberInput np = new NumberInput(NumberInputType.Int, v, info2);
+                        nt = NumberInputType.Int;
+                    }
+
+                    if (v.InputType == ParameterInputType.Slider)
+                    {
+                        NumberSlider sp = new NumberSlider();
+                        sp.Set(v.Min, v.Max, info2, v);
+                        Stack.Children.Add(sp);
+                    }
+                    else if (v.InputType == ParameterInputType.Input)
+                    {
+                        NumberInput np = new NumberInput();
+                        np.Set(nt, v, info2);
                         Stack.Children.Add(np);
                     }
+
                 }
                 else if(v.Value is bool || v.Type == NodeType.Bool)
                 {

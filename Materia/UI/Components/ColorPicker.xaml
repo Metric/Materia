@@ -6,19 +6,19 @@
              xmlns:local="clr-namespace:Materia.UI.Components"
              xmlns:local2="clr-namespace:Materia"
              mc:Ignorable="d" 
-             Height="375" Width="525" Loaded="UserControl_Loaded" Unloaded="UserControl_Unloaded" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" Icon="/Materia;component/Images/Icons/App/icon.ico">
+             Height="375" Width="525" Loaded="UserControl_Loaded" MouseUp="Window_MouseUp" MouseMove="Window_MouseMove" MouseLeave="Window_MouseLeave" Unloaded="UserControl_Unloaded" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" Icon="/Materia;component/Images/Icons/App/icon.ico">
     <Grid MinHeight="345" MinWidth="512" Margin="0,0,0,0" Background="#111">
-        <Grid Name="GHue" VerticalAlignment="Top" HorizontalAlignment="Left" Background="Gray" Width="24" Height="287" Margin="283,10,0,0">
-            <Image Name="HueSelector" Margin="1" Stretch="UniformToFill" MouseMove="HueSelector_MouseMove" />
-            <Rectangle Name="HPoint" Height="1" Fill="White" VerticalAlignment="Top" Margin="0" IsHitTestVisible="False" />
-        </Grid>
-        <Grid Name="GSatVal" VerticalAlignment="Top" HorizontalAlignment="Left" Background="Gray" Width="256" Height="287" Margin="10,10,0,0">
-            <Image Name="SaturationValueSelector" Stretch="UniformToFill" MouseMove="SaturationValueSelector_MouseMove" Margin="1" />
-            <Grid Name="SVPoint" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="-5,-5" IsHitTestVisible="False">
-                <Rectangle RadiusX="10" RadiusY="10" Width="10" Height="10" Stroke="Black" IsHitTestVisible="False" />
-                <Rectangle RadiusX="9" RadiusY="9" Width="9" Height="9" Stroke="White" IsHitTestVisible="False" />
+        <Canvas Name="GHue" VerticalAlignment="Top" HorizontalAlignment="Left" Background="Gray" Width="24" Height="287" Margin="283,24,0,0" ClipToBounds="True">
+            <Image Width="24" Height="287" Name="HueSelector" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="UniformToFill" MouseDown="HueSelector_MouseDown" Canvas.Left="1" Canvas.Top="1" />
+            <Rectangle Name="HPoint" Height="1" Width="24" Fill="White" VerticalAlignment="Top" Margin="0" IsHitTestVisible="False" />
+        </Canvas>
+        <Canvas Name="GSatVal" VerticalAlignment="Top" HorizontalAlignment="Left" Background="Gray" Width="256" Height="287" Margin="24,24,0,0">
+            <Image Width="256" Height="287" Name="SaturationValueSelector" Stretch="UniformToFill" MouseDown="SaturationValueSelector_MouseDown" />
+            <Grid Name="SVPoint" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0" IsHitTestVisible="False">
+                <Rectangle RadiusX="10" RadiusY="10" Width="10" Height="10" StrokeThickness="0.45" Stroke="Black" IsHitTestVisible="False" />
+                <Rectangle RadiusX="9" RadiusY="9" Width="9" Height="9" StrokeThickness="0.45" Stroke="White" IsHitTestVisible="False" />
             </Grid>
-        </Grid>
+        </Canvas>
         <Button Name="Dropper" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Click="Dropper_Click"  VerticalAlignment="Top" Width="24" Height="24" Margin="0,14,20,0" Style="{DynamicResource ImageTextButton}">
             <Button.Content>
                 <Image Source="/Materia;component/Images/dropper.png" />
@@ -36,7 +36,7 @@
                             <Rectangle Fill="LightGray" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,0,0,0" />
                             <Rectangle Fill="LightGray" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,4,0,0" />
                             <Rectangle Fill="White" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,4,0,0" />
-                        </Grid> 
+                        </Grid>
                     </VisualBrush.Visual>
                 </VisualBrush>
             </Grid.Background>

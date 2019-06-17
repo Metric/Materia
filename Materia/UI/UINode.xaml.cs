@@ -300,7 +300,7 @@ namespace Materia
 
                         if (odx >= 0 && odx < OutputNodes.Count)
                         {
-                            OutputNodes[odx].ConnectToNode(p);
+                            OutputNodes[odx].ConnectToNode(p, true);
                         }
                     }
                     else
@@ -340,9 +340,12 @@ namespace Materia
                     pw = (int)Math.Min(PreviewWrapper.ActualWidth, (pw * ((float)n.Width / (float)n.Height)));
                 }
 
+                ph = Math.Max(ph, 100);
+                pw = Math.Max(pw, 100);
+
                 byte[] small = n.GetPreview(pw, ph);
 
-                if (small != null) {
+                if (small != null && pw > 0 && ph > 0 && small.Length > 0) {
                     Preview.Source = BitmapSource.Create(pw, ph, 72, 72, PixelFormats.Bgra32, null, small, pw * 4);
                 }
             }

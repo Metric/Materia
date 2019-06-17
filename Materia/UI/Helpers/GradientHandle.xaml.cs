@@ -57,6 +57,7 @@ namespace Materia.UI.Helpers
             color.Y = c.G / 255.0f;
             color.Z = c.B / 255.0f;
             color.W = c.A / 255.0f;
+            SelectedColor.Background = new SolidColorBrush(Color.FromArgb((byte)c.A, (byte)c.R, (byte)c.G, (byte)c.B));
         }
 
         private void Grid_MouseDown(object sender, MouseButtonEventArgs e)

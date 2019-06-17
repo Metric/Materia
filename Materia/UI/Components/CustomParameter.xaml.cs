@@ -79,12 +79,18 @@ namespace Materia.UI.Components
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            GraphParameterValue.OnGraphParameterTypeChanged += GraphParameterValue_OnGraphParameterTypeChanged;
+            if(Param != null)
+            {
+                Param.OnGraphParameterTypeChanged += GraphParameterValue_OnGraphParameterTypeChanged;
+            }
         }
 
         private void UserControl_Unloaded(object sender, RoutedEventArgs e)
         {
-            GraphParameterValue.OnGraphParameterTypeChanged -= GraphParameterValue_OnGraphParameterTypeChanged;
+            if(Param != null)
+            {
+                Param.OnGraphParameterTypeChanged -= GraphParameterValue_OnGraphParameterTypeChanged;
+            }
         }
     }
 }

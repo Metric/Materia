@@ -131,7 +131,7 @@ namespace Materia.Nodes.Atomic
             public float[] color;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             UniformColorNodeData d = JsonConvert.DeserializeObject<UniformColorNodeData>(data);
             SetBaseNodeDate(d);

@@ -57,7 +57,7 @@ namespace Materia.Nodes.MathNodes
             public float val;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             FloatConstantData d = JsonConvert.DeserializeObject<FloatConstantData>(data);
             SetBaseNodeDate(d);

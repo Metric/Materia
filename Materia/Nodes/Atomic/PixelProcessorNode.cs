@@ -15,6 +15,8 @@ namespace Materia.Nodes.Atomic
 {
     public class PixelProcessorNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         protected NodeOutput output;
 
         protected FloatBitmap bmp;
@@ -91,10 +93,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(function.HasExpectedOutput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (function.HasExpectedOutput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()
@@ -145,7 +162,7 @@ namespace Materia.Nodes.Atomic
             public string functionGraph;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             PixelProcessorData d = JsonConvert.DeserializeObject<PixelProcessorData>(data);
             SetBaseNodeDate(d);

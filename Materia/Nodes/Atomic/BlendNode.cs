@@ -44,6 +44,8 @@ namespace Materia.Nodes.Atomic
 
     public class BlendNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         NodeInput first;
         NodeInput second;
         NodeInput mask;
@@ -149,10 +151,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(first.HasInput && second.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (first.HasInput && second.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()
@@ -228,7 +245,7 @@ namespace Materia.Nodes.Atomic
             return JsonConvert.SerializeObject(d);
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             BlendData d = JsonConvert.DeserializeObject<BlendData>(data);
             SetBaseNodeDate(d);

@@ -43,14 +43,6 @@ namespace Materia.UI.Components
             Id = id;
         }
 
-        private void GraphParameterValue_OnGraphParameterTypeChanged(GraphParameterValue param)
-        {
-            if (param == Param)
-            {
-                DisplayDefaultParam();
-            }
-        }
-
         public void Set(GraphParameterValue v, string id = "")
         {
             Param = v;

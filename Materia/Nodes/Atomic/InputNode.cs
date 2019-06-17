@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Materia.Nodes.Attributes;
 using Newtonsoft.Json;
@@ -12,6 +13,8 @@ namespace Materia.Nodes.Atomic
 {
     public class InputNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         [HideProperty]
         public new int Height
         {
@@ -94,8 +97,9 @@ namespace Materia.Nodes.Atomic
 
         public void SetInput(NodeInput input)
         {
-            foreach(NodeInput o in Inputs)
+            for(int i = 0; i < Inputs.Count; i++)
             {
+                NodeInput o = Inputs[i];
                 o.OnInputRemoved -= Input_OnInputRemoved;
                 o.OnInputChanged -= Input_OnInputChanged;
                 o.OnInputAdded -= Input_OnInputAdded;
@@ -130,10 +134,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(Input != null && Input.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (Input != null && Input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()
@@ -156,14 +175,9 @@ namespace Materia.Nodes.Atomic
             Output.Changed();
         }
 
-        public class InputNodeData : NodeData
+        public override void FromJson(string data)
         {
-            
-        }
-
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
-        {
-            InputNodeData d = JsonConvert.DeserializeObject<InputNodeData>(data);
+            NodeData d = JsonConvert.DeserializeObject<NodeData>(data);
             SetBaseNodeDate(d);
 
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
@@ -173,7 +187,7 @@ namespace Materia.Nodes.Atomic
 
         public override string GetJson()
         {
-            InputNodeData d = new InputNodeData();
+            NodeData d = new NodeData();
             FillBaseNodeData(d);
 
             return JsonConvert.SerializeObject(d);

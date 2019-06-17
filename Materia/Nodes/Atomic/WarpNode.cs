@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using Materia.Textures;
 using Materia.Imaging.GLProcessing;
 using Newtonsoft.Json;
@@ -12,6 +13,8 @@ namespace Materia.Nodes.Atomic
 {
     public class WarpNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         protected WarpProcessor processor;
 
         protected NodeInput input;
@@ -92,10 +95,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(input.HasInput && input1.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput && input1.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()
@@ -143,7 +161,7 @@ namespace Materia.Nodes.Atomic
             return JsonConvert.SerializeObject(d);
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             WarpData d = JsonConvert.DeserializeObject<WarpData>(data);
             SetBaseNodeDate(d);

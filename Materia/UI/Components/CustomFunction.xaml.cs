@@ -62,7 +62,7 @@ namespace Materia.UI.Components
             {
                 if (g != null)
                 {
-                    if (g.CustomFunctions.Remove(graph))
+                    if (g.RemoveCustomFunction(graph))
                     {
                         if (OnRemove != null)
                         {

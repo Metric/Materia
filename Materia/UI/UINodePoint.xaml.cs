@@ -96,6 +96,8 @@ namespace Materia
 
         UIGraph graph;
 
+        bool layoutDidUpdate;
+
         //a node point should only have one of these set
         //not both
         //as a node point can either be an input or an output
@@ -134,13 +136,16 @@ namespace Materia
             numbers = new Dictionary<UINodePoint, TextBlock>();
             paths = new Dictionary<UINodePoint, Path>();
             to = new List<UINodePoint>();
-
             LayoutUpdated += UINodePoint_LayoutUpdated;
         }
 
         private void UINodePoint_LayoutUpdated(object sender, EventArgs e)
         {
-            UpdatePaths();
+            if(!layoutDidUpdate)
+            {
+                layoutDidUpdate = true;
+                UpdatePaths();
+            }
         }
 
         public UINodePoint(UINode n, UIGraph pc)
@@ -152,7 +157,6 @@ namespace Materia
             paths = new Dictionary<UINodePoint, Path>();
             to = new List<UINodePoint>();
             Node = n;
-
             LayoutUpdated += UINodePoint_LayoutUpdated;
         }
 
@@ -338,7 +342,6 @@ namespace Materia
             paths[p] = path;
             to.Add(p);
             p.ParentNode = this;
-            UpdatePaths();
             graph.ViewPort.Children.Add(path);
         }
 
@@ -370,8 +373,6 @@ namespace Materia
 
                 p.ParentNode = null;
             }
-
-            UpdatePaths();
         }
 
         public void UpdateSelected(bool selected)
@@ -484,6 +485,8 @@ namespace Materia
                 }
             }
             catch { }
+
+            layoutDidUpdate = false;
         }
 
         private void UserControl_MouseDown(object sender, MouseButtonEventArgs e)

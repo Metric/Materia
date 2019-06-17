@@ -831,7 +831,9 @@ namespace Materia
             Original = Graph;
 
             Graph.CWD = CWD;
+            long ms = Environment.TickCount;
             Graph.FromJson(data);
+            Log.Info("Loaded graph in {0:0}ms", Environment.TickCount - ms);
             HdriManager.Selected = Graph.HdriIndex;
 
             Graph.OnGraphUpdated += Graph_OnGraphUpdated;
@@ -914,8 +916,10 @@ namespace Materia
                 ContextMenu = null;
             }
 
-            foreach (Node n in Graph.Nodes)
+            for(int i = 0; i < Graph.Nodes.Count; i++)
             {
+                Node n = Graph.Nodes[i];
+
                 if (n is CommentNode)
                 {
                     UICommentNode unode = new UICommentNode(n, this, n.ViewOriginX, n.ViewOriginY, XShift, YShift, Scale);
@@ -925,7 +929,7 @@ namespace Materia
                     GraphNodes.Add(unode);
                     lookup[n.Id] = unode;
                 }
-                else if(n is PinNode)
+                else if (n is PinNode)
                 {
                     UIPinNode unode = new UIPinNode(n, this, n.ViewOriginX, n.ViewOriginY, XShift, YShift, Scale);
                     unode.HorizontalAlignment = HorizontalAlignment.Left;
@@ -957,13 +961,15 @@ namespace Materia
 
             graphInitedWithTemplate = false;
 
-            Task.Delay(250).ContinueWith((Task t) =>
+            Task.Delay(100).ContinueWith((Task t) =>
             {
                 App.Current.Dispatcher.Invoke(() =>
                 {
                     //foreach uinode connect up
-                    foreach (IUIGraphNode n in GraphNodes)
+                    for(int i = 0; i < GraphNodes.Count; i++)
                     {
+                        IUIGraphNode n = GraphNodes[i];
+
                         n.LoadConnections(lookup);
                     }
 
@@ -1196,7 +1202,7 @@ namespace Materia
                 if(n != null)
                 {
                     n.Id = nd.id;
-                    n.FromJson(Graph.NodeLookup, json);
+                    n.FromJson(json);
                     Graph.Add(n);
 
                     n.SetConnections(Graph.NodeLookup, nd.outputs);
@@ -1256,7 +1262,6 @@ namespace Materia
             try
             {
                 Node.NodeData nd = JsonConvert.DeserializeObject<Node.NodeData>(json);
-
                 if (nd == null) return null;
 
                 Node n = null;
@@ -1267,7 +1272,7 @@ namespace Materia
                 if (n != null)
                 {
                     realLookup[nd.id] = n;
-                    n.FromJson(realLookup, json);
+                    n.FromJson(json);
                     Graph.Add(n);
 
                     if (n is CommentNode)

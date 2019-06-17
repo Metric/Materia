@@ -9,11 +9,10 @@ namespace Materia.Nodes
 {
     public class ImageNode : Node
     {
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             NodeData d = JsonConvert.DeserializeObject<NodeData>(data);
             SetBaseNodeDate(d);
-            SetConnections(nodes, d.outputs);
         }
 
         public override string GetJson()

@@ -61,7 +61,7 @@ namespace Materia.Nodes
             content = d;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             ItemNodeData d = JsonConvert.DeserializeObject<ItemNodeData>(data);
             SetBaseNodeDate(d);

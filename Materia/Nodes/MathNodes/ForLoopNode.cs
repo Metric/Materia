@@ -352,24 +352,5 @@ namespace Materia.Nodes.MathNodes
                 }
             }
         }
-
-        public class ForLoopNodeData : NodeData
-        {
-            public string resultVariable;
-        }
-
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
-        {
-            ForLoopNodeData d = JsonConvert.DeserializeObject<ForLoopNodeData>(data);
-            SetBaseNodeDate(d);
-        }
-
-        public override string GetJson()
-        {
-            ForLoopNodeData d = new ForLoopNodeData();
-            FillBaseNodeData(d);
-
-            return JsonConvert.SerializeObject(d);
-        }
     }
 }

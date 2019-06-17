@@ -15,6 +15,7 @@ namespace Materia.Nodes.Atomic
 {
     public class EmbossNode : ImageNode
     {
+        CancellationTokenSource ctk;
         NodeInput input;
 
         int angle;
@@ -111,7 +112,7 @@ namespace Materia.Nodes.Atomic
             public int elevation;
         }
 
-        public override void FromJson(Dictionary<string, Node> nodes, string data)
+        public override void FromJson(string data)
         {
             EmbossNodeData d = JsonConvert.DeserializeObject<EmbossNodeData>(data);
             SetBaseNodeDate(d);
@@ -132,10 +133,25 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(input.HasInput)
+            if (ctk != null)
             {
-                Process();
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(100, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (input.HasInput)
+                    {
+                        Process();
+                    }
+                });
+            });
         }
 
         void Process()

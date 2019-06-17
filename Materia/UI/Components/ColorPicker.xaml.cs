@@ -59,6 +59,9 @@ namespace Materia.UI.Components
 
         bool isInputASlide;
 
+        bool satMouseDown;
+        bool hueMouseDown;
+
         RawBitmap hueBitmap;
         RawBitmap svBitmap;
 
@@ -234,14 +237,15 @@ namespace Materia.UI.Components
             float x = (svBitmap.Width * sf) - 5;
             float y = svBitmap.Height - (svBitmap.Height * sv) - 5;
 
-            SVPoint.Margin = new Thickness(x, y, 0, 0);
+            Canvas.SetLeft(SVPoint, x);
+            Canvas.SetTop(SVPoint, y);
         }
 
         void UpdateHuePoint()
         {
             float f = hsv.H / 359.0f;
             float y = hueBitmap.Height * f;
-            HPoint.Margin = new Thickness(0, y, 0, 0);
+            Canvas.SetTop(HPoint, y);
         }
 
         void RedrawHue()
@@ -635,10 +639,11 @@ namespace Materia.UI.Components
 
         private void HueSelector_MouseMove(object sender, MouseEventArgs e)
         {
-            if(e.LeftButton == MouseButtonState.Pressed)
+            if(hueMouseDown)
             {
                 Point p = e.GetPosition(HueSelector);
                 float y = (float)p.Y / hueBitmap.Height * 359.0f;
+                y = Math.Min(359.0f, Math.Max(0, y));
                 hsv.H = y;
                 current = hsv.ToColor();
 
@@ -651,11 +656,14 @@ namespace Materia.UI.Components
 
         private void SaturationValueSelector_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e.LeftButton == MouseButtonState.Pressed)
+            if (satMouseDown)
             {
                 Point p = e.GetPosition(SaturationValueSelector);
                 float s = (float)p.X / (float)svBitmap.Width;
                 float v = 1.0f - (float)p.Y / (float)svBitmap.Height;
+
+                s = Math.Min(1, Math.Max(0, s));
+                v = Math.Min(1, Math.Max(0, v));
 
                 hsv.S = s;
                 hsv.V = v;
@@ -698,6 +706,69 @@ namespace Materia.UI.Components
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
+        }
+
+        private void SaturationValueSelector_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if(e.LeftButton == MouseButtonState.Pressed)
+            {
+                satMouseDown = true;
+
+                Point p = e.GetPosition(SaturationValueSelector);
+                float s = (float)p.X / (float)svBitmap.Width;
+                float v = 1.0f - (float)p.Y / (float)svBitmap.Height;
+
+                hsv.S = s;
+                hsv.V = v;
+
+                current = hsv.ToColor();
+
+                UpdatePreview();
+                UpdateTextFields();
+                UpdateSliders();
+            }
+        }
+
+        private void HueSelector_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if(e.LeftButton == MouseButtonState.Pressed)
+            {
+                hueMouseDown = true;
+
+                Point p = e.GetPosition(HueSelector);
+                float y = (float)p.Y / hueBitmap.Height * 359.0f;
+                hsv.H = y;
+                current = hsv.ToColor();
+
+                UpdatePreview();
+                UpdateTextFields();
+                UpdateSliders();
+                RedrawSatVal();
+            }
+        }
+
+        private void Window_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            hueMouseDown = false;
+            satMouseDown = false;
+        }
+
+        private void Window_MouseLeave(object sender, MouseEventArgs e)
+        {
+            hueMouseDown = false;
+            satMouseDown = false;
+        }
+
+        private void Window_MouseMove(object sender, MouseEventArgs e)
+        {
+            if(hueMouseDown)
+            {
+                HueSelector_MouseMove(HueSelector, e);
+            }
+            else if(satMouseDown)
+            {
+                SaturationValueSelector_MouseMove(SaturationValueSelector, e);
+            }
         }
     }
 }
