@@ -550,7 +550,7 @@ namespace Materia.Nodes
                     else
                     {
                         //log to console the fact that we could not connect the node
-                        Log.Warn("Could not restore a node connections on: " + n.name);
+                        Log.Warn("Could not restore a node connection");
                     }
                 }
             }
