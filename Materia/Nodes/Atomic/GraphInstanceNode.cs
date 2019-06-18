@@ -25,6 +25,7 @@ namespace Materia.Nodes.Atomic
         protected string path;
         protected Dictionary<string, object> jsonParameters;
         protected Dictionary<string, object> jsonCustomParameters;
+        protected Dictionary<string, GraphParameterValue> nameMap;
         protected int randomSeed;
         protected bool updatingParams;
 
@@ -138,6 +139,8 @@ namespace Materia.Nodes.Atomic
             width = w;
             height = h;
 
+            nameMap = new Dictionary<string, GraphParameterValue>();
+
             Id = Guid.NewGuid().ToString();
 
             tileX = tileY = 1;
@@ -150,6 +153,13 @@ namespace Materia.Nodes.Atomic
             //instead they are loaded after the graph is loaded
             Inputs = new List<NodeInput>();
             Outputs = new List<NodeOutput>();
+        }
+
+        public GraphParameterValue GetCustomParameter(string name)
+        {
+            GraphParameterValue v = null;
+            nameMap.TryGetValue(name, out v);
+            return v;
         }
 
         private void GraphParameterValue_OnGraphParameterUpdate(GraphParameterValue param)
@@ -184,19 +194,22 @@ namespace Materia.Nodes.Atomic
                         {
                             foreach (var k in Parameters.Keys)
                             {
+                                if (Parameters[k].IsFunction()) continue;
+
                                 string[] split = k.Split('.');
 
                                 if (p.HasParameterValue(split[0], split[1]))
                                 {
-                                    GraphInst.SetParameterValue(split[0], split[1], p.GetParameterValue(split[0], split[1]));
+                                    var realParam = Parameters[k];
+                                    realParam.AssignValue(p.GetParameterValue(split[0], split[1]));
                                 }
                             }
 
                             foreach (var param in CustomParameters)
-                            {
+                            { 
                                 if (p.HasParameterValue(Id, param.Name))
                                 {
-                                    param.Value = p.GetParameterValue(Id, param.Name);
+                                    param.AssignValue(p.GetParameterValue(Id, param.Name));
                                 }
                             }
                         }
@@ -219,6 +232,8 @@ namespace Materia.Nodes.Atomic
                 GraphInst.Dispose();
                 GraphInst = null;
             }
+
+            nameMap = new Dictionary<string, GraphParameterValue>();
 
             if (File.Exists(path) && Path.GetExtension(path).ToLower().Contains("mtg"))
             {
@@ -301,6 +316,13 @@ namespace Materia.Nodes.Atomic
                         n.OnUpdate += N_OnUpdate;
                     }
                 }
+            }
+
+            //name map used in parameter mapping for quicker lookup
+            for(int i = 0; i < GraphInst.CustomParameters.Count; i++)
+            {
+                var param = GraphInst.CustomParameters[i];
+                nameMap[param.Name] = param;
             }
         }
 
@@ -404,6 +426,7 @@ namespace Materia.Nodes.Atomic
             //fall back to last instance data saved
             if (!didLoad)
             {
+                nameMap = new Dictionary<string, GraphParameterValue>();
                 loading = true;
                 GraphInst = new Graph(Name);
                 GraphInst.ParentNode = this;

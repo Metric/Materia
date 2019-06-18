@@ -271,6 +271,31 @@ namespace Materia.Nodes
             return null;
         }
 
+        public virtual Graph TopGraph()
+        {
+            Graph p = null;
+
+            if (ParentNode != null)
+            {
+                p = ParentNode.ParentGraph;
+
+                while (p != null)
+                {
+                    var np = p.parentNode;
+                    if (np != null)
+                    {
+                        p = np.ParentGraph;
+                    }
+                    else
+                    {
+                        return p;
+                    }
+                }
+            }
+
+            return this;
+        }
+
         public Node FindSubNodeById(string id)
         {
             Node n = null;

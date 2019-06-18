@@ -62,9 +62,9 @@ namespace Materia.UI.Components
 
                 var p = Node.ParentGraph;
 
-                if(p is FunctionGraph)
+                if(p != null)
                 {
-                    p = (p as FunctionGraph).TopGraph();
+                    p = p.TopGraph();
                 }
 
                 if(p != null)
@@ -107,19 +107,39 @@ namespace Materia.UI.Components
 
                         string cparam = Parameter.Replace("$Custom.", "");
 
-                        var param = gn.CustomParameters.Find(m => m.Name.Equals(cparam));
+                        var param = gn.GetCustomParameter(cparam);
 
                         if (param != null)
                         {
                             var cparent = Node.ParentGraph;
 
+                            if(cparent != null)
+                            {
+                                cparent = cparent.TopGraph();
+                            }
+
                             if (cparent != null)
                             {
                                 cparent.SetParameterValue(Node.Id, cparam, param.Value, true, param.Type);
+                                var nparam = cparent.GetParameterRaw(Node.Id, cparam);
+
+                                //copy settings over
+                                if (nparam != null)
+                                {
+                                    nparam.Description = param.Description;
+                                    nparam.InputType = param.InputType;
+                                    nparam.Min = param.Min;
+                                    nparam.Max = param.Max;
+                                    nparam.Name = param.Name;
+                                }
 
                                 DefaultVar.IsEnabled = true;
                                 ConstantVar.IsEnabled = false;
                                 FunctionVar.IsEnabled = false;
+                            }
+                            else
+                            {
+                                Log.Warn("Failed to promote to constant");
                             }
                         }
                         else
@@ -127,6 +147,10 @@ namespace Materia.UI.Components
                             //log error
                             Log.Error("Could not find custom parameter: " + cparam);
                         }
+                    }
+                    else
+                    {
+                        Log.Warn("Failed to promote to constant");
                     }
                 }
                 else {
@@ -146,9 +170,9 @@ namespace Materia.UI.Components
 
                         var p = Node.ParentGraph;
 
-                        if (p is FunctionGraph)
+                        if (p != null)
                         {
-                            p = (p as FunctionGraph).TopGraph();
+                            p = p.TopGraph();
                         }
 
                         if (p != null)
@@ -161,11 +185,22 @@ namespace Materia.UI.Components
                             ConstantVar.IsEnabled = false;
                             FunctionVar.IsEnabled = false;
                         }
+                        else
+                        {
+                            Log.Warn("Failed to promote to constant");
+                        }
+                    }
+                    else
+                    {
+                        Log.Warn("Failed to promote to constant");
                     }
                 }
 
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Error(ex);
+            }
         }
 
         private void FunctionVar_Click(object sender, RoutedEventArgs e)
@@ -186,11 +221,16 @@ namespace Materia.UI.Components
 
                         string cparam = Parameter.Replace("$Custom.", "");
 
-                        var param = gn.CustomParameters.Find(m => m.Name.Equals(cparam));
+                        var param = gn.GetCustomParameter(cparam);
 
                         if (param != null)
                         {
                             var cparent = Node.ParentGraph;
+
+                            if(cparent != null)
+                            {
+                                cparent = cparent.TopGraph();
+                            }
 
                             g.ExpectedOutput = param.Type;
 
@@ -202,6 +242,10 @@ namespace Materia.UI.Components
                                 ConstantVar.IsEnabled = false;
                                 FunctionVar.IsEnabled = false;
                             }
+                            else
+                            {
+                                Log.Warn("Failed to promote to function");
+                            }
                         }
                         else
                         {
@@ -209,12 +253,20 @@ namespace Materia.UI.Components
                             Log.Error("Could not find custom parameter: " + cparam);
                         }
                     }
+                    else
+                    {
+                        Log.Warn("Failed to promoto to function");
+                    }
                 }
                 else
                 {
 
                     info = Node.GetType().GetProperty(Parameter);
-                    if (info == null) return;
+                    if (info == null)
+                    {
+                        Log.Warn("Failed to promote to function");
+                        return;
+                    }
 
                     var pro = info.GetCustomAttribute<PromoteAttribute>();
 
@@ -225,9 +277,9 @@ namespace Materia.UI.Components
 
                     var p = Node.ParentGraph;
 
-                    if (p is FunctionGraph)
+                    if (p != null)
                     {
-                        p = (p as FunctionGraph).TopGraph();
+                        p = p.TopGraph();
                     }
 
                     if (p != null)
@@ -240,9 +292,16 @@ namespace Materia.UI.Components
                         ConstantVar.IsEnabled = false;
                         FunctionVar.IsEnabled = false;
                     }
+                    else
+                    {
+                        Log.Warn("Failed to promote to function");
+                    }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Error(ex);
+            }
         }
 
         private void DefaultVar_Click(object sender, RoutedEventArgs e)
@@ -251,9 +310,9 @@ namespace Materia.UI.Components
 
             var p = Node.ParentGraph;
 
-            if(p != null && p is FunctionGraph)
+            if(p != null)
             {
-                p = (p as FunctionGraph).TopGraph();
+                p = p.TopGraph();
             }
 
             if (p != null)
@@ -274,9 +333,9 @@ namespace Materia.UI.Components
 
             var p = Node.ParentGraph;
 
-            if(p != null && p is FunctionGraph)
+            if(p != null)
             {
-                p = (p as FunctionGraph).TopGraph();
+                p = p.TopGraph();
             }
 
             if (p != null)

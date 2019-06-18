@@ -158,10 +158,9 @@ namespace Materia.Nodes
             SetVar("RandomSeed", randomSeed);
         }
 
-        public Graph TopGraph()
+        public override Graph TopGraph()
         {
             Graph p = null;
-
             //parentGraph takes priority!
             if(parentGraph != null)
             {

@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using Materia.Nodes;
 using System.Reflection;
 using Materia.Nodes.Attributes;
+using Materia.Nodes.Atomic;
 using OpenTK;
 using Materia.MathHelpers;
 using NLog;
@@ -62,24 +63,47 @@ namespace Materia.UI.Components
 
             foreach (var k in values.Keys)
             {
-                string[] split = k.Split('.');
                 var v = values[k];
+
+                if (v.IsFunction()) continue;
+
+                string[] split = k.Split('.');
 
                 var n = g.FindSubNodeById(split[0]);
 
                 PropertyInfo nodeInfo = null;
 
+                string customHeader = "";
+
                 if(n != null)
                 {
                     nodeInfo = n.GetType().GetProperty(split[1]);
+
+                    if(nodeInfo == null && n is GraphInstanceNode)
+                    {
+                        //then it might be an underling custom parameter on the node
+                        GraphInstanceNode inst = n as GraphInstanceNode;
+
+                        var realParam = inst.GetCustomParameter(split[1]);
+
+                        if(realParam != null)
+                        {
+                            //initiate custom header
+                            //for proper underlying processing
+                            //on the label
+                            customHeader = "$Custom.";
+                            //just set the parameter inputtype the same
+                            //also ensure min and max are the same
+                            v.InputType = realParam.InputType;
+                            v.Max = realParam.Max;
+                            v.Min = realParam.Min;
+                        }
+                    }
                 }
 
-                if (!v.IsFunction())
-                {
-                    PropertyLabel lbl = new PropertyLabel(v.Name, n, split[1]);
-                    Stack.Children.Add(lbl);
-                    BuildParameter(v, nodeInfo);
-                }
+                PropertyLabel lbl = new PropertyLabel(v.Name, n, customHeader + split[1]);
+                Stack.Children.Add(lbl);
+                BuildParameter(v, nodeInfo);
             }
         }
 
