@@ -306,7 +306,6 @@ namespace Materia.Nodes
                 return n;
             }
 
-
             var graphinsts = Nodes.FindAll(m => m is GraphInstanceNode);
 
             //try and retrieve from graph inst

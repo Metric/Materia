@@ -11,15 +11,15 @@ uniform mat4 normalMatrix;
 uniform vec2 tiling;
 
 struct AppData {
-    vec3 Normal;
-    vec2 UV;
-    vec3 WorldPos;
-    mat3 TBN;
-    vec3 ObjectPos;
-    vec4 ClipPos;
-    vec3 T;
-    vec3 B;
-    vec3 N;
+   vec3 Normal;
+   vec2 UV;
+   vec3 WorldPos;
+   mat3 TBN;
+   vec3 ObjectPos;
+   vec4 ClipPos;
+   vec3 T;
+   vec3 B;
+   vec3 N;
 };
 
 out AppData data;

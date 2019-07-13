@@ -37,6 +37,7 @@ uniform float lightPower = 1;
 //POM Data
 uniform float heightScale = 0.2;
 uniform float occlusionClipBias = -1.0;
+uniform int displace = 0;
 
 //Index of refraction
 uniform float refraction = 0.04;
@@ -265,11 +266,14 @@ void main()
     vec3 V = shading.view = normalize(cameraPosition - o.WorldPos);
     vec2 uv = o.UV;
 
-    uv = parallaxWorldMapping(o, cameraPosition - o.WorldPos, heightMap);
+    if(displace == 0)
+    {
+        uv = parallaxWorldMapping(o, cameraPosition - o.WorldPos, heightMap);
 
-    if(occlusionClipBias > -1) {
-        if(uv.x < 0 - occlusionClipBias || uv.x > 1 + occlusionClipBias || uv.y < 0 - occlusionClipBias || uv.y > 1 + occlusionClipBias)
-            discard;
+        if(occlusionClipBias > -1) {
+            if(uv.x < 0 - occlusionClipBias || uv.x > 1 + occlusionClipBias || uv.y < 0 - occlusionClipBias || uv.y > 1 + occlusionClipBias)
+                discard;
+        }
     }
 
     shading.uv = uv;

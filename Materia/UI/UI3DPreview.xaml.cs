@@ -56,6 +56,12 @@ namespace Materia.UI
         Orthographic
     }
 
+    public enum PreviewRenderMode
+    {
+        WireframeShading,
+        FullShading
+    }
+
     /// <summary>
     /// Interaction logic for UI3DPreview.xaml
     /// </summary>
@@ -90,6 +96,7 @@ namespace Materia.UI
         Mesh customMesh;
 
         Material.PBRMaterial mat;
+        Material.PBRTess tessMat;
 
         UINode occlusionNode;
         UINode albedoNode;
@@ -105,6 +112,7 @@ namespace Materia.UI
         PreviewGeometryType previewType;
         PreviewCameraPosition previewPosition;
         PreviewCameraMode previewCameraMode;
+        PreviewRenderMode previewRenderMode;
 
         Point mouseStart;
 
@@ -115,6 +123,7 @@ namespace Materia.UI
             HdriManager.Scan();
             HdriManager.OnHdriLoaded += HdriManager_OnHdriLoaded;
             InitializeComponent();
+            previewRenderMode = PreviewRenderMode.FullShading;
             Instance = this;
 
             materialSettings = new MaterialSettings();
@@ -172,7 +181,6 @@ namespace Materia.UI
                 previewType = PreviewGeometryType.Cube;
                 previewCameraMode = PreviewCameraMode.Perspective;
                 previewPosition = PreviewCameraPosition.Perspective;
-
                 glview = new GLControl(GraphicsMode.Default);
                 glview.Load += Glview_Load;
                 glview.Paint += Glview_Paint;
@@ -421,15 +429,21 @@ namespace Materia.UI
 
         void SetAlbedo(GLTextuer2D t)
         {
-            if (mat == null) return;
+            if (mat == null && tessMat == null) return;
 
             if (t == null || t.Id == 0)
             {
-                mat.Albedo = defaultDarkGray;
+                if(mat != null)
+                    mat.Albedo = defaultDarkGray;
+                if (tessMat != null)
+                    tessMat.Albedo = defaultDarkGray;
             }
             else
             {
-                mat.Albedo = t;
+                if(mat != null)
+                    mat.Albedo = t;
+                if (tessMat != null)
+                    tessMat.Albedo = t;
             }
 
             Invalidate();
@@ -437,15 +451,21 @@ namespace Materia.UI
 
         void SetNormal(GLTextuer2D t)
         {
-            if (mat == null) return;
+            if (mat == null && tessMat == null) return;
 
             if (t == null || t.Id == 0)
             {
-                mat.Normal = defaultBlack;
+                if (mat != null)
+                    mat.Normal = defaultBlack;
+                if (tessMat != null)
+                    tessMat.Normal = defaultBlack;
             }
             else
             {
-                mat.Normal = t;
+                if (mat != null)
+                    mat.Normal = t;
+                if (tessMat != null)
+                    tessMat.Normal = t;
             }
 
             Invalidate();
@@ -453,15 +473,21 @@ namespace Materia.UI
 
         void SetMetallic(GLTextuer2D t)
         {
-            if (mat == null) return;
+            if (mat == null && tessMat == null) return;
 
             if (t == null || t.Id == 0)
             {
-                mat.Metallic = defaultBlack;
+                if (mat != null)
+                    mat.Metallic = defaultBlack;
+                if (tessMat != null)
+                    tessMat.Metallic = defaultBlack;
             }
             else
             {
-                mat.Metallic = t;
+                if (mat != null)
+                    mat.Metallic = t;
+                if (tessMat != null)
+                    tessMat.Metallic = t;
             }
 
             Invalidate();
@@ -469,15 +495,21 @@ namespace Materia.UI
 
         void SetRoughness(GLTextuer2D t)
         {
-            if (mat == null) return;
+            if (mat == null && tessMat == null) return;
 
             if (t == null || t.Id == 0)
             {
-                mat.Roughness = defaultBlack;
+                if (mat != null)
+                    mat.Roughness = defaultBlack;
+                if (tessMat != null)
+                    tessMat.Roughness = defaultBlack;
             }
             else
             {
-                mat.Roughness = t;
+                if (mat != null)
+                    mat.Roughness = t;
+                if (tessMat != null)
+                    tessMat.Roughness = t;
             }
 
             Invalidate();
@@ -485,15 +517,21 @@ namespace Materia.UI
 
         void SetHeight(GLTextuer2D t)
         {
-            if (mat == null) return;
+            if (mat == null && tessMat == null) return;
 
             if (t == null || t.Id == 0)
-            {
-                mat.Height = defaultWhite;
+            { 
+                if (mat != null)
+                    mat.Height = defaultWhite;
+                if (tessMat != null)
+                    mat.Height = defaultBlack;
             }
             else
             {
-                mat.Height = t;
+                if (mat != null)
+                    mat.Height = t;
+                if (tessMat != null)
+                    tessMat.Height = t;
             }
 
             Invalidate();
@@ -501,15 +539,21 @@ namespace Materia.UI
 
         void SetOcclusion(GLTextuer2D t)
         {
-            if (mat == null) return;
+            if (mat == null && tessMat == null) return;
 
             if (t == null || t.Id == 0)
             {
-                mat.Occlusion = defaultWhite;
+                if (mat != null)
+                    mat.Occlusion = defaultWhite;
+                if (tessMat != null)
+                    tessMat.Occlusion = defaultWhite;
             }
             else
             {
-                mat.Occlusion = t;
+                if (mat != null)
+                    mat.Occlusion = t;
+                if (tessMat != null)
+                    tessMat.Occlusion = t;
             }
 
             Invalidate();
@@ -517,15 +561,21 @@ namespace Materia.UI
 
         void SetThickness(GLTextuer2D t)
         {
-            if (mat == null) return;
+            if (mat == null && tessMat == null) return;
 
             if(t == null || t.Id == 0)
             {
-                mat.Thickness = defaultBlack;
+                if (mat != null)
+                    mat.Thickness = defaultBlack;
+                if (tessMat != null)
+                    tessMat.Thickness = defaultBlack;
             }
             else
             {
-                mat.Thickness = t;
+                if (mat != null)
+                    mat.Thickness = t;
+                if (tessMat != null)
+                    tessMat.Thickness = t;
             }
 
             Invalidate();
@@ -596,7 +646,7 @@ namespace Materia.UI
                 RSMI.Importer importer = new RSMI.Importer();
                 List<RSMI.Containers.Mesh> meshes = importer.Parse(pcube);
 
-                if(mat == null)
+                if (mat == null)
                 {
                     mat = new Material.PBRMaterial
                     {
@@ -604,7 +654,21 @@ namespace Materia.UI
                         Albedo = defaultDarkGray,
                         Occlusion = defaultWhite,
                         Roughness = defaultBlack,
-                        Height = defaultWhite
+                        Height = defaultWhite,
+                        Thickness = defaultBlack
+                    };
+                }
+
+                if (tessMat == null)
+                {
+                    tessMat = new Material.PBRTess
+                    {
+                        Metallic = defaultBlack,
+                        Albedo = defaultDarkGray,
+                        Occlusion = defaultWhite,
+                        Roughness = defaultBlack,
+                        Height = defaultBlack,
+                        Thickness = defaultBlack
                     };
                 }
 
@@ -679,33 +743,71 @@ namespace Materia.UI
             }
         }
 
-        void CheckMaterials()
+        void CheckTessMaterials()
+        {
+            if (tessMat == null) return;
+
+            if (tessMat.Albedo == null || tessMat.Albedo.Id == 0)
+            {
+                tessMat.Albedo = defaultDarkGray;
+            }
+            if (tessMat.Normal == null || tessMat.Normal.Id == 0)
+            {
+                tessMat.Normal = defaultBlack;
+            }
+            if (tessMat.Height == null || tessMat.Height.Id == 0)
+            {
+                tessMat.Height = defaultBlack;
+            }
+            if (tessMat.Occlusion == null || tessMat.Occlusion.Id == 0)
+            {
+                tessMat.Occlusion = defaultWhite;
+            }
+            if (tessMat.Roughness == null || tessMat.Roughness.Id == 0)
+            {
+                tessMat.Roughness = defaultBlack;
+            }
+            if (tessMat.Metallic == null || tessMat.Metallic.Id == 0)
+            {
+                tessMat.Metallic = defaultBlack;
+            }
+            if (tessMat.Thickness == null || tessMat.Thickness.Id == 0)
+            {
+                tessMat.Thickness = defaultBlack;
+            }
+        }
+
+        void CheckBaseMaterials()
         {
             if (mat == null) return;
 
-            if(mat.Albedo == null || mat.Albedo.Id == 0)
+            if (mat.Albedo == null || mat.Albedo.Id == 0)
             {
                 mat.Albedo = defaultDarkGray;
             }
-            if(mat.Normal == null || mat.Normal.Id == 0)
+            if (mat.Normal == null || mat.Normal.Id == 0)
             {
                 mat.Normal = defaultBlack;
             }
-            if(mat.Height == null || mat.Height.Id == 0)
+            if (mat.Height == null || mat.Height.Id == 0)
             {
                 mat.Height = defaultWhite;
             }
-            if(mat.Occlusion == null || mat.Occlusion.Id == 0)
+            if (mat.Occlusion == null || mat.Occlusion.Id == 0)
             {
                 mat.Occlusion = defaultWhite;
             }
-            if(mat.Roughness == null || mat.Roughness.Id == 0)
+            if (mat.Roughness == null || mat.Roughness.Id == 0)
             {
                 mat.Roughness = defaultBlack;
             }
-            if(mat.Metallic == null || mat.Metallic.Id == 0)
+            if (mat.Metallic == null || mat.Metallic.Id == 0)
             {
                 mat.Metallic = defaultBlack;
+            }
+            if (mat.Thickness == null || mat.Thickness.Id == 0)
+            {
+                mat.Thickness = defaultBlack;
             }
         }
 
@@ -729,19 +831,44 @@ namespace Materia.UI
                 proj = camera.Perspective;
             }
 
-            //UpdateSSS
+            //Update SSS
             mat.SSSAmbient = materialSettings.SSSAmbient;
             mat.SSSDistortion = materialSettings.SSSDistortion;
             mat.SSSPower = materialSettings.SSSPower;
 
-            CheckMaterials();
+            tessMat.SSSAmbient = materialSettings.SSSAmbient;
+            tessMat.SSSDistortion = materialSettings.SSSDistortion;
+            tessMat.SSSPower = materialSettings.SSSPower;
+
+            //update other material settings
+            mat.IOR = materialSettings.IndexOfRefraction;
+            mat.HeightScale = materialSettings.HeightScale;
+            mat.ClipHeight = materialSettings.Clip;
+            mat.ClipHeightBias = materialSettings.HeightClipBias;
+            mat.UseDisplacement = false;
+
+            tessMat.IOR = materialSettings.IndexOfRefraction;
+            tessMat.HeightScale = materialSettings.HeightScale;
+            tessMat.ClipHeight = materialSettings.Clip;
+            tessMat.ClipHeightBias = materialSettings.HeightClipBias;
+            tessMat.UseDisplacement = true;
+
+            CheckTessMaterials();
+            CheckBaseMaterials();
             
             GL.Viewport(0, 0, glview.Width, glview.Height);
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1);
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.Clear(ClearBufferMask.DepthBufferBit);
 
-            DrawGeometry(ref proj, camera, mat);
+            if(previewRenderMode == PreviewRenderMode.WireframeShading)
+            {
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            }
+
+            DrawGeometry(ref proj, camera, materialSettings.Displacement ? tessMat : mat);
+
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             glview.SwapBuffers();
         }
@@ -783,10 +910,6 @@ namespace Materia.UI
                     cube.LightPower = light.Power;
                     cube.Near = camera.Near;
                     cube.Far = camera.Far;
-                    cube.IOR = materialSettings.IndexOfRefraction;
-                    cube.HeightScale = materialSettings.HeightScale;
-                    cube.ClipHeight = materialSettings.Clip;
-                    cube.ClipHeightBias = materialSettings.HeightClipBias;
 
                     if (m is Material.PBRDepth)
                     {
@@ -814,10 +937,6 @@ namespace Materia.UI
                     sphere.LightPower = light.Power;
                     sphere.Near = camera.Near;
                     sphere.Far = camera.Far;
-                    sphere.IOR = materialSettings.IndexOfRefraction;
-                    sphere.HeightScale = materialSettings.HeightScale;
-                    sphere.ClipHeight = materialSettings.Clip;
-                    sphere.ClipHeightBias = materialSettings.HeightClipBias;
 
                     if (m is Material.PBRDepth)
                     {
@@ -845,10 +964,6 @@ namespace Materia.UI
                     cylinder.LightPower = light.Power;
                     cylinder.Near = camera.Near;
                     cylinder.Far = camera.Far;
-                    cylinder.IOR = materialSettings.IndexOfRefraction;
-                    cylinder.HeightScale = materialSettings.HeightScale;
-                    cylinder.ClipHeight = materialSettings.Clip;
-                    cylinder.ClipHeightBias = materialSettings.HeightClipBias;
 
                     if (m is Material.PBRDepth)
                     {
@@ -876,10 +991,6 @@ namespace Materia.UI
                     plane.LightPower = light.Power;
                     plane.Near = camera.Near;
                     plane.Far = camera.Far;
-                    plane.IOR = materialSettings.IndexOfRefraction;
-                    plane.HeightScale = materialSettings.HeightScale;
-                    plane.ClipHeight = materialSettings.Clip;
-                    plane.ClipHeightBias = materialSettings.HeightClipBias;
 
                     if (m is Material.PBRDepth)
                     {
@@ -907,10 +1018,6 @@ namespace Materia.UI
                     cubeRounded.LightPower = light.Power;
                     cubeRounded.Near = camera.Near;
                     cubeRounded.Far = camera.Far;
-                    cubeRounded.IOR = materialSettings.IndexOfRefraction;
-                    cubeRounded.HeightScale = materialSettings.HeightScale;
-                    cubeRounded.ClipHeight = materialSettings.Clip;
-                    cubeRounded.ClipHeightBias = materialSettings.HeightClipBias;
 
                     if (m is Material.PBRDepth)
                     {
@@ -938,10 +1045,6 @@ namespace Materia.UI
                     custom.LightPower = light.Power;
                     custom.Near = camera.Near;
                     custom.Far = camera.Far;
-                    custom.IOR = materialSettings.IndexOfRefraction;
-                    custom.HeightScale = materialSettings.HeightScale;
-                    custom.ClipHeight = materialSettings.Clip;
-                    custom.ClipHeightBias = materialSettings.HeightClipBias;
 
                     if (m is Material.PBRDepth)
                     {
@@ -960,6 +1063,8 @@ namespace Materia.UI
             ViewContext.VerifyContext(glview);
             ViewContext.Context.MakeCurrent(glview.WindowInfo);
 
+            Log.Info("GL Version: " + GL.GetString(StringName.Version));
+            GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             GL.DepthFunc(DepthFunction.Lequal);
@@ -1022,6 +1127,12 @@ namespace Materia.UI
             }
 
             HdriManager.Release();
+
+            if(tessMat != null)
+            {
+                tessMat.Release();
+                tessMat = null;
+            }
 
             if (mat != null)
             {
@@ -1249,18 +1360,31 @@ namespace Materia.UI
             }
         }
 
+        private void RenderMode_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem mnu = sender as MenuItem;
+            PreviewRenderMode ctype;
+            Enum.TryParse<PreviewRenderMode>(mnu.Header.ToString().Replace("_", "").Replace(" ", ""), out ctype);
+            previewRenderMode = ctype;
+            Invalidate();
+        }
+
         //this is used for material menu item click
         //and light settings click
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
             MenuItem mnu = sender as MenuItem;
 
-            if(mnu.Header.ToString().ToLower().Contains("material"))
+            if(mnu.Header.ToString().ToLower().Contains("material setting"))
             {
                 if(UINodeParameters.Instance != null)
                 {
                     UINodeParameters.Instance.SetActive(materialSettings);
                 }
+            }
+            else if(mnu.Header.ToString().ToLower().Contains("reset material"))
+            {
+                materialSettings.ResetToDefault();
             }
             else if(mnu.Header.ToString().ToLower().Contains("light setting"))
             {

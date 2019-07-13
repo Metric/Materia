@@ -35,6 +35,14 @@ namespace Materia.Material
         public float SSSAmbient { get; set; }
         public float SSSPower { get; set; }
 
+        public bool UseDisplacement { get; set; }
+
+        public float IOR { get; set; }
+        public float HeightScale { get; set; }
+
+        public bool ClipHeight { get; set; }
+        public float ClipHeightBias { get; set; }
+
         public PBRMaterial()
         {
 
@@ -63,7 +71,7 @@ namespace Materia.Material
         }
 
         //need to move this out into a main cache area
-        void LoadBRDF()
+        protected void LoadBRDF()
         {
             if (BRDFLoaded) return;
 

@@ -165,6 +165,7 @@
     <Compile Include="Logging\MateriaLogTarget.cs" />
     <Compile Include="Material\PBRDepth.cs" />
     <Compile Include="Material\PBRLight.cs" />
+    <Compile Include="Material\PBRTess.cs" />
     <Compile Include="MathHelpers\Camera.cs" />
     <Compile Include="MathHelpers\Light.cs" />
     <Compile Include="MathHelpers\MVector.cs" />
@@ -273,6 +274,8 @@
     <Compile Include="Settings\MaterialSettings.cs" />
     <Compile Include="Settings\LightingSettings.cs" />
     <Compile Include="Settings\Settings.cs" />
+    <Compile Include="Shaders\GLTcsShader.cs" />
+    <Compile Include="Shaders\GLTesShader.cs" />
     <Compile Include="UI\Components\BreadCrumb.xaml.cs">
       <DependentUpon>BreadCrumb.xaml</DependentUpon>
     </Compile>

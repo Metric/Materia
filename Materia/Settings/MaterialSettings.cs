@@ -94,6 +94,25 @@ namespace Materia.Settings
             }
         }
 
+        protected bool useDisplacement;
+        [Section(Section = "General")]
+        [Title(Title = "Use Displacement")]
+        public bool Displacement
+        {
+            get
+            {
+                return useDisplacement;
+            }
+            set
+            {
+                useDisplacement = value;
+                if(OnMaterialUpdated != null)
+                {
+                    OnMaterialUpdated.Invoke(this);
+                }
+            }
+        }
+
         protected float sssDistortion;
         [Section(Section = "Subsurface Scattering")]
         [Title(Title = "Distortion")]
@@ -164,7 +183,26 @@ namespace Materia.Settings
             heightScale = 0.2f;
             heightClipBias = 0;
             clipHeight = false;
+            useDisplacement = false;
             indexOfRefraction = 0.04f;
+        }
+
+        public void ResetToDefault()
+        {
+            sssDistortion = 0.5f;
+            sssAmbient = 0;
+            sssPower = 1f;
+
+            heightScale = 0.2f;
+            heightClipBias = 0;
+            clipHeight = false;
+            indexOfRefraction = 0.04f;
+            useDisplacement = false;
+
+            if(OnMaterialUpdated != null)
+            {
+                OnMaterialUpdated.Invoke(this);
+            }
         }
 
         public override void Load()

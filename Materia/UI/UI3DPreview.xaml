@@ -41,7 +41,13 @@
                 <Separator></Separator>
                 <MenuItem Header="_Light Settings" Click="MenuItem_Click" Foreground="#555" />
             </MenuItem>
-            <MenuItem Height="25" Foreground="LightGray" Header="_Material" Click="MenuItem_Click" />
+            <MenuItem Height="25" Foreground="LightGray" Header="Material">
+                <MenuItem Header="_Material Settings" Click="MenuItem_Click" Foreground="#555" />
+                <MenuItem Header="_Wireframe Shading" Click="RenderMode_Click" Foreground="#555" h:MenuItemExtensions.GroupName="renderMode" IsCheckable="True" IsChecked="False"/>
+                <MenuItem Header="_Full Shading" Click="RenderMode_Click" Foreground="#555" h:MenuItemExtensions.GroupName="renderMode" IsCheckable="True" IsChecked="True" />
+                <Separator />
+                <MenuItem Header="_Reset Material" Click="MenuItem_Click" Foreground="#555" />
+            </MenuItem>
         </Menu>
     </Grid>
 </UserControl>

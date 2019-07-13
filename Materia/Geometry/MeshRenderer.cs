@@ -30,14 +30,8 @@ namespace Materia.Geometry
         public Matrix4 Model { get; set; }
         public Vector2 Tiling { get; set; }
 
-        public float IOR { get; set; }
-        public float HeightScale { get; set; }
-
         public float Near { get; set; }
         public float Far { get; set; }
-
-        public bool ClipHeight { get; set; }
-        public float ClipHeightBias { get; set; }
 
         protected GLArrayBuffer vbo;
         protected GLVertexArray vao;
@@ -262,24 +256,24 @@ namespace Materia.Geometry
                 shader.SetUniform("far", Far);
                 shader.SetUniform("near", Near);
 
-                shader.SetUniform("heightScale", HeightScale);
-                shader.SetUniform("refraction", IOR);
+                shader.SetUniform("heightScale", Mat.HeightScale);
+                shader.SetUniform("refraction", Mat.IOR);
 
                 ///SSS Related
                 shader.SetUniform("SSS_Distortion", Mat.SSSDistortion);
                 shader.SetUniform("SSS_Ambient", Mat.SSSAmbient);
                 shader.SetUniform("SSS_Power", Mat.SSSPower);
 
-
-
-                if(ClipHeight)
+                if(Mat.ClipHeight)
                 {
-                    shader.SetUniform("occlusionClipBias", ClipHeightBias);
+                    shader.SetUniform("occlusionClipBias", Mat.ClipHeightBias);
                 }
                 else
                 {
                     shader.SetUniform("occlusionClipBias", -1.0f);
                 }
+
+                shader.SetUniform("displace", Mat.UseDisplacement);
 
                 Vector2 tiling = Tiling;
 
@@ -287,7 +281,16 @@ namespace Materia.Geometry
 
                 ///draw
                 vao.Bind();
-                GL.DrawElements(BeginMode.Triangles, indicesCount, DrawElementsType.UnsignedInt, 0);
+
+                if (Mat.UseDisplacement)
+                {
+                    GL.DrawElements(BeginMode.Patches, indicesCount, DrawElementsType.UnsignedInt, 0);
+                }
+                else
+                {
+                    GL.DrawElements(BeginMode.Triangles, indicesCount, DrawElementsType.UnsignedInt, 0);
+                }
+
                 GLVertexArray.Unbind();
                 GLTextuer2D.Unbind();
             }
