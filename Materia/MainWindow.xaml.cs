@@ -26,6 +26,7 @@ using Xceed.Wpf.AvalonDock.Layout.Serialization;
 using Materia.Undo;
 using Materia.Nodes;
 using Materia.UI;
+using Materia.Settings;
 using NLog;
 
 namespace Materia
@@ -48,10 +49,14 @@ namespace Materia
 
         protected UIPopupShelf popupShelf;
 
+        protected RecentSettings recent;
+
         public MainWindow()
         {
             InitializeComponent();
             Instance = this;
+            recent = new RecentSettings();
+            recent.Load();
             graphs = new List<UIGraph>();
             documents = new List<LayoutDocument>();
             LoadLayout();
@@ -65,6 +70,27 @@ namespace Materia
 
             mnuRedo.IsEnabled = false;
             mnuUndo.IsEnabled = false;
+        }
+
+        private void BuildRecentSubMenu()
+        {
+            RecentMenu.Items.Clear();
+
+            foreach(RecentSettings.RecentPath p in recent.Paths)
+            {
+                MenuItem recent = new MenuItem();
+                recent.Header = p.path;
+                recent.Foreground = new SolidColorBrush(Colors.Black);
+                recent.Click += Recent_Click;
+                RecentMenu.Items.Add(recent);
+            }
+        }
+
+        private void Recent_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem mnu = sender as MenuItem;
+            string path = mnu.Header.ToString();
+            HandleOpen(path);
         }
 
         private void UndoRedoManager_OnUndoAdded(string id, int count)
@@ -372,7 +398,15 @@ namespace Materia
                     doc.Title = g.GraphName;
 
                     Log.Info("Opened Graph {0}", g.GraphName);
+
+                    recent.Add(path);
+
+                    BuildRecentSubMenu();
                 }
+            }
+            else
+            {
+                Log.Warn("File does not exist: " + path);
             }
         }
 
@@ -390,6 +424,8 @@ namespace Materia
                     if (g != null)
                     {
                         g.Save(svf.FileName);
+                        recent.Add(svf.FileName);
+                        BuildRecentSubMenu();
                     }
                 }
             }
@@ -483,6 +519,8 @@ namespace Materia
                 }
             }
 
+            recent.Save();
+
             //release all opengl content
             foreach(UIGraph g in graphs)
             {
@@ -567,6 +605,7 @@ namespace Materia
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            BuildRecentSubMenu();
             MateriaInputManager.Init();
             RegisterInputActions();
 

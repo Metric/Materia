@@ -273,6 +273,7 @@
     <Compile Include="Nodes\MathNodes\TangentNode.cs" />
     <Compile Include="Settings\MaterialSettings.cs" />
     <Compile Include="Settings\LightingSettings.cs" />
+    <Compile Include="Settings\RecentSettings.cs" />
     <Compile Include="Settings\Settings.cs" />
     <Compile Include="Shaders\GLTcsShader.cs" />
     <Compile Include="Shaders\GLTesShader.cs" />
