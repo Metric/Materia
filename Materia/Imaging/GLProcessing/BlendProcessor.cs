@@ -17,6 +17,11 @@ namespace Materia.Imaging.GLProcessing
             get; set;
         }
 
+        public int AlphaMode
+        {
+            get; set;
+        }
+
         public float Alpha { get; set; }
 
         GLShaderProgram shader;
@@ -24,6 +29,7 @@ namespace Materia.Imaging.GLProcessing
         public BlendProcessor() : base()
         {
             shader = GetShader("image.glsl", "blend.glsl");
+            AlphaMode = 0;
         }
 
         public void Process(int width, int height, GLTextuer2D tex, GLTextuer2D tex2, GLTextuer2D mask, GLTextuer2D output)
@@ -69,6 +75,7 @@ namespace Materia.Imaging.GLProcessing
                 tex2.Bind();
                 shader.SetUniform("blendMode", BlendMode);
                 shader.SetUniform("alpha", Alpha);
+                shader.SetUniform("alphaMode", AlphaMode);
 
                 if (mask != null)
                 {

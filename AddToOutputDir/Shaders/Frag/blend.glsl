@@ -40,6 +40,15 @@ uniform int blendMode = 1;
 uniform float alpha = 1;
 uniform int hasMask = 0;
 
+///alpha modes
+//Background = 0
+//Foregound = 1
+//Min = 2
+//Max = 3
+//Average = 4
+
+uniform int alphaMode = 0;
+
 ///HSL HELPERS
 vec3 ToHSL(vec3 c) {
     float r = c.r;
@@ -85,9 +94,9 @@ vec3 ToHSL(vec3 c) {
 float ColorCalc(float c, float t1, float t2) {
     if (c < 0) c += 1;
     if (c > 1) c -= 1;
-    if (6f * c < 1f) return t1 + (t2 - t1) * 6f * c;
-    if (2f * c < 1f) return t2;
-    if (3f * c < 2f) return t1 + (t2 - t1) * (2f / 3f - c) * 6f;
+    if (c < 1.0 / 6.0) return t1 + (t2 - t1) * 6.0 * c;
+    if (c < 0.5) return t2;
+    if (c < 2.0 / 3.0) return t1 + ((t2 - t1) * (2.0 / 3.0 - c) * 6.0);
     return t1;
 }
 
@@ -261,27 +270,24 @@ float Lighten(float a, float b) {
     return max(a,b);
 }
 
-//not working
 vec3 Hue(vec3 a, vec3 b) {
     vec3 h = ToHSL(a);
     vec3 h2 = ToHSL(b);
 
     h.r = h2.r;
 
-    return FromHSL(h2);
+    return FromHSL(h);
 }
 
-//not working
 vec3 Saturation(vec3 a, vec3 b) {
     vec3 h = ToHSL(a);
     vec3 h2 = ToHSL(b);
 
     h.g = h2.g;
 
-    return FromHSL(h2);
+    return FromHSL(h);
 }
 
-//not working
 vec3 Color(vec3 a, vec3 b) {
     vec3 h = ToHSL(a);
     vec3 h2 = ToHSL(b);
@@ -289,17 +295,16 @@ vec3 Color(vec3 a, vec3 b) {
     h.r = h2.r;
     h.g = h2.g;
 
-    return FromHSL(h2);
+    return FromHSL(h);
 }
 
-//not working
 vec3 Luminosity(vec3 a, vec3 b) {
     vec3 h = ToHSL(a);
     vec3 h2 = ToHSL(b);
 
     h.b = h2.b;
 
-    return FromHSL(h2);
+    return FromHSL(h);
 }
 
 void main() {
@@ -430,6 +435,25 @@ void main() {
         final.b = Exclusion(a.b * alpha * m, b.b);
     }
 
-    final.a = b.a;
+    if(alphaMode == 0) {
+        final.a = b.a;
+    }
+    else if(alphaMode == 1) {
+        final.a = a.a;
+    }
+    else if(alphaMode == 2) {
+        final.a = min(a.a, b.a);
+    }
+    else if(alphaMode == 3) {
+        final.a = max(a.a, b.a);
+    }
+    else if(alphaMode == 4) {
+        final.a = (a.a + b.a) * 0.5;
+    }
+    //default to background alpha mode
+    else {
+        final.a = b.a;
+    }
+
     FragColor = final;
 }

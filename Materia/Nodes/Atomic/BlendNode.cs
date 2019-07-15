@@ -42,6 +42,15 @@ namespace Materia.Nodes.Atomic
         Exclusion = 24
     }
 
+    public enum AlphaModeType
+    {
+        Background = 0,
+        Foreground = 1,
+        Min = 2,
+        Max = 3,
+        Average = 4
+    }
+
     public class BlendNode : ImageNode
     {
         CancellationTokenSource ctk;
@@ -89,6 +98,22 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        AlphaModeType alphaMode;
+        [Promote(NodeType.Float)]
+        [Title(Title = "Alpha Mode")]
+        public AlphaModeType AlphaMode
+        {
+            get
+            {
+                return alphaMode;
+            }
+            set
+            {
+                alphaMode = value;
+                TryAndProcess();
+            }
+        }
+
         public BlendNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
             Name = "Blend";
@@ -97,6 +122,7 @@ namespace Materia.Nodes.Atomic
             height = h;
 
             alpha = 1;
+            alphaMode = AlphaModeType.Background;
             mode = BlendType.Copy;
 
             previewProcessor = new BasicImageRenderer();
@@ -191,6 +217,7 @@ namespace Materia.Nodes.Atomic
 
             int pmode = (int)mode;
             float palpha = alpha;
+            int amode = (int)alphaMode;
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Mode"))
             {
@@ -200,11 +227,16 @@ namespace Materia.Nodes.Atomic
             {
                 palpha = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Alpha"));
             }
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "AlphaMode"))
+            {
+                amode = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "AlphaMode"));
+            }
 
             processor.TileX = tileX;
             processor.TileY = tileY;
             processor.Alpha = palpha;
             processor.BlendMode = pmode;
+            processor.AlphaMode = amode;
             processor.Process(width, height, i1, i2, i3, buffer);
             processor.Complete();
 
@@ -233,6 +265,7 @@ namespace Materia.Nodes.Atomic
         {
             public string mode;
             public float alpha;
+            public string alphaMode;
         }
 
         public override string GetJson()
@@ -240,6 +273,7 @@ namespace Materia.Nodes.Atomic
             BlendData d = new BlendData();
             FillBaseNodeData(d);
             d.mode = mode.ToString();
+            d.alphaMode = alphaMode.ToString();
             d.alpha = alpha;
 
             return JsonConvert.SerializeObject(d);
@@ -249,6 +283,7 @@ namespace Materia.Nodes.Atomic
         {
             BlendData d = JsonConvert.DeserializeObject<BlendData>(data);
             SetBaseNodeDate(d);
+            Enum.TryParse<AlphaModeType>(d.alphaMode, out alphaMode);
             Enum.TryParse<BlendType>(d.mode, out mode);
             alpha = d.alpha;
         }
