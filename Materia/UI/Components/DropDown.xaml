@@ -7,10 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="256">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition MinWidth="56" />
-            <ColumnDefinition MaxWidth="175" />
-        </Grid.ColumnDefinitions>
-        <ComboBox Foreground="LightGray" Style="{StaticResource ComboBoxFlatStyle}" SelectionChanged="Dropdown_SelectionChanged" Name="Dropdown" Grid.Column="1" MaxWidth="175"  Margin="4,4,4,4"></ComboBox>
+        <ComboBox Foreground="LightGray" Style="{StaticResource ComboBoxFlatStyle}" SelectionChanged="Dropdown_SelectionChanged" Name="Dropdown" Grid.Column="1"  Margin="4,4,4,4"></ComboBox>
     </Grid>
 </UserControl>

@@ -53,7 +53,15 @@ namespace Materia
             NumberType = t;
             property = p;
             propertyOwner = owner;
-            Input.Text = p.GetValue(owner).ToString();
+
+            if (t == NumberInputType.Int)
+            {
+                Input.Text = string.Format("{0:0}", Convert.ToInt32(p.GetValue(owner)));
+            }
+            else
+            {
+                Input.Text = string.Format("{0:0.000}", Convert.ToSingle(p.GetValue(owner)));
+            }
         }
 
         public void Set(NumberInputType t, object owner, PropertyInfo p)
@@ -62,7 +70,28 @@ namespace Materia
             NumberType = t;
             property = p;
             propertyOwner = owner;
-            Input.Text = p.GetValue(owner).ToString();
+
+            if (t == NumberInputType.Int)
+            {
+                Input.Text = string.Format("{0:0}", Convert.ToInt32(p.GetValue(owner)));
+            }
+            else
+            {
+                Input.Text = string.Format("{0:0.000}", Convert.ToSingle(p.GetValue(owner)));
+            }
+        }
+
+        public void UpdateValue(NumberInputType t, object o)
+        {
+            initing = true;
+            if (t == NumberInputType.Int)
+            {
+                Input.Text = string.Format("{0:0}", Convert.ToInt32(o));
+            }
+            else
+            {
+                Input.Text = string.Format("{0:0.000}", Convert.ToSingle(o));
+            }
         }
 
         private void Input_PreviewTextInput(object sender, TextCompositionEventArgs e)

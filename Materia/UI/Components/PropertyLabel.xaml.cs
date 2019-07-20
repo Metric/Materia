@@ -73,12 +73,22 @@ namespace Materia.UI.Components
 
                     if(g.HasParameterValue(Node.Id, Parameter.Replace("$Custom.", "")))
                     {
+                        if(g.IsParameterValueFunction(Node.Id, Parameter.Replace("$Custom.", "")))
+                        {
+                            FIcon.Opacity = 1;
+                        }
+                        else
+                        {
+                            FIcon.Opacity = 0.25;
+                        }
+
                         ConstantVar.IsEnabled = false;
                         FunctionVar.IsEnabled = false;
                         DefaultVar.IsEnabled = true;
                     }
                     else
                     {
+                        FIcon.Opacity = 0.25;
                         DefaultVar.IsEnabled = false;
                         ConstantVar.IsEnabled = true;
                         FunctionVar.IsEnabled = true;
@@ -133,6 +143,7 @@ namespace Materia.UI.Components
                                     nparam.Name = param.Name;
                                 }
 
+                                FIcon.Opacity = 0.25;
                                 DefaultVar.IsEnabled = true;
                                 ConstantVar.IsEnabled = false;
                                 FunctionVar.IsEnabled = false;
@@ -181,6 +192,7 @@ namespace Materia.UI.Components
 
                             pg.SetParameterValue(Node.Id, Parameter, v, pro != null, t);
 
+                            FIcon.Opacity = 0.25;
                             DefaultVar.IsEnabled = true;
                             ConstantVar.IsEnabled = false;
                             FunctionVar.IsEnabled = false;
@@ -238,6 +250,7 @@ namespace Materia.UI.Components
                             {
                                 cparent.SetParameterValue(Node.Id, cparam, g, true, param.Type);
 
+                                FIcon.Opacity = 1;
                                 DefaultVar.IsEnabled = true;
                                 ConstantVar.IsEnabled = false;
                                 FunctionVar.IsEnabled = false;
@@ -288,6 +301,7 @@ namespace Materia.UI.Components
 
                         pg.SetParameterValue(Node.Id, Parameter, g, true, g.ExpectedOutput);
 
+                        FIcon.Opacity = 1;
                         DefaultVar.IsEnabled = true;
                         ConstantVar.IsEnabled = false;
                         FunctionVar.IsEnabled = false;
@@ -321,6 +335,7 @@ namespace Materia.UI.Components
 
                 g.RemoveParameterValue(Node.Id, Parameter.Replace("$Custom.", ""));
 
+                FIcon.Opacity = 0.25;
                 ConstantVar.IsEnabled = true;
                 FunctionVar.IsEnabled = true;
                 DefaultVar.IsEnabled = false;

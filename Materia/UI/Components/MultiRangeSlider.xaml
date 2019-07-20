@@ -17,7 +17,7 @@
                     </TransformGroup>
                 </Path.RenderTransform>
                 <Path.Fill>
-                    <SolidColorBrush Color="#111" />
+                    <SolidColorBrush Color="#444" />
                 </Path.Fill>
             </Path>
         </Border>

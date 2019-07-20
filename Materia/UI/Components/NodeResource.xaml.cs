@@ -41,6 +41,7 @@ namespace Materia
             set
             {
                 NodeName.Text = value;
+                LoadIcon();
             }
         }
 
@@ -86,6 +87,15 @@ namespace Materia
         private void UserControl_MouseLeave(object sender, MouseEventArgs e)
         {
             GridView.Background = new SolidColorBrush(Colors.Transparent);
+        }
+
+        private void LoadIcon()
+        {
+            string path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Icons", "Shelf", Title + ".png");
+            if(System.IO.File.Exists(path))
+            {
+                Icon.Source = new BitmapImage(new Uri(path));
+            }
         }
     }
 }

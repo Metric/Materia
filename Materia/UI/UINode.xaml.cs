@@ -14,10 +14,9 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Materia.UI;
 using Materia.Nodes;
-using OpenTK;
 using Materia.Nodes.Atomic;
-using Materia.UI.Components;
 using Materia.Imaging;
+using Materia.UI.Helpers;
 using System.IO;
 using NLog;
 
@@ -170,7 +169,20 @@ namespace Materia
             n.OnInputRemovedFromNode += N_OnInputRemovedFromNode;
             n.OnOutputAddedToNode += N_OnOutputAddedToNode;
             n.OnOutputRemovedFromNode += N_OnOutputRemovedFromNode;
+            n.OnDescriptionChanged += N_OnDescriptionChanged;
             N_OnUpdate(n);
+
+            if(n is MathNode)
+            {
+                DescPreview.Visibility = Visibility.Visible;
+                Desc.Text = n.GetDescription();
+                LoadIcon();
+            }
+        }
+
+        private void N_OnDescriptionChanged(Node n, string desc)
+        {
+            Desc.Text = desc;
         }
 
         private void N_OnOutputRemovedFromNode(Node n, NodeOutput inp)
@@ -236,6 +248,15 @@ namespace Materia
             g.Children.Add(new TranslateTransform(t.Left, t.Top));
 
             RenderTransform = g;
+        }
+
+        private void LoadIcon()
+        {
+            string path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Icons", "Nodes", Node.Name + ".png");
+            if(System.IO.File.Exists(path))
+            {
+                Preview.Source = new BitmapImage(new Uri(path));
+            }
         }
 
         public void LoadConnection(string id)
@@ -323,6 +344,7 @@ namespace Materia
             {
                 if (!IsLoaded) return;
                 if (PreviewWrapper.ActualHeight == 0 || PreviewWrapper.ActualWidth == 0) return;
+                if (!n.CanPreview) return;
 
                 NodeName.Text = n.Name;
 

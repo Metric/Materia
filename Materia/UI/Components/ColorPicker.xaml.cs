@@ -16,6 +16,7 @@ using System.Text.RegularExpressions;
 using D = System.Drawing;
 using Materia.Imaging;
 using Materia.WinApi;
+using Materia.UI.Helpers;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
 

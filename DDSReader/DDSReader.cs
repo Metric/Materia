@@ -22,6 +22,14 @@ namespace DDSReader
             }
         }
 
+        public static DDSImage ReadImage(string path)
+        {
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
+            {
+                return ReadImage(stream);
+            }
+        }
+
         public static async Task<DDSHeader> ReadHeaderAsync(Stream stream)
         {
             var header = await stream.ReadStructAsync<DDSHeader>();
@@ -42,6 +50,65 @@ namespace DDSReader
             }
 
             return header;
+        }
+
+        public static DDSHeader ReadHeader(Stream stream)
+        {
+            var header = stream.ReadStruct<DDSHeader>();
+            if (header.dwMagic != Constants.DDSMagic)
+            {
+                throw new NotSupportedException("Provided stream is no DDS file!");
+            }
+
+            if (header.dwSize != Constants.HeaderSize)
+            {
+                throw new NotSupportedException("Invalid header size value!");
+            }
+
+            if (header.ddspf.dwSize != Constants.PixelformatSize)
+            {
+                throw new NotSupportedException("Invalid pixel format size value!");
+            }
+
+            return header;
+        }
+
+        public static DDSImage ReadImage(Stream stream)
+        {
+            var header = ReadHeader(stream);
+
+            var workImage = new DDSImage(header.Width(), header.Height());
+
+            CheckHeaderFlags(workImage, header.dwFlags);
+
+            var decoder = ChooseDecoder(header);
+
+            var depth = header.TextureDepth();
+            var width = header.Width();
+            var height = header.Height();
+
+            for (var mipmap = 0; mipmap < header.MipmapCount(); mipmap++)
+            {
+                var frameList = new List<byte[]>((int)depth);
+
+                for (var depthNum = 0; depthNum < depth; depthNum++)
+                {
+                    frameList.Add(decoder.DecodeFrameSync(stream, width, height));
+                }
+
+                workImage.AddFrame(new DDSMipMap(frameList, width, height));
+
+                depth = Math.Max(1, depth / 2);
+                width = Math.Max(1, width / 2);
+                height = Math.Max(1, height / 2);
+            }
+
+            if (decoder == null)
+            {
+                throw new NotSupportedException("Unsupported texture format!");
+            }
+
+            return workImage;
         }
 
         public static async Task<DDSImage> ReadImageAsync(Stream stream)

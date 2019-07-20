@@ -67,12 +67,12 @@ namespace Materia
             if (isInt)
             {
                 SlideInput.Value = Convert.ToInt32(p.GetValue(owner));
-                InputValue.Text = SlideInput.Value > 0 ? String.Format("{0:0}", SlideInput.Value) : "0";
+                TextInput.Set(NumberInputType.Int, owner, p);
             }
             else
             {
                 SlideInput.Value = Convert.ToSingle(p.GetValue(owner));
-                InputValue.Text = SlideInput.Value >= 0.01 ? String.Format("{0:0.000}", SlideInput.Value) : "0";
+                TextInput.Set(NumberInputType.Float, owner, p);
             }
         }
 
@@ -92,7 +92,15 @@ namespace Materia
             initValue = true;
 
             SlideInput.Value = Convert.ToSingle(p.GetValue(owner));
-            InputValue.Text = SlideInput.Value >= 0.01 ? String.Format("{0:0.000}", SlideInput.Value) : "0";
+
+            if (isInt)
+            {
+                TextInput.Set(NumberInputType.Int, owner, p);
+            }
+            else
+            {
+                TextInput.Set(NumberInputType.Float, owner, p);
+            }
         }
 
         private void SlideInput_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -102,10 +110,11 @@ namespace Materia
             {
                 if (isInt)
                 {
-                    InputValue.Text = SlideInput.Value > 0 ? String.Format("{0:0}", SlideInput.Value) : "0";
                     int v = (int)SlideInput.Value;
 
-                    if(ctk != null)
+                    TextInput.UpdateValue(NumberInputType.Int, v);
+
+                    if (ctk != null)
                     {
                         ctk.Cancel();
                     }
@@ -125,8 +134,8 @@ namespace Materia
                 }
                 else
                 {
-                    InputValue.Text = SlideInput.Value >= 0.01 ? String.Format("{0:0.000}", SlideInput.Value) : "0";
                     float v = (float)SlideInput.Value;
+                    TextInput.UpdateValue(NumberInputType.Float, v);
 
                     if (ctk != null)
                     {

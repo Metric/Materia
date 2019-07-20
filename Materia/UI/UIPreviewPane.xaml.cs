@@ -18,8 +18,7 @@ using RSMI.Containers;
 using Materia.Geometry;
 using Materia.Imaging.GLProcessing;
 using OpenTK.Graphics.OpenGL;
-using OpenTK;
-using OpenTK.Graphics;
+using Materia.Math3D;
 
 namespace Materia
 {
@@ -44,7 +43,7 @@ namespace Materia
 
         UVRenderer uvs;
 
-        GLControl glview;
+        OpenTK.GLControl glview;
         PreviewProcessor processor;
 
         FullScreenQuad quad;
@@ -58,7 +57,7 @@ namespace Materia
             vw = 512;
             vh = 512;
 
-            glview = new GLControl();
+            glview = new OpenTK.GLControl();
 
             glview.Load += Glview_Load;
             glview.MouseDown += Glview_MouseDown;

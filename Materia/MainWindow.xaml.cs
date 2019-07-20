@@ -28,6 +28,7 @@ using Materia.Nodes;
 using Materia.UI;
 using Materia.Settings;
 using NLog;
+using System.Windows.Threading;
 
 namespace Materia
 {
@@ -51,6 +52,8 @@ namespace Materia
 
         protected RecentSettings recent;
 
+        protected TKGL tk;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -70,6 +73,11 @@ namespace Materia
 
             mnuRedo.IsEnabled = false;
             mnuUndo.IsEnabled = false;
+
+            //set node context
+            Materia.Nodes.Node.AppContext = new DispatcherSynchronizationContext();
+            //initialize OpenTK GL Abstraction Layer
+            tk = new TKGL();
         }
 
         private void BuildRecentSubMenu()

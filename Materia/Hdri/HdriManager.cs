@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.IO;
 using Materia.Textures;
 using DDSReader;
-using OpenTK.Graphics.OpenGL;
+using Materia.GLInterfaces;
 using NLog;
 
 namespace Materia.Hdri
@@ -156,7 +156,7 @@ namespace Materia.Hdri
 
                             Irradiance = new GLTextuer2D(PixelInternalFormat.Rgb8);
                             Irradiance.Bind();
-                            Irradiance.SetData(data, OpenTK.Graphics.OpenGL.PixelFormat.Rgb, (int)mip.Width, (int)mip.Height);
+                            Irradiance.SetData(data, PixelFormat.Rgb, (int)mip.Width, (int)mip.Height);
                             Irradiance.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
                             Irradiance.SetWrap((int)TextureWrapMode.ClampToEdge);
                             GLTextuer2D.Unbind();
@@ -180,7 +180,7 @@ namespace Materia.Hdri
                                 var mip = mips[i];
                                 byte[] data = mip.MipmapData[0];
 
-                                Prefiltered.SetData(data, OpenTK.Graphics.OpenGL.PixelFormat.Rgb, (int)mip.Width, (int)mip.Height, i);
+                                Prefiltered.SetData(data, PixelFormat.Rgb, (int)mip.Width, (int)mip.Height, i);
                             }
 
                             Prefiltered.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);

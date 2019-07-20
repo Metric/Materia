@@ -1,7 +1,8 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:Materia"
-                    xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock">
+                    xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
+                    xmlns:etk="http://schemas.xceed.com/wpf/xaml/toolkit">
     <Style TargetType="{x:Type GridSplitter}">
         <Setter Property="Background" Value="#444" />
         <Setter Property="BorderThickness" Value="0" />
@@ -472,4 +473,128 @@
         </Setter>
     </Style>
     <!-- End Slider -->
+    
+    <!-- Split Button -->
+    <Style TargetType="{x:Type etk:SplitButton}">
+        <Setter Property="BorderThickness"
+            Value="1" />
+        <Setter Property="IsTabStop"
+            Value="False" />
+        <Setter Property="HorizontalContentAlignment"
+            Value="Center" />
+        <Setter Property="VerticalContentAlignment"
+            Value="Center" />
+        <Setter Property="DropDownContentBackground"
+            Value="{DynamicResource PopupBackgroundBrush}" />
+        <Setter Property="Padding"
+            Value="3" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type etk:SplitButton}">
+                    <Grid x:Name="MainGrid"
+                SnapsToDevicePixels="True">
+                        <etk:ButtonChrome x:Name="ControlChrome"
+                                 Background="{TemplateBinding Background}"
+                                 RenderEnabled="{TemplateBinding IsEnabled}"
+                                 CornerRadius="2.75"
+                                 BorderThickness="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="PART_ActionButton"
+                        Margin="0"
+                        HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                        VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                        Padding="{TemplateBinding Padding}"
+                        Style="{x:Null}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <ContentPresenter />
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <Grid>
+                                        <etk:ButtonChrome x:Name="ActionButtonChrome"
+                                         Background="{TemplateBinding Background}"
+                                         Foreground="{TemplateBinding Foreground}"
+                                         BorderThickness="{TemplateBinding BorderThickness}"
+                                         BorderBrush="{TemplateBinding BorderBrush}"
+                                         CornerRadius="2.75, 0, 0, 2.75">
+                                            <ContentPresenter Name="ActionButtonContent"
+                                        Margin="{TemplateBinding Padding}"
+                                        Content="{TemplateBinding Content}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}"
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        RecognizesAccessKey="true" />
+                                        </etk:ButtonChrome>
+                                    </Grid>
+                                </Button>
+                                <ToggleButton x:Name="PART_ToggleButton"
+                              Grid.Column="1"
+                              IsChecked="{Binding IsOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <ContentPresenter />
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                    <Grid>
+                                        <etk:ButtonChrome x:Name="ToggleButtonChrome"
+                                         Background="{TemplateBinding Background}"
+                                         BorderBrush="{TemplateBinding BorderBrush}"
+                                         BorderThickness="{TemplateBinding BorderThickness}"
+                                         Padding="1,0,1,0"
+                                         CornerRadius="0, 2.75, 2.75, 0">
+                                            <Grid x:Name="arrowGlyph"
+                            IsHitTestVisible="False"
+                            Margin="4,3,4,3">
+                                                <Path x:Name="Arrow"
+                              Width="9"
+                              Height="5"
+                              Data="M0,0 L3,0 4.5,1.5 6,0 9,0 4.5,4.5 z"
+                              Fill="#FFF"
+                              Margin="0,1,0,0" />
+                                            </Grid>
+                                        </etk:ButtonChrome>
+                                    </Grid>
+                                </ToggleButton>
+                            </Grid>
+                        </etk:ButtonChrome>
+
+                        <Popup x:Name="PART_Popup"
+                   HorizontalOffset="1"
+                   VerticalOffset="1"
+                   AllowsTransparency="True"
+                   StaysOpen="False"
+                   Placement="{TemplateBinding DropDownPosition}"
+                   Focusable="False"
+                   IsOpen="{Binding IsChecked, ElementName=PART_ToggleButton}">
+                            <!-- TODO: Create Popup Styles that can be reused on all popups in the toolkit-->
+                            <Border BorderThickness="1"
+                      Background="{TemplateBinding DropDownContentBackground}"
+                      BorderBrush="{TemplateBinding BorderBrush}"
+                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                <ScrollViewer x:Name="DropDownScrollViewer"
+                              VerticalScrollBarVisibility="Auto">
+                                    <ContentPresenter x:Name="PART_ContentPresenter"
+                                    Content="{TemplateBinding DropDownContent}" />
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled"
+                     Value="False">
+                            <Setter Property="Fill"
+                      TargetName="Arrow"
+                      Value="#AFAFAF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- End Split Button -->
 </ResourceDictionary>

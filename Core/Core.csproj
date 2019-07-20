@@ -1,0 +1,283 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{53335848-4C43-4625-9226-A12DD2543E44}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Core</RootNamespace>
+    <AssemblyName>Core</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.6.6\lib\net45\NLog.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Buffers\GLArrayBuffer.cs" />
+    <Compile Include="Buffers\GLElementBuffer.cs" />
+    <Compile Include="Buffers\GLFrameBuffer.cs" />
+    <Compile Include="Buffers\GLRenderBuffer.cs" />
+    <Compile Include="Buffers\GLUniformBuffer.cs" />
+    <Compile Include="Buffers\GLVertexArray.cs" />
+    <Compile Include="Geometry\FullScreenQuad.cs" />
+    <Compile Include="Geometry\Geometry.cs" />
+    <Compile Include="Geometry\MeshRenderer.cs" />
+    <Compile Include="Geometry\UVRenderer.cs" />
+    <Compile Include="Imaging\DirectBitmap.cs" />
+    <Compile Include="Imaging\FloatBitmap.cs" />
+    <Compile Include="Imaging\GLProcessing\BasicImageRenderer.cs" />
+    <Compile Include="Imaging\GLProcessing\BlendProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\BlurProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\ChannelSwitchProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\CircleProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\CurvesProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\EmbossProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\FXProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\GammaProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\GradientMapProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\GrayscaleConvProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\ImageProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\InvertProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\LevelsProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\MeshDepthProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\MeshProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\MotionBlurProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\NormalsProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\OcclusionProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\PixelShaderProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\PreviewProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\TransformProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\UniformColorProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\WarpProcessor.cs" />
+    <Compile Include="Imaging\RawBitmap.cs" />
+    <Compile Include="Material\Material.cs" />
+    <Compile Include="Material\PBRDepth.cs" />
+    <Compile Include="Material\PBRLight.cs" />
+    <Compile Include="Material\PBRMaterial.cs" />
+    <Compile Include="Material\PBRTess.cs" />
+    <Compile Include="MathHelpers\Camera.cs" />
+    <Compile Include="MathHelpers\Light.cs" />
+    <Compile Include="MathHelpers\MVector.cs" />
+    <Compile Include="MathHelpers\Point.cs" />
+    <Compile Include="MathHelpers\Transform.cs" />
+    <Compile Include="Nodes\Atomic\AONode.cs" />
+    <Compile Include="Nodes\Atomic\BitmapNode.cs" />
+    <Compile Include="Nodes\Atomic\BlendNode.cs" />
+    <Compile Include="Nodes\Atomic\BlurNode.cs" />
+    <Compile Include="Nodes\Atomic\ChannelSwitchNode.cs" />
+    <Compile Include="Nodes\Atomic\CircleNode.cs" />
+    <Compile Include="Nodes\Atomic\CurvesNode.cs" />
+    <Compile Include="Nodes\Atomic\EmbossNode.cs" />
+    <Compile Include="Nodes\Atomic\FXNode.cs" />
+    <Compile Include="Nodes\Atomic\GammaNode.cs" />
+    <Compile Include="Nodes\Atomic\GradientMapNode.cs" />
+    <Compile Include="Nodes\Atomic\GraphInstanceNode.cs" />
+    <Compile Include="Nodes\Atomic\GrayscaleConversionNode.cs" />
+    <Compile Include="Nodes\Atomic\InputNode.cs" />
+    <Compile Include="Nodes\Atomic\InvertNode.cs" />
+    <Compile Include="Nodes\Atomic\LevelsNode.cs" />
+    <Compile Include="Nodes\Atomic\MeshDepthNode.cs" />
+    <Compile Include="Nodes\Atomic\MeshNode.cs" />
+    <Compile Include="Nodes\Atomic\MotionBlurNode.cs" />
+    <Compile Include="Nodes\Atomic\NormalNode.cs" />
+    <Compile Include="Nodes\Atomic\OutputNode.cs" />
+    <Compile Include="Nodes\Atomic\PixelProcessorNode.cs" />
+    <Compile Include="Nodes\Atomic\SequenceNode.cs" />
+    <Compile Include="Nodes\Atomic\TransformNode.cs" />
+    <Compile Include="Nodes\Atomic\UniformColorNode.cs" />
+    <Compile Include="Nodes\Atomic\WarpNode.cs" />
+    <Compile Include="Nodes\Attributes\ColorPickerAttribute.cs" />
+    <Compile Include="Nodes\Attributes\CurveEditorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\DropdownAttribute.cs" />
+    <Compile Include="Nodes\Attributes\FileSelectorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\GraphFunctionEditorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\GraphParameterEditorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\HidePropertyAttribute.cs" />
+    <Compile Include="Nodes\Attributes\LevelEditorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\ParameterEditorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\ParameterMapEditorAttribute.cs" />
+    <Compile Include="Nodes\Attributes\PromoteAttribute.cs" />
+    <Compile Include="Nodes\Attributes\SectionAttribute.cs" />
+    <Compile Include="Nodes\Attributes\SliderAttribute.cs" />
+    <Compile Include="Nodes\Attributes\TextInputAttribute.cs" />
+    <Compile Include="Nodes\Attributes\TitleAttribute.cs" />
+    <Compile Include="Nodes\Attributes\VectorAttribute.cs" />
+    <Compile Include="Nodes\Containers\Gradient.cs" />
+    <Compile Include="Nodes\Containers\MultiRange.cs" />
+    <Compile Include="Nodes\FunctionGraph.cs" />
+    <Compile Include="Nodes\Graph.cs" />
+    <Compile Include="Nodes\GraphParameterValue.cs" />
+    <Compile Include="Nodes\Helpers\Blur.cs" />
+    <Compile Include="Nodes\Helpers\Curves.cs" />
+    <Compile Include="Nodes\Helpers\Utils.cs" />
+    <Compile Include="Nodes\ImageGraph.cs" />
+    <Compile Include="Nodes\ImageNode.cs" />
+    <Compile Include="Nodes\ItemNode.cs" />
+    <Compile Include="Nodes\Items\CommentNode.cs" />
+    <Compile Include="Nodes\Items\PinNode.cs" />
+    <Compile Include="Nodes\MathNode.cs" />
+    <Compile Include="Nodes\MathNodes\AbsoluteNode.cs" />
+    <Compile Include="Nodes\MathNodes\AddNode.cs" />
+    <Compile Include="Nodes\MathNodes\AndNode.cs" />
+    <Compile Include="Nodes\MathNodes\ArcTangentNode.cs" />
+    <Compile Include="Nodes\MathNodes\ArgNode.cs" />
+    <Compile Include="Nodes\MathNodes\BooleanConstantNode.cs" />
+    <Compile Include="Nodes\MathNodes\BreakFloat2Node.cs" />
+    <Compile Include="Nodes\MathNodes\BreakFloat3Node.cs" />
+    <Compile Include="Nodes\MathNodes\BreakFloat4Node.cs" />
+    <Compile Include="Nodes\MathNodes\CallNode.cs" />
+    <Compile Include="Nodes\MathNodes\CartesianNode.cs" />
+    <Compile Include="Nodes\MathNodes\CeilNode.cs" />
+    <Compile Include="Nodes\MathNodes\CosineNode.cs" />
+    <Compile Include="Nodes\MathNodes\DistanceNode.cs" />
+    <Compile Include="Nodes\MathNodes\DivideNode.cs" />
+    <Compile Include="Nodes\MathNodes\DotProductNode.cs" />
+    <Compile Include="Nodes\MathNodes\EqualNode.cs" />
+    <Compile Include="Nodes\MathNodes\ExponentialNode.cs" />
+    <Compile Include="Nodes\MathNodes\Float2ConstantNode.cs" />
+    <Compile Include="Nodes\MathNodes\Float3ConstantNode.cs" />
+    <Compile Include="Nodes\MathNodes\Float4ConstantNode.cs" />
+    <Compile Include="Nodes\MathNodes\FloatConstantNode.cs" />
+    <Compile Include="Nodes\MathNodes\FloorNode.cs" />
+    <Compile Include="Nodes\MathNodes\ForLoopNode.cs" />
+    <Compile Include="Nodes\MathNodes\FractNode.cs" />
+    <Compile Include="Nodes\MathNodes\GetFloat2VarNode.cs" />
+    <Compile Include="Nodes\MathNodes\GetFloat3VarNode.cs" />
+    <Compile Include="Nodes\MathNodes\GetFloat4VarNode.cs" />
+    <Compile Include="Nodes\MathNodes\GetFloatVarNode.cs" />
+    <Compile Include="Nodes\MathNodes\GetVarNode.cs" />
+    <Compile Include="Nodes\MathNodes\GreaterThanEqualNode.cs" />
+    <Compile Include="Nodes\MathNodes\GreaterThanNode.cs" />
+    <Compile Include="Nodes\MathNodes\IfElseNode.cs" />
+    <Compile Include="Nodes\MathNodes\LengthNode.cs" />
+    <Compile Include="Nodes\MathNodes\LerpNode.cs" />
+    <Compile Include="Nodes\MathNodes\LessThanEqualNode.cs" />
+    <Compile Include="Nodes\MathNodes\LessThanNode.cs" />
+    <Compile Include="Nodes\MathNodes\Log2Node.cs" />
+    <Compile Include="Nodes\MathNodes\LogNode.cs" />
+    <Compile Include="Nodes\MathNodes\MakeFloat2Node.cs" />
+    <Compile Include="Nodes\MathNodes\MakeFloat3Node.cs" />
+    <Compile Include="Nodes\MathNodes\MakeFloat4Node.cs" />
+    <Compile Include="Nodes\MathNodes\MaxNode.cs" />
+    <Compile Include="Nodes\MathNodes\MinNode.cs" />
+    <Compile Include="Nodes\MathNodes\ModuloNode.cs" />
+    <Compile Include="Nodes\MathNodes\MultiplyNode.cs" />
+    <Compile Include="Nodes\MathNodes\NegateNode.cs" />
+    <Compile Include="Nodes\MathNodes\NormalizeNode.cs" />
+    <Compile Include="Nodes\MathNodes\NotEqualNode.cs" />
+    <Compile Include="Nodes\MathNodes\NotNode.cs" />
+    <Compile Include="Nodes\MathNodes\OrNode.cs" />
+    <Compile Include="Nodes\MathNodes\PolarNode.cs" />
+    <Compile Include="Nodes\MathNodes\Pow2Node.cs" />
+    <Compile Include="Nodes\MathNodes\Random2Node.cs" />
+    <Compile Include="Nodes\MathNodes\RandomNode.cs" />
+    <Compile Include="Nodes\MathNodes\RoundNode.cs" />
+    <Compile Include="Nodes\MathNodes\SamplerNode.cs" />
+    <Compile Include="Nodes\MathNodes\SetVarNode.cs" />
+    <Compile Include="Nodes\MathNodes\SineNode.cs" />
+    <Compile Include="Nodes\MathNodes\SqrtNode.cs" />
+    <Compile Include="Nodes\MathNodes\SubtractNode.cs" />
+    <Compile Include="Nodes\MathNodes\TangentNode.cs" />
+    <Compile Include="Nodes\Node.cs" />
+    <Compile Include="Nodes\NodeInput.cs" />
+    <Compile Include="Nodes\NodeOutput.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Shaders\GLFragmentShader.cs" />
+    <Compile Include="Shaders\GLGeometryShader.cs" />
+    <Compile Include="Shaders\GLShaderProgram.cs" />
+    <Compile Include="Shaders\GLTcsShader.cs" />
+    <Compile Include="Shaders\GLTesShader.cs" />
+    <Compile Include="Shaders\GLVertexShader.cs" />
+    <Compile Include="Textures\GLTextuer2D.cs" />
+    <Compile Include="Textures\GLTexture.cs" />
+    <Compile Include="Textures\GLTextureCube.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Interfaces\Interfaces.csproj">
+      <Project>{4d41515c-8095-425e-b844-1eae5fc326ec}</Project>
+      <Name>Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Math3D\Math3D.csproj">
+      <Project>{755808a3-aa86-4a26-a476-13796429e585}</Project>
+      <Name>Math3D</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RSMI\RSMI.csproj">
+      <Project>{5ca5390f-3dc6-4e00-9cd3-c0262c40afc1}</Project>
+      <Name>RSMI</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Nodes\Functions\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NLog.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

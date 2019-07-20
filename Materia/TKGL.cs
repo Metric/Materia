@@ -1,0 +1,410 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Materia.GLInterfaces;
+using OpenTK.Graphics.OpenGL;
+
+namespace Materia
+{
+    public class TKGL : IGL
+    {
+        public TKGL()
+        {
+            Primary = this;
+        }
+
+        public override void ActiveTexture(int index)
+        {
+            GL.ActiveTexture((OpenTK.Graphics.OpenGL.TextureUnit)index);
+        }
+
+        public override void AttachShader(int id, int sid)
+        {
+            GL.AttachShader(id, sid);
+        }
+
+        public override void BindBuffer(int target, int id)
+        {
+            GL.BindBuffer((OpenTK.Graphics.OpenGL.BufferTarget)target, id);
+        }
+
+        public override void BindBufferBase(int rangeTarget, int pos, int id)
+        {
+            GL.BindBufferBase((OpenTK.Graphics.OpenGL.BufferRangeTarget)rangeTarget, pos, id);
+        }
+
+        public override void BindFramebuffer(int target, int id)
+        {
+            GL.BindFramebuffer((OpenTK.Graphics.OpenGL.FramebufferTarget)target, id);
+        }
+
+        public override void BindRenderbuffer(int target, int id)
+        {
+            GL.BindRenderbuffer((OpenTK.Graphics.OpenGL.RenderbufferTarget)target, id);
+        }
+
+        public override void BindTexture(int target, int id)
+        {
+            GL.BindTexture((OpenTK.Graphics.OpenGL.TextureTarget)target, id);
+        }
+
+        public override void BindVertexArray(int id)
+        {
+            GL.BindVertexArray(id);
+        }
+
+        public override void BlendFunc(int src, int dst)
+        {
+            GL.BlendFunc((OpenTK.Graphics.OpenGL.BlendingFactor)src, (OpenTK.Graphics.OpenGL.BlendingFactor)dst);
+        }
+
+        public override void BufferData(int target, int length, IntPtr data, int type)
+        {
+            GL.BufferData((OpenTK.Graphics.OpenGL.BufferTarget)target, length, data, (OpenTK.Graphics.OpenGL.BufferUsageHint)type);
+        }
+
+        public override void BufferData(int target, int length, float[] data, int type)
+        {
+            GL.BufferData((OpenTK.Graphics.OpenGL.BufferTarget)target, length, data, (OpenTK.Graphics.OpenGL.BufferUsageHint)type);
+        }
+
+        public override void BufferData(int target, int length, int[] data, int type)
+        {
+            GL.BufferData((OpenTK.Graphics.OpenGL.BufferTarget)target, length, data, (OpenTK.Graphics.OpenGL.BufferUsageHint)type);
+        }
+
+        public override void BufferData(int target, int length, uint[] data, int type)
+        {
+            GL.BufferData((OpenTK.Graphics.OpenGL.BufferTarget)target, length, data, (OpenTK.Graphics.OpenGL.BufferUsageHint)type);
+        }
+
+        public override void BufferSubData<T1>(int target, IntPtr offset, int length, T1[] data)
+        {
+            GL.BufferSubData((OpenTK.Graphics.OpenGL.BufferTarget)target, offset, length, data); 
+        }
+
+        public override void BufferSubData<T3>(int target, IntPtr offset, int length, ref T3 data)
+        {
+            GL.BufferSubData((OpenTK.Graphics.OpenGL.BufferTarget)target, offset, length, ref data);
+        }
+
+        public override int CheckFramebufferStatus(int target)
+        {
+            return (int)GL.CheckFramebufferStatus((OpenTK.Graphics.OpenGL.FramebufferTarget)target);
+        }
+
+        public override void Clear(int mask)
+        {
+            GL.Clear((OpenTK.Graphics.OpenGL.ClearBufferMask)mask);
+        }
+
+        public override void ClearColor(float r, float g, float b, float a)
+        {
+            GL.ClearColor(r, g, b, a);
+        }
+
+        public override void CompileShader(int id)
+        {
+            GL.CompileShader(id);
+        }
+
+        public override void CopyTexImage2D(int target, int level, int internalFormat, int x, int y, int w, int h, int border)
+        {
+            GL.CopyTexImage2D((OpenTK.Graphics.OpenGL.TextureTarget)target, level, (OpenTK.Graphics.OpenGL.InternalFormat)internalFormat, x, y, w, h, border);
+        }
+
+        public override int CreateProgram()
+        {
+            return GL.CreateProgram();
+        }
+
+        public override int CreateShader(int type)
+        {
+            return GL.CreateShader((OpenTK.Graphics.OpenGL.ShaderType)type);
+        }
+
+        public override void CullFace(int mode)
+        {
+            GL.CullFace((OpenTK.Graphics.OpenGL.CullFaceMode)mode);
+        }
+
+        public override void DeleteBuffer(int id)
+        {
+            GL.DeleteBuffer(id);
+        }
+
+        public override void DeleteFramebuffer(int id)
+        {
+            GL.DeleteFramebuffer(id);
+        }
+
+        public override void DeleteProgram(int id)
+        {
+            GL.DeleteProgram(id);
+        }
+
+        public override void DeleteRenderbuffer(int id)
+        {
+            GL.DeleteRenderbuffer(id);
+        }
+
+        public override void DeleteShader(int id)
+        {
+            GL.DeleteShader(id);
+        }
+
+        public override void DeleteTexture(int id)
+        {
+            GL.DeleteTexture(id);
+        }
+
+        public override void DeleteVertexArray(int id)
+        {
+            GL.DeleteVertexArray(id);
+        }
+
+        public override void DepthFunc(int func)
+        {
+            GL.DepthFunc((OpenTK.Graphics.OpenGL.DepthFunction)func);
+        }
+
+        public override void DetachShader(int id, int sid)
+        {
+            GL.DetachShader(id, sid);
+        }
+
+        public override void Disable(int cap)
+        {
+            GL.Disable((OpenTK.Graphics.OpenGL.EnableCap)cap);
+        }
+
+        public override void DrawBuffer(int mode)
+        {
+            GL.DrawBuffer((OpenTK.Graphics.OpenGL.DrawBufferMode)mode);
+        }
+
+        public override void DrawElements(int mode, int count, int type, int indices)
+        {
+            GL.DrawElements((OpenTK.Graphics.OpenGL.BeginMode)mode, count, (OpenTK.Graphics.OpenGL.DrawElementsType)type, indices);
+        }
+
+        public override void Enable(int cap)
+        {
+            GL.Enable((OpenTK.Graphics.OpenGL.EnableCap)cap);
+        }
+
+        public override void EnableVertexAttribArray(int index)
+        {
+            GL.EnableVertexAttribArray(index);
+        }
+
+        public override void FramebufferRenderbuffer(int target, int attachment, int renderTarget, int id)
+        {
+            GL.FramebufferRenderbuffer((OpenTK.Graphics.OpenGL.FramebufferTarget)target, (OpenTK.Graphics.OpenGL.FramebufferAttachment)attachment, (OpenTK.Graphics.OpenGL.RenderbufferTarget)renderTarget, id);
+        }
+
+        public override void FramebufferTexture2D(int target, int attachment, int textureTarget, int id, int mip)
+        {
+            GL.FramebufferTexture2D((OpenTK.Graphics.OpenGL.FramebufferTarget)target, (OpenTK.Graphics.OpenGL.FramebufferAttachment)attachment, (OpenTK.Graphics.OpenGL.TextureTarget)textureTarget, id, mip);
+        }
+
+        public override int GenBuffer()
+        {
+            return GL.GenBuffer();
+        }
+
+        public override void GenerateMipmap(int target)
+        {
+            GL.GenerateMipmap((OpenTK.Graphics.OpenGL.GenerateMipmapTarget)target);
+        }
+
+        public override int GenFramebuffer()
+        {
+            return GL.GenFramebuffer();
+        }
+
+        public override int GenRenderbuffer()
+        {
+            return GL.GenRenderbuffer();
+        }
+
+        public override int GenTexture()
+        {
+            return GL.GenTexture();
+        }
+
+        public override int GenVertexArray()
+        {
+            return GL.GenVertexArray();
+        }
+
+        public override void GetProgram(int id, int programParamName, out int status)
+        {
+            GL.GetProgram(id, (OpenTK.Graphics.OpenGL.GetProgramParameterName)programParamName, out status);
+        }
+
+        public override void GetProgramInfoLog(int id, int size, out int length, out string log)
+        {
+            GL.GetProgramInfoLog(id, size, out length, out log);
+        }
+
+        public override void GetShader(int id, int param, out int status)
+        {
+            GL.GetShader(id, (OpenTK.Graphics.OpenGL.ShaderParameter)param, out status);
+        }
+
+        public override void GetShaderInfoLog(int id, int size, out int length, out string log)
+        {
+            GL.GetShaderInfoLog(id, size, out length, out log);
+        }
+
+        public override int GetUniformBlockIndex(int id, string name)
+        {
+            return GL.GetUniformBlockIndex(id, name);
+        }
+
+        public override int GetUniformLocation(int id, string name)
+        {
+            return GL.GetUniformLocation(id, name);
+        }
+
+        public override void LinkProgram(int id)
+        {
+            GL.LinkProgram(id);
+        }
+
+        public override void PatchParameter(int type, int count)
+        {
+            GL.PatchParameter((OpenTK.Graphics.OpenGL.PatchParameterInt)type, count);
+        }
+
+        public override void PolygonMode(int mask, int mode)
+        {
+            GL.PolygonMode((OpenTK.Graphics.OpenGL.MaterialFace)mask, (OpenTK.Graphics.OpenGL.PolygonMode)mode);
+        }
+
+        public override void ReadBuffer(int mode)
+        {
+            GL.ReadBuffer((OpenTK.Graphics.OpenGL.ReadBufferMode)mode);
+        }
+
+        public override void ReadPixels(int x, int y, int w, int h, int format, int type, byte[] buffer)
+        {
+            GL.ReadPixels(x, y, w, h, (OpenTK.Graphics.OpenGL.PixelFormat)format, (OpenTK.Graphics.OpenGL.PixelType)type, buffer);
+        }
+
+        public override void ReadPixels(int x, int y, int w, int h, int format, int type, float[] buffer)
+        {
+            GL.ReadPixels(x, y, w, h, (OpenTK.Graphics.OpenGL.PixelFormat)format, (OpenTK.Graphics.OpenGL.PixelType)type, buffer);
+        }
+
+        public override void RenderbufferStorage(int target, int format, int width, int height)
+        {
+            GL.RenderbufferStorage((OpenTK.Graphics.OpenGL.RenderbufferTarget)target, (OpenTK.Graphics.OpenGL.RenderbufferStorage)format, width, height);
+        }
+
+        public override void ShaderSource(int id, string data)
+        {
+            GL.ShaderSource(id, data);
+        }
+
+        public override void TexImage2D(int target, int level, int internalFormat, int w, int h, int border, int format, int pixelType, IntPtr data)
+        {
+            GL.TexImage2D((OpenTK.Graphics.OpenGL.TextureTarget)target, level, (OpenTK.Graphics.OpenGL.PixelInternalFormat)internalFormat, w, h, border, (OpenTK.Graphics.OpenGL.PixelFormat)format, (OpenTK.Graphics.OpenGL.PixelType)pixelType, data);
+        }
+
+        public override void TexImage2D(int target, int level, int internalFormat, int w, int h, int border, int format, int pixelType, float[] data)
+        {
+            GL.TexImage2D((OpenTK.Graphics.OpenGL.TextureTarget)target, level, (OpenTK.Graphics.OpenGL.PixelInternalFormat)internalFormat, w, h, border, (OpenTK.Graphics.OpenGL.PixelFormat)format, (OpenTK.Graphics.OpenGL.PixelType)pixelType, data);
+        }
+
+        public override void TexImage2D(int target, int level, int internalFormat, int w, int h, int border, int format, int pixelType, byte[] data)
+        {
+            GL.TexImage2D((OpenTK.Graphics.OpenGL.TextureTarget)target, level, (OpenTK.Graphics.OpenGL.PixelInternalFormat)internalFormat, w, h, border, (OpenTK.Graphics.OpenGL.PixelFormat)format, (OpenTK.Graphics.OpenGL.PixelType)pixelType, data);
+        }
+
+        public override void TexParameter(int target, int param, int data)
+        {
+            GL.TexParameter((OpenTK.Graphics.OpenGL.TextureTarget)target, (OpenTK.Graphics.OpenGL.TextureParameterName)param, data);
+        }
+
+        public override void TexParameterI(int target, int param, int[] data)
+        {
+            GL.TexParameterI((OpenTK.Graphics.OpenGL.TextureTarget)target, (OpenTK.Graphics.OpenGL.TextureParameterName)param, data);
+        }
+
+        public override void Uniform1(int location, int i)
+        {
+            GL.Uniform1(location, i);
+        }
+
+        public override void Uniform1(int location, uint i)
+        {
+            GL.Uniform1(location, i);
+        }
+
+        public override void Uniform1(int location, float f)
+        {
+            GL.Uniform1(location, f);
+        }
+
+        public override void Uniform2(int location, float x, float y)
+        {
+            GL.Uniform2(location, x, y);
+        }
+
+        public override void Uniform3(int location, float x, float y, float z)
+        {
+            GL.Uniform3(location, x, y, z);
+        }
+
+        public override void Uniform4(int location, float x, float y, float z, float w)
+        {
+            GL.Uniform4(location, x, y, z, w);
+        }
+
+        public override void UniformBlockBinding(int id, int index, int pos)
+        {
+            GL.UniformBlockBinding(id, index, pos);
+        }
+
+        public override void UniformMatrix3(int location, ref Math3D.Matrix3 m)
+        {
+            unsafe
+            {
+                fixed(float* ptr = &m.Row0.X)
+                {
+                    GL.UniformMatrix3(location, 1, false, ptr);
+                }
+            }
+        }
+
+        public override void UniformMatrix4(int location, ref Math3D.Matrix4 m)
+        {
+            unsafe
+            {
+                fixed(float* ptr = &m.Row0.X)
+                {
+                    GL.UniformMatrix4(location, 1, false, ptr);
+                }
+            }
+        }
+
+        public override void UseProgram(int id)
+        {
+            GL.UseProgram(id);
+        }
+
+        public override void VertexAttribPointer(int index, int size, int type, bool normalized, int stride, int offset)
+        {
+            GL.VertexAttribPointer(index, size, (OpenTK.Graphics.OpenGL.VertexAttribPointerType)type, normalized, stride, offset);
+        }
+
+        public override void Viewport(int x, int y, int w, int h)
+        {
+            GL.Viewport(x, y, w, h);
+        }
+    }
+}

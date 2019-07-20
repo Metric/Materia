@@ -5,26 +5,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using TK = OpenTK;
-using OpenTK;
-using OpenTK.Graphics.OpenGL;
+using Materia.Math3D;
 using OpenTK.Graphics;
 using Materia.Textures;
-using DDSReader;
 using System.Collections.ObjectModel;
 using Materia.Geometry;
 using Materia.Imaging;
+using Materia.GLInterfaces;
 using RSMI.Containers;
 using Materia.MathHelpers;
 using Materia.Hdri;
 using Materia.Settings;
-using Materia.Buffers;
 using NLog;
 
 namespace Materia.UI
@@ -69,7 +60,7 @@ namespace Materia.UI
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
-        GLControl glview;
+        OpenTK.GLControl glview;
 
         public GLTextuer2D defaultBlack { get; protected set; }
         public GLTextuer2D defaultGray { get; protected set; }
@@ -114,7 +105,7 @@ namespace Materia.UI
         PreviewCameraMode previewCameraMode;
         PreviewRenderMode previewRenderMode;
 
-        Point mouseStart;
+        System.Windows.Point mouseStart;
 
         public static UI3DPreview Instance { get; protected set; }
 
@@ -171,6 +162,8 @@ namespace Materia.UI
 
         private void HdriManager_OnHdriLoaded(GLTextuer2D irradiance, GLTextuer2D prefiltered)
         {
+            Materia.Nodes.Atomic.MeshNode.Irradiance = irradiance;
+            Materia.Nodes.Atomic.MeshNode.Prefilter = prefiltered;
             Invalidate();
         }
 
@@ -181,7 +174,7 @@ namespace Materia.UI
                 previewType = PreviewGeometryType.Cube;
                 previewCameraMode = PreviewCameraMode.Perspective;
                 previewPosition = PreviewCameraPosition.Perspective;
-                glview = new GLControl(GraphicsMode.Default);
+                glview = new OpenTK.GLControl(GraphicsMode.Default);
                 glview.Load += Glview_Load;
                 glview.Paint += Glview_Paint;
                 glview.MouseWheel += Glview_MouseWheel;
@@ -205,14 +198,14 @@ namespace Materia.UI
 
         private void Glview_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            mouseStart = new Point(e.Location.X, e.Location.Y);
+            mouseStart = new System.Windows.Point(e.Location.X, e.Location.Y);
         }
 
         private void Glview_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             if(e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                Point p = new Point(e.Location.X, e.Location.Y);
+                System.Windows.Point p = new System.Windows.Point(e.Location.X, e.Location.Y);
 
                 Quaternion n = camera.LocalRotation;
 
@@ -234,7 +227,7 @@ namespace Materia.UI
             }
             else if(e.Button == System.Windows.Forms.MouseButtons.Middle)
             {
-                Point p = new Point(e.Location.X, e.Location.Y);
+                System.Windows.Point p = new System.Windows.Point(e.Location.X, e.Location.Y);
 
                 Vector3 right = camera.Right;
                 Vector3 up = camera.Up;
@@ -591,11 +584,12 @@ namespace Materia.UI
                 Nodes.Helpers.Utils.Fill(black, 0, 0, 0f, 0f, 0f, 1);
                 defaultBlack = new GLTextuer2D(PixelInternalFormat.Rgba8);
                 defaultBlack.Bind();
-                defaultBlack.SetData(black.Image, OpenTK.Graphics.OpenGL.PixelFormat.Rgba, 128, 128);
+                defaultBlack.SetData(black.Image, GLInterfaces.PixelFormat.Rgba, 128, 128);
                 defaultBlack.GenerateMipMaps();
                 defaultBlack.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
                 defaultBlack.SetWrap((int)TextureWrapMode.Repeat);
                 GLTextuer2D.Unbind();
+                Materia.Nodes.Atomic.MeshNode.DefaultBlack = defaultBlack;
             }
             if (defaultWhite == null)
             {
@@ -603,11 +597,12 @@ namespace Materia.UI
                 Nodes.Helpers.Utils.Fill(black, 0, 0, 1f, 1f, 1f, 1);
                 defaultWhite = new GLTextuer2D(PixelInternalFormat.Rgba8);
                 defaultWhite.Bind();
-                defaultWhite.SetData(black.Image, OpenTK.Graphics.OpenGL.PixelFormat.Rgba, 128, 128);
+                defaultWhite.SetData(black.Image, GLInterfaces.PixelFormat.Rgba, 128, 128);
                 defaultWhite.GenerateMipMaps();
                 defaultWhite.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
                 defaultWhite.SetWrap((int)TextureWrapMode.Repeat);
                 GLTextuer2D.Unbind();
+                Materia.Nodes.Atomic.MeshNode.DefaultWhite = defaultWhite;
             }
             if (defaultGray == null)
             {
@@ -615,7 +610,7 @@ namespace Materia.UI
                 Nodes.Helpers.Utils.Fill(black, 0, 0, 0.5f, 0.5f, 0.5f, 1);
                 defaultGray = new GLTextuer2D(PixelInternalFormat.Rgba8);
                 defaultGray.Bind();
-                defaultGray.SetData(black.Image, OpenTK.Graphics.OpenGL.PixelFormat.Rgba, 128, 128);
+                defaultGray.SetData(black.Image, GLInterfaces.PixelFormat.Rgba, 128, 128);
                 defaultGray.GenerateMipMaps();
                 defaultGray.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
                 defaultGray.SetWrap((int)TextureWrapMode.Repeat);
@@ -628,11 +623,12 @@ namespace Materia.UI
                 Nodes.Helpers.Utils.Fill(black, 0, 0, 0.25f, 0.25f, 0.25f, 1);
                 defaultDarkGray = new GLTextuer2D(PixelInternalFormat.Rgba8);
                 defaultDarkGray.Bind();
-                defaultDarkGray.SetData(black.Image, OpenTK.Graphics.OpenGL.PixelFormat.Rgba, 128, 128);
+                defaultDarkGray.SetData(black.Image, GLInterfaces.PixelFormat.Rgba, 128, 128);
                 defaultDarkGray.GenerateMipMaps();
                 defaultDarkGray.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
                 defaultDarkGray.SetWrap((int)TextureWrapMode.Repeat);
                 GLTextuer2D.Unbind();
+                Materia.Nodes.Atomic.MeshNode.DefaultDarkGray = defaultDarkGray;
             }
         }
 
@@ -856,19 +852,19 @@ namespace Materia.UI
             CheckTessMaterials();
             CheckBaseMaterials();
             
-            GL.Viewport(0, 0, glview.Width, glview.Height);
-            GL.ClearColor(0.1f, 0.1f, 0.1f, 1);
-            GL.Clear(ClearBufferMask.ColorBufferBit);
-            GL.Clear(ClearBufferMask.DepthBufferBit);
+            IGL.Primary.Viewport(0, 0, glview.Width, glview.Height);
+            IGL.Primary.ClearColor(0.1f, 0.1f, 0.1f, 1);
+            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit);
+            IGL.Primary.Clear((int)ClearBufferMask.DepthBufferBit);
 
             if(previewRenderMode == PreviewRenderMode.WireframeShading)
             {
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+                IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Line);
             }
 
             DrawGeometry(ref proj, camera, materialSettings.Displacement ? tessMat : mat);
 
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
 
             glview.SwapBuffers();
         }
@@ -1063,14 +1059,14 @@ namespace Materia.UI
             ViewContext.VerifyContext(glview);
             ViewContext.Context.MakeCurrent(glview.WindowInfo);
 
-            Log.Info("GL Version: " + GL.GetString(StringName.Version));
-            GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
-            GL.Enable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.Blend);
-            GL.DepthFunc(DepthFunction.Lequal);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            GL.Enable(EnableCap.CullFace);
-            GL.CullFace(CullFaceMode.Back);
+            Log.Info("GL Version: " + OpenTK.Graphics.OpenGL.GL.GetString(OpenTK.Graphics.OpenGL.StringName.Version));
+            IGL.Primary.PatchParameter((int)PatchParameterInt.PatchVertices, 3);
+            IGL.Primary.Enable((int)EnableCap.DepthTest);
+            IGL.Primary.Enable((int)EnableCap.Blend);
+            IGL.Primary.DepthFunc((int)DepthFunction.Lequal);
+            IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
+            IGL.Primary.Enable((int)EnableCap.CullFace);
+            IGL.Primary.CullFace((int)CullFaceMode.Back);
 
             LoadMeshes();
 

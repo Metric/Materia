@@ -51,13 +51,16 @@
                         </VisualBrush.Visual>
                     </VisualBrush>
                 </Grid.Background>
+                <Grid Background="Black" Name="DescPreview" Visibility="Collapsed">
+                    <TextBlock Name="Desc" Foreground="White" FontSize="24" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                </Grid>
                 <Image Name="Preview" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"  />
             </Grid>
             <StackPanel Name="InputStack"  VerticalAlignment="Center" ClipToBounds="False" Margin="-8,0,0,0" HorizontalAlignment="Left" Width="16" />
             <StackPanel Name="OutputStack" HorizontalAlignment="Right"  VerticalAlignment="Center" Width="16" ClipToBounds="False" Margin="0,0,-8,0" />
             <Grid VerticalAlignment="Top" Height="16">
-                <Border Background="DarkRed">
-                    <TextBlock Name="NodeName" Text="" Foreground="LightGray" TextAlignment="Center"></TextBlock>
+                <Border Background="#0072ff">
+                    <TextBlock Name="NodeName" Text="" Foreground="White" TextAlignment="Center"></TextBlock>
                 </Border>
             </Grid>
         </Grid>

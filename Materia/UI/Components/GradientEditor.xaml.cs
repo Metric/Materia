@@ -39,7 +39,7 @@ namespace Materia.UI.Components
 
         bool mouseDown;
         GradientHandle selected;
-        Point startPos;
+        System.Windows.Point startPos;
 
         public GradientEditor()
         {
@@ -77,7 +77,7 @@ namespace Materia.UI.Components
         {
             if(mouseDown && selected != null)
             {
-                Point p = e.GetPosition(HandleHolder);
+                System.Windows.Point p = e.GetPosition(HandleHolder);
                 double delta = p.X - startPos.X;
                 double pos = UpdateHandleUIPosition(selected, delta);
                 UpdateHandlePosition(selected, (float)Math.Min(1, Math.Max(0, (pos / (HandleHolder.ActualWidth - HANDLE_HALF_WIDTH)))));
@@ -105,13 +105,13 @@ namespace Materia.UI.Components
                     {
                         for (int i = 0; i < g.positions.Length; i++)
                         {
-                            AddHandle(new Point(g.positions[i] * HandleHolder.ActualWidth - HANDLE_HALF_WIDTH, 0), g.colors[i]);
+                            AddHandle(new System.Windows.Point(g.positions[i] * HandleHolder.ActualWidth - HANDLE_HALF_WIDTH, 0), g.colors[i]);
                         }
                     }
                     else
                     {
-                        AddHandle(new Point(-HANDLE_HALF_WIDTH, 0), new MVector(0, 0, 0, 1));
-                        AddHandle(new Point(HandleHolder.ActualWidth - HANDLE_HALF_WIDTH, 0), new MVector(1, 1, 1, 1));
+                        AddHandle(new System.Windows.Point(-HANDLE_HALF_WIDTH, 0), new MVector(0, 0, 0, 1));
+                        AddHandle(new System.Windows.Point(HandleHolder.ActualWidth - HANDLE_HALF_WIDTH, 0), new MVector(1, 1, 1, 1));
                     }
                 }
             }
@@ -121,7 +121,7 @@ namespace Materia.UI.Components
             }
         }
 
-        void AddHandle(Point p, MVector c, bool updateProperty = false)
+        void AddHandle(System.Windows.Point p, MVector c, bool updateProperty = false)
         {
             GradientHandle h = new GradientHandle();
             h.HorizontalAlignment = HorizontalAlignment.Left;
@@ -269,7 +269,7 @@ namespace Materia.UI.Components
         {
             if (e.ClickCount > 1)
             {
-                Point p = e.GetPosition(HandleHolder);
+                System.Windows.Point p = e.GetPosition(HandleHolder);
 
                 GradientHandle handle = null;
                 double min = double.PositiveInfinity;

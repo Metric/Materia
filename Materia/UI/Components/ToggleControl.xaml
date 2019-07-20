@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="42" d:DesignWidth="256">
     <Grid Height="42">
-        <ToggleButton x:Name="Toggle" BorderThickness="0" Margin="5,0,5,0" Background="#444" Foreground="LightGray" FontSize="10" HorizontalAlignment="Stretch" VerticalAlignment="center" Height="32" Click="Toggle_Click">
+        <ToggleButton x:Name="Toggle" BorderThickness="0" Margin="5" Background="#444" Foreground="LightGray" FontSize="10" HorizontalAlignment="Stretch" Height="32" Click="Toggle_Click">
             <ToggleButton.Style>
                 <Style TargetType="{x:Type ToggleButton}">
                     <Setter Property="Template">

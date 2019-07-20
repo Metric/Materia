@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using Materia.Nodes;
 using Materia.Nodes.Items;
 using Materia.UI.Components;
+using Materia.UI.Helpers;
 
 namespace Materia.UI.ItemNodes
 {

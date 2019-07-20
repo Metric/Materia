@@ -30,8 +30,8 @@ namespace Materia
         object propertyOwner;
 
         Dictionary<int, List<CurvePoint>> Points { get; set; }
-        Dictionary<int, List<Point>> Normalized { get; set; }
-        Dictionary<int, List<Point>> Input { get; set; }
+        Dictionary<int, List<MathHelpers.Point>> Normalized { get; set; }
+        Dictionary<int, List<MathHelpers.Point>> Input { get; set; }
 
         RawBitmap display;
 
@@ -61,19 +61,19 @@ namespace Materia
             Points[2] = new List<CurvePoint>();
             Points[3] = new List<CurvePoint>();
 
-            Normalized = new Dictionary<int, List<Point>>();
-            Normalized[0] = new List<Point>();
-            Normalized[1] = new List<Point>();
-            Normalized[2] = new List<Point>();
-            Normalized[3] = new List<Point>();
+            Normalized = new Dictionary<int, List<MathHelpers.Point>>();
+            Normalized[0] = new List<MathHelpers.Point>();
+            Normalized[1] = new List<MathHelpers.Point>();
+            Normalized[2] = new List<MathHelpers.Point>();
+            Normalized[3] = new List<MathHelpers.Point>();
 
             inited = false;
 
-            Input = new Dictionary<int, List<Point>>();
-            Input[0] = new List<Point>();
-            Input[1] = new List<Point>();
-            Input[2] = new List<Point>();
-            Input[3] = new List<Point>();
+            Input = new Dictionary<int, List<MathHelpers.Point>>();
+            Input[0] = new List<MathHelpers.Point>();
+            Input[1] = new List<MathHelpers.Point>();
+            Input[2] = new List<MathHelpers.Point>();
+            Input[3] = new List<MathHelpers.Point>();
         }
 
         public UICurves(PropertyInfo p, PropertyInfo output, object owner)
@@ -92,8 +92,8 @@ namespace Materia
 
             inited = false;
 
-            Input = (Dictionary<int, List<Point>>)p.GetValue(owner);
-            Normalized = (Dictionary<int, List<Point>>)output.GetValue(owner);
+            Input = (Dictionary<int, List<MathHelpers.Point>>)p.GetValue(owner);
+            Normalized = (Dictionary<int, List<MathHelpers.Point>>)output.GetValue(owner);
 
             Sort(Input[0]);
             Sort(Input[1]);
@@ -103,13 +103,13 @@ namespace Materia
 
         void UpdateProperty()
         {
-            Dictionary<int, List<Point>> pts = new Dictionary<int, List<Point>>();
+            Dictionary<int, List<MathHelpers.Point>> pts = new Dictionary<int, List<MathHelpers.Point>>();
 
             for(int i = 0; i < 4; i++)
             {
                 var cps = Points[i];
 
-                pts[i] = new List<Point>();
+                pts[i] = new List<MathHelpers.Point>();
 
                 foreach(CurvePoint cp in cps)
                 {
@@ -120,7 +120,7 @@ namespace Materia
             property.SetValue(propertyOwner, pts);
         }
 
-        void AddPoint(Point p)
+        void AddPoint(MathHelpers.Point p)
         {
             int m = (int)mode;
 
@@ -141,7 +141,7 @@ namespace Materia
             UpdateProperty();
         }
 
-        void AddPointNormalized(Point p)
+        void AddPointNormalized(MathHelpers.Point p)
         {
             int m = (int)mode;
 
@@ -174,7 +174,7 @@ namespace Materia
                 double dy = ep.Y - mouseStart.Y;
 
                 CurvePoint cp = target as CurvePoint;
-                Point p = cp.Position;
+                MathHelpers.Point p = cp.Position;
                 p.X += dx;
                 p.Y += dy;
                 cp.Position = p;
@@ -214,18 +214,18 @@ namespace Materia
         /// <param name="path"></param>
         /// <param name="buffer"></param>
         /// <returns></returns>
-        protected List<Point> RenderPath(List<CurvePoint> path, RawBitmap buffer, byte r = 175, byte g = 175, byte b = 175)
+        protected List<MathHelpers.Point> RenderPath(List<CurvePoint> path, RawBitmap buffer, byte r = 175, byte g = 175, byte b = 175)
         {
-            List<Point> points = new List<Point>();
-            List<Point> curve = new List<Point>();
-            List<Point> normalized = new List<Point>();
+            List<MathHelpers.Point> points = new List<MathHelpers.Point>();
+            List<MathHelpers.Point> curve = new List<MathHelpers.Point>();
+            List<MathHelpers.Point> normalized = new List<MathHelpers.Point>();
             double width = CurveView.ActualWidth;
             double height = CurveView.ActualHeight - 1;
 
             foreach (CurvePoint p in path)
             {
-                Point n = p.Normalized;
-                points.Add(new Point(n.X * width, n.Y * height));
+                MathHelpers.Point n = p.Normalized;
+                points.Add(new MathHelpers.Point(n.X * width, n.Y * height));
             }
 
             Sort(points);
@@ -233,18 +233,18 @@ namespace Materia
             //make sure we have x points on edges
             if (points.Count >= 2)
             {
-                Point f = points[0];
+                MathHelpers.Point f = points[0];
 
                 if (f.X > 0)
                 {
-                    points.Insert(0, new Point(0, f.Y));
+                    points.Insert(0, new MathHelpers.Point(0, f.Y));
                 }
 
-                Point l = points[points.Count - 1];
+                MathHelpers.Point l = points[points.Count - 1];
 
                 if (l.X < width)
                 {
-                    points.Add(new Point(width, l.Y));
+                    points.Add(new MathHelpers.Point(width, l.Y));
                 }
             }
 
@@ -252,8 +252,8 @@ namespace Materia
 
             for (int i = 0; i < points.Count - 1; i++)
             {
-                Point cur = points[i];
-                Point next = points[i + 1];
+                MathHelpers.Point cur = points[i];
+                MathHelpers.Point next = points[i + 1];
 
                 for (double x = cur.X; x < next.X; x++)
                 {
@@ -269,19 +269,19 @@ namespace Materia
                     if (y < 0) y = 0;
                     if (y > height - 1) y = height - 1;
 
-                    curve.Add(new Point(x, y));
-                    normalized.Add(new Point(x / width, y / height));
+                    curve.Add(new MathHelpers.Point(x, y));
+                    normalized.Add(new MathHelpers.Point(x / width, y / height));
                 }
             }
 
-            Point lp = points[points.Count - 1];
+            MathHelpers.Point lp = points[points.Count - 1];
             curve.Add(lp);
-            normalized.Add(new Point(lp.X / width, lp.Y / height));
+            normalized.Add(new MathHelpers.Point(lp.X / width, lp.Y / height));
 
             Parallel.For(0, curve.Count - 1, i =>
             {
-                Point p1 = curve[i];
-                Point p2 = curve[i + 1];
+                MathHelpers.Point p1 = curve[i];
+                MathHelpers.Point p2 = curve[i + 1];
                 buffer.DrawLine((int)p1.X, (int)p1.Y, (int)p2.X, (int)p2.Y, r, g, b, 255);
             });
 
@@ -290,7 +290,7 @@ namespace Materia
 
         protected void UpdatePath(bool updateProperty = true)
         {
-            List<Point> normals = new List<Point>();
+            List<MathHelpers.Point> normals = new List<MathHelpers.Point>();
             if(display == null)
             {
                 display = new RawBitmap((int)CurveView.ActualWidth, (int)CurveView.ActualHeight);
@@ -363,10 +363,10 @@ namespace Materia
             }
         }
 
-        void Sort(List<Point> p)
+        void Sort(List<MathHelpers.Point> p)
         {
             //sort by x
-            p.Sort((Point p1, Point p2) =>
+            p.Sort((MathHelpers.Point p1, MathHelpers.Point p2) =>
             {
                 return (int)(p1.X - p2.X);
             });
@@ -389,7 +389,8 @@ namespace Materia
         {
             if(e.ClickCount > 1)
             {
-                AddPoint(e.GetPosition(CurveView));
+                Point p = e.GetPosition(CurveView);
+                AddPoint(new MathHelpers.Point(p.X, p.Y));
             }
         }
 
@@ -401,7 +402,7 @@ namespace Materia
             Points[2] = new List<CurvePoint>();
             Points[3] = new List<CurvePoint>();
 
-            foreach (Point pt in Input[0])
+            foreach (MathHelpers.Point pt in Input[0])
             {
                 CurvePoint cp = new CurvePoint(this);
                 cp.HorizontalAlignment = HorizontalAlignment.Left;
@@ -417,7 +418,7 @@ namespace Materia
                 CurveView.Children.Add(cp);
             }
 
-            foreach (Point pt in Input[1])
+            foreach (MathHelpers.Point pt in Input[1])
             {
                 CurvePoint cp = new CurvePoint(this);
                 cp.HorizontalAlignment = HorizontalAlignment.Left;
@@ -432,7 +433,7 @@ namespace Materia
                 Points[1].Add(cp);
             }
 
-            foreach (Point pt in Input[2])
+            foreach (MathHelpers.Point pt in Input[2])
             {
                 CurvePoint cp = new CurvePoint(this);
                 cp.HorizontalAlignment = HorizontalAlignment.Left;
@@ -447,7 +448,7 @@ namespace Materia
                 Points[2].Add(cp);
             }
 
-            foreach(Point pt in Input[3])
+            foreach(MathHelpers.Point pt in Input[3])
             {
                 CurvePoint cp = new CurvePoint(this);
                 cp.HorizontalAlignment = HorizontalAlignment.Left;
@@ -522,8 +523,8 @@ namespace Materia
 
             pts.Clear();
 
-            AddPointNormalized(new Point(0, 1));
-            AddPointNormalized(new Point(1, 0));
+            AddPointNormalized(new MathHelpers.Point(0, 1));
+            AddPointNormalized(new MathHelpers.Point(1, 0));
 
             UpdatePath();
             UpdateProperty();

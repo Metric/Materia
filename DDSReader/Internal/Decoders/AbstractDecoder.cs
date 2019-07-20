@@ -21,6 +21,7 @@ namespace DDSReader.Internal.Decoders
         #region IDataDecoder Members
 
         public abstract Task<byte[]> DecodeFrame(Stream dataSource, uint width, uint height);
+        public abstract byte[] DecodeFrameSync(Stream dataSource, uint width, uint height);
 
         #endregion
     }

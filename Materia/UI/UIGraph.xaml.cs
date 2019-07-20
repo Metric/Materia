@@ -524,6 +524,7 @@ namespace Materia
 
             Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
             Graph.OnGraphNameChanged -= Graph_OnGraphNameChanged;
+            Graph.OnHdriChanged -= Graph_OnHdriChanged;
 
             ClearView();
 
@@ -537,10 +538,16 @@ namespace Materia
 
             Graph.OnGraphUpdated += Graph_OnGraphUpdated;
             Graph.OnGraphNameChanged += Graph_OnGraphNameChanged;
+            Graph.OnHdriChanged += Graph_OnHdriChanged;
 
             ReadOnly = Graph.ReadOnly;
             Graph.ReadOnly = false;
             LoadGraphUI();
+        }
+
+        private void Graph_OnHdriChanged(Graph g)
+        {
+            HdriManager.Selected = g.HdriIndex;
         }
 
         private void Graph_OnGraphNameChanged(Graph g)
@@ -1116,6 +1123,8 @@ namespace Materia
             if (Graph != null)
             {
                 Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
+                Graph.OnHdriChanged -= Graph_OnHdriChanged;
+                Graph.OnGraphNameChanged -= Graph_OnGraphNameChanged;
 
                 Graph.Dispose();
                 Graph = null;

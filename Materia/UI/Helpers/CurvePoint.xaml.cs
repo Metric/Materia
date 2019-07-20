@@ -20,8 +20,8 @@ namespace Materia.UI.Helpers
     /// </summary>
     public partial class CurvePoint : UserControl
     {
-        protected Point normalized;
-        public Point Normalized
+        protected MathHelpers.Point normalized;
+        public MathHelpers.Point Normalized
         {
             get
             {
@@ -36,8 +36,8 @@ namespace Materia.UI.Helpers
             }
         }
 
-        protected Point position;
-        public Point Position
+        protected MathHelpers.Point position;
+        public MathHelpers.Point Position
         {
             get
             {
@@ -72,7 +72,7 @@ namespace Materia.UI.Helpers
 
         public void UpdateViewPosition()
         {
-            position = new Point(normalized.X * (CurveView.CurveView.ActualWidth - 1) - 4, normalized.Y * (CurveView.CurveView.ActualHeight - 1) - 4);
+            position = new MathHelpers.Point(normalized.X * (CurveView.CurveView.ActualWidth - 1) - 4, normalized.Y * (CurveView.CurveView.ActualHeight - 1) - 4);
         }
 
         public void Relayout()

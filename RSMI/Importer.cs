@@ -28,19 +28,19 @@ namespace RSMI
 
                         foreach (Vector3D v in m.Normals)
                         {
-                            ms.normals.Add(new OpenTK.Vector3(v.X, v.Y, v.Z));
+                            ms.normals.Add(new Materia.Math3D.Vector3(v.X, v.Y, v.Z));
                             //we also add placeholders for tangents
-                            ms.tangents.Add(new OpenTK.Vector4(0, 0, 0, 1));
+                            ms.tangents.Add(new Materia.Math3D.Vector4(0, 0, 0, 1));
                         }
 
                         foreach(Vector3D v in m.Vertices)
                         {
-                            ms.vertices.Add(new OpenTK.Vector3(v.X, v.Y, v.Z));
+                            ms.vertices.Add(new Materia.Math3D.Vector3(v.X, v.Y, v.Z));
                         }
 
                         foreach(Vector3D v in m.TextureCoordinateChannels[0])
                         {
-                            ms.uv.Add(new OpenTK.Vector2(v.X, v.Y));
+                            ms.uv.Add(new Materia.Math3D.Vector2(v.X, v.Y));
                         }
 
                         

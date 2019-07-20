@@ -7,7 +7,7 @@
              xmlns:ui="clr-namespace:Materia"
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="800">
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
         <ui:NumberInput x:Name="XPos" Height="32" />
         <ui:NumberInput x:Name="YPos" Height="32" />
         <ui:NumberInput x:Name="ZPos" Height="32" />

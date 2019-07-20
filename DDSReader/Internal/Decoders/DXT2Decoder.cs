@@ -18,6 +18,15 @@ namespace DDSReader.Internal.Decoders
             return dxt1Data;
         }
 
+        public override byte[] DecodeFrameSync(Stream dataSource, uint width, uint height)
+        {
+            var dxt1Data = base.DecodeFrameSync(dataSource, width, height);
+
+            CorrectPreMult(dxt1Data);
+
+            return dxt1Data;
+        }
+
         public static void CorrectPreMult(byte[] dxt1Data)
         {
             for (var i = 0; i < dxt1Data.Length; i += BytesPerPixel)
