@@ -159,6 +159,24 @@ namespace Materia.Exporters
                                 src.Dispose();
                             }
                         }
+                        else if (on.OutType == OutputType.emission)
+                        {
+                            RawBitmap bmp = null;
+                            byte[] bits = on.GetPreview(on.Width, on.Height);
+
+                            if (bits != null)
+                            {
+                                bmp = new RawBitmap(on.Width, on.Height, bits);
+                                var src = bmp.ToBitmap();
+
+                                using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_emission.png"), FileMode.OpenOrCreate))
+                                {
+                                    src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
+                                }
+
+                                src.Dispose();
+                            }
+                        }
                     }
                 }
             }

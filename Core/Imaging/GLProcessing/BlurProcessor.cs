@@ -37,6 +37,10 @@ namespace Materia.Imaging.GLProcessing
         {
             base.Process(width, height, tex, output);
 
+            colorBuff.Bind();
+            colorBuff.ClampToEdge();
+            GLTextuer2D.Unbind();
+
             if (shader != null)
             {
                 ResizeViewTo(tex, output, tex.Width, tex.Height, width, height);
@@ -54,6 +58,9 @@ namespace Materia.Imaging.GLProcessing
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
                 tex.Bind();
 
+                //clamp to prevent blur wrap
+                tex.ClampToEdge();
+
                 if (renderQuad != null)
                 {
                     renderQuad.Draw();
@@ -67,6 +74,9 @@ namespace Materia.Imaging.GLProcessing
                 shader.SetUniform("horizontal", false);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
                 output.Bind();
+
+                //clamp to prevent blur wrap
+                output.ClampToEdge();
 
                 IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit);
                 IGL.Primary.Clear((int)ClearBufferMask.DepthBufferBit);
@@ -155,6 +165,10 @@ namespace Materia.Imaging.GLProcessing
                 output.CopyFromFrameBuffer(width, height);
                 GLTextuer2D.Unbind();
             }
+
+            colorBuff.Bind();
+            colorBuff.Repeat();
+            GLTextuer2D.Unbind();
         }
 
         public override void Release()

@@ -56,6 +56,9 @@ namespace Materia
 
         public MainWindow()
         {
+            //initialize OpenTK GL Abstraction Layer first
+            tk = new TKGL();
+
             InitializeComponent();
             Instance = this;
             recent = new RecentSettings();
@@ -76,8 +79,6 @@ namespace Materia
 
             //set node context
             Materia.Nodes.Node.AppContext = new DispatcherSynchronizationContext();
-            //initialize OpenTK GL Abstraction Layer
-            tk = new TKGL();
         }
 
         private void BuildRecentSubMenu()

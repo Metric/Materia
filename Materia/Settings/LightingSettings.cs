@@ -76,12 +76,33 @@ namespace Materia.Settings
             }
         }
 
+        protected float bloomIntensity;
+        [Title(Title = "Bloom Intensity")]
+        [Section(Section = "Effects")]
+        public float BloomIntensity
+        {
+            get
+            {
+                return bloomIntensity;
+            }
+            set
+            {
+                bloomIntensity = value;
+
+                if (OnLightingUpdated != null)
+                {
+                    OnLightingUpdated.Invoke(this);
+                }
+            }
+        }
+
         public LightingSettings()
         {
             name = "lighting";
             position = new MVector(0, 2, 2, 0);
             color = new MVector(1, 1, 1, 1);
             power = 1;
+            bloomIntensity = 8;
         }
 
         public override void Load()

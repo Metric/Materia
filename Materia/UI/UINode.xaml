@@ -16,6 +16,7 @@
                 <MenuItem Header="_Occlusion" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Height" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Thickness" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Emission" Click="MenuItem_Click"></MenuItem>
             </MenuItem>
             <MenuItem Header="_Export Image" Click="MenuItem_Click"></MenuItem>
         </ContextMenu>
@@ -30,6 +31,8 @@
                 <MenuItem Header="_Normal" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Occlusion" Click="MenuItem_Click"></MenuItem>
                 <MenuItem Header="_Height" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Thickness" Click="MenuItem_Click"></MenuItem>
+                <MenuItem Header="_Emission" Click="MenuItem_Click"></MenuItem>
             </MenuItem>
             <MenuItem Header="_Edit" Click="MenuItem_Click" />
         </ContextMenu>

@@ -243,6 +243,10 @@
     <Compile Include="Nodes\NodeInput.cs" />
     <Compile Include="Nodes\NodeOutput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rendering\BasePass.cs" />
+    <Compile Include="Rendering\BloomPass.cs" />
+    <Compile Include="Rendering\RenderStack.cs" />
+    <Compile Include="Rendering\RenderStackItem.cs" />
     <Compile Include="Shaders\GLFragmentShader.cs" />
     <Compile Include="Shaders\GLGeometryShader.cs" />
     <Compile Include="Shaders\GLShaderProgram.cs" />

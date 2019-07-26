@@ -1,5 +1,6 @@
 #version 330 core
-out vec4 FragColor;
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 Brightness;
 
 struct AppData {
     vec3 Normal;
@@ -28,6 +29,7 @@ uniform sampler2D brdfLUT;
 uniform sampler2D irradianceMap;
 uniform sampler2D prefilterMap;
 uniform sampler2D thicknessMap;
+uniform sampler2D emissionMap;
 
 //Light Data
 uniform vec3 lightPosition = vec3(0,1,1);
@@ -258,6 +260,10 @@ float subsurfaceScattering(float atten, float thickness, vec3 L, vec3 N)
     return fLT;
 }
 
+float lengthSqr(vec3 v) {
+    return v.x * v.x + v.y * v.y + v.z * v.z;
+}
+
 void main() 
 {
     AppData o = data;
@@ -321,13 +327,22 @@ void main()
     vec3 specularIBL = prefilteredColor * (iKs * envBRDF.x + envBRDF.y);
 
     vec3 ambient = (iKd * diffuseIBL + specularIBL) * ao;
-    final += (ambient + Lo);
+    //add ambient + light + emission
+    final += (ambient + Lo) + texture(emissionMap, uv).rgb;
+
+    //draw to secondary color attachment for bloom
+    float bright = lengthSqr(final);
+    Brightness = vec4(0);
+    if(bright > 3) {
+        Brightness = vec4(final, 1.0);
+    }
 
     //HDR
-    final = final / (final + vec3(1.0)); 
+    //final = final / (final + vec3(1.0)); 
 
     //GAMMA
-    final = pow(final, vec3(1.0/2.2));
+    //final = pow(final, vec3(1.0/2.2));
 
     FragColor = vec4(final, color.a);
+    
 }

@@ -21,7 +21,8 @@ namespace Materia.Nodes.Atomic
         roughness,
         metallic,
         normal,
-        thickness
+        thickness,
+        emission
     }
 
     /// <summary>

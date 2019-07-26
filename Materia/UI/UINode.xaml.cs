@@ -748,6 +748,13 @@ namespace Materia
                     prev.SetThicknessNode(this);
                 }
             }
+            else if(item.Header.ToString().ToLower().Contains("emission"))
+            {
+                if(prev != null)
+                {
+                    prev.SetEmissionNode(this);
+                }
+            }
             else if(item.Header.ToString().ToLower().Contains("edit"))
             {
                 if(Node is PixelProcessorNode && Graph.Graph is ImageGraph)

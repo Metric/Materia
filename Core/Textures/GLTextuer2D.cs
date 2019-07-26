@@ -111,6 +111,26 @@ namespace Materia.Textures
             IGL.Primary.TexParameter((int)TextureTarget.Texture2D, (int)TextureParameterName.TextureMagFilter, mag);
         }
 
+        public void Nearest()
+        {
+            SetFilter((int)TextureMinFilter.Nearest, (int)TextureMagFilter.Nearest);
+        }
+
+        public void Linear()
+        {
+            SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
+        }
+
+        public void ClampToEdge()
+        {
+            SetWrap((int)TextureWrapMode.ClampToEdge);
+        }
+        
+        public void Repeat()
+        {
+            SetWrap((int)TextureWrapMode.Repeat);
+        }
+
         public void SetWrap(int wrap)
         {
             IGL.Primary.TexParameter((int)TextureTarget.Texture2D, (int)TextureParameterName.TextureWrapS, wrap);

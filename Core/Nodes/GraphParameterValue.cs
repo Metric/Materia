@@ -30,6 +30,9 @@ namespace Materia.Nodes
         [TextInput]
         public string Name { get; set; }
 
+        [TextInput]
+        public string Section { get; set; }
+
         public string Id { get; set; }
 
         protected NodeType type;
@@ -208,6 +211,7 @@ namespace Materia.Nodes
             public float max;
             public int inputType;
             public string id;
+            public string section;
         }
 
         public GraphParameterValue(string name, object value,
@@ -218,6 +222,7 @@ namespace Materia.Nodes
             v = value;
             Id = id;
             Description = desc;
+            Section = "Default";
             this.type = type;
 
             if (string.IsNullOrEmpty(Id))
@@ -292,6 +297,34 @@ namespace Materia.Nodes
             return v is FunctionGraph;
         }
 
+        public virtual void SetJson(GraphParameterValueData d, Node n)
+        {
+            Name = d.name;
+            if(d.isFunction)
+            {
+                FunctionGraph t = new FunctionGraph("temp");
+                t.FromJson((string)d.value);
+                t.ExpectedOutput = (NodeType)d.type;
+                t.ParentNode = n;
+                t.SetConnections();
+                v = t;
+            }
+            else
+            {
+                v = d.value;
+            }
+
+            Description = d.description;
+            Section = d.section;
+            type = (NodeType)d.type;
+            inputType = (ParameterInputType)d.inputType;
+            Id = d.id;
+            min = d.min;
+            max = d.max;
+
+            ValidateValue();
+        }
+
         public string GetJson()
         {
             GraphParameterValueData d = new GraphParameterValueData();
@@ -303,6 +336,7 @@ namespace Materia.Nodes
             d.max = Max;
             d.inputType = (int)inputType;
             d.id = Id;
+            d.section = Section;
 
             if (d.isFunction)
             {
@@ -321,19 +355,9 @@ namespace Materia.Nodes
         public static GraphParameterValue FromJson(string data, Node n)
         {
             GraphParameterValueData d = JsonConvert.DeserializeObject<GraphParameterValueData>(data);
-
-            if (d.isFunction)
-            {
-                FunctionGraph t = new FunctionGraph("temp");
-                t.FromJson((string)d.value);
-                t.ExpectedOutput = (NodeType)d.type;
-                t.ParentNode = n;
-                t.SetConnections();
-                return new GraphParameterValue(d.name, t, d.description, (NodeType)d.type, d.min, d.max, (ParameterInputType)d.inputType, d.id);
-            }
-
-
-            return new GraphParameterValue(d.name, d.value, d.description, (NodeType)d.type, d.min, d.max, (ParameterInputType)d.inputType, d.id);
+            var g = new GraphParameterValue(d.name, d.value);
+            g.SetJson(d, n);
+            return g;
         }
     }
 }

@@ -185,6 +185,18 @@ namespace Materia
             GL.DrawBuffer((OpenTK.Graphics.OpenGL.DrawBufferMode)mode);
         }
 
+        public override void DrawBuffers(int[] modes)
+        {
+            OpenTK.Graphics.OpenGL.DrawBuffersEnum[] fmodes = new OpenTK.Graphics.OpenGL.DrawBuffersEnum[modes.Length];
+
+            for (int i = 0; i < modes.Length; i++)
+            {
+                fmodes[i] = (OpenTK.Graphics.OpenGL.DrawBuffersEnum)modes[i];
+            }
+
+            GL.DrawBuffers(fmodes.Length, fmodes);
+        }
+
         public override void DrawElements(int mode, int count, int type, int indices)
         {
             GL.DrawElements((OpenTK.Graphics.OpenGL.BeginMode)mode, count, (OpenTK.Graphics.OpenGL.DrawElementsType)type, indices);

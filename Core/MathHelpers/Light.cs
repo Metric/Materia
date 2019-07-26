@@ -12,5 +12,11 @@ namespace Materia.MathHelpers
     {
         public Vector3 Color { get; set; }
         public float Power { get; set; }
+
+        public Light()
+        {
+            Power = 1.0f;
+            Color = new Vector3(1.0f);
+        }
     }
 }

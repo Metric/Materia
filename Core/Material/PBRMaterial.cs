@@ -24,6 +24,7 @@ namespace Materia.Material
         public GLTextuer2D Occlusion { get; set; }
         public GLTextuer2D Height { get; set; }
         public GLTextuer2D Thickness { get; set; }
+        public GLTextuer2D Emission { get; set; }
         public static GLTextuer2D BRDFLut { get; protected set; }
         public static bool BRDFLoaded { get; protected set; }
 
@@ -130,6 +131,11 @@ namespace Materia.Material
             {
                 Thickness.Release();
                 Thickness = null;
+            }
+            if(Emission != null)
+            {
+                Emission.Release();
+                Emission = null;
             }
         }
     }

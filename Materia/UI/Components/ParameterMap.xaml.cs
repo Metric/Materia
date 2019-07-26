@@ -38,21 +38,38 @@ namespace Materia.UI.Components
         {
             InitializeComponent();
 
-            foreach(var v in values)
-            {
-                if(!v.IsFunction())
-                {
-                    PropertyLabel lbl = new PropertyLabel(v.Name, n, "$Custom." + v.Name);
-                    Stack.Children.Add(lbl);
+            //create a copy
+            var temp = values.ToList();
 
-                    if (!useBasic)
-                    {
-                        BuildParameterCustom(v);
-                    }
-                    else
-                    {
-                        BuildParameter(v);
-                    }
+            temp.Sort((a, b) =>
+            {
+                return a.Section.CompareTo(b.Section);
+            });
+
+            string lastSection = "Default";
+            foreach(var v in temp)
+            {
+                if (v.IsFunction()) continue;
+
+                if(!v.Section.Equals(lastSection))
+                {
+                    lastSection = v.Section;
+
+                    PropertySection sect = new PropertySection();
+                    sect.Title = v.Section;
+                    Stack.Children.Add(sect);
+                }
+
+                PropertyLabel lbl = new PropertyLabel(v.Name, n, "$Custom." + v.Name);
+                Stack.Children.Add(lbl);
+
+                if (!useBasic)
+                {
+                    BuildParameterCustom(v);
+                }
+                else
+                {
+                    BuildParameter(v);
                 }
             }
         }
@@ -60,6 +77,8 @@ namespace Materia.UI.Components
         public ParameterMap(Graph g, Dictionary<string, GraphParameterValue> values)
         {
             InitializeComponent();
+
+            List<Tuple<PropertyLabel, GraphParameterValue, PropertyInfo>> sorter = new List<Tuple<PropertyLabel, GraphParameterValue, PropertyInfo>>();
 
             foreach (var k in values.Keys)
             {
@@ -97,13 +116,35 @@ namespace Materia.UI.Components
                             v.InputType = realParam.InputType;
                             v.Max = realParam.Max;
                             v.Min = realParam.Min;
+                            v.Section = realParam.Section;
                         }
                     }
                 }
 
                 PropertyLabel lbl = new PropertyLabel(v.Name, n, customHeader + split[1]);
-                Stack.Children.Add(lbl);
-                BuildParameter(v, nodeInfo);
+                Tuple<PropertyLabel, GraphParameterValue, PropertyInfo> prop = new Tuple<PropertyLabel, GraphParameterValue, PropertyInfo>(lbl, v, nodeInfo);
+                sorter.Add(prop);
+            }
+
+            sorter.Sort((a, b) =>
+            {
+                return a.Item2.Section.CompareTo(b.Item2.Section);
+            });
+
+            string lastSection = "Default";
+            foreach(var prop in sorter)
+            {
+                GraphParameterValue v = prop.Item2;
+                if(!v.Section.Equals(lastSection))
+                {
+                    lastSection = v.Section;
+                    PropertySection sect = new PropertySection();
+                    sect.Title = v.Section;
+                    Stack.Children.Add(sect);
+                }
+
+                Stack.Children.Add(prop.Item1);
+                BuildParameter(v, prop.Item3);
             }
         }
 

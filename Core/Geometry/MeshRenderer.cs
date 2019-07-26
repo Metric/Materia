@@ -47,8 +47,12 @@ namespace Materia.Geometry
             }
         }
 
+        public bool IsLight { get; set; }
+
         public MeshRenderer(Mesh model)
         {
+            IsLight = false;
+
             Tiling = new Vector2(1, 1);
 
             vbo = new GLArrayBuffer(BufferUsageHint.StaticDraw);
@@ -139,7 +143,7 @@ namespace Materia.Geometry
 
                 Vector2 tiling = Tiling;
 
-                Vector4 lightColor = new Vector4(LightColor, 1);
+                Vector4 lightColor = new Vector4(LightColor * LightPower, 1);
 
                 shader.SetUniform2("tiling", ref tiling);
 
@@ -153,6 +157,18 @@ namespace Materia.Geometry
         }
 
         public override void Draw()
+        {
+            if(IsLight)
+            {
+                DrawAsLight();
+            }
+            else
+            {
+                DrawFull();
+            }
+        }
+
+        public virtual void DrawFull()
         {
             if(Mat != null && Mat.Shader != null)
             {
@@ -215,6 +231,12 @@ namespace Materia.Geometry
                     Mat.Thickness.Bind();
                 }
 
+                IGL.Primary.ActiveTexture((int)TextureUnit.Texture10);
+                if(Mat.Emission != null)
+                {
+                    Mat.Emission.Bind();
+                }
+
                 //use shader
                 shader.Use();
 
@@ -229,6 +251,7 @@ namespace Materia.Geometry
                 shader.SetUniform("irradianceMap", 7);
                 shader.SetUniform("prefilterMap", 8);
                 shader.SetUniform("thicknessMap", 9);
+                shader.SetUniform("emissionMap", 10);
 
                 Vector3 lpos = LightPosition;
                 Vector3 lc = LightColor;

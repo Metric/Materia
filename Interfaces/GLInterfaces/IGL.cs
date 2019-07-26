@@ -79,6 +79,7 @@ namespace Materia.GLInterfaces
         public abstract void ReadPixels(int x, int y, int w, int h, int format, int type, float[] buffer);
 
         public abstract void DrawBuffer(int mode);
+        public abstract void DrawBuffers(int[] modes);
         public abstract void ReadBuffer(int mode);
 
         ///Textures

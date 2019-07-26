@@ -91,7 +91,7 @@ Command Line MTG Renderer Build Instructions
 * Right click MTG Renderer Project -> Build
 * May have to copy runtimes folder for assimp over from the RSMI project build folder to the built MTGRenderer.exe location
 * Copy item from AddToOutputDir to where the final built .exe is located
-* Run via command line with via the following arguments:
+* Run via command line with the following arguments:
     - exportType mtgFilePath exportFolderPath
       - exportType is a number from 0-2. 0 = Separate Files, 1 = Unity5 Compacted, 2 = Unreal4 Compacted
 

@@ -16,6 +16,7 @@ using RSMI.Containers;
 using Materia.MathHelpers;
 using Materia.Hdri;
 using Materia.Settings;
+using Materia.Rendering;
 using NLog;
 
 namespace Materia.UI
@@ -78,6 +79,11 @@ namespace Materia.UI
         MeshRenderer plane;
         MeshRenderer cubeRounded;
         MeshRenderer custom;
+        MeshRenderer lightMesh;
+
+        RenderStack renderStack;
+        BasePass basePass;
+        BloomPass bloomPass;
 
         Mesh cubeMesh;
         Mesh sphereMesh;
@@ -96,6 +102,7 @@ namespace Materia.UI
         UINode normalNode;
         UINode heightNode;
         UINode thicknessNode;
+        UINode emissionNode;
 
         MaterialSettings materialSettings;
         LightingSettings lightSettings;
@@ -300,7 +307,12 @@ namespace Materia.UI
                 thicknessNode.Node.OnUpdate -= Node_OnUpdate;
                 thicknessNode = null;
                 SetThickness(null);
-                
+            }
+            else if(emissionNode == n)
+            {
+                emissionNode.Node.OnUpdate -= Node_OnUpdate;
+                emissionNode = null;
+                SetEmission(null);
             }
         }
 
@@ -388,6 +400,18 @@ namespace Materia.UI
             SetThickness(thicknessNode.Node.GetActiveBuffer());
         }
 
+        public void SetEmissionNode(UINode n)
+        {
+            if(emissionNode != null)
+            {
+                emissionNode.Node.OnUpdate -= Node_OnUpdate;
+            }
+
+            emissionNode = n;
+            emissionNode.Node.OnUpdate += Node_OnUpdate;
+            SetEmission(emissionNode.Node.GetActiveBuffer());
+        }
+
         private void Node_OnUpdate(Nodes.Node n)
         {
             if(albedoNode != null && albedoNode.Node == n)
@@ -417,6 +441,10 @@ namespace Materia.UI
             else if(thicknessNode != null && thicknessNode.Node == n)
             {
                 SetThickness(n.GetActiveBuffer());
+            }
+            else if(emissionNode != null && emissionNode.Node == n)
+            {
+                SetEmission(n.GetActiveBuffer());
             }
         }
 
@@ -574,6 +602,28 @@ namespace Materia.UI
             Invalidate();
         }
 
+        void SetEmission(GLTextuer2D t)
+        {
+            if (mat == null && tessMat == null) return;
+
+            if (t == null || t.Id == 0)
+            {
+                if (mat != null)
+                    mat.Emission = defaultBlack;
+                if (tessMat != null)
+                    tessMat.Emission = defaultBlack;
+            }
+            else
+            {
+                if (mat != null)
+                    mat.Emission = t;
+                if (tessMat != null)
+                    tessMat.Emission = t;
+            }
+
+            Invalidate();
+        }
+
         void LoadDefaultTextures()
         {
             lightMat = new Material.PBRLight();
@@ -651,7 +701,8 @@ namespace Materia.UI
                         Occlusion = defaultWhite,
                         Roughness = defaultBlack,
                         Height = defaultWhite,
-                        Thickness = defaultBlack
+                        Thickness = defaultBlack,
+                        Emission = defaultBlack
                     };
                 }
 
@@ -664,7 +715,8 @@ namespace Materia.UI
                         Occlusion = defaultWhite,
                         Roughness = defaultBlack,
                         Height = defaultBlack,
-                        Thickness = defaultBlack
+                        Thickness = defaultBlack,
+                        Emission = defaultBlack
                     };
                 }
 
@@ -689,6 +741,8 @@ namespace Materia.UI
                     sphereMesh = meshes[0];
                     sphere = new MeshRenderer(meshes[0]);
                     sphere.Mat = mat;
+                    lightMesh = new MeshRenderer(meshes[0]);
+                    lightMesh.Mat = lightMat;
                 }
 
                 string prounded = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Geometry", "cube-rounded.obj");
@@ -862,34 +916,63 @@ namespace Materia.UI
                 IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Line);
             }
 
-            DrawGeometry(ref proj, camera, materialSettings.Displacement ? tessMat : mat);
+            MeshRenderer[] meshes = GatherMeshes(ref proj, camera, materialSettings.Displacement ? tessMat : mat);
+
+            if (basePass != null)
+            {
+                basePass.Update(meshes, glview.Width, glview.Height);
+            }
+            if (bloomPass != null)
+            {
+                bloomPass.Intensity = lightSettings.BloomIntensity;
+                bloomPass.Update(glview.Width, glview.Height);
+            }
+
+            if(renderStack != null)
+            { 
+                renderStack.Process();
+            }
 
             IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
 
             glview.SwapBuffers();
         }
 
-        private void DrawGeometry(ref Matrix4 proj, Camera camera, Material.PBRMaterial m)
+        private MeshRenderer[] GatherMeshes(ref Matrix4 proj, Camera camera, Material.PBRMaterial m)
         {
-            //draw our only light source
-            if(sphere != null)
-            {
-                sphere.Mat = lightMat;
-                sphere.CameraPosition = camera.EyePosition;
-                sphere.IrradianceMap = HdriManager.Irradiance;
-                sphere.PrefilterMap = HdriManager.Prefiltered;
-                sphere.Projection = proj;
-                sphere.Model = light.WorldMatrix;
-                sphere.View = camera.View;
-                sphere.LightColor = light.Color;
-                sphere.LightPosition = light.Position;
-                sphere.LightPower = light.Power;
-                sphere.Near = camera.Near;
-                sphere.Far = camera.Far;
+            List<MeshRenderer> meshes = new List<MeshRenderer>();
 
-                sphere.DrawAsLight();
+            if(lightMesh != null)
+            {
+                lightMesh.Mat = lightMat;
+                lightMesh.IsLight = true;
+                lightMesh.CameraPosition = camera.EyePosition;
+                lightMesh.IrradianceMap = HdriManager.Irradiance;
+                lightMesh.PrefilterMap = HdriManager.Prefiltered;
+                lightMesh.Projection = proj;
+                lightMesh.Model = light.WorldMatrix;
+                lightMesh.View = camera.View;
+                lightMesh.LightColor = light.Color;
+                lightMesh.LightPosition = light.Position;
+                lightMesh.LightPower = light.Power;
+                lightMesh.Near = camera.Near;
+                lightMesh.Far = camera.Far;
+
+                meshes.Add(lightMesh);
             }
 
+            var mesh = GetCurrentMesh(ref proj, camera, m);
+
+            if(mesh != null)
+            {
+                meshes.Add(mesh);
+            }
+
+            return meshes.ToArray();
+        }
+
+        private MeshRenderer GetCurrentMesh(ref Matrix4 proj, Camera camera, Material.PBRMaterial m)
+        {
             if (previewType == PreviewGeometryType.Cube)
             {
                 if (cube != null)
@@ -907,14 +990,7 @@ namespace Materia.UI
                     cube.Near = camera.Near;
                     cube.Far = camera.Far;
 
-                    if (m is Material.PBRDepth)
-                    {
-                        cube.DrawForDepth();
-                    }
-                    else
-                    {
-                        cube.Draw();
-                    }
+                    return cube;
                 }
             }
             else if (previewType == PreviewGeometryType.Sphere)
@@ -934,14 +1010,7 @@ namespace Materia.UI
                     sphere.Near = camera.Near;
                     sphere.Far = camera.Far;
 
-                    if (m is Material.PBRDepth)
-                    {
-                        sphere.DrawForDepth();
-                    }
-                    else
-                    {
-                        sphere.Draw();
-                    }
+                    return sphere;
                 }
             }
             else if (previewType == PreviewGeometryType.Cylinder)
@@ -961,14 +1030,7 @@ namespace Materia.UI
                     cylinder.Near = camera.Near;
                     cylinder.Far = camera.Far;
 
-                    if (m is Material.PBRDepth)
-                    {
-                        cylinder.DrawForDepth();
-                    }
-                    else
-                    {
-                        cylinder.Draw();
-                    }
+                    return cylinder;
                 }
             }
             else if (previewType == PreviewGeometryType.Plane)
@@ -988,14 +1050,7 @@ namespace Materia.UI
                     plane.Near = camera.Near;
                     plane.Far = camera.Far;
 
-                    if (m is Material.PBRDepth)
-                    {
-                        plane.DrawForDepth();
-                    }
-                    else
-                    {
-                        plane.Draw();
-                    }
+                    return plane;
                 }
             }
             else if (previewType == PreviewGeometryType.RoundedCube)
@@ -1015,19 +1070,12 @@ namespace Materia.UI
                     cubeRounded.Near = camera.Near;
                     cubeRounded.Far = camera.Far;
 
-                    if (m is Material.PBRDepth)
-                    {
-                        cubeRounded.DrawForDepth();
-                    }
-                    else
-                    {
-                        cubeRounded.Draw();
-                    }
+                    return cubeRounded;
                 }
             }
-            else if(previewType == PreviewGeometryType.Custom)
+            else if (previewType == PreviewGeometryType.Custom)
             {
-                if(custom != null)
+                if (custom != null)
                 {
                     custom.Mat = m;
                     custom.CameraPosition = camera.EyePosition;
@@ -1042,16 +1090,11 @@ namespace Materia.UI
                     custom.Near = camera.Near;
                     custom.Far = camera.Far;
 
-                    if (m is Material.PBRDepth)
-                    {
-                        custom.DrawForDepth();
-                    }
-                    else
-                    {
-                        custom.Draw();
-                    }
+                    return custom;
                 }
             }
+
+            return null;
         }
 
         private void Glview_Load(object sender, EventArgs e)
@@ -1067,6 +1110,12 @@ namespace Materia.UI
             IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
             IGL.Primary.Enable((int)EnableCap.CullFace);
             IGL.Primary.CullFace((int)CullFaceMode.Back);
+
+            renderStack = new RenderStack();
+            basePass = new BasePass(null, glview.Width, glview.Height);
+            bloomPass = new BloomPass(glview.Width, glview.Height);
+            renderStack.Add(basePass);
+            renderStack.Add(bloomPass);
 
             LoadMeshes();
 
@@ -1087,6 +1136,12 @@ namespace Materia.UI
 
         public void Release()
         {
+            if(renderStack != null)
+            {
+                renderStack.Release();
+                renderStack = null;
+            }
+
             if(materialSettings != null)
             {
                 materialSettings.Save();
@@ -1170,6 +1225,12 @@ namespace Materia.UI
             {
                 custom.Release();
                 custom = null;
+            }
+
+            if(lightMesh != null)
+            {
+                lightMesh.Release();
+                lightMesh = null;
             }
 
             if(glview != null)
