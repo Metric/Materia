@@ -51,7 +51,7 @@ namespace Materia.UI.Components
             {
                 if (v.IsFunction()) continue;
 
-                if(!v.Section.Equals(lastSection))
+                if(!string.IsNullOrEmpty(v.Section) && !v.Section.Equals(lastSection))
                 {
                     lastSection = v.Section;
 
@@ -135,7 +135,7 @@ namespace Materia.UI.Components
             foreach(var prop in sorter)
             {
                 GraphParameterValue v = prop.Item2;
-                if(!v.Section.Equals(lastSection))
+                if(!string.IsNullOrEmpty(v.Section) && !v.Section.Equals(lastSection))
                 {
                     lastSection = v.Section;
                     PropertySection sect = new PropertySection();

@@ -316,6 +316,15 @@ namespace Materia.Nodes
 
             Description = d.description;
             Section = d.section;
+
+            //whoops forgot to check for this!
+            //otherwise d.section from a file
+            //without d.section is null!
+            if(string.IsNullOrEmpty(Section))
+            {
+                Section = "Default";
+            }
+
             type = (NodeType)d.type;
             inputType = (ParameterInputType)d.inputType;
             Id = d.id;

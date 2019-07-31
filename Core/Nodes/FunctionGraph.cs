@@ -106,8 +106,11 @@ namespace Materia.Nodes
                 int c = Nodes.Count;
                 for(int i = 0; i < c; i++)
                 {
-                    MathNode n = (MathNode)Nodes[i];
-                    n.ParentNode = parentNode;
+                    if (Nodes[i] is MathNode)
+                    {
+                        MathNode n = (MathNode)Nodes[i];
+                        n.ParentNode = parentNode;
+                    }
                 }
 
                 g = TopGraph();
