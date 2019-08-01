@@ -43,16 +43,16 @@ Major TODO
   * Various shape nodes.
   * Keyboard Shortcuts
   * Re-creation of various substance graph instances.
-  * Need to add more gradient graphs such as Radial Gradient, Diamond Gradient, Gaussian Gradient, and etc. 
   * More Undo and Redo tracking operations.
   * Thorough testing of function graphs for both CPU and GPU.
+  * Add a Pow math node. 
+  * Add various Matrix4, Matrix3, and Matrix2 math nodes.
 
 Known Bugs
 ====================
 * Color selector magnifier window fails to update on multiple displays when they are different scaling and resolution on Windows 10. This is an internal bug of the .Net framework. Already reported to the .Net developer forum. However, the actual color being selected is the correct color, even if the magnifier window fails to update.
   - Work around for now is to set scaling for all displays to 100% in Windows 10.
   - UPDATE: I just received an email that this issue has now been added to the dotnot WPF github issues tracker at: https://github.com/dotnet/wpf/issues/1320
-
 
 How-To and Various Info
 ========================

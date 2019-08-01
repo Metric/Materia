@@ -19,6 +19,7 @@ using Materia.Geometry;
 using Materia.Imaging.GLProcessing;
 using OpenTK.Graphics.OpenGL;
 using Materia.Math3D;
+using Materia.Textures;
 
 namespace Materia
 {
@@ -33,6 +34,8 @@ namespace Materia
         Point pan;
 
         System.Drawing.Point start;
+
+        GLTextuer2D blankTexture;
 
         double vw;
         double vh;
@@ -98,9 +101,9 @@ namespace Materia
             {
                 processor.Bind(current.Node.GetActiveBuffer());
             }
-            else
+            else if(blankTexture != null)
             {
-                processor.Bind(null);
+                processor.Bind(blankTexture);
             }
 
             if(quad != null)
@@ -199,6 +202,11 @@ namespace Materia
                 processor = new PreviewProcessor();
             }
 
+            blankTexture = new GLTextuer2D(GLInterfaces.PixelInternalFormat.Rgb);
+            blankTexture.Bind();
+            blankTexture.SetData(IntPtr.Zero, GLInterfaces.PixelFormat.Rgb, 16, 16);
+            GLTextuer2D.Unbind();
+
             Invalidate();
         }
 
@@ -231,6 +239,8 @@ namespace Materia
                 current.Node.OnUpdate -= Node_OnUpdate;
                 current = null;
             }
+
+            Invalidate();
         }
 
         public void SetPreviewNode(UINode n)
@@ -368,6 +378,12 @@ namespace Materia
 
         public void Release()
         {
+            if(blankTexture != null)
+            {
+                blankTexture.Release();
+                blankTexture = null;
+            }
+
             if(quad != null)
             {
                 quad.Release();

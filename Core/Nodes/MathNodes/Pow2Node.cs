@@ -61,7 +61,7 @@ namespace Materia.Nodes.MathNodes
 
             n1id += index;
 
-            return "float " + s + " = pow(2," + n1id + ");\r\n";
+            return "float " + s + " = pow(" + n1id + ", 2);\r\n";
         }
 
         void Process()
@@ -74,7 +74,7 @@ namespace Materia.Nodes.MathNodes
             {
                 float v = Convert.ToSingle(o);
 
-                output.Data = (float)Math.Pow(2, v);
+                output.Data = (float)Math.Pow(v, 2);
             }
             else
             {
