@@ -47,9 +47,23 @@ namespace Materia.Settings
                 f.accessed = DateTime.Now.Ticks;
             }
 
+            Sort();
+        }
+
+        void Sort()
+        {
             Paths.Sort((m1, m2) =>
             {
-                return (int)(m2.accessed - m1.accessed);
+                if (m1.accessed < m2.accessed)
+                {
+                    return 1;
+                }
+                else if (m1.accessed > m2.accessed)
+                {
+                    return -1;
+                }
+
+                return 0;
             });
         }
 
@@ -66,6 +80,8 @@ namespace Materia.Settings
                         Paths = mt.Paths;
                     }
                 }
+
+                Sort();
             }
             catch (Exception e)
             {
