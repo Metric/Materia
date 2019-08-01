@@ -163,22 +163,6 @@ namespace Materia
 
                 return i;
             }
-
-            public override bool Equals(object obj)
-            {
-                if(obj is GraphStackItem)
-                {
-                    GraphStackItem s = obj as GraphStackItem;
-                    return s.id == id && s.type == type && s.parameter == parameter;
-                }
-
-                return false;
-            }
-
-            public override int GetHashCode()
-            {
-                return parameter.GetHashCode() ^ id.GetHashCode() ^ type.GetHashCode();
-            }
         }
 
         public UIGraph(Graph template = null)
@@ -531,6 +515,12 @@ namespace Materia
             Graph = g;
 
             Scale = Graph.Zoom;
+
+            if(Scale <= 0)
+            {
+                Scale = 1;
+            }
+
             XShift = Graph.ShiftX;
             YShift = Graph.ShiftY;
 
@@ -615,42 +605,18 @@ namespace Materia
                         }
                     }
                 }
+
+                LoadGraph(graph);
             }
-
-            //no need to reload if it is the same graph already
-            if (graph == Graph) return;
-            if (graph == null) return;
-
-            Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
-
-            ClearView();
-
-            Graph = graph;
-
-            Scale = Graph.Zoom;
-
-            if(Scale <= 0)
-            {
-                Scale = 1;
-            }
-
-            XShift = Graph.ShiftX;
-            YShift = Graph.ShiftY;
-
-            ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
-
-            Graph.OnGraphUpdated += Graph_OnGraphUpdated;
-            Graph.OnGraphNameChanged += Graph_OnGraphNameChanged;
-
-            ReadOnly = Graph.ReadOnly;
-            Graph.ReadOnly = false;
-            LoadGraphUI();
         }
 
         protected void RestoreStack()
         {
             if(StoredGraphStack != null)
             {
+                //need to clear it since we are restoring
+                GraphStack.Clear();
+
                 var graph = Original;
                 Node n;
                 for(int i = 0; i < StoredGraphStack.Length; i++)
@@ -822,7 +788,7 @@ namespace Materia
             }
         }
 
-        public void LoadGraph(string data, string CWD, bool readOnly = false)
+        public void LoadGraph(string data, string CWD, bool readOnly = false, bool loadUI = true)
         {
             Release();
 
@@ -835,25 +801,34 @@ namespace Materia
 
             pinIndex = 0;
 
-            Original = Graph;
-
             Graph.CWD = CWD;
             long ms = Environment.TickCount;
             Graph.FromJson(data);
+            Original = Graph;
             Log.Info("Loaded graph in {0:0}ms", Environment.TickCount - ms);
             HdriManager.Selected = Graph.HdriIndex;
 
             Graph.OnGraphUpdated += Graph_OnGraphUpdated;
 
             Scale = Graph.Zoom;
+
+            if(Scale <= 0)
+            {
+                Scale = 1;
+            }
+
             XShift = Graph.ShiftX;
             YShift = Graph.ShiftY;
 
             ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
 
-            LoadGraphUI();
             ReadOnly = readOnly;
 
+            if (loadUI)
+            {
+                LoadGraphUI();
+            }
+           
             Crumbs.Clear();
 
             BreadCrumb cb = new BreadCrumb(Crumbs, "Root", this, null);
@@ -2144,7 +2119,7 @@ namespace Materia
         {
             if(!string.IsNullOrEmpty(StoredGraph))
             {
-                LoadGraph(StoredGraph, StoredGraphCWD);
+                LoadGraph(StoredGraph, StoredGraphCWD, false, StoredGraphStack == null || StoredGraphStack.Length == 0);
                 StoredGraph = null;
 
                 RestoreStack();

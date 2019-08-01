@@ -97,7 +97,7 @@ namespace Materia
             processor.View = view;
             processor.Projection = proj;
 
-            if(current != null)
+            if(current != null && current.Node != null && current.Node.GetActiveBuffer() != null && current.Node.GetActiveBuffer().Id != 0)
             {
                 processor.Bind(current.Node.GetActiveBuffer());
             }
