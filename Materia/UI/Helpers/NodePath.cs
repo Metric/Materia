@@ -146,12 +146,16 @@ namespace Materia.UI.Helpers
             pf.IsClosed = false;
             pf.StartPoint = r1;
 
-            LineSegment seg = new LineSegment(new Point(r1Extra, r1y), true);
+            LineSegment seg = new LineSegment(new Point(r1Extra * 0.5 + r1.X, r1.Y), true);
             pf.Segments.Add(seg);
-            LineSegment seg2 = new LineSegment(new Point(r2Extra, r2y), true);
+            LineSegment seg2 = new LineSegment(new Point(r1Extra + r1.X, r1y), true);
             pf.Segments.Add(seg2);
-            LineSegment seg3 = new LineSegment(r2, true);
+            LineSegment seg3 = new LineSegment(new Point(r2Extra + r2.X, r2y), true);
             pf.Segments.Add(seg3);
+            LineSegment seg4 = new LineSegment(new Point(r2Extra * 0.5 + r2.X, r2.Y), true);
+            pf.Segments.Add(seg4);
+            LineSegment seg5 = new LineSegment(r2, true);
+            pf.Segments.Add(seg5);
             p.Figures.Add(pf);
             path.Data = p;
         }
@@ -178,8 +182,8 @@ namespace Materia.UI.Helpers
 
             double distExtra = dist * 0.05;
 
-            double r1Extra = r1.X + distExtra;
-            double r2Extra = r2.X - distExtra;
+            double r1Extra = distExtra;
+            double r2Extra = -distExtra;
 
             double r1y = midy;
             double r2y = midy;
@@ -208,18 +212,24 @@ namespace Materia.UI.Helpers
                     PathFigure pf = p.Figures[0];
                     pf.StartPoint = r1;
 
-                    if (pf.Segments.Count < 3)
+                    if (pf.Segments.Count < 5)
                     {
                         InitLines(ref r1, r1Extra, r1y, r2Extra, r2y, ref r2);
                     }
-                    else if(pf.Segments[0] is LineSegment && pf.Segments[1] is LineSegment && pf.Segments[2] is LineSegment)
+                    else if(pf.Segments[0] is LineSegment && pf.Segments[1] is LineSegment 
+                        && pf.Segments[2] is LineSegment && pf.Segments[3] is LineSegment
+                        && pf.Segments[4] is LineSegment)
                     {
                         LineSegment seg = (LineSegment)pf.Segments[0];
-                        seg.Point = new Point(r1Extra, r1y);
+                        seg.Point = new Point(r1Extra * 0.5 + r1.X, r1.Y);
                         LineSegment seg2 = (LineSegment)pf.Segments[1];
-                        seg2.Point = new Point(r2Extra, r2y);
+                        seg2.Point = new Point(r1Extra + r1.X, r1y);
                         LineSegment seg3 = (LineSegment)pf.Segments[2];
-                        seg3.Point = r2;
+                        seg3.Point = new Point(r2Extra + r2.X, r2y);
+                        LineSegment seg4 = (LineSegment)pf.Segments[3];
+                        seg4.Point = new Point(r2Extra * 0.5 + r2.X, r2.Y);
+                        LineSegment seg5 = (LineSegment)pf.Segments[4];
+                        seg5.Point = r2;
                     }
                     else
                     {
