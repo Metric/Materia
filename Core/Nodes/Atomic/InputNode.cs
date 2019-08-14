@@ -15,7 +15,6 @@ namespace Materia.Nodes.Atomic
     {
         CancellationTokenSource ctk;
 
-        [HideProperty]
         public new int Height
         {
             get
@@ -28,7 +27,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new int Width
         {
             get
@@ -41,7 +39,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new float TileX
         {
             get
@@ -54,7 +51,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new float TileY
         {
             get
@@ -144,25 +140,40 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(100, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (Input != null && Input.HasInput)
                 {
-                    if (Input != null && Input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
+        }
+
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+
+            })
+            .ContinueWith(t =>
+            {
+                if (Input != null && Input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
         }
 
         void Process()
@@ -176,6 +187,8 @@ namespace Materia.Nodes.Atomic
 
             width = i1.Width;
             height = i1.Height;
+
+            if (previewProcessor == null) return;
 
             previewProcessor.Process(i1.Width, i1.Height, i1, buffer);
             previewProcessor.Complete();

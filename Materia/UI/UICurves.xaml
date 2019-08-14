@@ -15,29 +15,9 @@
                 <ComboBoxItem Content="Blue" />
             </ComboBox.Items>
         </ComboBox>
-        <Button Name="ResetButton" Click="ResetButton_Click" Background="#444" Foreground="LightGray" Content="RESET" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="42" Height="20" Margin="5" BorderThickness="0" />
+        <Button Name="ResetButton" Click="ResetButton_Click" Background="#444" Foreground="LightGray" Content="RESET" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="42" Height="20" Margin="5" BorderThickness="0" Style="{StaticResource ImageTextButton}" />
 
-        <ToggleButton Name="ToggleAll" Width="42" BorderThickness="0" Background="#444" Foreground="LightGray" Content="ALL" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Top" Height="20" Margin="5,5,50,5" Click="ToggleAll_Click">
-            <ToggleButton.Style>
-                <Style TargetType="{x:Type ToggleButton}">
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="ToggleButton">
-                                <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
-                                        Background="{TemplateBinding Background}">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsChecked" Value="True">
-                                        <Setter Property="Background" TargetName="border" Value="#222" />
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </ToggleButton.Style>
-        </ToggleButton>
+        <ToggleButton Name="ToggleAll" Width="42" BorderThickness="0" Background="#444" Foreground="LightGray" Content="ALL" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Top" Height="20" Margin="5,5,50,5" Click="ToggleAll_Click" Style="{StaticResource ToggleTextButton}"></ToggleButton>
         <Grid ClipToBounds="True" Background="#222" Name="CurveView" Margin="0,32,0,0" MouseLeave="CurveView_MouseLeave" MouseDown="CurveView_MouseDown" MouseMove="CurveView_MouseMove"  MouseUp="CurveView_MouseUp">
             <Image Name="CurvePixels" />
         </Grid>

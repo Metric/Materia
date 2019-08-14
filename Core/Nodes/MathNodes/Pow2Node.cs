@@ -22,7 +22,7 @@ namespace Materia.Nodes.MathNodes
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
-            input = new NodeInput(NodeType.Float, this, "Float Input");
+            input = new NodeInput(NodeType.Float, this, "Value");
             output = new NodeOutput(NodeType.Float, this);
 
             Inputs.Add(input);
@@ -80,6 +80,8 @@ namespace Materia.Nodes.MathNodes
             {
                 output.Data = 0;
             }
+
+            result = output.Data.ToString();
 
             if (ParentGraph != null)
             {

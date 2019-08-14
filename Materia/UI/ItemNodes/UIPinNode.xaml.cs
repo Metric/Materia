@@ -130,7 +130,7 @@ namespace Materia.UI.ItemNodes
         private void UserControl_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             ColorPicker cp = new ColorPicker(pinNode.GetSystemColor());
-            cp.Owner = MainWindow.Instance;
+            cp.Owner = MateriaMainWindow.Instance;
 
             if(cp.ShowDialog() == true)
             {

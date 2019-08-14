@@ -8,6 +8,6 @@
              d:DesignHeight="32" d:DesignWidth="256">
     <Grid Height="32">
         <Slider Foreground="#666" Name="SlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" ValueChanged="SlideInput_ValueChanged" VerticalAlignment="Center" Margin="5,0,56,0" />
-        <local:NumberInput x:Name="TextInput" HorizontalAlignment="Right" />
+        <local:NumberInput x:Name="Input" HorizontalAlignment="Right" />
     </Grid>
 </UserControl>

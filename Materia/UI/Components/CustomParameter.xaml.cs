@@ -38,7 +38,7 @@ namespace Materia.UI.Components
         {
             InitializeComponent();
             Param = v;
-            Params.Set(v, false);
+            Params.Set(v, null, false);
             DisplayDefaultParam();
             Id = id;
         }
@@ -54,7 +54,7 @@ namespace Materia.UI.Components
         public void Set(GraphParameterValue v, string id = "")
         {
             Param = v;
-            Params.Set(v, false);
+            Params.Set(v, null, false);
             Id = id;
             DisplayDefaultParam();
         }

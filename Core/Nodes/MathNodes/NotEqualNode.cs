@@ -80,6 +80,8 @@ namespace Materia.Nodes.MathNodes
 
             output.Data = !input.Input.Data.Equals(input2.Input.Data);
 
+            result = output.Data.ToString();
+
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;

@@ -12,7 +12,7 @@ namespace Materia.Nodes.MathNodes
     {
         protected string inputName;
 
-        [TextInput]
+        [Editable(ParameterInputType.Text, "Input Name")]
         public string InputName
         {
             get
@@ -27,7 +27,8 @@ namespace Materia.Nodes.MathNodes
         }
 
         protected NodeType inputType;
-        [Dropdown(null, "Bool", "Float", "Float2", "Float3", "Float4")]
+        [Dropdown(null, "Bool", "Float", "Float2", "Float3", "Float4", "Matrix2", "Matrix3", "Matrix4")]
+        [Editable(ParameterInputType.Dropdown, "Input Type")]
         public NodeType InputType
         {
             get

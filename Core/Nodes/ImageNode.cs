@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Materia.Nodes
 {
-    public class ImageNode : Node
+    public abstract class ImageNode : Node
     {
         public override void FromJson(string data)
         {

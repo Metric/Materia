@@ -14,35 +14,18 @@ namespace Materia.Nodes.MathNodes
         NodeOutput output;
 
         MVector vec;
-
-        protected float x;
-        [Promote(NodeType.Float)]
-        public float X
+        [Promote(NodeType.Float2)]
+        [Editable(ParameterInputType.Float2Input, "Vector")]
+        public MVector Vector
         {
             get
             {
-                return x;
+                return vec;
             }
             set
             {
-                x = value;
-                OnDescription($"{x},{y}");
-                Updated();
-            }
-        }
-
-        protected float y;
-        [Promote(NodeType.Float)]
-        public float Y
-        {
-            get
-            {
-                return y;
-            }
-            set
-            {
-                y = value;
-                OnDescription($"{x},{y}");
+                vec = value;
+                OnDescription($"{vec.X},{vec.Y}");
                 Updated();
             }
         }
@@ -51,9 +34,7 @@ namespace Materia.Nodes.MathNodes
         {
             //we ignore w,h,p
 
-            vec = new MVector();
-
-            x = y = 0;
+            vec = new MVector(0,0);
 
             CanPreview = false;
 
@@ -71,7 +52,7 @@ namespace Materia.Nodes.MathNodes
 
         public override string GetDescription()
         {
-            return $"{x},{y}";
+            return $"{vec.X},{vec.Y}";
         }
 
         public override void TryAndProcess()
@@ -89,16 +70,16 @@ namespace Materia.Nodes.MathNodes
         {
             Float2ConstantData d = JsonConvert.DeserializeObject<Float2ConstantData>(data);
             SetBaseNodeDate(d);
-            x = d.x;
-            y = d.y;
+            vec.X = d.x;
+            vec.Y = d.y;
         }
 
         public override string GetJson()
         {
             Float2ConstantData d = new Float2ConstantData();
             FillBaseNodeData(d);
-            d.x = x;
-            d.y = y;
+            d.x = vec.X;
+            d.y = vec.Y;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -107,17 +88,15 @@ namespace Materia.Nodes.MathNodes
         {
             var s = shaderId + "0";
 
-            float px = x;
-            float py = y;
+            float px = vec.X;
+            float py = vec.Y;
 
             var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "X"))
+            if (p != null && p.HasParameterValue(Id, "Vector"))
             {
-                px = Convert.ToSingle(p.GetParameterValue(Id, "X"));
-            }
-            if(p != null && p.HasParameterValue(Id, "Y"))
-            {
-                py = Convert.ToSingle(p.GetParameterValue(Id, "Y"));
+                MVector v = p.GetParameterValue<MVector>(Id, "Vector");
+                px = v.X;
+                py = v.Y;
             }
 
             return "vec2 " + s + " = vec2(" + px + "," + py + ");\r\n";
@@ -125,22 +104,16 @@ namespace Materia.Nodes.MathNodes
 
         void Process()
         {
-            float px = x;
-            float py = y;
+            MVector v = vec;
 
             var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "X"))
+            if (p != null && p.HasParameterValue(Id, "Vector"))
             {
-                px = Convert.ToSingle(p.GetParameterValue(Id, "X"));
-            }
-            if (p != null && p.HasParameterValue(Id, "Y"))
-            {
-                py = Convert.ToSingle(p.GetParameterValue(Id, "Y"));
+                v = p.GetParameterValue<MVector>(Id, "Vector");
             }
 
-            vec.X = px;
-            vec.Y = py;
-            output.Data = vec;
+
+            output.Data = v;
     
             if (ParentGraph != null)
             {

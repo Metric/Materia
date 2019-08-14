@@ -48,9 +48,9 @@ namespace Materia.UI.Components
 
         private void EditFunc_Click(object sender, RoutedEventArgs e)
         {
-            if(MainWindow.Instance != null)
+            if(MateriaMainWindow.Instance != null)
             {
-                MainWindow.Instance.Push(null, graph, null, GraphStackType.CustomFunction);
+                MateriaMainWindow.Instance.Push(null, graph, null, GraphStackType.CustomFunction);
             }
         }
 

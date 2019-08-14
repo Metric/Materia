@@ -14,7 +14,6 @@ namespace Materia.Nodes.Atomic
     {
         CancellationTokenSource ctk;
 
-        [HideProperty]
         public new int Height
         {
             get
@@ -27,7 +26,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new int Width
         {
             get
@@ -40,7 +38,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new float TileX
         {
             get
@@ -53,7 +50,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new float TileY
         {
             get
@@ -66,7 +62,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new GraphPixelType InternalPixelFormat
         {
             get
@@ -167,25 +162,40 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(100, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput)
                 {
-                    if (input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
+        }
+
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
         }
 
         void Process()

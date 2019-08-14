@@ -87,17 +87,14 @@ namespace Materia.Nodes.MathNodes
 
             if (t1 == NodeType.Float2 && t2 == NodeType.Float2)
             {
-                output.Type = NodeType.Float;
                 return "float " + s + " = distance(" + n1id + ", " + n2id + ");\r\n";
             }
             else if (t1 == NodeType.Float3 && t2 == NodeType.Float3)
             {
-                output.Type = NodeType.Float;
                 return "float " + s + " = distance(" + n1id + ", " + n2id + ");\r\n";
             }
             else if (t1 == NodeType.Float4 && t2 == NodeType.Float4)
             {
-                output.Type = NodeType.Float;
                 return "float " + s + " = distance(" + n1id + ", " + n2id + ");\r\n";
             }
 
@@ -127,6 +124,8 @@ namespace Materia.Nodes.MathNodes
             {
                 output.Data = 0;
             }
+
+            result = output.Data.ToString();
 
             if (ParentGraph != null)
             {

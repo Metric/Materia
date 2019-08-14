@@ -140,37 +140,30 @@ namespace Materia.Nodes.MathNodes
 
             if(t1 == NodeType.Float && t2 == NodeType.Float)
             {
-                output.Type = NodeType.Float;
                 return "float " + s + " = " + n1id + " - " + n2id + ";\r\n";
             }
             else if((t1 == NodeType.Float && t2 == NodeType.Float2) || (t1 == NodeType.Float2 && t2 == NodeType.Float))
             {
-                output.Type = NodeType.Float2;
                 return "vec2 " + s + " = " + n1id + " - " + n2id + ";\r\n";
             }
             else if ((t1 == NodeType.Float && t2 == NodeType.Float3) || (t1 == NodeType.Float3 && t2 == NodeType.Float))
             {
-                output.Type = NodeType.Float3;
                 return "vec3 " + s + " = " + n1id + " - " + n2id + ";\r\n";
             }
             else if ((t1 == NodeType.Float && t2 == NodeType.Float4) || (t1 == NodeType.Float4 && t2 == NodeType.Float))
             {
-                output.Type = NodeType.Float4;
                 return "vec4 " + s + " = " + n1id + " - " + n2id + ";\r\n";
             }
             else if(t1 == NodeType.Float2 && t2 == NodeType.Float2)
             {
-                output.Type = NodeType.Float2;
                 return "vec2 " + s + " = " + n1id + " - " + n2id + ";\r\n";
             }
             else if(t1 == NodeType.Float3 && t2 == NodeType.Float3)
             {
-                output.Type = NodeType.Float3;
                 return "vec3 " + s + " = " + n1id + " - " + n2id + ";\r\n";
             }
             else if(t1  == NodeType.Float4 && t2 == NodeType.Float4)
             {
-                output.Type = NodeType.Float4;
                 return "vec4 " + s + " = " + n1id + " - " + n2id + ";\r\n";
             }
 
@@ -210,7 +203,7 @@ namespace Materia.Nodes.MathNodes
                             object o = inp.Input.Data;
                             if (o == null) continue;
 
-                            if (o is float || o is int || o is double)
+                            if (o is float || o is int || o is double || o is long)
                             {
                                 if (i == 0)
                                 {
@@ -246,9 +239,9 @@ namespace Materia.Nodes.MathNodes
                                 }
 
                             }
-                        }
 
-                        i++;
+                            i++;
+                        }
                     }
                 }
 
@@ -279,14 +272,16 @@ namespace Materia.Nodes.MathNodes
                                     v -= f;
                                 }
                             }
-                        }
 
-                        i++;
+                            i++;
+                        }
                     }
                 }
 
                 output.Data = v;
             }
+
+            result = output.Data.ToString();
 
             if (ParentGraph != null)
             {

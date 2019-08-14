@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Exporters", "Exporters\Expo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MTGRenderer", "MTGRenderer\MTGRenderer.csproj", "{34906453-C6B0-45EF-9119-BD88D49A6D75}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archive", "Archive\Archive.csproj", "{92888AF6-1CDB-4459-845F-D65763D3BAF7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -167,6 +169,18 @@ Global
 		{34906453-C6B0-45EF-9119-BD88D49A6D75}.Release|x64.Build.0 = Release|Any CPU
 		{34906453-C6B0-45EF-9119-BD88D49A6D75}.Release|x86.ActiveCfg = Release|Any CPU
 		{34906453-C6B0-45EF-9119-BD88D49A6D75}.Release|x86.Build.0 = Release|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Debug|x64.Build.0 = Debug|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Debug|x86.Build.0 = Debug|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Release|x64.ActiveCfg = Release|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Release|x64.Build.0 = Release|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Release|x86.ActiveCfg = Release|Any CPU
+		{92888AF6-1CDB-4459-845F-D65763D3BAF7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

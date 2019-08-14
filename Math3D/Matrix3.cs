@@ -725,6 +725,19 @@ namespace Materia.Math3D
         }
 
 
+        /// <summary>
+        /// Multiplies an instance by a scalar.
+        /// </summary>
+        /// <param name="left">The left operand of the multiplication.</param>
+        /// <param name="right">The right operand of the multiplication.</param>
+        /// <param name="result">A new instance that is the result of the multiplication</param>
+        public static void Mult(ref Matrix3 left, float right, out Matrix3 result)
+        {
+            result.Row0 = left.Row0 * right;
+            result.Row1 = left.Row1 * right;
+            result.Row2 = left.Row2 * right;
+        }
+
 
         /// <summary>
         /// Calculate the inverse of the given matrix
@@ -895,6 +908,20 @@ namespace Materia.Math3D
             return Matrix3.Mult(left, right);
         }
 
+        public static Matrix3 operator *(Matrix3 left, float right)
+        {
+            Matrix3 result;
+            Matrix3.Mult(ref left, right, out result);
+            return result;
+        }
+
+        public static Matrix3 operator *(float left, Matrix3 right)
+        {
+            Matrix3 result;
+            Matrix3.Mult(ref right, left, out result);
+            return result;
+        }
+
         /// <summary>
         /// Compares two instances for equality.
         /// </summary>
@@ -977,6 +1004,5 @@ namespace Materia.Math3D
                     Row1 == other.Row1 &&
                     Row2 == other.Row2;
         }
-
     }
 }

@@ -13,6 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Reflection;
+using Materia.Nodes.Helpers;
+using Materia.MathHelpers;
 
 namespace Materia.UI.Components
 {
@@ -35,12 +37,50 @@ namespace Materia.UI.Components
             property = p;
             propertyOwner = owner;
             Toggle.Content = name;
-            Toggle.IsChecked = (bool)p.GetValue(owner);
+
+            object v = p.GetValue(owner);
+            if (Utils.IsNumber(v) || v is bool)
+            {
+                Toggle.IsChecked = Convert.ToBoolean(v);
+            }
+            else if(v is MVector)
+            {
+                Toggle.IsChecked = Utils.VectorToBool(v);
+            }
+            else
+            {
+                Toggle.IsChecked = false;
+            }
         }
 
         private void Toggle_Click(object sender, RoutedEventArgs e)
         {
-            property.SetValue(propertyOwner, Toggle.IsChecked);
+            if (property == null) return;
+            if (property.PropertyType.IsEnum)
+            {
+                int i = 0;
+                if (Toggle.IsChecked != null)
+                {
+                    i = Toggle.IsChecked.Value ? 1 : 0;
+                }
+               
+                property.SetValue(propertyOwner, i);
+            }
+            else if (property.PropertyType.Equals(typeof(float)) || property.PropertyType.Equals(typeof(double))
+                || property.PropertyType.Equals(typeof(int)) || property.PropertyType.Equals(typeof(long)))
+            {
+                int i = 0;
+                if (Toggle.IsChecked != null)
+                {
+                    i = Toggle.IsChecked.Value ? 1 : 0;
+                }
+
+                property.SetValue(propertyOwner, i);
+            }
+            else
+            {
+                property.SetValue(propertyOwner, Toggle.IsChecked);
+            }
         }
     }
 }

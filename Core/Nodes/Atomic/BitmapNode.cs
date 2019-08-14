@@ -22,12 +22,12 @@ namespace Materia.Nodes.Atomic
 
         NodeOutput Output;
 
+        CancellationTokenSource ctk;
+
         string relativePath;
 
         string path;
-        [FileSelector(Filter = "Image Files (*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.gif")]
-        [Title(Title ="Image File")]
-        [Section(Section = "Content")]
+        [Editable(ParameterInputType.ImageFile, "Image", "Content")]
         public string Path
         {
             get
@@ -46,11 +46,11 @@ namespace Materia.Nodes.Atomic
                     relativePath = System.IO.Path.Combine("resources", System.IO.Path.GetFileName(path));
                 }
 
-                Process();
+                TryAndProcess();
             }
         }
 
-        [Section(Section = "Content")]
+        [Editable(ParameterInputType.Toggle, "Resource", "Content")]
         public bool Resource
         {
             get; set;
@@ -58,7 +58,6 @@ namespace Materia.Nodes.Atomic
 
         //we declare these new to hide them
 
-        [HideProperty]
         public new int Width
         {
             get
@@ -67,7 +66,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new int Height
         {
             get
@@ -76,7 +74,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new float TileX
         {
             get
@@ -89,7 +86,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new float TileY
         {
             get
@@ -126,122 +122,96 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            Process();
+            if(!Async)
+            {
+                LoadBitmap();
+                Process();
+                return;
+            }
+
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
+
+            //ctk = new CancellationTokenSource();
+
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
+
+                if (ParentGraph != null)
+                {
+                    ParentGraph.Schedule(this);
+                }
+            //}, Context);
+        }
+
+        private void LoadBitmap()
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                {
+                    Bitmap bmp = (Bitmap)Bitmap.FromFile(path);
+
+                    if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
+                    {
+                        width = bmp.Width;
+                        height = bmp.Height;
+
+                        brush = FloatBitmap.FromBitmap(bmp);
+                    }
+                }
+                else if (!string.IsNullOrEmpty(relativePath) && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
+                {
+                    Bitmap bmp = (Bitmap)Bitmap.FromFile(System.IO.Path.Combine(ParentGraph.CWD, relativePath));
+
+                    if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
+                    {
+                        width = bmp.Width;
+                        height = bmp.Height;
+
+                        brush = FloatBitmap.FromBitmap(bmp);
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+            }
+
+            System.GC.Collect();
+        }
+
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                LoadBitmap();
+
+            }).ContinueWith(t =>
+            {
+                Process();
+            }, Context);
         }
 
         void Process()
         {
-            if (Async)
-            {
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        if (!string.IsNullOrEmpty(path) && File.Exists(path))
-                        {
-                            Bitmap bmp = (Bitmap)Bitmap.FromFile(path);
+            if (brush == null) return;
 
-                            if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
-                            {
-                                width = bmp.Width;
-                                height = bmp.Height;
+            CreateBufferIfNeeded();
 
-                                brush = FloatBitmap.FromBitmap(bmp);
-                            }
-                        }
-                        else if (!string.IsNullOrEmpty(relativePath) && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
-                        {
-                            Bitmap bmp = (Bitmap)Bitmap.FromFile(System.IO.Path.Combine(ParentGraph.CWD, relativePath));
+            buffer.Bind();
+            buffer.SetData(brush.Image, GLInterfaces.PixelFormat.Rgba, width, height);
+            GLTextuer2D.Unbind();
 
-                            if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
-                            {
-                                width = bmp.Width;
-                                height = bmp.Height;
+            brush = null;
 
-                                brush = FloatBitmap.FromBitmap(bmp);
-                            }
-                        }
-
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Error(e);
-                    }
-
-                    System.GC.Collect();
-
-                })
-                .ContinueWith(t =>
-                {
-                    RunInContext(() =>
-                    {
-                        if (brush == null) return;
-
-                        CreateBufferIfNeeded();
-
-                        buffer.Bind();
-                        buffer.SetData(brush.Image, GLInterfaces.PixelFormat.Rgba, width, height);
-                        GLTextuer2D.Unbind();
-
-                        brush = null;
-
-                        Updated();
-                        Output.Data = buffer;
-                        Output.Changed();
-                    });
-                });
-            }
-            else
-            {
-                try
-                {
-                    if (!string.IsNullOrEmpty(path) && File.Exists(path))
-                    {
-                        Bitmap bmp = (Bitmap)Bitmap.FromFile(path);
-
-                        if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
-                        {
-                            width = bmp.Width;
-                            height = bmp.Height;
-
-                            brush = FloatBitmap.FromBitmap(bmp);
-                        }
-                    }
-                    else if (!string.IsNullOrEmpty(relativePath) && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
-                    {
-                        Bitmap bmp = (Bitmap)Bitmap.FromFile(System.IO.Path.Combine(ParentGraph.CWD, relativePath));
-
-                        if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
-                        {
-                            width = bmp.Width;
-                            height = bmp.Height;
-
-                            brush = FloatBitmap.FromBitmap(bmp);
-                        }
-                    }
-
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                }
-
-                System.GC.Collect();
-
-                if (brush == null) return;
-
-                CreateBufferIfNeeded();
-
-                buffer.Bind();
-                buffer.SetData(brush.Image, GLInterfaces.PixelFormat.Rgba, width, height);
-                GLTextuer2D.Unbind();
-
-                brush = null;
-
-                Updated();
-                Output.Data = buffer;
-                Output.Changed();
-            }
+            Updated();
+            Output.Data = buffer;
+            Output.Changed();
         }
 
         public class BitmapNodeData : NodeData
@@ -275,32 +245,7 @@ namespace Materia.Nodes.Atomic
         {
             if (!Resource) return;
 
-            if(string.IsNullOrEmpty(relativePath) || string.IsNullOrEmpty(path))
-            {
-                return;
-            }
-
-            string cpath = System.IO.Path.Combine(CWD, relativePath);
-            string opath = System.IO.Path.Combine(ParentGraph.CWD, relativePath);
-            if (!Directory.Exists(cpath))
-            {
-                Directory.CreateDirectory(cpath);
-            }
-
-
-            if (File.Exists(path))
-            {
-                File.Copy(path, cpath);
-            }
-            else if (File.Exists(opath) && !opath.ToLower().Equals(cpath.ToLower()))
-            {
-                File.Copy(opath, cpath);
-            }
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();  
+            CopyResourceTo(CWD, relativePath, path);
         }
 
         protected override void OnWidthHeightSet()

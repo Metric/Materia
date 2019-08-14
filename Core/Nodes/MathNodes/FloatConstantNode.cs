@@ -14,6 +14,7 @@ namespace Materia.Nodes.MathNodes
 
         protected float val;
         [Promote(NodeType.Float)]
+        [Editable(ParameterInputType.FloatInput, "Value")]
         public float Value
         {
             get
@@ -23,7 +24,7 @@ namespace Materia.Nodes.MathNodes
             set
             {
                 val = value;
-                OnDescription(val.ToString());
+                OnDescription(string.Format("{0:0.000}", val));
                 Updated();
             }
         }
@@ -50,7 +51,7 @@ namespace Materia.Nodes.MathNodes
 
         public override string GetDescription()
         {
-            return val.ToString();
+            return string.Format("{0:0.000}", val);
         }
 
         public override void TryAndProcess()

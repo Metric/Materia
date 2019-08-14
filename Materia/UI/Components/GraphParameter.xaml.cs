@@ -33,12 +33,11 @@ namespace Materia.UI.Components
             InitializeComponent();
         }
 
-
         public GraphParameter(GraphParameterValue v, string id = "")
         {
             InitializeComponent();
             Param = v;
-            Params.Set(v, false);
+            Params.Set(v, new string[] { "Type", "InputType" }, false);
             DisplayDefaultParam();
             Id = id;
         }
@@ -46,7 +45,7 @@ namespace Materia.UI.Components
         public void Set(GraphParameterValue v, string id = "")
         {
             Param = v;
-            Params.Set(v, false, "Type");
+            Params.Set(v, new string[] { "Type", "InputType" }, false);
             Id = id;
             DisplayDefaultParam();
         }
@@ -54,7 +53,7 @@ namespace Materia.UI.Components
         protected void DisplayDefaultParam()
         {
             ParamDefaultStack.Children.Clear();
-            var p = new ParameterMap(null, new List<GraphParameterValue>(new GraphParameterValue[] { Param }), true);
+            var p = new ParameterMap(null, new List<GraphParameterValue>(new GraphParameterValue[] { Param }));
             ParamDefaultStack.Children.Add(p);
         }
 

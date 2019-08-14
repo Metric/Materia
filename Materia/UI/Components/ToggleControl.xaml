@@ -7,27 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="42" d:DesignWidth="256">
     <Grid Height="42">
-        <ToggleButton x:Name="Toggle" BorderThickness="0" Margin="5" Background="#444" Foreground="LightGray" FontSize="10" HorizontalAlignment="Stretch" Height="32" Click="Toggle_Click">
-            <ToggleButton.Style>
-                <Style TargetType="{x:Type ToggleButton}">
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
-                                    Background="{TemplateBinding Background}">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsChecked" Value="True">
-                                        <Setter Property="Background" TargetName="border" Value="#222" />
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </ToggleButton.Style>
-        </ToggleButton>
-
+        <ToggleButton x:Name="Toggle" BorderThickness="0" Margin="5" Background="#444" Foreground="LightGray" FontSize="10" HorizontalAlignment="Stretch" Height="32" Click="Toggle_Click" Style="{StaticResource ToggleTextButton}"></ToggleButton>
     </Grid>
 </UserControl>

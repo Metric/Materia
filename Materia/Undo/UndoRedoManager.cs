@@ -131,12 +131,17 @@ namespace Materia.Undo
                 if (stack.Count > 0)
                 {
                     var p = stack.Pop();
-                    var r = p.Undo();
 
-                    if (r != null)
+                    Task.Run(async () =>
                     {
-                        AddRedo(r);
-                    }
+                        await p.Undo(r =>
+                        {
+                            if (r != null)
+                            {
+                                AddRedo(r);
+                            }
+                        });
+                    });
 
                     if (OnUndo != null)
                     {
@@ -155,12 +160,17 @@ namespace Materia.Undo
                 if (stack.Count > 0)
                 {
                     var p = stack.Pop();
-                    var r = p.Undo();
 
-                    if (r != null)
+                    Task.Run(async () =>
                     {
-                        AddUndo(r);
-                    }
+                        await p.Undo(r =>
+                        {
+                            if (r != null)
+                            {
+                                AddUndo(r);
+                            }
+                        });
+                    });
 
                     if (OnRedo != null)
                     {

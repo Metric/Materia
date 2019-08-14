@@ -19,7 +19,6 @@ namespace Materia.Nodes.Atomic
 
         public Graph GraphInst { get; protected set; }
 
-        CancellationTokenSource ctk2;
         CancellationTokenSource ctk;
 
         protected string path;
@@ -31,9 +30,7 @@ namespace Materia.Nodes.Atomic
 
         protected bool loading;
 
-        [FileSelector]
-        [Section(Section = "Content")]
-        [Title(Title = "Materia Graph File")]
+        [Editable(ParameterInputType.GraphFile, "Materia Graph File", "Content")]
         public string GraphFilePath
         {
             get
@@ -48,7 +45,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [ParameterMapEditor]
+        [Editable(ParameterInputType.Map, "Parameters", "Instance Parameters")]
         public Dictionary<string, GraphParameterValue> Parameters
         {
             get
@@ -62,7 +59,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [ParameterMapEditor]
+        [Editable(ParameterInputType.Map, "Custom Parameters", "Instance Parameters")]
         public List<GraphParameterValue> CustomParameters
         {
             get
@@ -93,7 +90,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new float TileX
         {
             get
@@ -106,7 +102,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new float TileY
         {
             get
@@ -119,7 +114,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new GraphPixelType InternalPixelFormat
         {
             get
@@ -172,28 +166,33 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            if(!Async)
+            if (!Async)
             {
                 PrepareProcess();
+                if (GraphInst != null)
+                {
+                    GraphInst.TryAndProcess();
+                }
+                TryAndReleaseBuffers();
                 return;
             }
 
-            if (ctk2 != null)
-            {
-                ctk2.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk2 = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(25, ctk2.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (ParentGraph != null)
                 {
-                    PrepareProcess();
-                });
-            });
+                    ParentGraph.Schedule(this);
+                }
+            //}, Context);
         }
 
         private void PrepareProcess()
@@ -218,18 +217,44 @@ namespace Materia.Nodes.Atomic
                         }
                     }
 
-                    foreach (var param in CustomParameters)
+                    int count = CustomParameters.Count;
+                    for(int i = 0; i < count; i++)
                     {
+                        var param = CustomParameters[i];
                         if (p.HasParameterValue(Id, param.Name))
                         {
                             param.AssignValue(p.GetParameterValue(Id, param.Name));
                         }
                     }
                 }
-
-                GraphInst.TryAndProcess();
                 updatingParams = false;
             }
+        }
+
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                PrepareProcess();
+            })
+            .ContinueWith(t =>
+            {
+                if (GraphInst != null)
+                {
+                    GraphInst.TryAndProcess();
+                }
+            }, Context)
+            .ContinueWith(t =>
+            {
+                while (GraphInst != null && GraphInst.IsProcessing)
+                {
+                    Thread.Sleep(1);
+                }
+            })
+            .ContinueWith(t =>
+            {
+                TryAndReleaseBuffers();
+            }, Context);
         }
 
         //used for initial loading
@@ -259,12 +284,13 @@ namespace Materia.Nodes.Atomic
                 GraphInst = new Graph(nm);
 
                 GraphData = File.ReadAllText(path);
-                GraphInst.ParentNode = this;
+                GraphInst.AssignParentNode(this);
+                GraphInst.Synchronized = !Async;
                 GraphInst.FromJson(GraphData);
                 GraphInst.AssignParameters(jsonParameters);
                 GraphInst.AssignCustomParameters(jsonCustomParameters);
      
-                GraphInst.RandomSeed = randomSeed;
+                GraphInst.AssignSeed(randomSeed);
 
                 //now do real initial resize
                 GraphInst.ResizeWith(width, height);
@@ -289,9 +315,11 @@ namespace Materia.Nodes.Atomic
 
         void Setup()
         {
+            int count = 0;
             if(GraphInst.InputNodes.Count > 0)
             {
-                for(int i = 0; i < GraphInst.InputNodes.Count; i++)
+                count = GraphInst.InputNodes.Count;
+                for(int i = 0; i < count; i++)
                 {
                     string id = GraphInst.InputNodes[i];
                     Node n;
@@ -308,7 +336,8 @@ namespace Materia.Nodes.Atomic
 
             if(GraphInst.OutputNodes.Count > 0)
             {
-                for(int i = 0; i < GraphInst.OutputNodes.Count; i++)
+                count = GraphInst.OutputNodes.Count;
+                for(int i = 0; i < count; i++)
                 {
                     string id = GraphInst.OutputNodes[i];
                     Node n;
@@ -330,7 +359,8 @@ namespace Materia.Nodes.Atomic
             }
 
             //name map used in parameter mapping for quicker lookup
-            for(int i = 0; i < GraphInst.CustomParameters.Count; i++)
+            count = GraphInst.CustomParameters.Count;
+            for(int i = 0; i < count; i++)
             {
                 var param = GraphInst.CustomParameters[i];
                 nameMap[param.Name] = param;
@@ -340,38 +370,14 @@ namespace Materia.Nodes.Atomic
         private void N_OnUpdate(Node n)
         {
             Updated();
-            TryAndReleaseBuffers();
         }
 
         void TryAndReleaseBuffers()
         {
-            if(ctk != null)
+            if (GraphInst != null)
             {
-                try
-                {
-                    ctk.Cancel();
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                }
+                GraphInst.ReleaseIntermediateBuffers();
             }
-
-            ctk = new CancellationTokenSource();
-
-            Task.Delay(250, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
-
-                RunInContext(() =>
-                {
-                    ctk = null;
-                    if (GraphInst != null)
-                    {
-                        GraphInst.ReleaseIntermediateBuffers();
-                    }
-                });
-            });
         }
 
         public override byte[] GetPreview(int width, int height)
@@ -440,11 +446,12 @@ namespace Materia.Nodes.Atomic
                 nameMap = new Dictionary<string, GraphParameterValue>();
                 loading = true;
                 GraphInst = new Graph(Name);
-                GraphInst.ParentNode = this;
+                GraphInst.AssignParentNode(this);
+                GraphInst.Synchronized = !Async;
                 GraphInst.FromJson(GraphData);
                 GraphInst.AssignParameters(jsonParameters);
                 GraphInst.AssignCustomParameters(jsonCustomParameters);
-                GraphInst.RandomSeed = randomSeed;
+                GraphInst.AssignSeed(randomSeed);
                 GraphInst.ResizeWith(width, height);
                 GraphInst.OnGraphParameterUpdate += GraphParameterValue_OnGraphParameterUpdate;
 

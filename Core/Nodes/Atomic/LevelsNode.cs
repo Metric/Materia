@@ -25,7 +25,7 @@ namespace Materia.Nodes.Atomic
 
         LevelsProcessor processor;
 
-        [LevelEditor]
+        [Editable(ParameterInputType.Levels, "Range")]
         public MultiRange Range
         {
             get
@@ -97,25 +97,25 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(100, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput)
                 {
-                    if (input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
         public override void Dispose()
@@ -127,6 +127,21 @@ namespace Materia.Nodes.Atomic
                 processor.Release();
                 processor = null;
             }
+        }
+
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
         }
 
         void Process()

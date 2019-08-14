@@ -23,8 +23,8 @@ namespace Materia.Nodes.Atomic
         protected int redChannel;
 
         [Promote(NodeType.Float)]
-        [Title(Title = "Red Channel")]
         [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
+        [Editable(ParameterInputType.Dropdown, "Red Channel")]
         public int RedChannel
         {
             get
@@ -41,8 +41,8 @@ namespace Materia.Nodes.Atomic
         protected int greenChannel;
 
         [Promote(NodeType.Float)]
-        [Title(Title = "Green Channel")]
         [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
+        [Editable(ParameterInputType.Dropdown, "Green Channel")]
         public int GreenChannel
         {
             get
@@ -59,8 +59,8 @@ namespace Materia.Nodes.Atomic
         protected int blueChannel;
 
         [Promote(NodeType.Float)]
-        [Title(Title = "Blue Channel")]
         [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
+        [Editable(ParameterInputType.Dropdown, "Blue Channel")]
         public int BlueChannel
         {
             get
@@ -77,8 +77,8 @@ namespace Materia.Nodes.Atomic
         protected int alphaChannel;
 
         [Promote(NodeType.Float)]
-        [Title(Title = "Alpha Channel")]
         [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
+        [Editable(ParameterInputType.Dropdown, "Alpha Channel")]
         public int AlphaChannel
         {
             get
@@ -155,33 +155,84 @@ namespace Materia.Nodes.Atomic
             {
                 if (input.HasInput && input2.HasInput)
                 {
+                    GetParams();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(25, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput && input2.HasInput)
                 {
-                    if (input.HasInput && input2.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                GetParams();
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput && input2.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
+        }
+
+        private void GetParams()
+        {
+            predChannel = redChannel;
+            pgreenChannel = greenChannel;
+            pblueChannel = blueChannel;
+            palphaChannel = alphaChannel;
+
+            if (ParentGraph != null)
+            {
+                if (ParentGraph.HasParameterValue(Id, "RedChannel"))
+                {
+                    predChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "RedChannel"));
+                }
+
+                if (ParentGraph.HasParameterValue(Id, "GreenChannel"))
+                {
+                    pgreenChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "GreenChannel"));
+                }
+
+                if (ParentGraph.HasParameterValue(Id, "BlueChannel"))
+                {
+                    pblueChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "BlueChannel"));
+                }
+
+                if (ParentGraph.HasParameterValue(Id, "AlphaChannel"))
+                {
+                    palphaChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "AlphaChannel"));
+                }
+            }
+        }
+
+        float predChannel;
+        float pgreenChannel;
+        float pblueChannel;
+        float palphaChannel;
         void Process()
         {
             GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
@@ -194,34 +245,6 @@ namespace Materia.Nodes.Atomic
 
             processor.TileX = tileX;
             processor.TileY = TileY;
-
-            float predChannel = redChannel;
-            float pgreenChannel = greenChannel;
-            float pblueChannel = blueChannel;
-            float palphaChannel = alphaChannel;
-
-            if(ParentGraph != null)
-            {
-                if(ParentGraph.HasParameterValue(Id, "RedChannel"))
-                {
-                    predChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "RedChannel"));
-                }
-
-                if(ParentGraph.HasParameterValue(Id, "GreenChannel"))
-                {
-                    pgreenChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "GreenChannel"));
-                }
-
-                if(ParentGraph.HasParameterValue(Id, "BlueChannel"))
-                {
-                    pblueChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "BlueChannel"));
-                }
-
-                if(ParentGraph.HasParameterValue(Id, "AlphaChannel"))
-                {
-                    palphaChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "AlphaChannel"));
-                }
-            }
 
             processor.RedChannel = (int)predChannel;
             processor.GreenChannel = (int)pgreenChannel;

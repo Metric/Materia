@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
+using System.Text.RegularExpressions;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -18,10 +19,11 @@ namespace Materia.Nodes.MathNodes
         NodeInput input;
         NodeOutput output;
 
+        private static string FunctionArgTest = "[A-Za-z0-9_]+\\(.*{0}.*\\)";
+
         protected string varName;
 
-        [Title(Title = "Variable Name")]
-        [TextInput]
+        [Editable(ParameterInputType.Text, "Variable Name")]
         public string VarName
         {
             get
@@ -90,8 +92,7 @@ namespace Materia.Nodes.MathNodes
         {
             if(input.HasInput)
             {
-                NodeType t1 = input.Input.Type;
-                output.Type = t1;
+                output.Type = input.Input.Type;
             }
         }
 
@@ -118,6 +119,11 @@ namespace Materia.Nodes.MathNodes
             }
 
             output.Data = input.Input.Data;
+            if (output.Data != null)
+            {
+                result = output.Data.ToString();
+            }
+
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;
@@ -142,9 +148,9 @@ namespace Materia.Nodes.MathNodes
 
             if(t == NodeType.Float)
             {
-                output.Type = NodeType.Float;
                 string op = "float " + varName + " = " + n1id + ";\r\n float " + s + " = " + n1id + ";\r\n";
-                if(currentFrag.IndexOf("float " + VarName + " = ") > -1)
+                Regex ftest = new Regex(string.Format(FunctionArgTest, "float " + varName), RegexOptions.Multiline);
+                if(currentFrag.IndexOf("float " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
                 {
                     op = varName + " = " + n1id + ";\r\n float " + s + " = " + n1id + ";\r\n";
                 }
@@ -152,9 +158,9 @@ namespace Materia.Nodes.MathNodes
             }
             else if(t == NodeType.Bool)
             {
-                output.Type = NodeType.Bool;
                 string op = "bool " + varName + " = " + n1id + ";\r\n bool " + s + " = " + n1id + ";\r\n";
-                if (currentFrag.IndexOf("bool " + VarName + " = ") > -1)
+                Regex ftest = new Regex(string.Format(FunctionArgTest, "bool " + varName), RegexOptions.Multiline);
+                if (currentFrag.IndexOf("bool " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
                 {
                     op = varName + " = " + n1id + ";\r\n bool " + s + " = " + n1id + ";\r\n";
                 }
@@ -162,9 +168,9 @@ namespace Materia.Nodes.MathNodes
             }
             else if(t == NodeType.Float2)
             {
-                output.Type = NodeType.Float2;
                 string op = "vec2 " + varName + " = " + n1id + ";\r\n vec2 " + s + " = " + n1id + ";\r\n";
-                if (currentFrag.IndexOf("vec2 " + VarName + " = ") > -1)
+                Regex ftest = new Regex(string.Format(FunctionArgTest, "vec2 " + varName), RegexOptions.Multiline);
+                if (currentFrag.IndexOf("vec2 " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
                 {
                     op = varName + " = " + n1id + ";\r\n vec2 " + s + " = " + n1id + ";\r\n";
                 }
@@ -172,9 +178,9 @@ namespace Materia.Nodes.MathNodes
             }
             else if(t == NodeType.Float3)
             {
-                output.Type = NodeType.Float3;
                 string op = "vec3 " + varName + " = " + n1id + ";\r\n vec3 " + s + " = " + n1id + ";\r\n";
-                if (currentFrag.IndexOf("vec3 " + VarName + " = ") > -1)
+                Regex ftest = new Regex(string.Format(FunctionArgTest, "vec3 " + varName), RegexOptions.Multiline);
+                if (currentFrag.IndexOf("vec3 " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
                 {
                     op = varName + " = " + n1id + ";\r\n vec3 " + s + " = " + n1id + ";\r\n";
                 }
@@ -182,11 +188,41 @@ namespace Materia.Nodes.MathNodes
             }
             else if(t == NodeType.Float4)
             {
-                output.Type = NodeType.Float4;
                 string op = "vec4 " + varName + " = " + n1id + ";\r\n vec4 " + s + " = " + n1id + ";\r\n";
-                if (currentFrag.IndexOf("vec4 " + VarName + " = ") > -1)
+                Regex ftest = new Regex(string.Format(FunctionArgTest, "vec4 " + varName), RegexOptions.Multiline);
+                if (currentFrag.IndexOf("vec4 " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
                 {
                     op = varName + " = " + n1id + ";\r\n vec4 " + s + " = " + n1id + ";\r\n";
+                }
+                return op;
+            }
+            else if(t == NodeType.Matrix2)
+            {
+                string op = "mat2 " + varName + " = " + n1id + ";\r\n mat2 " + s + " = " + n1id + ";\r\n";
+                Regex ftest = new Regex(string.Format(FunctionArgTest, "mat2 " + varName), RegexOptions.Multiline);
+                if (currentFrag.IndexOf("mat2 " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
+                {
+                    op = varName + " = " + n1id + ";\r\n mat2 " + s + " = " + n1id + ";\r\n";
+                }
+                return op;
+            }
+            else if (t == NodeType.Matrix3)
+            {
+                string op = "mat3 " + varName + " = " + n1id + ";\r\n mat3 " + s + " = " + n1id + ";\r\n";
+                Regex ftest = new Regex(string.Format(FunctionArgTest, "mat3 " + varName), RegexOptions.Multiline);
+                if (currentFrag.IndexOf("mat3 " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
+                {
+                    op = varName + " = " + n1id + ";\r\n mat3 " + s + " = " + n1id + ";\r\n";
+                }
+                return op;
+            }
+            else if (t == NodeType.Matrix4)
+            {
+                string op = "mat4 " + varName + " = " + n1id + ";\r\n mat4 " + s + " = " + n1id + ";\r\n";
+                Regex ftest = new Regex(string.Format(FunctionArgTest, "mat4 " + varName), RegexOptions.Multiline);
+                if (currentFrag.IndexOf("mat4 " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
+                {
+                    op = varName + " = " + n1id + ";\r\n mat4 " + s + " = " + n1id + ";\r\n";
                 }
                 return op;
             }

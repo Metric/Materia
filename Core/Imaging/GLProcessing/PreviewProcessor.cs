@@ -16,10 +16,12 @@ namespace Materia.Imaging.GLProcessing
         public Matrix4 Model { get; set; }
         public Matrix4 Projection { get; set; }
         public Matrix4 View { get; set; }
+        public bool FlipY { get; set; }
 
         IGLProgram shader;
         public PreviewProcessor()
         {
+            FlipY = false;
             Luminosity = 1.0f;
             shader = Material.Material.GetShader("preview.glsl", "preview.glsl");
         }
@@ -38,6 +40,7 @@ namespace Materia.Imaging.GLProcessing
                 shader.SetUniformMatrix4("projectionMatrix", ref proj);
                 shader.SetUniform("MainTex", 0);
                 shader.SetUniform("luminosity", Luminosity);
+                shader.SetUniform("flipY", FlipY);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
 
                 if (tex != null)

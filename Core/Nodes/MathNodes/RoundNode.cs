@@ -114,6 +114,8 @@ namespace Materia.Nodes.MathNodes
                 output.Data = m;
             }
 
+            result = output.Data.ToString();
+
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;

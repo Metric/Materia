@@ -67,5 +67,16 @@
                 </Border>
             </Grid>
         </Grid>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="24" Margin="0,-27,0,103">
+            <Image Name="InputIcon" ToolTip="Input Node" Source="/Materia;component/Images/output.png" Width="24" Height="24">
+                <Image.RenderTransformOrigin>
+                    <Point X="0.5" Y="0.5" />
+                </Image.RenderTransformOrigin>
+                <Image.RenderTransform>
+                    <ScaleTransform ScaleX="-1" ScaleY="1" />
+                </Image.RenderTransform>
+            </Image>
+            <Image Name="OutputIcon" ToolTip="Assigned Output Node" Source="/Materia;component/Images/output.png" Width="24" Height="24" />
+        </StackPanel>
     </Grid>
 </UserControl>

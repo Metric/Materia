@@ -88,14 +88,12 @@ namespace Materia.Nodes.MathNodes
         {
             if (input.Input.Data == null || input2.Input.Data == null) return;
 
-            if (!(input.Input.Data is float))
+            if (!Helpers.Utils.IsNumber(input.Input.Data))
             {
-                Log.Debug(input.Input.Node.Name + " is a vec2 and trying to connect to a float");
                 return;
             }
-            if(!(input2.Input.Data is float))
+            if (!Helpers.Utils.IsNumber(input2.Input.Data))
             {
-                Log.Debug(input2.Input.Node.Name + " is a vec2 and trying to connect to a float");
                 return;
             }
 
@@ -105,6 +103,8 @@ namespace Materia.Nodes.MathNodes
             vec.X = x;
             vec.Y = y;
             output.Data = vec;
+
+            result = output.Data.ToString();
 
             if (ParentGraph != null)
             {

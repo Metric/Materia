@@ -13,9 +13,16 @@ using Materia.MathHelpers;
 using System.Threading;
 using Materia.Nodes.Items;
 using NLog;
+using Materia.Nodes.MathNodes;
 
 namespace Materia.Nodes
 {
+    public enum NodePathType
+    {
+        Line = 0,
+        Bezier = 1
+    }
+
     public enum GraphPixelType
     {
         RGBA = PixelInternalFormat.Rgba8,
@@ -32,7 +39,7 @@ namespace Materia.Nodes
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
-        public static int[] GRAPH_SIZES = new int[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
+        public static int[] GRAPH_SIZES = new int[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
         public const int DEFAULT_SIZE = 256;
 
         public delegate void GraphUpdate(Graph g);
@@ -41,10 +48,19 @@ namespace Materia.Nodes
         public event GraphParameterValue.GraphParameterUpdate OnGraphParameterUpdate;
         public event GraphParameterValue.GraphParameterUpdate OnGraphParameterTypeUpdate;
         public event GraphUpdate OnHdriChanged;
+        public event GraphUpdate OnGraphLoaded;
+        public event GraphUpdate OnGraphLinesChanged;
 
-        [HideProperty]
         public bool ReadOnly { get; set; }
-        [HideProperty]
+
+        public bool Synchronized { get; set; }
+        public bool IsProcessing { get; protected set; }
+
+        protected Queue<Node> TaskQueue { get; set; }
+        protected CancellationTokenSource QueueCanceller;
+        protected Task Scheduler { get; set; }
+        protected bool IsActive { get; set; }
+
         public string CWD { get; set; }
         public List<Node> Nodes { get; protected set; }
         public Dictionary<string, Node> NodeLookup { get; protected set; }
@@ -57,23 +73,30 @@ namespace Materia.Nodes
         protected Dictionary<string, Node.NodeData> tempData;
 
         /// <summary>
-        /// Parameters are only available for image graphs and fx graphs
+        /// Parameters are only available for image graphs
         /// </summary>
-        [GraphParameterEditor]
+        [Editable(ParameterInputType.MapEdit, "Promoted Parameters", "Promoted Parameters")]
         public Dictionary<string, GraphParameterValue> Parameters { get; protected set; }
-        
-        [Section(Section = "Custom Parameters")]
-        [Title(Title = "")]
-        [ParameterEditor]
+             
+        [Editable(ParameterInputType.MapEdit, "Custom Parameters", "Custom Parameters")]
         public List<GraphParameterValue> CustomParameters { get; protected set; }
 
-        [Section(Section = "Custom Functions")]
-        [Title(Title = "")]
-        [GraphFunctionEditor]
+        [Editable(ParameterInputType.MapEdit, "Custom Functions", "Custom Fuctions")]
         public List<FunctionGraph> CustomFunctions { get; protected set; }
 
+        //this is a container
+        //that is filled when a parameter is promoted to a function graph
+        //it is also filled when we load a graph
+        //its primary use is for the editor
+        //so it can list all available promoted parameters to functions
+        //even if the parameter has been renamed or changed in the underlying graph
+        //that way the graph can be cleaned up / properly updated to handle the changes
+        //by the user
+        [Editable(ParameterInputType.MapEdit, "Promoted Functions", "Promoted Functions")]
+        public Dictionary<string, FunctionGraph> ParameterFunctions { get; protected set; }
+
         protected string name;
-        [TextInput]
+        [Editable(ParameterInputType.Text, "Name")]
         public string Name
         {
             get
@@ -90,19 +113,15 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public double ShiftX { get; set; }
 
-        [HideProperty]
         public double ShiftY { get; set; }
 
-        [HideProperty]
         public float Zoom { get; set; }
 
         protected GraphPixelType defaultTextureType;
 
-        [Dropdown(null)]
-        [Title(Title = "Default Texture Type")]
+        [Editable(ParameterInputType.Dropdown, "Default Texture Format")]
         public GraphPixelType DefaultTextureType
         {
             get
@@ -119,8 +138,6 @@ namespace Materia.Nodes
         }
 
         protected string hdriIndex;
-
-        [HideProperty]
         public string HdriIndex
         {
             get
@@ -137,13 +154,24 @@ namespace Materia.Nodes
             }
         }
 
+        protected string[] hdriImages;
         [Dropdown("HdriIndex")]
-        [Title(Title = "Hdri Image")]
-        public string[] HdriImages { get; set; }
+        [Editable(ParameterInputType.Dropdown, "Environment HDR")]
+        public string[] HdriImages
+        {
+            get
+            {
+                return hdriImages;
+            }
+            set
+            {
+                hdriImages = value;
+            }
+        }
 
         protected int randomSeed;
 
-        [Title(Title = "Random Seed")]
+        [Editable(ParameterInputType.IntInput, "Random Seed")]
         public int RandomSeed
         {
             get
@@ -162,6 +190,25 @@ namespace Materia.Nodes
 
                 Updated();
                 TryAndProcess();
+            }
+        }
+
+        protected NodePathType graphLinesDisplay;
+        [Editable(ParameterInputType.Dropdown, "Graph Lines Display", "Display")]
+        public NodePathType GraphLinesDisplay
+        {
+            get
+            {
+                return graphLinesDisplay;
+            }
+            set
+            {
+                graphLinesDisplay = value;
+
+                if(OnGraphLinesChanged != null)
+                {
+                    OnGraphLinesChanged.Invoke(this);
+                }
             }
         }
 
@@ -196,7 +243,6 @@ namespace Materia.Nodes
         protected int width;
         protected int height;
 
-        [HideProperty]
         public int Width
         {
             get
@@ -210,7 +256,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public int Height
         {
             get
@@ -224,7 +269,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         [JsonIgnore]
         protected Node parentNode;
         public virtual Node ParentNode
@@ -239,8 +283,26 @@ namespace Materia.Nodes
             }
         }
 
-        public Graph(string name, int w = DEFAULT_SIZE, int h = DEFAULT_SIZE)
+        /// <summary>
+        /// A graph must be instantiated on the UI / Main Thread
+        /// So it can acquire the proper TaskScheduler for nodes
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="w"></param>
+        /// <param name="h"></param>
+        /// <param name="async"></param>
+        public Graph(string name, int w = DEFAULT_SIZE, int h = DEFAULT_SIZE, bool async = true)
         {
+            if (Node.Context == null)
+            {
+                Node.Context = TaskScheduler.FromCurrentSynchronizationContext();
+            }
+
+            TaskQueue = new Queue<Node>();
+            QueueCanceller = new CancellationTokenSource();
+
+            Synchronized = !async;
+
             tempData = new Dictionary<string, Node.NodeData>();
 
             Name = name;
@@ -259,6 +321,31 @@ namespace Materia.Nodes
             Parameters = new Dictionary<string, GraphParameterValue>();
             CustomParameters = new List<GraphParameterValue>();
             CustomFunctions = new List<FunctionGraph>();
+            ParameterFunctions = new Dictionary<string, FunctionGraph>();
+
+            if (async)
+            {
+                IsActive = true;
+                Scheduler = Task.Run(async () =>
+                {
+                    while (IsActive)
+                    {
+                        if (TaskQueue.Count > 0)
+                        {
+                            IsProcessing = true;
+                            Node n = TaskQueue.Dequeue();
+                            n.IsScheduled = false;
+                            await n.GetTask();
+                        }
+                        else
+                        {
+                            IsProcessing = false;
+                        }
+
+                        Thread.Sleep(1);
+                    }
+                }, QueueCanceller.Token);
+            }
         }
 
         public virtual object GetVar(string k)
@@ -388,6 +475,7 @@ namespace Materia.Nodes
             public List<string> outputs;
             public List<string> inputs;
             public GraphPixelType defaultTextureType;
+            public NodePathType graphLinesDisplay;
 
             public double shiftX;
             public double shiftY;
@@ -404,7 +492,7 @@ namespace Materia.Nodes
         }
 
         public virtual void TryAndProcess()
-        {
+        {    
             int c = Nodes.Count;
             for(int i = 0; i < c; i++)
             {
@@ -415,8 +503,34 @@ namespace Materia.Nodes
                     continue;
                 }
 
-                n.TryAndProcess();
+                //do not process
+                //comments / pins
+                if (n is ImageNode)
+                {
+                    n.TryAndProcess();
+                }
+            } 
+        }
+
+        public virtual void Schedule(Node n)
+        {
+            if (Synchronized) return;
+
+            if(n != null && !n.IsScheduled)
+            {
+                n.IsScheduled = true;
+                TaskQueue.Enqueue(n);
             }
+        }
+
+        public virtual void AssignSeed(int seed)
+        {
+            randomSeed = seed;
+        }
+
+        public virtual void AssignParentNode(Node n)
+        {
+            parentNode = n;
         }
 
         /// <summary>
@@ -436,19 +550,22 @@ namespace Materia.Nodes
             {
                 Node n = Nodes[i];
 
-                if (n is OutputNode || n is InputNode)
-                {
-                    continue;
-                }
-
-                 if(!(n is ItemNode) && !(n is BitmapNode))
-                {
+                if(!(n is ItemNode) && !(n is BitmapNode))
+                {   
                     Point osize;
 
                     if (OriginSizes.TryGetValue(n.Id, out osize))
                     {
-                        int fwidth = (int)Math.Min(4096, Math.Max(8, Math.Round(osize.X * wp)));
-                        int fheight = (int)Math.Min(4096, Math.Max(8, Math.Round(osize.Y * hp)));
+                        int fwidth = (int)Math.Min(8192, Math.Max(8, Math.Round(osize.X * wp)));
+                        int fheight = (int)Math.Min(8192, Math.Max(8, Math.Round(osize.Y * hp)));
+
+                        if (n is GraphInstanceNode)
+                        {
+                            //we need to do a ResizeWith on the internal graph
+                            //of the graph instance
+                            GraphInstanceNode ginst = n as GraphInstanceNode;
+                            ginst.GraphInst.ResizeWith(fwidth, fheight);
+                        }
 
                         //we use assign in order to avoid
                         //triggering update event
@@ -465,7 +582,8 @@ namespace Materia.Nodes
 
             List<string> data = new List<string>();
 
-            for(int i = 0; i < Nodes.Count; i++)
+            int count = Nodes.Count;
+            for(int i = 0; i < count; i++)
             {
                 Node n = Nodes[i];
                 data.Add(n.GetJson());
@@ -485,6 +603,7 @@ namespace Materia.Nodes
             d.height = height;
             d.customParameters = GetJsonReadyCustomParameters();
             d.customFunctions = GetJsonReadyCustomFunctions();
+            d.graphLinesDisplay = graphLinesDisplay;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -493,7 +612,8 @@ namespace Materia.Nodes
         {
             List<string> funcs = new List<string>();
 
-            for(int i = 0; i < CustomFunctions.Count; i++)
+            int count = CustomFunctions.Count;
+            for(int i = 0; i < count; i++)
             {
                 FunctionGraph f = CustomFunctions[i];
                 funcs.Add(f.GetJson());
@@ -533,7 +653,8 @@ namespace Materia.Nodes
         protected List<string> GetJsonReadyCustomParameters()
         {
             List<string> parameters = new List<string>();
-            for(int i = 0; i < CustomParameters.Count; i++)
+            int count = CustomParameters.Count;
+            for(int i = 0; i < count; i++)
             {
                 GraphParameterValue g = CustomParameters[i];
                 parameters.Add(g.GetJson());
@@ -545,7 +666,8 @@ namespace Materia.Nodes
         {
             Dictionary<string, object> parameters = new Dictionary<string, object>();
 
-            for(int i = 0; i < CustomParameters.Count; i++)
+            int count = CustomParameters.Count;
+            for(int i = 0; i < count; i++)
             {
                 var param = CustomParameters[i];
                 parameters[param.Id] = param.Value;
@@ -560,20 +682,24 @@ namespace Materia.Nodes
             {
                 CustomFunctions = new List<FunctionGraph>();
 
-                for(int i = 0; i < functions.Count; i++)
+                int fcount = functions.Count;
+                for(int i = 0; i < fcount; i++)
                 {
                     string k = functions[i];
                     FunctionGraph g = new FunctionGraph("temp");
+                    g.AssignParentGraph(this);
                     CustomFunctions.Add(g);
                     g.FromJson(k);
                 }
 
-                for(int i = 0; i < CustomFunctions.Count; i++)
+                for(int i = 0; i < fcount; i++)
                 {
                     FunctionGraph g = CustomFunctions[i];
-                    //set parent graph
+                    //set parent graph via this
+                    //method to trigger an event
+                    //that is necessary for call nodes
                     g.ParentGraph = this;
-                    //finally set connections
+                    //set connections
                     g.SetConnections();
                 }
             }
@@ -643,6 +769,7 @@ namespace Materia.Nodes
                     }
                 }
 
+                ParameterFunctions = new Dictionary<string, FunctionGraph>();
                 Parameters = new Dictionary<string, GraphParameterValue>();
 
                 foreach (var k in parameters.Keys)
@@ -663,6 +790,7 @@ namespace Materia.Nodes
                     { 
                         var f = Parameters[k].Value as FunctionGraph;
                         f.OnGraphUpdated += Graph_OnGraphUpdated;
+                        ParameterFunctions[k] = f;
                     }
                 }
             }
@@ -724,7 +852,8 @@ namespace Materia.Nodes
             {
                 CustomParameters.Clear();
 
-                for(int i = 0; i < parameters.Count; i++)
+                int count = parameters.Count;
+                for(int i = 0; i < count; i++)
                 {
                     string k = parameters[i];
                     var param = GraphParameterValue.FromJson(k, null);
@@ -773,7 +902,8 @@ namespace Materia.Nodes
         /// </summary>
         public virtual void ReleaseIntermediateBuffers()
         {
-            for(int i = 0; i < Nodes.Count; i++)
+            int count = Nodes.Count;
+            for(int i = 0; i < count; i++)
             {
                 Node n = Nodes[i];
                 if (n is OutputNode)
@@ -818,6 +948,7 @@ namespace Materia.Nodes
             {
                 var n = new GraphInstanceNode(width, height);
                 n.ParentGraph = this;
+                n.Async = !Synchronized;
                 return n;
             }
 
@@ -829,32 +960,37 @@ namespace Materia.Nodes
                     if (t.Equals(typeof(OutputNode)))
                     {
                         var n  = new OutputNode(defaultTextureType);
-                        n.ParentGraph = this;
+                        n.AssignParentGraph(this);
+                        n.Async = !Synchronized;
                         return n;
                     }
                     else if(t.Equals(typeof(InputNode)))
                     {
                         var n = new InputNode(defaultTextureType);
-                        n.ParentGraph = this;
+                        n.AssignParentGraph(this);
+                        n.Async = !Synchronized;
                         return n;
                     }
                     else if(t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
                     {
                         Node n = (Node)Activator.CreateInstance(t);
-                        n.ParentGraph = this;
+                        n.AssignParentGraph(this);
+                        n.Async = !Synchronized;
                         return n;
                     }
                     else
                     {
                         Node n = (Node)Activator.CreateInstance(t, width, height, defaultTextureType);
-                        n.ParentGraph = this;
+                        n.AssignParentGraph(this);
+                        n.Async = !Synchronized;
                         return n;
                     }
                 }
                 else
                 {
                     var n = new GraphInstanceNode(width, height);
-                    n.ParentGraph = this;
+                    n.AssignParentGraph(this);
+                    n.Async = !Synchronized;
                     return n;
                 }
             }
@@ -865,142 +1001,157 @@ namespace Materia.Nodes
             }
         }
 
+        public virtual void FromJson(GraphData d)
+        {
+            if (d == null) return;
+
+            tempData = new Dictionary<string, Node.NodeData>();
+            Dictionary<string, Node> lookup = new Dictionary<string, Node>();
+
+            graphLinesDisplay = d.graphLinesDisplay;
+            hdriIndex = d.hdriIndex;
+            Name = d.name;
+            OutputNodes = d.outputs;
+            InputNodes = d.inputs;
+            defaultTextureType = d.defaultTextureType;
+            ShiftX = d.shiftX;
+            ShiftY = d.shiftY;
+            Zoom = d.zoom;
+            width = d.width;
+            height = d.height;
+
+            if (width <= 0 || width == int.MaxValue) width = 256;
+            if (height <= 0 || height == int.MaxValue) height = 256;
+
+            SetJsonReadyCustomParameters(d.customParameters);
+            SetJsonReadyCustomFunctions(d.customFunctions);
+
+            int count = d.nodes.Count;
+            //parse node data
+            //setup initial object instances
+            for (int i = 0; i < count; i++)
+            {
+                string s = d.nodes[i];
+                Node.NodeData nd = JsonConvert.DeserializeObject<Node.NodeData>(s);
+
+                if (nd != null)
+                {
+                    string type = nd.type;
+                    if (!string.IsNullOrEmpty(type))
+                    {
+                        try
+                        {
+                            Type t = Type.GetType(type);
+                            if (t != null)
+                            {
+                                //special case to handle output nodes
+                                if (t.Equals(typeof(OutputNode)))
+                                {
+                                    OutputNode n = new OutputNode(defaultTextureType);
+                                    n.Async = !Synchronized;
+                                    n.AssignParentGraph(this);
+                                    n.Id = nd.id;
+                                    lookup[nd.id] = n;
+                                    Nodes.Add(n);
+                                    tempData[nd.id] = nd;
+                                    LoadNode(n, s);
+                                }
+                                else if (t.Equals(typeof(InputNode)))
+                                {
+                                    InputNode n = new InputNode(defaultTextureType);
+                                    n.Async = !Synchronized;
+                                    n.AssignParentGraph(this);
+                                    n.Id = nd.id;
+                                    lookup[nd.id] = n;
+                                    Nodes.Add(n);
+                                    tempData[nd.id] = nd;
+                                    LoadNode(n, s);
+                                }
+                                else if (t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
+                                {
+                                    Node n = (Node)Activator.CreateInstance(t);
+                                    if (n != null)
+                                    {
+                                        n.Async = !Synchronized;
+                                        n.AssignParentGraph(this);
+                                        n.Id = nd.id;
+                                        lookup[nd.id] = n;
+                                        Nodes.Add(n);
+                                        tempData[nd.id] = nd;
+                                        LoadNode(n, s);
+                                    }
+                                }
+                                else
+                                {
+                                    Node n = (Node)Activator.CreateInstance(t, nd.width, nd.height, defaultTextureType);
+                                    if (n != null)
+                                    {
+                                        n.Async = !Synchronized;
+                                        n.AssignParentGraph(this);
+                                        n.Id = nd.id;
+                                        lookup[nd.id] = n;
+                                        Nodes.Add(n);
+                                        tempData[nd.id] = nd;
+                                        LoadNode(n, s);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                //log we could not load graph node
+                            }
+                        }
+                        catch
+                        {
+                            //log we could not load graph node
+                        }
+                    }
+                }
+            }
+
+            NodeLookup = lookup;
+            SetJsonReadyParameters(d.parameters);
+
+            if (!(this is FunctionGraph))
+            {
+                SetConnections();
+            }
+        }
+
         public virtual void FromJson(string data)
         {
             GraphData d = JsonConvert.DeserializeObject<GraphData>(data);
 
             if (d != null)
             {
-                tempData = new Dictionary<string, Node.NodeData>();
-                Dictionary<string, Node> lookup = new Dictionary<string, Node>();
-
-                hdriIndex = d.hdriIndex;
-                Name = d.name;
-                OutputNodes = d.outputs;
-                InputNodes = d.inputs;
-                defaultTextureType = d.defaultTextureType;
-                ShiftX = d.shiftX;
-                ShiftY = d.shiftY;
-                Zoom = d.zoom;
-                width = d.width;
-                height = d.height;
-
-                if (width == 0 || width == int.MaxValue) width = 256;
-                if (height == 0 || height == int.MaxValue) height = 256;
-
-                SetJsonReadyCustomParameters(d.customParameters);
-                SetJsonReadyCustomFunctions(d.customFunctions);
-
-                //parse node data
-                //setup initial object instances
-                for(int i = 0; i < d.nodes.Count; i++)
-                {
-                    string s = d.nodes[i];
-                    Node.NodeData nd = JsonConvert.DeserializeObject<Node.NodeData>(s);
-
-                    if (nd != null)
-                    {
-                        string type = nd.type;
-                        if (!string.IsNullOrEmpty(type))
-                        {
-                            try
-                            {
-                                Type t = Type.GetType(type);
-                                if (t != null)
-                                {
-                                    //special case to handle output nodes
-                                    if (t.Equals(typeof(OutputNode)))
-                                    {
-                                        OutputNode n = new OutputNode(defaultTextureType);
-                                        n.ParentGraph = this;
-                                        n.Id = nd.id;
-                                        lookup[nd.id] = n;
-                                        Nodes.Add(n);
-                                        tempData[nd.id] = nd;
-                                        LoadNode(n, s);
-                                    }
-                                    else if (t.Equals(typeof(InputNode)))
-                                    {
-                                        InputNode n = new InputNode(defaultTextureType);
-                                        n.ParentGraph = this;
-                                        n.Id = nd.id;
-                                        lookup[nd.id] = n;
-                                        Nodes.Add(n);
-                                        tempData[nd.id] = nd;
-                                        LoadNode(n, s);
-                                    }
-                                    else if (t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
-                                    {
-                                        Node n = (Node)Activator.CreateInstance(t);
-                                        if (n != null)
-                                        {
-                                            n.ParentGraph = this;
-                                            n.Id = nd.id;
-                                            lookup[nd.id] = n;
-                                            Nodes.Add(n);
-                                            tempData[nd.id] = nd;
-                                            LoadNode(n, s);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Node n = (Node)Activator.CreateInstance(t, nd.width, nd.height, defaultTextureType);
-                                        if (n != null)
-                                        {
-                                            n.ParentGraph = this;
-                                            n.Id = nd.id;
-                                            lookup[nd.id] = n;
-                                            Nodes.Add(n);
-                                            tempData[nd.id] = nd;
-                                            LoadNode(n, s);
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    //log we could not load graph node
-                                }
-                            }
-                            catch
-                            {
-                                //log we could not load graph node
-                            }
-                        }
-                    }
-                }
-
-                NodeLookup = lookup;
-                SetJsonReadyParameters(d.parameters);
-
-                if (!(this is FunctionGraph))
-                {
-                    SetConnections();
-                }
+                FromJson(d);
             }
         }
 
         private void LoadNode(Node n, string data)
         {
-            n.FromJson(data);
-
-            //this handles a case where
-            //the function graph is already created
-            //and possible being reloaded
-            //after being cleared and then FromJson is called again
-            if (n is MathNode && this is FunctionGraph)
+            //slight optimization for function graphs
+            if(n is MathNode && this is FunctionGraph)
             {
-                FunctionGraph t = this as FunctionGraph;
                 MathNode mn = n as MathNode;
+                FunctionGraph fg = this as FunctionGraph;
+                mn.AssignParentNode(fg.parentNode);
 
-                if (t.ParentNode != null)
+                if(n is ExecuteNode && fg.Execute == null)
                 {
-                    mn.ParentNode = t.ParentNode;
+                    fg.Execute = n as ExecuteNode;
                 }
-                else if (t.ParentGraph != null)
+                if(n is ArgNode)
                 {
-                    mn.OnFunctionParentSet();
+                    fg.Args.Add(n as ArgNode);
+                }
+                else if(n is CallNode)
+                {
+                    fg.Calls.Add(n as CallNode);
                 }
             }
+
+            n.FromJson(data);
 
             //origin sizes are only for graph instances
             //not actually used in the current one being edited
@@ -1012,8 +1163,10 @@ namespace Materia.Nodes
         {
             //finally after every node is populated
             //try and connect them all!
-            foreach (Node n in Nodes)
+            int count = Nodes.Count;
+            for(int i = 0; i < count; i++) 
             {
+                Node n = Nodes[i];
                 Node.NodeData nd = null;
                 //we prevent the input on change event from happening
                 if (tempData.TryGetValue(n.Id, out nd))
@@ -1030,22 +1183,27 @@ namespace Materia.Nodes
             {
                 (this as FunctionGraph).UpdateOutputTypes();
             }
-            //do not processs graph instances while loading
-            else if(ParentNode == null)
+
+            if (OnGraphLoaded != null)
             {
-                TryAndProcess();
+                OnGraphLoaded.Invoke(this);
             }
         }
 
-        public void CopyResources(string cwd)
+        public void CopyResources(string cwd, bool setCWD = false)
         {
-            foreach (Node n in Nodes)
+            int count = Nodes.Count;
+            for(int i = 0; i < count; i++)
             {
+                var n = Nodes[i];
                 n.CopyResources(cwd);
             }
 
-            //set last in case we need to copy from current graph cwd to new cwd
-            this.CWD = cwd;
+            if (setCWD)
+            {
+                //set last in case we need to copy from current graph cwd to new cwd
+                CWD = cwd;
+            }
         }
 
         protected virtual void ClearParameters()
@@ -1053,8 +1211,10 @@ namespace Materia.Nodes
             if(CustomParameters != null)
             {
                 //just a quick sanity check
-                foreach (var param in CustomParameters)
+                int count = CustomParameters.Count;
+                for(int i = 0; i < count; i++) 
                 {
+                    var param = CustomParameters[i];
                     if (param.IsFunction())
                     {
                         FunctionGraph fn = param.Value as FunctionGraph;
@@ -1068,8 +1228,10 @@ namespace Materia.Nodes
 
             if(CustomFunctions != null)
             {
-                foreach(var f in CustomFunctions)
+                int count = CustomFunctions.Count;
+                for(int i = 0; i < count; i++)
                 {
+                    var f = CustomFunctions[i];
                     f.Dispose();
                 }
 
@@ -1094,10 +1256,25 @@ namespace Materia.Nodes
 
         public virtual void Dispose()
         {
+            if(TaskQueue != null)
+            {
+                TaskQueue.Clear();
+            }
+
+            IsActive = false;
+
+            if(QueueCanceller != null)
+            {
+                QueueCanceller.Cancel();
+                QueueCanceller = null;
+            }
+
             if (Nodes != null)
             {
-                foreach (Node n in Nodes)
+                int count = Nodes.Count;
+                for(int i = 0; i < count; i++)
                 {
+                    var n = Nodes[i];
                     n.Dispose();
                 }
 
@@ -1233,6 +1410,8 @@ namespace Materia.Nodes
                     FunctionGraph g = p.Value as FunctionGraph;
                     g.OnGraphUpdated -= Graph_OnGraphUpdated;
                     g.Dispose();
+
+                    ParameterFunctions.Remove(cid);
                 }
             }
 
@@ -1254,6 +1433,7 @@ namespace Materia.Nodes
                     FunctionGraph g = p.Value as FunctionGraph;
                     g.OnGraphUpdated -= Graph_OnGraphUpdated;
                     g.Dispose();
+                    ParameterFunctions.Remove(cid);
                 }
 
                 if(v is FunctionGraph)
@@ -1313,7 +1493,9 @@ namespace Materia.Nodes
 
             if (v is FunctionGraph)
             {
-                (v as FunctionGraph).OnGraphUpdated += Graph_OnGraphUpdated;
+                FunctionGraph vg = v as FunctionGraph;
+                vg.OnGraphUpdated += Graph_OnGraphUpdated;
+                ParameterFunctions[cid] = vg;
             }
 
             Updated();

@@ -17,6 +17,7 @@ using Materia.Imaging;
 using Materia.Nodes.Helpers;
 using Materia.Nodes.Containers;
 using System.Reflection;
+using Materia.Nodes;
 
 namespace Materia
 {
@@ -65,6 +66,11 @@ namespace Materia
             MultiSlider.Set(range.min[0], range.mid[0], range.max[0]);
 
             inputFromUser = false;
+        }
+
+        private void OnNodeUpdate(Node n)
+        {
+            OnUpdate(n);
         }
 
         public void OnUpdate(object obj)
@@ -162,6 +168,11 @@ namespace Materia
             Channels.SelectedIndex = 0;
             inputFromUser = false;
 
+            if (propertyOwner is ImageNode)
+            {
+                (propertyOwner as ImageNode).OnUpdate += OnNodeUpdate;
+            }
+
             Task.Delay(10).ContinueWith(t =>
             {
                 App.Current.Dispatcher.Invoke(() =>
@@ -202,6 +213,14 @@ namespace Materia
 
             MultiSlider.Set(0, 0.5f, 1);
             property.SetValue(propertyOwner, range);
+        }
+
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if(propertyOwner is ImageNode)
+            {
+                (propertyOwner as ImageNode).OnUpdate -= OnNodeUpdate;
+            }
         }
     }
 }

@@ -8,15 +8,18 @@ using Newtonsoft.Json;
 using Materia.Imaging.GLProcessing;
 using Materia.Nodes.Attributes;
 using Materia.MathHelpers;
+using System.Threading;
 
 namespace Materia.Nodes.Atomic
 {
     public class UniformColorNode : ImageNode
     {
+        CancellationTokenSource ctk;
+
         MVector color;
 
         [Promote(NodeType.Float4)]
-        [ColorPicker]
+        [Editable(ParameterInputType.Color, "Color")]
         public MVector Color
         {
             get
@@ -30,7 +33,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new float TileX
         {
             get
@@ -43,7 +45,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
         public new float TileY
         {
             get
@@ -89,16 +90,48 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            Process();
+            if (!Async)
+            {
+                GetParams();
+                Process();
+                return;
+            }
+
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
+
+            //ctk = new CancellationTokenSource();
+
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
+
+                if (ParentGraph != null)
+                {
+                    ParentGraph.Schedule(this);
+                }
+            //}, Context);
         }
 
-        void Process()
+        public override Task GetTask()
         {
-            CreateBufferIfNeeded();
+            return Task.Factory.StartNew(() =>
+            {
+                GetParams();
+            })
+            .ContinueWith(t =>
+            {
+                Process();
+            }, Context);
+        }
 
-            Vector4 pcolor = new Vector4(color.X, color.Y, color.Z, color.W);
+        private void GetParams()
+        {
+            pcolor = new Vector4(color.X, color.Y, color.Z, color.W);
 
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Color"))
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Color"))
             {
                 object obj = ParentGraph.GetParameterValue(Id, "Color");
 
@@ -111,11 +144,17 @@ namespace Materia.Nodes.Atomic
                     pcolor.Z = m.Z;
                     pcolor.W = m.W;
                 }
-                else if(obj is Vector4)
+                else if (obj is Vector4)
                 {
                     pcolor = (Vector4)obj;
                 }
             }
+        }
+
+        Vector4 pcolor;
+        void Process()
+        {
+            CreateBufferIfNeeded();
 
             processor.Color = pcolor;
             processor.Process(width, height, null, buffer);

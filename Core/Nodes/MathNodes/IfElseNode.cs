@@ -47,6 +47,7 @@ namespace Materia.Nodes.MathNodes
 
         private void Input_OnInputChanged(NodeInput n)
         {
+            UpdateOutputType();
             TryAndProcess();
         }
 
@@ -116,28 +117,24 @@ namespace Materia.Nodes.MathNodes
 
             if(input2.Input.Type == NodeType.Float && input3.Input.Type == NodeType.Float)
             {
-                output.Type = NodeType.Float;
                 compute = "float " + s + ";\r\n" + " if(" + n1id + ") { \r\n";
                 compute += s + " = " + n2id + ";\r\n} else {\r\n";
                 compute += s + " = " + n3id + ";}\r\n";
             }
             else if(input2.Input.Type == NodeType.Float2 && input3.Input.Type == NodeType.Float2)
             {
-                output.Type = NodeType.Float2;
                 compute = "vec2 " + s + ";\r\n" + "if(" + n1id + ") { \r\n";
                 compute += s + " = " + n2id + ";\r\n} else {\r\n";
                 compute += s + " = " + n3id + ";}\r\n";
             }
             else if (input2.Input.Type == NodeType.Float3 && input3.Input.Type == NodeType.Float3)
             {
-                output.Type = NodeType.Float3;
                 compute = "vec3 " + s + ";\r\n" + "if(" + n1id + ") { \r\n";
                 compute += s + " = " + n2id + ";\r\n} else {\r\n";
                 compute += s + " = " + n3id + ";}\r\n";
             }
             else if (input2.Input.Type == NodeType.Float4 && input3.Input.Type == NodeType.Float4)
             {
-                output.Type = NodeType.Float4;
                 compute = "vec4 " + s + ";\r\n" + "if(" + n1id + ") { \r\n";
                 compute += s + " = " + n2id + ";\r\n} else {\r\n";
                 compute += s + " = " + n3id + ";}\r\n";
@@ -156,7 +153,19 @@ namespace Materia.Nodes.MathNodes
 
             if (input.Input.Data != null && input.Input.Data is bool) c = Convert.ToBoolean(input.Input.Data);
 
-            output.Data = c ? input2.Input.Data : input3.Input.Data;
+            if (c)
+            {
+                output.Data = input2.Input.Data;
+            }
+            else
+            {
+                output.Data = input3.Input.Data;
+            }
+
+            if (output.Data != null)
+            {
+                result = output.Data.ToString();
+            }
 
             if (ParentGraph != null)
             {

@@ -96,6 +96,8 @@ namespace Materia.Nodes.MathNodes
             output.Data = radius * (float)Math.Cos(theta);
             output2.Data = radius * (float)Math.Sin(theta);
 
+            result = $"{output.Data.ToString()},{output2.Data.ToString()}";
+
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;

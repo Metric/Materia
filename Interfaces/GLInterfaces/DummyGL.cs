@@ -59,6 +59,11 @@ namespace Materia.GLInterfaces
            
         }
 
+        public override void BlendEquationSeparate(int rgbMode, int alphaMode)
+        {
+            
+        }
+
         public override void BufferData(int target, int length, IntPtr data, int type)
         {
             

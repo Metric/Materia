@@ -95,6 +95,19 @@ namespace Materia.Nodes.MathNodes
         {
             if (input.Input.Data == null || input2.Input.Data == null || input3.Input.Data == null) return;
 
+            if (!Helpers.Utils.IsNumber(input.Input.Data))
+            {
+                return;
+            }
+            if (!Helpers.Utils.IsNumber(input2.Input.Data))
+            {
+                return;
+            }
+            if (!Helpers.Utils.IsNumber(input3.Input.Data))
+            {
+                return;
+            }
+
             float x = Convert.ToSingle(input.Input.Data);
             float y = Convert.ToSingle(input2.Input.Data);
             float z = Convert.ToSingle(input3.Input.Data);
@@ -104,6 +117,8 @@ namespace Materia.Nodes.MathNodes
             vec.Z = z;
 
             output.Data = vec;
+
+            result = output.Data.ToString();
 
             if (ParentGraph != null)
             {

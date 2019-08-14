@@ -15,12 +15,10 @@ namespace Materia.Nodes.MathNodes
     /// </summary>
     public class ForLoopNode : MathNode
     {
-        protected NodeInput initialInput;
         protected NodeInput startInput;
         protected NodeInput endInput;
         protected NodeInput incrementInput;
 
-        protected NodeOutput loopOutput;
         protected NodeOutput incrementOutput;
         protected NodeOutput completeOutput;
 
@@ -34,22 +32,17 @@ namespace Materia.Nodes.MathNodes
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
-            initialInput = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Float Type");
             startInput = new NodeInput(NodeType.Float, this, "Start");
             endInput = new NodeInput(NodeType.Float, this, "End");
             incrementInput = new NodeInput(NodeType.Float, this, "Increment By");
 
-            loopOutput = new NodeOutput(NodeType.Float | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Loop");
             incrementOutput = new NodeOutput(NodeType.Float, this, "Current");
             completeOutput = new NodeOutput(NodeType.Execute, this, "Done");
 
-            Inputs.Add(initialInput);
             Inputs.Add(startInput);
             Inputs.Add(endInput);
             Inputs.Add(incrementInput);
 
-            initialInput.OnInputAdded += Input_OnInputAdded;
-            initialInput.OnInputChanged += Input_OnInputChanged;
 
             startInput.OnInputAdded += Input_OnInputAdded;
             startInput.OnInputChanged += Input_OnInputChanged;
@@ -60,7 +53,6 @@ namespace Materia.Nodes.MathNodes
             incrementInput.OnInputAdded += Input_OnInputAdded;
             incrementInput.OnInputChanged += Input_OnInputChanged;
 
-            Outputs.Add(loopOutput);
             Outputs.Add(incrementOutput);
             Outputs.Add(completeOutput);
         }
@@ -78,10 +70,7 @@ namespace Materia.Nodes.MathNodes
 
         public override void UpdateOutputType()
         {
-            if (initialInput.HasInput)
-            {
-                loopOutput.Type = initialInput.Input.Type;
-            }
+
         }
 
         public override string GetShaderPart(string currentFrag)
@@ -91,55 +80,29 @@ namespace Materia.Nodes.MathNodes
                 return "";
             }
 
-            if(!initialInput.HasInput || !startInput.HasInput || !endInput.HasInput || !incrementInput.HasInput)
+            if(!startInput.HasInput || !endInput.HasInput || !incrementInput.HasInput)
             {
                 return "";
             }
 
-            NodeType inputType = initialInput.Input.Type;
-
-            loopOutput.Type = inputType;
-
-            string initialId = (initialInput.Input.Node as MathNode).ShaderId;
             string startId = (startInput.Input.Node as MathNode).ShaderId;
             string endId = (endInput.Input.Node as MathNode).ShaderId;
             string incrementId = (incrementInput.Input.Node as MathNode).ShaderId;
 
-            var idx1 = initialInput.Input.Node.Outputs.IndexOf(initialInput.Input);
             var idx2 = startInput.Input.Node.Outputs.IndexOf(startInput.Input);
             var idx3 = endInput.Input.Node.Outputs.IndexOf(endInput.Input);
             var idx4 = incrementInput.Input.Node.Outputs.IndexOf(incrementInput.Input);
 
-            initialId += idx1.ToString();
             startId += idx2.ToString();
             endId += idx3.ToString();
             incrementId += idx4.ToString();
 
             string id = shaderId;
 
-            string loopId = id + "1";
-            string incId = id + "2";
+            string incId = id + "1";
             string innerBody = "";
 
             string frag = "";
-
-            if(inputType == NodeType.Float)
-            {
-                frag += "float " + loopId + " = " + initialId + ";\r\n";
-            }
-            else if(inputType == NodeType.Float2)
-            {
-                frag += "vec2 " + loopId + " = " + initialId + ";\r\n";
-            }
-            else if(inputType == NodeType.Float3)
-            {
-                frag += "vec3 " + loopId + " = " + initialId + ";\r\n";
-            }
-            else if(inputType == NodeType.Float4 
-                || inputType == NodeType.Color || inputType == NodeType.Gray)
-            {
-                frag += "vec4 " + loopId + " = " + initialId + ";\r\n";
-            }
 
             frag += "\r\nif (" + startId + " <= " + endId + ") {\r\n";
 
@@ -301,7 +264,7 @@ namespace Materia.Nodes.MathNodes
 
         public override void TryAndProcess()
         {
-            if(initialInput.HasInput && startInput.HasInput
+            if(startInput.HasInput
                 && endInput.HasInput && incrementInput.HasInput)
             {
                 Process();
@@ -310,14 +273,13 @@ namespace Materia.Nodes.MathNodes
 
         void Process()
         {
-            if (initialInput.Input.Data == null || startInput.Input.Data == null
+            if (startInput.Input.Data == null
                 || endInput.Input.Data == null
                 || incrementInput.Input.Data == null || ParentGraph == null)
             {
                 return;
             }
 
-            object d = initialInput.Input.Data;
             float s = Convert.ToSingle(startInput.Input.Data);
             float e = Convert.ToSingle(endInput.Input.Data);
             float incr = Convert.ToSingle(incrementInput.Input.Data);
@@ -330,7 +292,6 @@ namespace Materia.Nodes.MathNodes
                 for (float i = s; i < e; i += incr)
                 {
                     incrementOutput.Data = i;
-                    loopOutput.Data = d;
 
                     foreach(var n in loop)
                     {
@@ -343,7 +304,6 @@ namespace Materia.Nodes.MathNodes
                 for(float i = s; i >= e; i-=incr)
                 {
                     incrementOutput.Data = i;
-                    loopOutput.Data = d;
 
                     foreach(var n in loop)
                     {

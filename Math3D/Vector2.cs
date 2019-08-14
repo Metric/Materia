@@ -749,6 +749,12 @@ namespace Materia.Math3D
             result.Y = v.Y;
         }
 
+        public static void Transform(ref Vector2 vec, ref Matrix2 mat, out Vector2 result)
+        {
+            result.X = mat.Row0.X * vec.X + mat.Row0.Y * vec.Y;
+            result.Y = mat.Row1.X * vec.X + mat.Row1.Y * vec.Y;
+        }
+
         /// <summary>
         /// Gets or sets an OpenTK.Vector2 with the Y and X components of this instance.
         /// </summary>
@@ -830,6 +836,20 @@ namespace Materia.Math3D
             vec.X *= scale.X;
             vec.Y *= scale.Y;
             return vec;
+        }
+
+        public static Vector2 operator *(Vector2 vec, Matrix2 mat)
+        {
+            Vector2 result;
+            Vector2.Transform(ref vec, ref mat, out result);
+            return result;
+        }
+
+        public static Vector2 operator *(Matrix2 mat, Vector2 vec)
+        {
+            Vector2 result;
+            Vector2.Transform(ref vec, ref mat, out result);
+            return result;
         }
 
         /// <summary>

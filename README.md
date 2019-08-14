@@ -45,7 +45,6 @@ Major TODO
   * Re-creation of various substance graph instances.
   * More Undo and Redo tracking operations.
   * Thorough testing of function graphs for both CPU and GPU.
-  * Add a Pow math node. 
   * Add various Matrix4, Matrix3, and Matrix2 math nodes.
 
 Known Bugs
@@ -86,6 +85,7 @@ Editor Build Instructions
 
 Command Line MTG Renderer Build Instructions
 =========================
+* Note: The command line MTG Renderer does not suppor the new .mtga format yet.
 * Load up the main solution
 * Make sure OpenTK, OpenTK Control, Newtonsoft JSON, DDSReader Project, RSMI Project, Core Project, Math3D Project, Interfaces Project, Exporters Project, System.Drawing, and System.Windows.Forms is properly referenced in the MTG Renderer project
 * Right click MTG Renderer Project -> Build

@@ -71,22 +71,18 @@ namespace Materia.Nodes.MathNodes
 
             if (input.Input.Type == NodeType.Float4)
             {
-                output.Type = NodeType.Float4;
                 return "vec4 " + s + " = abs(" + n1id + ");\r\n";
             }
             else if (input.Input.Type == NodeType.Float3)
             {
-                output.Type = NodeType.Float3;
                 return "vec3 " + s + " = abs(" + n1id + ");\r\n";
             }
             else if (input.Input.Type == NodeType.Float2)
             {
-                output.Type = NodeType.Float2;
                 return "vec2 " + s + " = abs(" + n1id + ");\r\n";
             }
             else if (input.Input.Type == NodeType.Float)
             {
-                output.Type = NodeType.Float;
                 return "float " + s + " = abs(" + n1id + ");\r\n";
             }
 
@@ -120,6 +116,8 @@ namespace Materia.Nodes.MathNodes
             {
                 output.Data = 0;
             }
+
+            result = output.Data.ToString();
 
             if (ParentGraph != null)
             {

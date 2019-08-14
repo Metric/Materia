@@ -24,7 +24,7 @@ namespace Materia.Nodes.Atomic
         NodeOutput Output;
 
         float r;
-        [Slider(IsInt = false, Max = 1, Min = 0, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.FloatSlider, "Red")]
         public float Red
         {
             get
@@ -39,7 +39,7 @@ namespace Materia.Nodes.Atomic
         }
 
         float g;
-        [Slider(IsInt = false, Max = 1, Min = 0, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.FloatSlider, "Green")]
         public float Green
         {
             get
@@ -54,7 +54,7 @@ namespace Materia.Nodes.Atomic
         }
 
         float b;
-        [Slider(IsInt = false, Max = 1, Min = 0, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.FloatSlider, "Blue")]
         public float Blue
         {
             get
@@ -69,7 +69,7 @@ namespace Materia.Nodes.Atomic
         }
 
         float a;
-        [Slider(IsInt = false, Max = 1, Min = 0, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.FloatSlider, "Alpha")]
         public float Alpha
         {
             get
@@ -146,25 +146,40 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(25, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput)
                 {
-                    if (input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
+        }
+
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+
+            })
+            .ContinueWith(t =>
+            {
+                if (input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
         }
 
         void Process()

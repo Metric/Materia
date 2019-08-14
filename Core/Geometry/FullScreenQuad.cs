@@ -13,15 +13,15 @@ namespace Materia.Geometry
     {
         static float[] buffer =
         {
-            1,1,0, 1, 1,
-            1,-1,0, 1, 0,
-            -1,-1,0, 0, 0,
-            -1,1,0, 0, 1
+            1,1,0,  1,1,
+            -1,1,0, 0,1,
+            1,-1,0,  1,0,
+            -1,-1,0, 0,0
         };
 
         static uint[] indices =
         {
-            0,1,3,1,2,3
+            0, 1, 2, 2, 1, 3
         };
 
         GLVertexArray vao;

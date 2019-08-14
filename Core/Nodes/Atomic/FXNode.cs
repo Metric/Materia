@@ -10,6 +10,7 @@ using Materia.Nodes.Attributes;
 using Materia.Textures;
 using Newtonsoft.Json;
 using Materia.Nodes.Helpers;
+using NLog;
 
 namespace Materia.Nodes.Atomic
 {
@@ -24,9 +25,19 @@ namespace Materia.Nodes.Atomic
         MaxY = 6
     }
 
+    public enum FXBlend
+    {
+        Blend = 0,
+        Add = 1,
+        Max = 2
+    }
+
     public class FXNode : ImageNode
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         CancellationTokenSource ctk;
+
         NodeInput q1;
         NodeInput q2;
         NodeInput q3;
@@ -38,6 +49,7 @@ namespace Materia.Nodes.Atomic
 
         protected int iterations;
         [Promote(NodeType.Float)]
+        [Editable(ParameterInputType.IntInput, "Iterations")]
         public int Iterations
         {
             get
@@ -52,9 +64,8 @@ namespace Materia.Nodes.Atomic
         }
 
         protected MVector translation;
-        [Section(Section = "Transform")]
-        [Vector(NodeType.Float2)]
         [Promote(NodeType.Float2)]
+        [Editable(ParameterInputType.Float2Input, "Translation", "Transform")]
         public MVector Translation
         {
             get
@@ -69,9 +80,8 @@ namespace Materia.Nodes.Atomic
         }
 
         protected MVector scale;
-        [Section(Section = "Transform")]
-        [Vector(NodeType.Float2)]
         [Promote(NodeType.Float2)]
+        [Editable(ParameterInputType.Float2Input, "Scale", "Transform")]
         public MVector Scale
         {
             get
@@ -86,9 +96,8 @@ namespace Materia.Nodes.Atomic
         }
 
         protected int rotation;
-        [Section(Section = "Transform")]
-        [Slider(IsInt = true, Max = 360, Min = 0)]
         [Promote(NodeType.Float)]
+        [Editable(ParameterInputType.IntSlider, "Rotation", "Transform", 0, 360)]
         public int Rotation
         {
             get
@@ -103,9 +112,8 @@ namespace Materia.Nodes.Atomic
         }
 
         protected FXPivot patternPivot;
-        [Section(Section = "Transform")]
         [Promote(NodeType.Float)]
-        [Title(Title = "Pattern Pivot")]
+        [Editable(ParameterInputType.Dropdown, "Pattern Pivot", "Transform")]
         public FXPivot PatternPivot
         {
             get
@@ -121,8 +129,7 @@ namespace Materia.Nodes.Atomic
 
         protected float luminosity;
         [Promote(NodeType.Float)]
-        [Section(Section = "Effects")]
-        [Slider(IsInt = false, Max = 1.0f, Min = 0.0f)]
+        [Editable(ParameterInputType.FloatSlider, "Luminosity", "Effects")]
         public float Luminosity
         {
             get
@@ -138,9 +145,7 @@ namespace Materia.Nodes.Atomic
 
         protected float luminosityRandomness;
         [Promote(NodeType.Float)]
-        [Section(Section = "Effects")]
-        [Title(Title = "Luminsosity Randomness")]
-        [Slider(IsInt = false, Max = 1.0f, Min = 0.0f)]
+        [Editable(ParameterInputType.FloatSlider, "Luminosity Randomness", "Effects")]
         public float LuminosityRandomness
         {
             get
@@ -151,6 +156,51 @@ namespace Materia.Nodes.Atomic
             {
                 luminosityRandomness = value;
                 TryAndProcess();
+            }
+        }
+
+        protected FXBlend blending;
+        [Promote(NodeType.Float)]
+        [Editable(ParameterInputType.Dropdown, "Blending", "Effects")]
+        public FXBlend Blending
+        {
+            get
+            {
+                return blending;
+            }
+            set
+            {
+                blending = value;
+                TryAndProcess();
+            }
+        }
+
+        /// <summary>
+        /// Hiding the tiling
+        /// as it does not apply
+        /// to the FX node
+        /// </summary>
+        public new float TileY
+        {
+            get
+            {
+                return tileY;
+            }
+            set
+            {
+                tileY = value;
+            }
+        }
+
+        public new float TileX
+        {
+            get
+            {
+                return tileX;
+            }
+            set
+            {
+                tileX = value;
             }
         }
 
@@ -173,6 +223,8 @@ namespace Materia.Nodes.Atomic
             translation = new MVector();
             scale = new MVector(1, 1);
             rotation = 0;
+
+            blending = FXBlend.Blend;
 
             previewProcessor = new BasicImageRenderer();
             processor = new FXProcessor();
@@ -236,184 +288,164 @@ namespace Materia.Nodes.Atomic
             {
                 if (q1.HasInput || q2.HasInput || q3.HasInput || q4.HasInput)
                 {
+                    GetParams();
+                    CollectQuadData();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(25, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (ParentGraph != null)
                 {
                     if (q1.HasInput || q2.HasInput || q3.HasInput || q4.HasInput)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
-        float CalculateRandomLuminosity(float iter, float randLum, float maxLum)
+        float CalculateRandomLuminosity(float iter, float randLum)
         {
             MVector m2 = new MVector(randLum + iter + ParentGraph.RandomSeed, randLum + iter + ParentGraph.RandomSeed);
             float f = Utils.Rand(ref m2);
-            f = f * (maxLum * randLum);
+            f = f * randLum;
             return f;
         }
 
-        void ProcessQuad1(float i, float imax, int quads)
+        //special helper struct
+        private class FXQuadData
         {
-            if (!q1.HasInput) return;
-            GLTextuer2D i1 = (GLTextuer2D)q1.Input.Data;
+            public FXBlend blending;
+            public FXPivot pivot;
+            public float luminosity;
+            public float angle;
+            public MVector translation;
+            public MVector scale;
 
-            if (i1 == null) return;
-            if (i1.Id == 0) return;
+            public int quadrant;
 
-            MVector pTrans = translation;
-            MVector pScale = scale;
-            float pRot = rotation;
-            FXPivot pivot = PatternPivot;
-            float luminosity = Luminosity;
-            float luminosityRandomness = LuminosityRandomness;
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Luminosity"))
+            public FXQuadData(int q, FXBlend blend, FXPivot piv, float lum, float ang, MVector trans, MVector scal)
             {
-                if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                luminosity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Luminosity"));
+                quadrant = q;
+                blending = blend;
+                pivot = piv;
+                luminosity = lum;
+                angle = ang;
+                translation = trans;
+                scale = scal;
             }
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "LuminosityRandomness"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                luminosityRandomness = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "LuminosityRandomness"));
-            }
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "PatternPivot"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "PatternPivot"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "PatternPivot").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                float t = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "PatternPivot"));
-                pivot = (FXPivot)((int)t);
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Translation"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Translation"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Translation").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                object o = ParentGraph.GetParameterValue(Id, "Translation");
-                if(o != null && o is MVector)
-                {
-                    pTrans = (MVector)o;
-                }
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Scale"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Scale"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Scale").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                object o = ParentGraph.GetParameterValue(Id, "Scale");
-                if(o != null && o is MVector)
-                {
-                    pScale = (MVector)o;
-                }
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Rotation"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Rotation"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Rotation").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                pRot = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Rotation"));
-            }
-
-            float rlum = CalculateRandomLuminosity(i, luminosityRandomness, luminosity);
-            luminosity += rlum;
-            processor.Luminosity = Math.Min(1.0f, Math.Max(0, luminosity));
-
-            float angle = (float)(pRot * (Math.PI / 180.0f));
-            processor.Scale = pScale;
-            processor.Translation = pTrans;
-            processor.Angle = angle;
-            processor.Pivot = pivot;
-
-            processor.Process(0, width, height, i1, buffer, quads);
         }
 
-        void ProcessQuad2(float i, float imax, int quads)
+        void ProcessQuad(FXQuadData data, int quads)
         {
-            if (!q2.HasInput) return;
-            GLTextuer2D i1 = (GLTextuer2D)q2.Input.Data;
+            GLTextuer2D i1 = null;
+            if (data.quadrant == 0)
+            {
+                if (!q1.HasInput) return;
+                i1 = (GLTextuer2D)q1.Input.Data;
+            }
+            else if(data.quadrant == 1)
+            {
+                if (!q2.HasInput) return;
+                i1 = (GLTextuer2D)q2.Input.Data;
+            }
+            else if(data.quadrant == 2)
+            {
+                if (!q3.HasInput) return;
+                i1 = (GLTextuer2D)q3.Input.Data;
+            }
+            else if(data.quadrant == 3)
+            {
+                if (!q4.HasInput) return;
+                i1 = (GLTextuer2D)q4.Input.Data;
+            }
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
 
+            processor.Blending = data.blending;
+            processor.Scale = data.scale;
+            processor.Translation = data.translation;
+            processor.Angle = data.angle;
+            processor.Pivot = data.pivot;
+            processor.Luminosity = data.luminosity;
+
+            processor.Process(data.quadrant, width, height, i1, buffer, quads);
+        }
+
+        FXQuadData GetQuad(float i, float x, float y, float imax, int quad)
+        {
             MVector pTrans = translation;
             MVector pScale = scale;
             float pRot = rotation;
 
             FXPivot pivot = PatternPivot;
+            FXBlend blend = blending;
 
             float luminosity = Luminosity;
             float luminosityRandomness = LuminosityRandomness;
+
+            GetQuadParams(i, imax, x, y, ref pTrans, ref pScale, ref pRot, ref pivot, ref blend, ref luminosity, ref luminosityRandomness);
+
+            float rlum = CalculateRandomLuminosity(i, luminosityRandomness);
+            luminosity += rlum;
+            luminosity = Math.Min(1.0f, Math.Max(0, luminosity));
+
+            float angle = (float)(pRot * (Math.PI / 180.0f));
+
+            return new FXQuadData(quad, blend, pivot, luminosity, angle, pTrans, pScale);
+        }
+
+        void GetQuadParams(float i, float imax, float x, float y, ref MVector trans, 
+            ref MVector scale, ref float rot, 
+            ref FXPivot pivot, ref FXBlend blend, 
+            ref float luminosity, ref float luminosityRandomness)
+        {
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Blending"))
+            {
+                if (ParentGraph.IsParameterValueFunction(Id, "Blending"))
+                {
+                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Blending").Value as FunctionGraph;
+                    g.SetVar("pos", new MVector(x, y));
+                    g.SetVar("iteration", i);
+                    g.SetVar("maxIterations", imax);
+                    g.TryAndProcess();
+                    blend = (FXBlend)Convert.ToInt32(g.Result);
+                }
+                else
+                {
+                    blend = (FXBlend)Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Blending"));
+                }
+            }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Luminosity"))
             {
                 if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i));
+                    g.SetVar("pos", new MVector(x, y));
                     g.SetVar("iteration", i);
                     g.SetVar("maxIterations", imax);
+                    g.TryAndProcess();
+                    luminosity = Convert.ToSingle(g.Result);
                 }
-
-                luminosity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Luminosity"));
+                else
+                {
+                    luminosity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Luminosity"));
+                }
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "LuminosityRandomness"))
@@ -421,12 +453,16 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i));
+                    g.SetVar("pos", new MVector(x, y));
                     g.SetVar("iteration", i);
                     g.SetVar("maxIterations", imax);
+                    g.TryAndProcess();
+                    luminosityRandomness = Convert.ToSingle(g.Result);
                 }
-
-                luminosityRandomness = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "LuminosityRandomness"));
+                else
+                {
+                    luminosityRandomness = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "LuminosityRandomness"));
+                }
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "PatternPivot"))
@@ -434,13 +470,16 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "PatternPivot"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "PatternPivot").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i));
+                    g.SetVar("pos", new MVector(x, y));
                     g.SetVar("iteration", i);
                     g.SetVar("maxIterations", imax);
+                    g.TryAndProcess();
+                    pivot = (FXPivot)Convert.ToInt32(g.Result);
                 }
-
-                float t = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "PatternPivot"));
-                pivot = (FXPivot)((int)t);
+                else
+                {
+                    pivot = (FXPivot)Convert.ToInt32(ParentGraph.GetParameterValue(Id, "PatternPivot"));
+                }
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Translation"))
@@ -448,15 +487,24 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "Translation"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Translation").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i));
+                    g.SetVar("pos", new MVector(x, y));
                     g.SetVar("iteration", i);
                     g.SetVar("maxIterations", imax);
-                }
+                    g.TryAndProcess();
 
-                object o = ParentGraph.GetParameterValue(Id, "Translation");
-                if (o != null && o is MVector)
+                    object o = g.Result;
+                    if(o != null && o is MVector)
+                    {
+                        trans = (MVector)o;
+                    }
+                }
+                else
                 {
-                    pTrans = (MVector)o;
+                    object o = ParentGraph.GetParameterValue(Id, "Translation");
+                    if (o != null && o is MVector)
+                    {
+                        trans = (MVector)o;
+                    }
                 }
             }
 
@@ -465,15 +513,24 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "Scale"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Scale").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i));
+                    g.SetVar("pos", new MVector(x, y));
                     g.SetVar("iteration", i);
                     g.SetVar("maxIterations", imax);
-                }
+                    g.TryAndProcess();
 
-                object o = ParentGraph.GetParameterValue(Id, "Scale");
-                if (o != null && o is MVector)
+                    object o = g.Result;
+                    if(o != null && o is MVector)
+                    {
+                        scale = (MVector)o;
+                    }
+                }
+                else
                 {
-                    pScale = (MVector)o;
+                    object o = ParentGraph.GetParameterValue(Id, "Scale");
+                    if (o != null && o is MVector)
+                    {
+                        scale = (MVector)o;
+                    }
                 }
             }
 
@@ -482,261 +539,96 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "Rotation"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Rotation").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i));
+                    g.SetVar("pos", new MVector(x, y));
                     g.SetVar("iteration", i);
                     g.SetVar("maxIterations", imax);
+                    g.TryAndProcess();
+                    rot = Convert.ToSingle(g.Result);
                 }
-
-                pRot = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Rotation"));
+                else
+                {
+                    rot = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Rotation"));
+                }
             }
-
-            float rlum = CalculateRandomLuminosity(i, luminosityRandomness, luminosity);
-            luminosity += rlum;
-            processor.Luminosity = Math.Min(1.0f, Math.Max(0, luminosity));
-
-            float angle = (float)(pRot * (Math.PI / 180.0f));
-            processor.Scale = pScale;
-            processor.Translation = pTrans;
-            processor.Angle = angle;
-            processor.Pivot = pivot;
-
-            processor.Process(1, width, height, i1, buffer, quads);
         }
 
-        void ProcessQuad3(float i, float imax, int quads)
+        public override Task GetTask()
         {
-            if (!q3.HasInput) return;
-            GLTextuer2D i1 = (GLTextuer2D)q3.Input.Data;
-
-            if (i1 == null) return;
-            if (i1.Id == 0) return;
-
-            MVector pTrans = translation;
-            MVector pScale = scale;
-            float pRot = rotation;
-
-            FXPivot pivot = PatternPivot;
-
-            float luminosity = Luminosity;
-            float luminosityRandomness = LuminosityRandomness;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Luminosity"))
+            return Task.Factory.StartNew(() =>
             {
-                if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                luminosity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Luminosity"));
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "LuminosityRandomness"))
+                GetParams();
+                CollectQuadData();
+            })
+            .ContinueWith(t =>
             {
-                if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                luminosityRandomness = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "LuminosityRandomness"));
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "PatternPivot"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "PatternPivot"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "PatternPivot").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                float t = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "PatternPivot"));
-                pivot = (FXPivot)((int)t);
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Translation"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Translation"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Translation").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                object o = ParentGraph.GetParameterValue(Id, "Translation");
-                if (o != null && o is MVector)
-                {
-                    pTrans = (MVector)o;
-                }
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Scale"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Scale"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Scale").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                object o = ParentGraph.GetParameterValue(Id, "Scale");
-                if (o != null && o is MVector)
-                {
-                    pScale = (MVector)o;
-                }
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Rotation"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Rotation"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Rotation").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                pRot = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Rotation"));
-            }
-
-            float rlum = CalculateRandomLuminosity(i, luminosityRandomness, luminosity);
-            luminosity += rlum;
-            processor.Luminosity = Math.Min(1.0f, Math.Max(0, luminosity));
-
-            float angle = (float)(pRot * (Math.PI / 180.0f));
-            processor.Scale = pScale;
-            processor.Translation = pTrans;
-            processor.Angle = angle;
-            processor.Pivot = pivot;
-
-            processor.Process(2, width, height, i1, buffer, quads);
+                Process();
+            }, Context);
         }
 
-        void ProcessQuad4(float i, float imax, int quads)
+        private void CollectQuadData()
         {
-            if (!q4.HasInput) return;
-            GLTextuer2D i1 = (GLTextuer2D)q4.Input.Data;
+            quads.Clear();
 
-            if (i1 == null) return;
-            if (i1.Id == 0) return;
+            if (quadsConnected == 0 || pmaxIter == 0) return;
 
-            MVector pTrans = translation;
-            MVector pScale = scale;
-            float pRot = rotation;
+            bool q1IsValid = quadsConnected >= 1;
+            bool q2IsValid = quadsConnected >= 2;
+            bool q3IsValid = quadsConnected >= 3;
+            bool q4IsValid = quadsConnected >= 4;
 
-            FXPivot pivot = PatternPivot;
-
-            float luminosity = Luminosity;
-            float luminosityRandomness = LuminosityRandomness;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Luminosity"))
+            ///this part here is the most computational
+            ///expensive and is thus better to run in a separate thread
+            for (int i = 0; i < pmaxIter; i++)
             {
-                if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
+                if(q1IsValid)
                 {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
+                    quads.Add(GetQuad(i, 0, 0, pmaxIter, 0));
                 }
-
-                luminosity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Luminosity"));
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "LuminosityRandomness"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
+                if(q2IsValid)
                 {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
+                    quads.Add(GetQuad(i, 1, 0, pmaxIter, 1));
                 }
-
-                luminosityRandomness = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "LuminosityRandomness"));
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "PatternPivot"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "PatternPivot"))
+                if(q3IsValid)
                 {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "PatternPivot").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
+                    quads.Add(GetQuad(i, 0, 1, pmaxIter, 2));
                 }
-
-                float t = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "PatternPivot"));
-                pivot = (FXPivot)((int)t);
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Translation"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Translation"))
+                if(q4IsValid)
                 {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Translation").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                object o = ParentGraph.GetParameterValue(Id, "Translation");
-                if (o != null && o is MVector)
-                {
-                    pTrans = (MVector)o;
+                    quads.Add(GetQuad(i, 1, 1, pmaxIter, 3));
                 }
             }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Scale"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Scale"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Scale").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                object o = ParentGraph.GetParameterValue(Id, "Scale");
-                if (o != null && o is MVector)
-                {
-                    pScale = (MVector)o;
-                }
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Rotation"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Rotation"))
-                {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Rotation").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(i+1, i+1));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
-                }
-
-                pRot = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Rotation"));
-            }
-
-            float rlum = CalculateRandomLuminosity(i, luminosityRandomness, luminosity);
-            luminosity += rlum;
-            processor.Luminosity = Math.Min(1.0f, Math.Max(0, luminosity));
-
-            float angle = (float)(pRot * (Math.PI / 180.0f));
-            processor.Scale = pScale;
-            processor.Translation = pTrans;
-            processor.Angle = angle;
-            processor.Pivot = pivot;
-
-            processor.Process(3, width, height, i1, buffer, quads);
         }
 
+        private void GetParams()
+        {
+            quadsConnected = 0;
+
+            if (q1.HasInput && q1.Input.Data != null) quadsConnected++;
+            if (q2.HasInput && q2.Input.Data != null) quadsConnected++;
+            if (q3.HasInput && q3.Input.Data != null) quadsConnected++;
+            if (q4.HasInput && q4.Input.Data != null) quadsConnected++;
+
+            pmaxIter = iterations;
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Iterations"))
+            {
+                pmaxIter = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Iterations"));
+            }
+
+            ///ho boy this was not cool!
+            if (float.IsNaN(pmaxIter) || float.IsInfinity(pmaxIter))
+            {
+                pmaxIter = 0;
+            }
+
+            //also we are capping to a maximum of 512
+            //for performance reasons
+            pmaxIter = Math.Min(pmaxIter, 512);
+        }
+
+        List<FXQuadData> quads = new List<FXQuadData>();
+        int quadsConnected;
+        float pmaxIter;
         void Process()
         {
             //we release the previous buffer if there is one
@@ -749,37 +641,24 @@ namespace Materia.Nodes.Atomic
                 buffer = null;
             }
 
-            int quadsConnected = 0;
-
-            if (q1.HasInput && q1.Input.Data != null) quadsConnected++;
-            if (q2.HasInput && q2.Input.Data != null) quadsConnected++;
-            if (q3.HasInput && q3.Input.Data != null) quadsConnected++;
-            if (q4.HasInput && q4.Input.Data != null) quadsConnected++;
-
             if (processor == null) return;
 
-            if (quadsConnected == 0) return;
+            if (quadsConnected == 0 || pmaxIter == 0) return;
 
             CreateBufferIfNeeded();
 
+            processor.TileX = tileX;
+            processor.TileY = tileY;
             processor.Prepare(width, height, null, buffer);
 
-            float pmaxIter = iterations;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Iterations"))
+            foreach(FXQuadData d in quads)
             {
-                pmaxIter = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Iterations"));
-            }
-
-            for(float i = 0; i < pmaxIter; i++)
-            {
-                if(q1.HasInput) ProcessQuad1(i, pmaxIter, quadsConnected);
-                if(q2.HasInput) ProcessQuad2(i, pmaxIter, quadsConnected);
-                if(q3.HasInput) ProcessQuad3(i, pmaxIter, quadsConnected);
-                if(q4.HasInput) ProcessQuad4(i, pmaxIter, quadsConnected);
+                ProcessQuad(d, quadsConnected);
             }
 
             processor.Complete();
+
+            quads.Clear();
 
             Updated();
             Output.Data = buffer;
@@ -806,6 +685,7 @@ namespace Materia.Nodes.Atomic
             public float sx;
             public float sy;
             public int pivot;
+            public int blending;
         }
 
         public override string GetJson()
@@ -819,6 +699,7 @@ namespace Materia.Nodes.Atomic
             d.sx = scale.X;
             d.sy = scale.Y;
             d.pivot = (int)patternPivot;
+            d.blending = (int)blending;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -832,6 +713,7 @@ namespace Materia.Nodes.Atomic
             translation = new MVector(d.tx, d.ty);
             scale = new MVector(d.sx, d.sy);
             patternPivot = (FXPivot)d.pivot;
+            blending = (FXBlend)d.blending;
         }
     }
 }

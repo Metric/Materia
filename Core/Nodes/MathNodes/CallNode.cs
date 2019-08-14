@@ -12,7 +12,6 @@ namespace Materia.Nodes.MathNodes
     {
         protected int selectedIndex;
 
-        [HideProperty]
         public int SelectedIndex
         {
             get
@@ -83,6 +82,7 @@ namespace Materia.Nodes.MathNodes
         protected string[] function;
 
         [Dropdown("SelectedIndex")]
+        [Editable(ParameterInputType.Dropdown, "Function")]
         public string[] Function
         {
             get
@@ -107,7 +107,7 @@ namespace Materia.Nodes.MathNodes
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
-            output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
+            output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Bool, this);
             Outputs.Add(output);
         }
 
@@ -116,67 +116,7 @@ namespace Materia.Nodes.MathNodes
             return selectedName;
         }
 
-        public override void OnFunctionParentSet()
-        {
-            Graph g = topGraph = TopGraph();
-
-            if(g != null)
-            {
-                function = new string[g.CustomFunctions.Count];
-
-                int i = 0;
-                for(i = 0; i < g.CustomFunctions.Count; i++)
-                {
-                    var f = g.CustomFunctions[i];
-
-                    if(f.Name.Equals(selectedName) || string.IsNullOrEmpty(selectedName))
-                    {
-                        if (selectedFunction != null)
-                        {
-                            var o = selectedFunction.OutputNode;
-                            selectedFunction.OnGraphUpdated -= SelectedFunction_OnGraphUpdated;
-
-                            if (o != null)
-                            {
-                                if (o.Outputs.Count > 1)
-                                {
-                                    o.Outputs[1].OnTypeChanged -= CallNode_OnTypeChanged;
-                                }
-                                else if (o.Outputs.Count > 0)
-                                {
-                                    o.Outputs[0].OnTypeChanged -= CallNode_OnTypeChanged;
-                                }
-                            }
-                        }
-                        selectedName = f.Name;
-                        selectedIndex = i;
-                        selectedFunction = f;
-                        selectedFunction.OnGraphUpdated += SelectedFunction_OnGraphUpdated;
-
-                        var ou = selectedFunction.OutputNode;
-
-                        if (ou != null)
-                        {
-                            if (ou.Outputs.Count > 1)
-                            {
-                                ou.Outputs[1].OnTypeChanged += CallNode_OnTypeChanged;
-                            }
-                            else if (ou.Outputs.Count > 0)
-                            {
-                                ou.Outputs[0].OnTypeChanged += CallNode_OnTypeChanged;
-                            }
-                        }
-                    }
-
-                    function[i] = f.Name;
-                    OnDescription(f.Name);
-                }
-
-                UpdateInputs();
-            }
-        }
-
-        protected override void OnParentNodeSet()
+        protected void OnParentSet()
         {
             Graph g =  topGraph = TopGraph();
 
@@ -269,11 +209,11 @@ namespace Materia.Nodes.MathNodes
                 {
                     if (idx == -1)
                     {
-                        prevEx.Add(executeInput);
+                        prevEx.Add(executeInput, false);
                     }
                     else
                     {
-                        prevEx.InsertAt(idx, executeInput);
+                        prevEx.InsertAt(idx, executeInput, false);
                     }
                 }
             }
@@ -301,11 +241,11 @@ namespace Materia.Nodes.MathNodes
                         {
                             if (idx < 0)
                             {
-                                prev.Add(input);
+                                prev.Add(input, false);
                             }
                             else
                             {
-                                prev.InsertAt(idx, input);
+                                prev.InsertAt(idx, input, false);
                             }
                         }
                     }
@@ -325,11 +265,14 @@ namespace Materia.Nodes.MathNodes
 
         public override void UpdateOutputType()
         {
-            var op = selectedFunction.GetOutputType();
-
-            if (op != null)
+            if (selectedFunction != null)
             {
-                output.Type = op.Value;
+                var op = selectedFunction.GetOutputType();
+
+                if (op != null)
+                {
+                    output.Type = op.Value;
+                }
             }
         }
 
@@ -392,6 +335,18 @@ namespace Materia.Nodes.MathNodes
             else if(output.Type == NodeType.Bool)
             {
                 prefix = "bool ";
+            }
+            else if(output.Type == NodeType.Matrix2)
+            {
+                prefix = "mat2 ";
+            }
+            else if(output.Type == NodeType.Matrix3)
+            {
+                prefix = "mat3 ";
+            }
+            else if(output.Type == NodeType.Matrix4)
+            {
+                prefix = "mat4 ";
             }
 
             string frag = prefix + s + " = " + selectedFunction.Name.Replace(" ", "").Replace("-", "_") + "(";
@@ -476,6 +431,8 @@ namespace Materia.Nodes.MathNodes
 
             output.Data = selectedFunction.Result;
 
+            result = output.Data.ToString();
+
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;
@@ -504,12 +461,67 @@ namespace Materia.Nodes.MathNodes
             return JsonConvert.SerializeObject(d);
         }
 
+        public override void AssignParentGraph(Graph g)
+        {
+            if (parentGraph != null)
+            {
+                if (parentGraph is FunctionGraph)
+                {
+                    FunctionGraph fg = parentGraph as FunctionGraph;
+
+                    fg.OnParentGraphSet -= Fg_OnParentGraphSet;
+                    fg.OnParentNodeSet -= Fg_OnParentNodeSet;
+                }
+            }
+
+            if (g != null)
+            {
+                if (g is FunctionGraph)
+                {
+                    FunctionGraph fg = g as FunctionGraph;
+
+                    fg.OnParentGraphSet += Fg_OnParentGraphSet;
+                    fg.OnParentNodeSet += Fg_OnParentNodeSet;
+                }
+            }
+
+            base.AssignParentGraph(g);
+        }
+
         public override void FromJson(string data)
         {
             CallNodeData d = JsonConvert.DeserializeObject<CallNodeData>(data);
             SetBaseNodeDate(d);
             selectedIndex = d.selectedIndex;
             selectedName = d.selectedName;
+
+            OnParentSet();
+        }
+
+        public override void Dispose()
+        {
+            if(parentGraph != null)
+            {
+                if(parentGraph is FunctionGraph)
+                {
+                    FunctionGraph fg = parentGraph as FunctionGraph;
+
+                    fg.OnParentGraphSet -= Fg_OnParentGraphSet;
+                    fg.OnParentNodeSet -= Fg_OnParentNodeSet;
+                }
+            }
+
+            base.Dispose();
+        }
+
+        private void Fg_OnParentNodeSet(FunctionGraph g)
+        {
+            OnParentSet();   
+        }
+
+        private void Fg_OnParentGraphSet(FunctionGraph g)
+        {
+            OnParentSet();
         }
     }
 }

@@ -18,23 +18,34 @@ namespace Materia.Nodes
 {
     public class FunctionGraph : Graph
     {
+        public delegate void OutputNodeSet(Node n);
+        public event OutputNodeSet OnOutputSet;
+
+        public delegate void FunctionParentSet(FunctionGraph g);
+        public event FunctionParentSet OnParentGraphSet;
+        public event FunctionParentSet OnParentNodeSet;
+
+
+
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
         static string GLSLHash = "float rand(vec2 co) {\r\n"
                                  + "return fract(sin(dot(co, vec2(12.9898,78.233))) * 43758.5453) * 2.0 - 1.0;\r\n"
                                  + "}\r\n\r\n";
 
+        protected string lastShaderCode;
+
+        public ExecuteNode Execute { get; set; }
+
         public Node OutputNode { get; protected set; }
 
         public IGLProgram Shader { get; protected set; }
 
-        [HideProperty]
         public NodeType ExpectedOutput
         {
             get; set;
         }
 
-        [HideProperty]
         public bool HasExpectedOutput
         {
             get
@@ -56,6 +67,24 @@ namespace Materia.Nodes
             get; set;
         }
 
+        protected List<ArgNode> args;
+        public List<ArgNode> Args
+        {
+            get
+            {
+                return args;
+            }
+        }
+
+        protected List<CallNode> calls;
+        public List<CallNode> Calls
+        {
+            get
+            {
+                return calls;
+            }
+        }
+
         protected Graph parentGraph;
         public Graph ParentGraph
         {
@@ -71,17 +100,15 @@ namespace Materia.Nodes
                 }
 
                 parentGraph = value;
+
+                if(OnParentGraphSet != null)
+                {
+                    OnParentGraphSet.Invoke(this);
+                }
                 
                 if(parentGraph != null)
                 {
                     parentGraph.OnGraphUpdated += G_OnGraphUpdated;
-                }
-
-                int c = Nodes.Count;
-                for(int i = 0; i < c; i++)
-                {
-                    MathNode n = (MathNode)Nodes[i];
-                    n.OnFunctionParentSet();
                 }
             }
         }
@@ -102,15 +129,10 @@ namespace Materia.Nodes
                 }
 
                 parentNode = value;
-                //update nodes
-                int c = Nodes.Count;
-                for(int i = 0; i < c; i++)
+
+                if(OnParentGraphSet != null)
                 {
-                    if (Nodes[i] is MathNode)
-                    {
-                        MathNode n = (MathNode)Nodes[i];
-                        n.ParentNode = parentNode;
-                    }
+                    OnParentNodeSet.Invoke(this);
                 }
 
                 g = TopGraph();
@@ -127,7 +149,6 @@ namespace Materia.Nodes
             SetVar("RandomSeed", randomSeed);
         }
 
-        [HideProperty]
         public new int Width
         {
             get
@@ -140,7 +161,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public new int Height
         {
             get
@@ -153,13 +173,76 @@ namespace Materia.Nodes
             }
         }
 
-        public FunctionGraph(string name, int w = 256, int h = 256) : base(name, w, h)
+        public FunctionGraph(string name, int w = 256, int h = 256) : base(name, w, h, false)
         {
+            calls = new List<CallNode>();
+            args = new List<ArgNode>();
             Name = name;
             SetVar("PI", 3.14159265359f);
             SetVar("Rad2Deg", (180.0f / 3.14159265359f));
             SetVar("Deg2Rad", (3.14159265359f / 180.0f));
             SetVar("RandomSeed", randomSeed);
+        }
+
+        public override bool Add(Node n)
+        {
+            if(n is ExecuteNode && Execute == null)
+            {
+                if(base.Add(n))
+                {
+                    Execute = n as ExecuteNode;
+                    return true;
+                }
+
+                return false;
+            }
+            else if(n is ExecuteNode && Execute != null)
+            {
+                return false;
+            }
+            else if(n is ArgNode)
+            {
+                if(base.Add(n))
+                {
+                    args.Add(n as ArgNode);
+                    return true;
+                }
+
+                return false;
+            }
+            else if(n is CallNode)
+            {
+                if(base.Add(n))
+                {
+                    calls.Add(n as CallNode);
+                    return true;
+                }
+
+                return false;
+            }
+            else
+            {
+                return base.Add(n);
+            }
+        }
+
+        public override void Remove(Node n)
+        {
+            if(Execute == n)
+            {
+                Execute = null;
+            }
+
+            if(n is ArgNode)
+            {
+                args.Remove(n as ArgNode);
+            }
+            else if(n is CallNode)
+            {
+                calls.Remove(n as CallNode);
+            }  
+
+            base.Remove(n);
         }
 
         public override Graph TopGraph()
@@ -210,16 +293,17 @@ namespace Materia.Nodes
                 return "";
             }
 
+            string otherCalls = "";
             string frag = "";
 
             List<Node> ordered = OrderNodesForShader();
 
             //this is in case this function references
             //other functions
-            List<Node> calls = Nodes.FindAll(m => m is CallNode);
-            for(int i = 0; i < calls.Count; i++)
+            int count = calls.Count;
+            for(int i = 0; i < count; i++)
             {
-                CallNode m = (CallNode)calls[i];
+                CallNode m = calls[i];
 
                 //no need to recreate the function
                 //if it is a recursive function!
@@ -235,9 +319,9 @@ namespace Materia.Nodes
                     return "";
                 }
 
-                if (frag.IndexOf(s) == -1)
+                if (otherCalls.IndexOf(s) == -1)
                 {
-                    frag += s;
+                    otherCalls += s;
                 }
             }
 
@@ -270,6 +354,18 @@ namespace Materia.Nodes
             {
                 frag += "bool ";
             }
+            else if(outtype.Value == NodeType.Matrix2)
+            {
+                frag += "mat2 ";
+            }
+            else if(outtype.Value == NodeType.Matrix3)
+            {
+                frag += "mat3 ";
+            }
+            else if(outtype.Value == NodeType.Matrix4)
+            {
+                frag += "mat4 ";
+            }
             else
             {
                 return "";
@@ -277,11 +373,10 @@ namespace Materia.Nodes
 
             frag += Name.Replace(" ", "").Replace("-", "_") + "(";
 
-            List<Node> args = Nodes.FindAll(m => m is ArgNode);
-
-            for(int i = 0; i < args.Count; i++)
+            count = args.Count;
+            for(int i = 0; i < count; i++)
             {
-                ArgNode a = (ArgNode)args[i];
+                ArgNode a = args[i];
 
                 if (a.InputType == NodeType.Float)
                 {
@@ -303,6 +398,18 @@ namespace Materia.Nodes
                 {
                     frag += "bool " + a.InputName + ",";
                 }
+                else if(a.InputType == NodeType.Matrix2)
+                {
+                    frag += "mat2 " + a.InputName + ",";
+                }
+                else if(a.InputType == NodeType.Matrix3)
+                {
+                    frag += "mat3 " + a.InputName + ",";
+                }
+                else if(a.InputType == NodeType.Matrix4)
+                {
+                    frag += "mat4 " + a.InputName + ",";
+                }
             }
 
             if (args.Count > 0)
@@ -314,16 +421,16 @@ namespace Materia.Nodes
                 frag += ") {\r\n";
             }
 
-            string intern = GetInternalShaderCode(ordered, true);
+            string intern = GetInternalShaderCode(ordered, frag, true);
 
             if (string.IsNullOrEmpty(intern))
             {
                 return "";
             }
 
-            frag += intern + "}\r\n\r\n";
+            frag = intern + "}\r\n\r\n";
 
-            return frag;
+            return otherCalls + frag;
         }
 
         protected List<Node> TravelBranch(Node parent, HashSet<Node> seen)
@@ -335,6 +442,7 @@ namespace Materia.Nodes
 
             while (queue.Count > 0)
             {
+                int count = 0;
                 Node n = queue.Dequeue();
 
                 if (seen.Contains(n))
@@ -344,7 +452,8 @@ namespace Materia.Nodes
 
                 seen.Add(n);
 
-                for(int i = 0; i < n.Inputs.Count; i++)
+                count = n.Inputs.Count;
+                for(int i = 0; i < count; i++)
                 {
                     NodeInput op = n.Inputs[i];
 
@@ -369,10 +478,22 @@ namespace Materia.Nodes
 
                 forward.Add(n);
 
+                //prevent going past outputnode
+                //if there is is one
+                //this saves some time
+                //in case the graphs have
+                //nodes after the output
+                //for some reason
+                if(n == OutputNode)
+                {
+                    continue;
+                }
+
                 if (n.Outputs.Count > 0)
                 {
                     int i = 0;
-                    for(i = 0; i < n.Outputs.Count; i++)
+                    count = n.Outputs.Count;
+                    for(i = 0; i < count; i++)
                     {
                         NodeOutput op = n.Outputs[i];
 
@@ -391,7 +512,8 @@ namespace Materia.Nodes
                                 //from one output
                                 //otherwise we queue up in queue
                                 //and proceed in order
-                                for(int j = 0; j < op.To.Count; j++)
+                                int count2 = op.To.Count;
+                                for(int j = 0; j < count2; j++)
                                 {
                                     NodeInput t = op.To[j];
                                     var branch = TravelBranch(t.Node, seen);
@@ -422,21 +544,33 @@ namespace Materia.Nodes
                 return forward;
             }
 
-            reverse.Push(OutputNode);
+            if (Execute != null)
+            {
+                stack.Push(Execute);
+            }
 
-            while (reverse.Count > 0)
-            { 
-                Node n = reverse.Pop();
-                stack.Push(n);
+            //If we do not have an execute node
+            //then fall back to old method
+            //of starting from output
+            //to find first node
+            if (stack.Count == 0)
+            {
+                reverse.Push(OutputNode);
 
-                for(int i = 0; i < n.Inputs.Count; i++)
+                while (reverse.Count > 0)
                 {
-                    NodeInput op = n.Inputs[i];
-                    if (op.HasInput)
+                    Node n = reverse.Pop();
+                    stack.Push(n);
+
+                    for (int i = 0; i < n.Inputs.Count; i++)
                     {
-                        if (op.Type == NodeType.Execute)
+                        NodeInput op = n.Inputs[i];
+                        if (op.HasInput)
                         {
-                            reverse.Push(op.Input.Node);
+                            if (op.Type == NodeType.Execute)
+                            {
+                                reverse.Push(op.Input.Node);
+                            }
                         }
                     }
                 }
@@ -449,6 +583,14 @@ namespace Materia.Nodes
             var branch = TravelBranch(sc[0], seen);
             forward.AddRange(branch);
 
+            //remove execute from it
+            //so it does not interfere with the shader generation
+            //etc
+            if (Execute != null)
+            {
+                forward.Remove(Execute);
+            }
+
             return forward;
         }
 
@@ -456,14 +598,15 @@ namespace Materia.Nodes
         {
             var nodes = OrderNodesForShader();
 
-            for(int i = 0; i < nodes.Count; i++)
+            int count = nodes.Count;
+            for(int i = 0; i < count; i++)
             {
                 Node n = nodes[i];
                 (n as MathNode).UpdateOutputType();
             }
         }
 
-        protected string GetInternalShaderCode(List<Node> nodes, bool asFunc = false)
+        protected string GetInternalShaderCode(List<Node> nodes, string frag = "", bool asFunc = false)
         {
             if (OutputNode == null)
             {
@@ -488,11 +631,12 @@ namespace Materia.Nodes
                 sizePart = "vec2 size = vec2(" + w + "," + h + ");\r\n";
             }
 
-            string frag = sizePart
+            frag += sizePart
                         + "vec2 pos = UV;\r\n"
                         + GetParentGraphShaderParams();
 
-            for(int i = 0; i < nodes.Count; i++)
+            int count = nodes.Count;
+            for(int i = 0; i < count; i++)
             {
                 var n = nodes[i] as MathNode;
 
@@ -535,17 +679,12 @@ namespace Materia.Nodes
             return frag;
         }
 
-        public virtual bool BuildShader()
+        public virtual void PrepareShader()
         {
+            lastShaderCode = null;
             if (OutputNode == null)
             {
-                return false;
-            }
-
-            if(Shader != null)
-            {
-                Shader.Release();
-                Shader = null;
+                return;
             }
 
             List<Node> ordered = OrderNodesForShader();
@@ -563,11 +702,10 @@ namespace Materia.Nodes
                          + "uniform sampler2D Input3;\r\n"
                          + GLSLHash;
 
-
-            List<Node> calls = Nodes.FindAll(m => m is CallNode);
-            for(int i = 0; i < calls.Count; i++)
+            int count = calls.Count;
+            for (int i = 0; i < count; i++)
             {
-                CallNode m = (CallNode)calls[i];
+                CallNode m = calls[i];
                 if (m.selectedFunction == this)
                 {
                     continue;
@@ -577,7 +715,7 @@ namespace Materia.Nodes
 
                 if (string.IsNullOrEmpty(s))
                 {
-                    return false;
+                    return;
                 }
 
                 if (frag.IndexOf(s) == -1)
@@ -592,12 +730,32 @@ namespace Materia.Nodes
 
             if (string.IsNullOrEmpty(intern))
             {
-                return false;
+                return;
             }
 
             frag += intern + "}";
 
-            //Log.Info("Function Frag Shader Code: {0}", frag);
+            //one last check to verify the output actually has the expected output
+            if (!HasExpectedOutput)
+            {
+                return;
+            }
+
+            lastShaderCode = frag;
+        }
+
+        public virtual bool BuildShader()
+        {
+            if (OutputNode == null || string.IsNullOrEmpty(lastShaderCode))
+            {
+                return false;
+            }
+
+            if(Shader != null)
+            {
+                Shader.Release();
+                Shader = null;
+            }
 
             //one last check to verify the output actually has the expected output
             if (!HasExpectedOutput)
@@ -605,13 +763,17 @@ namespace Materia.Nodes
                 return false;
             }
 
-            Shader = Material.Material.CompileFragWithVert("image.glsl", frag);
+            //Log.Debug(frag);
+
+            Shader = Material.Material.CompileFragWithVert("image.glsl", lastShaderCode);
 
             if (Shader == null)
             {
+                lastShaderCode = null;
                 return false;
             }
 
+            lastShaderCode = null;
             return true;
         }
 
@@ -620,6 +782,10 @@ namespace Materia.Nodes
             if(string.IsNullOrEmpty(id))
             {
                 OutputNode = null;
+                if(OnOutputSet != null)
+                {
+                    OnOutputSet.Invoke(null);
+                }
                 Updated();
                 return;
             }
@@ -628,11 +794,16 @@ namespace Materia.Nodes
             if(NodeLookup.TryGetValue(id, out n))
             {
                 OutputNode = n;
+                if (OnOutputSet != null)
+                {
+                    OnOutputSet.Invoke(n);
+                }
                 Updated();
             }
         }
 
-        public override bool Add(Node n)
+        //this was not needed in the long run
+       /* public override bool Add(Node n)
         {
             if(n is MathNode)
             {
@@ -644,7 +815,7 @@ namespace Materia.Nodes
                 //for certain nodes such as call node
                 if(suc)
                 {
-                    if(parentNode != null)
+                    if(parentNode != null && mn.ParentNode == null)
                     {
                         mn.ParentNode = parentNode;
                     }
@@ -662,7 +833,7 @@ namespace Materia.Nodes
             }
 
             return false;
-        }
+        }*/
 
         //a function graph does not allow embedded graph instances
         //and the type must be coming from MathNodes path
@@ -671,8 +842,8 @@ namespace Materia.Nodes
             if (type.Contains("MathNodes") && !type.Contains(System.IO.Path.DirectorySeparatorChar))
             {
                 MathNode n = base.CreateNode(type) as MathNode;
-                n.ParentNode = parentNode;
-                n.ParentGraph = this;
+                n.AssignParentNode(parentNode);
+                n.AssignParentGraph(this);
                 return n;
             }
             else if(type.Contains("Items") && !type.Contains(System.IO.Path.DirectorySeparatorChar))
@@ -681,6 +852,11 @@ namespace Materia.Nodes
             }
 
             return null;
+        }
+
+        public void AssignParentGraph(Graph g)
+        {
+            parentGraph = g;
         }
 
         public override void ResizeWith(int width, int height)
@@ -716,6 +892,18 @@ namespace Materia.Nodes
             else if (param.Type == NodeType.Float3)
             {
                 type = "vec3 ";
+            }
+            else if(param.Type == NodeType.Matrix2)
+            {
+                type = "mat2 ";
+            }
+            else if(param.Type == NodeType.Matrix3)
+            {
+                type = "mat3 ";
+            }
+            else if(param.Type == NodeType.Matrix4)
+            {
+                type = "mat4 ";
             }
             else
             {
@@ -802,6 +990,29 @@ namespace Materia.Nodes
 
                 builder.Append("vec3(" + vec.X + "," + vec.Y + "," + vec.Z + ");\r\n");
             }
+            else if(param.Type == NodeType.Matrix2)
+            {
+                Matrix2 m2 = param.Matrix2Value;
+                //glsl matrices are column major order
+                builder.Append("mat2(" + m2.Column0.X + ", " + m2.Column0.Y + ", " + m2.Column1.X + ", " + m2.Column1.Y + ");\r\n");
+            }
+            else if(param.Type == NodeType.Matrix3)
+            {
+                Matrix3 m3 = param.Matrix3Value;
+                //glsl matrices are column major order
+                builder.Append("mat3(" + m3.Column0.X + ", " + m3.Column0.Y + ", " + m3.Column0.Z + ", "
+                                        + m3.Column1.X + ", " + m3.Column1.Y + ", " + m3.Column1.Z + ", "
+                                        + m3.Column2.X + ", " + m3.Column2.Y + ", " + m3.Column2.Z + ");\r\n");
+            }
+            else if(param.Type == NodeType.Matrix4)
+            {
+                Matrix4 m4 = param.Matrix4Value;
+                //glsl matrices are column major order
+                builder.Append("mat3(" + m4.Column0.X + ", " + m4.Column0.Y + ", " + m4.Column0.Z + ", " + m4.Column0.W + ", "
+                                        + m4.Column1.X + ", " + m4.Column1.Y + ", " + m4.Column1.Z + ", " + m4.Column1.W + ", "
+                                        + m4.Column2.X + ", " + m4.Column2.Y + ", " + m4.Column2.Z + ", " + m4.Column2.W + "," 
+                                        + m4.Column3.X + ", " + m4.Column3.Y + ", " + m4.Column3.Z + ", " + m4.Column3.W + ");\r\n");
+            }
         }
 
         protected void BuildShaderFunctionValue(GraphParameterValue param, StringBuilder builder)
@@ -851,6 +1062,29 @@ namespace Materia.Nodes
 
                 builder.Append("vec3(" + vec.X + "," + vec.Y + "," + vec.Z + ");\r\n");
             }
+            else if (param.Type == NodeType.Matrix2 && value is Matrix2)
+            {
+                Matrix2 m2 = (Matrix2)value;
+                //glsl matrices are column major order
+                builder.Append("mat2(" + m2.Column0.X + ", " + m2.Column0.Y + ", " + m2.Column1.X + ", " + m2.Column1.Y + ");\r\n");
+            }
+            else if (param.Type == NodeType.Matrix3 && value is Matrix3)
+            {
+                Matrix3 m3 = (Matrix3)value;
+                //glsl matrices are column major order
+                builder.Append("mat3(" + m3.Column0.X + ", " + m3.Column0.Y + ", " + m3.Column0.Z + ", "
+                                        + m3.Column1.X + ", " + m3.Column1.Y + ", " + m3.Column1.Z + ", "
+                                        + m3.Column2.X + ", " + m3.Column2.Y + ", " + m3.Column2.Z + ");\r\n");
+            }
+            else if (param.Type == NodeType.Matrix4 && value is Matrix4)
+            {
+                Matrix4 m4 = (Matrix4)value;
+                //glsl matrices are column major order
+                builder.Append("mat3(" + m4.Column0.X + ", " + m4.Column0.Y + ", " + m4.Column0.Z + ", " + m4.Column0.W + ", "
+                                        + m4.Column1.X + ", " + m4.Column1.Y + ", " + m4.Column1.Z + ", " + m4.Column1.W + ", "
+                                        + m4.Column2.X + ", " + m4.Column2.Y + ", " + m4.Column2.Z + ", " + m4.Column2.W + ","
+                                        + m4.Column3.X + ", " + m4.Column3.Y + ", " + m4.Column3.Z + ", " + m4.Column3.W + ");\r\n");
+            }
         }
 
         protected string GetParentGraphShaderParams()
@@ -859,26 +1093,21 @@ namespace Materia.Nodes
 
             try
             {
+                var p = TopGraph();
 
-                if (parentNode != null)
+                if (p != null)
                 {
-                    var p = TopGraph();
-
-                    if (p != null)
+                    foreach (var param in p.Parameters.Values)
                     {
-                        foreach (var param in p.Parameters.Values)
-                        {
-                            BuildShaderParam(param, builder);
-                        }
+                        BuildShaderParam(param, builder);
+                    }
 
-                        for(int i = 0; i < p.CustomParameters.Count; i++)
-                        {
-                            GraphParameterValue param = p.CustomParameters[i];
-                            if (!param.IsFunction())
-                            {
-                                BuildShaderParam(param, builder, true);
-                            }
-                        }
+                    int count = p.CustomParameters.Count;
+                    for(int i = 0; i < count; i++)
+                    {
+                        GraphParameterValue param = p.CustomParameters[i];
+                        if (param.IsFunction()) continue;
+                        BuildShaderParam(param, builder, true);
                     }
                 }
             }
@@ -912,7 +1141,8 @@ namespace Materia.Nodes
                         }
                     }
 
-                    for(int i = 0; i < p.CustomParameters.Count; i++)
+                    int count = p.CustomParameters.Count;
+                    for(int i = 0; i < count; i++)
                     {
                         GraphParameterValue param = p.CustomParameters[i];
 
@@ -943,36 +1173,18 @@ namespace Materia.Nodes
 
                 if (p != null)
                 {
-                    for(int i = 0; i < props.Length; i++)
+                    int count = props.Length;
+                    for(int i = 0; i < count; i++)
                     {
                         var prop = props[i];
+                        EditableAttribute editable = prop.GetCustomAttribute<EditableAttribute>();
 
-                        if (!prop.PropertyType.Equals(typeof(int))
-                            && !prop.PropertyType.Equals(typeof(float))
-                            && !prop.PropertyType.Equals(typeof(MVector))
-                            && !prop.PropertyType.Equals(typeof(bool))
-                            && !prop.PropertyType.Equals(typeof(double))
-                            && !prop.PropertyType.Equals(typeof(Vector4)))
+                        if(editable == null)
                         {
                             continue;
                         }
 
-                        try
-                        {
-                            HidePropertyAttribute hb = prop.GetCustomAttribute<HidePropertyAttribute>();
-
-                            if (hb != null)
-                            {
-                                continue;
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e);
-                        }
-
                         object v = null;
-                        string varName = "";
 
                         if (p.HasParameterValue(parentNode.Id, prop.Name))
                         {
@@ -987,23 +1199,6 @@ namespace Materia.Nodes
                             v = prop.GetValue(parentNode);
                         }
 
-                        try
-                        {
-                            TitleAttribute t = prop.GetCustomAttribute<TitleAttribute>();
-
-                            if (t != null)
-                            {
-                                varName = t.Title.Replace(" ", "").Replace("-", "");
-                            }
-                            else
-                            {
-                                varName = prop.Name;
-                            }
-                        }
-                        catch
-                        {
-                            varName = prop.Name;
-                        }
 
                         if (v != null)
                         {
@@ -1013,59 +1208,25 @@ namespace Materia.Nodes
                                 v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
                             }
 
-                            SetVar(varName, v);
+                            SetVar(prop.Name, v);
                         }
                     }
                 }
                 else
                 {
-                    for(int i = 0; i < props.Length; i++)
+                    int count = props.Length;
+                    for(int i = 0; i < count; i++)
                     {
                         var prop = props[i];
-                        if (!prop.PropertyType.Equals(typeof(int))
-                            && !prop.PropertyType.Equals(typeof(float))
-                            && !prop.PropertyType.Equals(typeof(MVector))
-                            && !prop.PropertyType.Equals(typeof(bool))
-                            && !prop.PropertyType.Equals(typeof(double))
-                            && !prop.PropertyType.Equals(typeof(Vector4)))
+                        EditableAttribute editable = prop.GetCustomAttribute<EditableAttribute>();
+
+                        if(editable == null)
                         {
                             continue;
                         }
 
-                        try
-                        {
-                            HidePropertyAttribute hb = prop.GetCustomAttribute<HidePropertyAttribute>();
-
-                            if (hb != null)
-                            {
-                                continue;
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e);
-                        }
-
                         object v = prop.GetValue(parentNode);
-                        string varName = "";
 
-                        try
-                        {
-                            TitleAttribute t = prop.GetCustomAttribute<TitleAttribute>();
-
-                            if (t != null)
-                            {
-                                varName = t.Title.Replace(" ", "").Replace("-", "");
-                            }
-                            else
-                            {
-                                varName = prop.Name;
-                            }
-                        }
-                        catch
-                        {
-                            varName = prop.Name;
-                        }
 
                         if (v != null)
                         {
@@ -1075,7 +1236,7 @@ namespace Materia.Nodes
                                 v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
                             }
 
-                            SetVar(varName, v);
+                            SetVar(prop.Name, v);
                         }
                     }
                 }
@@ -1123,7 +1284,8 @@ namespace Materia.Nodes
             //just as if it was running in the shader code
             if(ordered.Count > 0)
             {
-                for(int i = 0; i < ordered.Count; i++)
+                int count = ordered.Count;
+                for(int i = 0; i < count; i++)
                 {
                     ordered[i].TryAndProcess();
                 } 
@@ -1141,7 +1303,8 @@ namespace Materia.Nodes
 
             List<string> data = new List<string>();
 
-            for(int i = 0; i < Nodes.Count; i++)
+            int count = Nodes.Count;
+            for(int i = 0; i < count; i++)
             {
                 Node n = Nodes[i];
                 data.Add(n.GetJson());
@@ -1159,9 +1322,8 @@ namespace Materia.Nodes
 
         public override void FromJson(string data)
         {
-            base.FromJson(data);
-
             FunctionGraphData d = JsonConvert.DeserializeObject<FunctionGraphData>(data);
+            base.FromJson(d);
 
             Node n = null;
 

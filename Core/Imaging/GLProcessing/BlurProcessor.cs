@@ -71,6 +71,10 @@ namespace Materia.Imaging.GLProcessing
                 output.CopyFromFrameBuffer(width, height);
                 GLTextuer2D.Unbind();
 
+                tex.Bind();
+                tex.Repeat();
+                GLTextuer2D.Unbind();
+
                 shader.SetUniform("horizontal", false);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
                 output.Bind();
@@ -165,6 +169,10 @@ namespace Materia.Imaging.GLProcessing
                 output.CopyFromFrameBuffer(width, height);
                 GLTextuer2D.Unbind();
             }
+
+            output.Bind();
+            output.Repeat();
+            GLTextuer2D.Unbind();
 
             colorBuff.Bind();
             colorBuff.Repeat();

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Materia.Nodes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,21 +11,23 @@ namespace Materia.Undo
     public abstract class UndoObject
     {
         public string StackId { get; set; }
-        public abstract UndoObject Undo();
+        public abstract Task Undo(Action<UndoObject> cb);
     }
 
     public class DeleteNode : UndoObject
     {
         public string json;
         public Point point;
-        public List<Tuple<string, List<Nodes.NodeOutputConnection>>> parents;
+        public List<NodeConnection> parents;
         public UIGraph graph;
+        public string nid;
 
         protected string[] stack;
 
-        public DeleteNode(string stackId, string js, Point p, List<Tuple<string, List<Nodes.NodeOutputConnection>>> pars, UIGraph g, string[] gstack = null)
+        public DeleteNode(string stackId, string js, string id, Point p, List<NodeConnection> pars, UIGraph g, string[] gstack = null)
         {
             json = js;
+            nid = id;
             graph = g;
             point = p;
             parents = pars;
@@ -40,41 +43,54 @@ namespace Materia.Undo
             }
         }
 
-        public override UndoObject Undo()
+        public async override Task Undo(Action<UndoObject> cb)
         {
             if(graph != null && !string.IsNullOrEmpty(json))
             {
                 graph.TryAndLoadGraphStack(stack);
 
-                UI.IUIGraphNode n = graph.AddNodeFromJson(json, point);
+                await Task.Delay(25);
 
-                if(n != null && parents.Count > 0)
+                App.Current.Dispatcher.Invoke(() =>
                 {
-                    Task.Delay(250).ContinueWith(t =>
+                    UI.IUIGraphNode n = graph.AddNodeFromJson(json, point);
+
+                    if (n != null && parents.Count > 0)
                     {
-                        App.Current.Dispatcher.Invoke(() =>
+                        Task.Delay(100).ContinueWith(t =>
                         {
-                            foreach (var p in parents)
+                            App.Current.Dispatcher.Invoke(() =>
                             {
-                                var id = p.Item1;
-                                var cons = p.Item2;
-
-                                UI.IUIGraphNode unode = graph.GetNode(id);
-
-                                if (unode != null)
+                                foreach (var p in parents)
                                 {
-                                    unode.Node.SetConnection(graph.Graph.NodeLookup, cons, n.Id);
-                                    unode.LoadConnection(n.Id);
-                                }
-                            }
-                        });
-                    });
+                                    UI.IUIGraphNode unode = graph.GetNode(p.parent);
 
-                    return new CreateNode(StackId, n.Id, graph, stack);
-                }
+                                    if (unode != null)
+                                    {
+                                        unode.Node.SetConnection(n.Node, p);
+                                        unode.LoadConnection(n.Id);
+                                    }
+                                }
+
+                            //update the graph after reconnections
+                            graph.Graph.TryAndProcess();
+                            });
+                        });
+                    }
+
+                    if (cb != null)
+                    {
+                        cb.Invoke(new CreateNode(StackId, nid, graph, stack));
+                    }
+                });
+
+                return;
             }
 
-            return null;
+            if (cb != null)
+            {
+                cb.Invoke(null);
+            }
         }
     }
 
@@ -99,21 +115,40 @@ namespace Materia.Undo
             }
         }
 
-        public override UndoObject Undo()
+        public async override Task Undo(Action<UndoObject> cb)
         {
             if (graph != null)
             {
                 graph.TryAndLoadGraphStack(stack);
 
-                Tuple<string, Point, List<Tuple<string, List<Nodes.NodeOutputConnection>>>> result = graph.RemoveNode(id);
+                await Task.Delay(25);
 
-                if (result != null)
+                App.Current.Dispatcher.Invoke(() =>
                 {
-                    return new DeleteNode(StackId, result.Item1, result.Item2, result.Item3, graph, stack);
-                }
+                    Tuple<string, Point, List<NodeConnection>> result = graph.RemoveNode(id);
+
+                    if (result != null)
+                    {
+                        if (cb != null)
+                        {
+                            cb.Invoke(new DeleteNode(StackId, result.Item1, id, result.Item2, result.Item3, graph, stack));
+                        }
+                        return;
+                    }
+
+                    if(cb != null)
+                    {
+                        cb.Invoke(null);
+                    }
+                });
+
+                return;
             }
 
-            return null;
+            if(cb != null)
+            {
+                cb.Invoke(null);
+            }
         }
     }
 }

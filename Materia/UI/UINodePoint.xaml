@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia"
              mc:Ignorable="d" 
-             d:DesignHeight="16" d:DesignWidth="64" MouseDown="UserControl_MouseDown" ClipToBounds="False" Unloaded="UserControl_Unloaded" Margin="0,5,0,0">
+             d:DesignHeight="16" d:DesignWidth="64" MouseDown="UserControl_MouseDown" ClipToBounds="False" Unloaded="UserControl_Unloaded" Loaded="UserControl_Loaded" Margin="0,5,0,0">
 
     <UserControl.Resources>
         <SolidColorBrush x:Key="ColorInputOutput" Color="#FFa200ee" />
@@ -14,6 +14,9 @@
         <SolidColorBrush x:Key="Float2InputOutput" Color="#FF00ee32" />
         <SolidColorBrush x:Key="Float3InputOutput" Color="#FF8cee00" />
         <SolidColorBrush x:Key="Float4InputOutput" Color="#FFdaee00" />
+        <SolidColorBrush x:Key="Matrix2InputOutput" Color="#FF00ffff" />
+        <SolidColorBrush x:Key="Matrix3InputOutput" Color="#FFffff00" />
+        <SolidColorBrush x:Key="Matrix4InputOutput" Color="#FF00ee00" />
         <SolidColorBrush x:Key="BoolInputOutput" Color="#FFee8600" />
         <LinearGradientBrush x:Key="GrayColorInputOutput" StartPoint="0,0" EndPoint="0,1">
             <GradientStopCollection>

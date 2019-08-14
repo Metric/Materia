@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.Imaging.GLProcessing;
 using Materia.Textures;
+using Materia.Nodes.Attributes;
 
 namespace Materia.Nodes.Atomic
 {
@@ -24,6 +25,7 @@ namespace Materia.Nodes.Atomic
 
         InvertProcessor processor;
 
+        [Editable(ParameterInputType.Toggle, "Red")]
         public bool Red
         {
             get
@@ -37,6 +39,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        [Editable(ParameterInputType.Toggle, "Green")]
         public bool Green
         {
             get
@@ -50,6 +53,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        [Editable(ParameterInputType.Toggle, "Blue")]
         public bool Blue
         {
             get
@@ -63,6 +67,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        [Editable(ParameterInputType.Toggle, "Alpha")]
         public bool Alpha
         {
             get
@@ -138,25 +143,40 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(100, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput)
                 {
-                    if (input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
+        }
+
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
         }
 
         void Process()

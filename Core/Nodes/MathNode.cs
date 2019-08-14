@@ -10,6 +10,18 @@ namespace Materia.Nodes
 {
     public class MathNode : Node
     {
+        protected string result;
+
+        [ReadOnly]
+        [Editable(ParameterInputType.Text, "Current Output Result", "Debug")]
+        public string Result
+        {
+            get
+            {
+                return result;
+            }
+        }
+
         public NodeInput executeInput;
 
         protected Node parentNode;
@@ -22,7 +34,6 @@ namespace Materia.Nodes
             set
             {
                 parentNode = value;
-                OnParentNodeSet();
             }
         }
 
@@ -35,7 +46,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public new int Height
         {
             get
@@ -48,7 +58,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public new int Width
         {
             get
@@ -61,7 +70,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public new float TileX
         {
             get
@@ -74,7 +82,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public new float TileY
         {
             get
@@ -87,7 +94,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public new GraphPixelType InternalPixelFormat
         {
             get
@@ -110,6 +116,11 @@ namespace Materia.Nodes
             executeInput = new NodeInput(NodeType.Execute, this);
             Inputs.Add(executeInput);
             Outputs.Add(new NodeOutput(NodeType.Execute, this));
+        }
+
+        public override void AssignParentNode(Node n)
+        {
+            parentNode = n;
         }
 
         public Graph TopGraph()
@@ -143,19 +154,14 @@ namespace Materia.Nodes
             
         }
 
-        public virtual void OnFunctionParentSet()
-        {
-
-        }
-
-        protected virtual void OnParentNodeSet()
-        {
-
-        }
-
         public virtual void UpdateOutputType()
         {
 
+        }
+
+        public override Task GetTask()
+        {
+            return null;
         }
 
         public override bool IsRoot()

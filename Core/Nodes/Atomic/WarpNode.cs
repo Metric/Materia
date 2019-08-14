@@ -25,7 +25,7 @@ namespace Materia.Nodes.Atomic
         protected float intensity;
 
         [Promote(NodeType.Float)]
-        [Slider(IsInt = false, Max = 1.0f, Min = 0f, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.FloatSlider, "Intensity")]
         public float Intensity
         {
             get
@@ -99,33 +99,60 @@ namespace Materia.Nodes.Atomic
             {
                 if (input.HasInput && input1.HasInput)
                 {
+                    GetParams();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(100, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput && input1.HasInput)
                 {
-                    if (input.HasInput && input1.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                GetParams();
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput && input1.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
+        }
+
+        private void GetParams()
+        {
+            pintensity = intensity;
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
+            {
+                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
+            }
+        }
+
+        float pintensity;
         void Process()
         {
             GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
@@ -138,13 +165,6 @@ namespace Materia.Nodes.Atomic
             if (i2.Id == 0) return;
 
             CreateBufferIfNeeded();
-
-            float pintensity = intensity;
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
-            {
-                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
-            }
 
             processor.TileX = tileX;
             processor.TileY = TileY;

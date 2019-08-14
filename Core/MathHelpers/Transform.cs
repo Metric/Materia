@@ -10,7 +10,6 @@ namespace Materia.MathHelpers
 {
     public class Transform
     {
-        [HideProperty]
         public Transform Parent { get; protected set; }
 
         private List<Transform> children;
@@ -22,7 +21,6 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public Quaternion Rotation
         {
             get
@@ -47,7 +45,6 @@ namespace Materia.MathHelpers
 
         private Vector3 localEulerAngles;
 
-        [HideProperty]
         public Vector3 LocalEulerAngles
         {
             get
@@ -62,10 +59,8 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public Quaternion LocalRotation { get; set; }
 
-        [HideProperty]
         public Vector3 Scale
         {
             get
@@ -81,7 +76,6 @@ namespace Materia.MathHelpers
 
         public Vector3 LocalScale { get; set; }
 
-        [HideProperty]
         public Vector3 Position
         {
             get
@@ -105,7 +99,6 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public Vector3 LocalPosition { get; set; }
 
         public Matrix4 WorldMatrix
@@ -116,7 +109,6 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public Matrix4 LocalMatrix
         {
             get
@@ -125,7 +117,6 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public Vector3 Forward
         {
             get
@@ -136,7 +127,6 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public Vector3 Right
         {
             get
@@ -147,7 +137,6 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public Vector3 Up
         {
             get

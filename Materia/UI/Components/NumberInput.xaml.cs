@@ -167,11 +167,7 @@ namespace Materia
         {
             if(e.Key == Key.Enter || e.Key == Key.Escape)
             {
-                if (MainWindow.Instance != null)
-                {
-                    Keyboard.ClearFocus();
-                    Keyboard.Focus(MainWindow.Instance);
-                }
+                Keyboard.ClearFocus();
             }
         }
     }

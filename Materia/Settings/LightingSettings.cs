@@ -19,8 +19,7 @@ namespace Materia.Settings
         public event LightingUpdate OnLightingUpdated;
 
         protected MVector position;
-        [Section(Section = "Position")]
-        [Vector(Nodes.NodeType.Float3)]
+        [Editable(Nodes.ParameterInputType.Float3Input, "Position", "Position")]
         public MVector Position
         {
             get
@@ -39,8 +38,7 @@ namespace Materia.Settings
         }
 
         protected MVector color;
-        [Section(Section = "Light")]
-        [ColorPicker]
+        [Editable(Nodes.ParameterInputType.Color, "Color", "Light")]
         public MVector Color
         {
             get
@@ -58,7 +56,7 @@ namespace Materia.Settings
         }
 
         protected float power;
-        [Section(Section = "Light")]
+        [Editable(Nodes.ParameterInputType.FloatInput, "Power", "Light")]
         public float Power
         {
             get
@@ -77,8 +75,7 @@ namespace Materia.Settings
         }
 
         protected float bloomIntensity;
-        [Title(Title = "Bloom Intensity")]
-        [Section(Section = "Effects")]
+        [Editable(Nodes.ParameterInputType.FloatInput, "Bloom Intensity", "Effects")]
         public float BloomIntensity
         {
             get

@@ -20,6 +20,29 @@ namespace Materia.UI.Components
     /// </summary>
     public partial class PropertySection : UserControl
     {
+        protected bool collapsed;
+        public bool Collapsed
+        {
+            get
+            {
+                return collapsed;
+            }
+            set
+            {
+                collapsed = value;
+                if(collapsed)
+                {
+                    CollapseButtonRotation.Angle = -90;
+                    PanelItems.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    CollapseButtonRotation.Angle = 90;
+                    PanelItems.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
         public string Title
         {
             get
@@ -35,6 +58,23 @@ namespace Materia.UI.Components
         public PropertySection()
         {
             InitializeComponent();
+            PanelItems.DataContext = this;
+            Collapsed = false;
+        }
+
+        public void Insert(int index, UIElement e)
+        {
+            PanelItems.Children.Insert(index, e);
+        }
+
+        public void Add(UIElement e)
+        {
+            PanelItems.Children.Add(e);
+        }
+
+        private void CollapsedButton_Click(object sender, RoutedEventArgs e)
+        {
+            Collapsed = !Collapsed;
         }
     }
 }

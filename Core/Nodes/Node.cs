@@ -11,6 +11,7 @@ using Materia.Textures;
 using System.Reflection;
 using Newtonsoft.Json;
 using NLog;
+using Materia.Nodes.Atomic;
 
 namespace Materia.Nodes
 {
@@ -18,8 +19,9 @@ namespace Materia.Nodes
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
-        public static SynchronizationContext AppContext { get; set; }
-        public static bool Async = true;
+        public static TaskScheduler Context { get; set; }
+        public bool Async { get; set; }
+        public bool IsScheduled { get; set; }
 
         public delegate void UpdateEvent(Node n);
         public delegate void InputChanged(Node n, NodeInput inp);
@@ -40,7 +42,6 @@ namespace Materia.Nodes
 
         public event DescriptionChange OnDescriptionChanged;
 
-        [HideProperty]
         public bool CanPreview = true;
 
         public double ViewOriginX = 0;
@@ -80,9 +81,8 @@ namespace Materia.Nodes
         public string Id { get; set; }
 
         protected string name;
-        [TextInput]
-        [Section(Section = "Basic")]
-        [Title(Title = "Label")]
+
+        [Editable(ParameterInputType.Text, "Name", "Basic")]
         public string Name
         {
             get
@@ -105,7 +105,7 @@ namespace Materia.Nodes
             public int width;
             public int height;
             public string type;
-            public List<NodeOutputConnection> outputs;
+            public List<NodeConnection> outputs;
             public float tileX;
             public float tileY;
             public string name;
@@ -127,8 +127,7 @@ namespace Materia.Nodes
 
         protected int width;
 
-        [Slider(IsInt = true, Max = 4096, Min = 8, Snap = true, Ticks = new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
-        [Section(Section = "Standard")]
+        [Editable(ParameterInputType.IntSlider, "Width", "Basic", 8, 8192, new float[] { 8, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192 })]
         public int Width
         {
             get
@@ -143,9 +142,7 @@ namespace Materia.Nodes
         }
 
         protected int height;
-
-        [Slider(IsInt = true, Max = 4096, Min = 8, Snap = true, Ticks = new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
-        [Section(Section = "Standard")]
+        [Editable(ParameterInputType.IntSlider, "Height", "Basic", 8, 8192, new float[] { 8, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192 })]
         public int Height
         {
             get
@@ -162,8 +159,7 @@ namespace Materia.Nodes
         protected float tileX;
         protected float tileY;
 
-        [Title(Title = "Tile X")]
-        [Section(Section = "Standard")]
+        [Editable(ParameterInputType.FloatInput, "Tile X", "Basic")]
         public float TileX
         {
             get
@@ -177,8 +173,7 @@ namespace Materia.Nodes
             }
         }
 
-        [Title(Title = "Tile Y")]
-        [Section(Section = "Standard")]
+        [Editable(ParameterInputType.FloatInput, "Tile Y", "Basic")]
         public float TileY
         {
             get
@@ -193,9 +188,8 @@ namespace Materia.Nodes
         }
 
         protected GraphPixelType internalPixelType;
-        [Dropdown(null)]
-        [Title(Title = "Texture Format")]
-        [Section(Section = "Standard")]
+      
+        [Editable(ParameterInputType.Dropdown, "Texture Format", "Basic")]
         public GraphPixelType InternalPixelFormat
         {
             get
@@ -275,18 +269,6 @@ namespace Materia.Nodes
             }
         }
 
-        public virtual void RunInContext(Action a)
-        {
-            if(AppContext != null)
-            {
-                AppContext.Post((object o) =>
-                {
-                    Action d = o as Action;
-                    d.Invoke();
-                }, a);
-            }
-        }
-
         public virtual void Dispose()
         {
             RemoveParameters();
@@ -318,7 +300,66 @@ namespace Materia.Nodes
             height = h;
         }
 
+        public virtual void AssignParentGraph(Graph g)
+        {
+            parentGraph = g;
+        }
+
+        public virtual void AssignParentNode(Node n)
+        {
+           
+        }
+
+        public virtual void SetSize(int w, int h)
+        {
+            width = w;
+            height = h;
+            OnWidthHeightSet();
+        }
+
         public virtual void CopyResources(string CWD) { }
+
+        protected virtual void CopyResourceTo(string CWD, string relative, string from)
+        {
+            if (string.IsNullOrEmpty(CWD) || string.IsNullOrEmpty(relative) 
+                || string.IsNullOrEmpty(from))
+            {
+                return;
+            }
+
+            string cpath = System.IO.Path.Combine(CWD, relative);
+            string cdir = System.IO.Path.GetDirectoryName(cpath);
+            if (!System.IO.Directory.Exists(cdir))
+            {
+                System.IO.Directory.CreateDirectory(cdir);
+            }
+
+            //if the paths are the same do nothing!
+            if(from.Equals(cpath))
+            {
+                return;
+            }
+
+            if (System.IO.File.Exists(from) && !System.IO.File.Exists(cpath))
+            {
+                System.IO.File.Copy(from, cpath);
+            }
+            else if (!string.IsNullOrEmpty(ParentGraph.CWD))
+            {
+                string opath = System.IO.Path.Combine(ParentGraph.CWD, relative);
+
+                //if the paths are the same do nothing!
+                if(opath.Equals(cpath))
+                {
+                    return;
+                }
+
+                if (System.IO.File.Exists(opath) && !System.IO.File.Exists(cpath))
+                {
+                    System.IO.File.Copy(opath, cpath);
+                }
+            }
+        }
 
         public virtual byte[] GetPreview(int width, int height)
         {
@@ -477,8 +518,8 @@ namespace Materia.Nodes
             {
                 buffer = new GLTextuer2D((GLInterfaces.PixelInternalFormat)((int)internalPixelType));
                 buffer.Bind();
-                buffer.SetFilter((int)GLInterfaces.TextureMinFilter.Linear, (int)GLInterfaces.TextureMagFilter.Linear);
-                buffer.SetWrap((int)GLInterfaces.TextureWrapMode.Repeat);
+                buffer.Nearest();
+                buffer.Repeat();
                 if(internalPixelType == GraphPixelType.Luminance16F || internalPixelType == GraphPixelType.Luminance32F)
                 {
                     buffer.SetSwizzleLuminance();
@@ -487,22 +528,24 @@ namespace Materia.Nodes
             }
         }
 
-        public List<NodeOutputConnection> GetConnections()
+        public List<NodeConnection> GetConnections()
         {
-            List<NodeOutputConnection> outputs = new List<NodeOutputConnection>();
+            List<NodeConnection> outputs = new List<NodeConnection>();
 
             int i = 0;
             foreach (NodeOutput Output in Outputs)
             {
+                int k = 0;
                 foreach (NodeInput n in Output.To)
                 {
                     int index = n.Node.Inputs.IndexOf(n);
 
                     if (index > -1)
                     {
-                        NodeOutputConnection nc = new NodeOutputConnection(n.Node.Id, i, index);
+                        NodeConnection nc = new NodeConnection(Id, n.Node.Id, i, index, k);
                         outputs.Add(nc);
                     }
+                    k++;
                 }
                 i++;
             }
@@ -510,56 +553,69 @@ namespace Materia.Nodes
             return outputs;
         }
 
-        public List<Tuple<string, List<NodeOutputConnection>>> GetParentsConnections()
-        {
-            List<Tuple<string, List<NodeOutputConnection>>> items = new List<Tuple<string, List<NodeOutputConnection>>>();
 
+        /// <summary>
+        /// This is used in the Undo / Redo System
+        /// </summary>
+        /// <returns></returns>
+        public List<NodeConnection> GetParentConnections()
+        {
+            List<NodeConnection> connections = new List<NodeConnection>();
+            int i = 0;
             foreach (NodeInput n in Inputs)
             {
                 if (n.HasInput)
                 {
-                    var cons = n.Input.Node.GetConnections();
-                    items.Add(new Tuple<string, List<NodeOutputConnection>>(n.Input.Node.Id, cons));
+                    int idx = n.Input.Node.Outputs.IndexOf(n.Input);
+                    if (idx > -1)
+                    {
+                        NodeOutput no = n.Input.Node.Outputs[idx];
+                        int ord = no.To.IndexOf(n);
+                        NodeConnection nc = new NodeConnection(n.Input.Node.Id, Id, idx, i, ord);
+                        connections.Add(nc);
+                    }
                 }
+                i++;
             }
 
-            return items;
+            return connections;
         }
 
         /// <summary>
-        /// Used to set individual node connections filtered by id
+        /// This is used in the Undo / Redo System
         /// </summary>
-        /// <param name="nodes"></param>
-        /// <param name="connections"></param>
-        /// <param name="id"></param>
-        public void SetConnection(Dictionary<string, Node> nodes, List<NodeOutputConnection> connections, string id)
+        /// <param name="n"></param>
+        /// <param name="connection"></param>
+        public void SetConnection(Node n, NodeConnection connection)
         {
-            if(connections != null)
+            if(connection.index < n.Inputs.Count)
             {
-                foreach(NodeOutputConnection nc in connections)
+                var inp = n.Inputs[connection.index];
+                if(connection.outIndex >= 0 && connection.outIndex < Outputs.Count)
                 {
-                    if(nc.node.Equals(id))
-                    {
-                        Node n = null;
-
-                        if(nodes.TryGetValue(nc.node, out n))
-                        {
-                            var inp = n.Inputs[nc.index];
-                            if (nc.outIndex >= 0 && nc.outIndex < Outputs.Count)
-                            {
-                                Outputs[nc.outIndex].Add(inp);
-                            }
-                        }
-                    }
+                    Outputs[connection.outIndex].InsertAt(connection.order, inp, false);
                 }
+            }
+            else
+            {
+                //log to console the fact that we could not connect the node
+                Log.Warn("Could not restore a node connections on: " + n.name);
             }
         }
 
-        public void SetConnections(Dictionary<string,Node> nodes, List<NodeOutputConnection> connections, bool triggerAddEvent = true)
+        /// <summary>
+        /// This is used in the Graph.FromJson
+        /// And thus the NodeOutput.InsertAt is not used
+        /// as there should be no inputs added already
+        /// </summary>
+        /// <param name="nodes"></param>
+        /// <param name="connections"></param>
+        /// <param name="triggerAddEvent"></param>
+        public void SetConnections(Dictionary<string,Node> nodes, List<NodeConnection> connections, bool triggerAddEvent = true)
         {
             if (connections != null)
             {
-                foreach (NodeOutputConnection nc in connections)
+                foreach (NodeConnection nc in connections)
                 {
                     Node n = null;
                     if (nodes.TryGetValue(nc.node, out n))
@@ -587,9 +643,19 @@ namespace Materia.Nodes
             }
         }
 
+        public abstract Task GetTask();
+
         public virtual bool IsRoot()
         {
-            return Inputs == null || Inputs.Count == 0 || Inputs.Find(m => m.HasInput) == null;
+            bool realputs = Inputs == null || Inputs.Count == 0;
+
+            if (realputs) return true;
+
+            var inp = Inputs.Find(m => m.HasInput);
+            if (inp == null) return true;
+
+            if (inp.Node is GraphInstanceNode) return true;
+            return false;
         }
     }
 }

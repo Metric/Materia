@@ -13,65 +13,18 @@ namespace Materia.Nodes.MathNodes
         MVector vec;
 
         protected float x;
-        [Promote(NodeType.Float)]
-        public float X
+        [Promote(NodeType.Float4)]
+        [Editable(ParameterInputType.Float4Input, "Vector")]
+        public MVector Vector
         {
             get
             {
-                return x;
+                return vec;
             }
             set
             {
-                x = value;
-                OnDescription($"{x},{y},{z},{w}");
-                Updated();
-            }
-        }
-
-        protected float y;
-        [Promote(NodeType.Float)]
-        public float Y
-        {
-            get
-            {
-                return y;
-            }
-            set
-            {
-                y = value;
-                OnDescription($"{x},{y},{z},{w}");
-                Updated();
-            }
-        }
-
-        protected float z;
-        [Promote(NodeType.Float)]
-        public float Z
-        {
-            get
-            {
-                return z;
-            }
-            set
-            {
-                z = value;
-                OnDescription($"{x},{y},{z},{w}");
-                Updated();
-            }
-        }
-
-        protected float w;
-        [Promote(NodeType.Float)]
-        public float W
-        {
-            get
-            {
-                return w;
-            }
-            set
-            {
-                w = value;
-                OnDescription($"{x},{y},{z},{w}");
+                vec = value;
+                OnDescription($"{vec.X},{vec.Y},{vec.Z},{vec.W}");
                 Updated();
             }
         }
@@ -80,11 +33,9 @@ namespace Materia.Nodes.MathNodes
         {
             //we ignore w,h,p
 
-            x = y = z = 0;
-
             CanPreview = false;
 
-            vec = new MVector();
+            vec = new MVector(0,0,0,0);
 
             Name = "Float4 Constant";
             Id = Guid.NewGuid().ToString();
@@ -100,7 +51,7 @@ namespace Materia.Nodes.MathNodes
 
         public override string GetDescription()
         {
-            return $"{x},{y},{z},{w}";
+            return $"{vec.X},{vec.Y},{vec.Z},{vec.W}";
         }
 
         public override void TryAndProcess()
@@ -120,20 +71,20 @@ namespace Materia.Nodes.MathNodes
         {
             Float4ConstantData d = JsonConvert.DeserializeObject<Float4ConstantData>(data);
             SetBaseNodeDate(d);
-            x = d.x;
-            y = d.y;
-            z = d.z;
-            w = d.w;
+            vec.X = d.x;
+            vec.Y = d.y;
+            vec.Z = d.z;
+            vec.W = d.w;
         }
 
         public override string GetJson()
         {
             Float4ConstantData d = new Float4ConstantData();
             FillBaseNodeData(d);
-            d.x = x;
-            d.y = y;
-            d.z = z;
-            d.w = w;
+            d.x = vec.X;
+            d.y = vec.Y;
+            d.z = vec.Z;
+            d.w = vec.W;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -143,62 +94,36 @@ namespace Materia.Nodes.MathNodes
             var s = shaderId + "0";
 
 
-            float px = x;
-            float py = y;
-            float pz = z;
-            float pw = w;
+            float px = vec.X;
+            float py = vec.Y;
+            float pz = vec.Z;
+            float pw = vec.W;
 
             var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "X"))
+            if (p != null && p.HasParameterValue(Id, "Vector"))
             {
-                px = Convert.ToSingle(p.GetParameterValue(Id, "X"));
+                MVector v = p.GetParameterValue<MVector>(Id, "Vector");
+                px = v.X;
+                py = v.Y;
+                pz = v.Z;
+                pw = v.W;
             }
-            if (p != null && p.HasParameterValue(Id, "Y"))
-            {
-                py = Convert.ToSingle(p.GetParameterValue(Id, "Y"));
-            }
-            if (p != null && p.HasParameterValue(Id, "Z"))
-            {
-                pz = Convert.ToSingle(p.GetParameterValue(Id, "Z"));
-            }
-            if (p != null && p.HasParameterValue(Id, "W"))
-            {
-                pw = Convert.ToSingle(p.GetParameterValue(Id, "W"));
-            }
+
 
             return "vec4 " + s + " = vec4(" + px + "," + py + "," + pz + "," + pw + ");\r\n";
         }
 
         void Process()
         {
-            float px = x;
-            float py = y;
-            float pz = z;
-            float pw = w;
+            MVector v = vec;
 
             var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "X"))
+            if (p != null && p.HasParameterValue(Id, "Vector"))
             {
-                px = Convert.ToSingle(p.GetParameterValue(Id, "X"));
-            }
-            if (p != null && p.HasParameterValue(Id, "Y"))
-            {
-                py = Convert.ToSingle(p.GetParameterValue(Id, "Y"));
-            }
-            if (p != null && p.HasParameterValue(Id, "Z"))
-            {
-                pz = Convert.ToSingle(p.GetParameterValue(Id, "Z"));
-            }
-            if (p != null && p.HasParameterValue(Id, "W"))
-            {
-                pw = Convert.ToSingle(p.GetParameterValue(Id, "W"));
+                v = p.GetParameterValue<MVector>(Id, "Vector");
             }
 
-            vec.X = px;
-            vec.Y = py;
-            vec.Z = pz;
-            vec.W = pw;
-            output.Data = vec;
+            output.Data = v;
 
             if (ParentGraph != null)
             {

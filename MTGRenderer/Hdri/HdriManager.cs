@@ -14,7 +14,6 @@ namespace Materia.Hdri
 {
     public class HdriManager
     {
-        public static SynchronizationContext Context { get; set; }
         public delegate void HdriLoaded(GLTextuer2D irradiance, GLTextuer2D prefiltered);
 
         public static event HdriLoaded OnHdriLoaded;

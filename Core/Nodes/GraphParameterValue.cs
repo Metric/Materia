@@ -6,13 +6,41 @@ using System.Threading.Tasks;
 using Materia.Nodes.Attributes;
 using Materia.MathHelpers;
 using Newtonsoft.Json;
+using Materia.Math3D;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes
 {
     public enum ParameterInputType
     {
-        Slider,
-        Input
+        FloatSlider = 0,
+        FloatInput = 1,
+        IntSlider = 2,
+        IntInput = 3,
+        Float2Slider = 4,
+        Float2Input = 5,
+        Float3Slider = 6,
+        Float3Input = 7,
+        Float4Slider = 8,
+        Float4Input = 9,
+        Int2Slider = 10,
+        Int2Input = 11,
+        Int3Slider = 12,
+        Int3Input = 13,
+        Int4Slider = 14,
+        Int4Input = 16,
+        Toggle = 17,
+        Color = 18,
+        Gradient = 19,
+        ImageFile = 20,
+        MeshFile = 21,
+        GraphFile = 22,
+        Levels = 23,
+        Curves = 24,
+        Text = 25,
+        Dropdown = 26,
+        Map = 27,
+        MapEdit = 28
     }
 
     public class GraphParameterValue
@@ -27,16 +55,17 @@ namespace Materia.Nodes
             get; set;
         }
 
-        [TextInput]
+        [Editable(ParameterInputType.Text, "Name")]
         public string Name { get; set; }
 
-        [TextInput]
+        [Editable(ParameterInputType.Text, "Section")]
         public string Section { get; set; }
 
         public string Id { get; set; }
 
         protected NodeType type;
         [Dropdown(null, "Bool", "Float", "Float2", "Float3", "Float4")]
+        [Editable(ParameterInputType.Dropdown, "Type")]
         public NodeType Type
         {
             get
@@ -46,19 +75,7 @@ namespace Materia.Nodes
             set
             {
                 type = value;
-                if (!(v is float) && type == NodeType.Float)
-                {
-                    v = 0;
-                }
-                else if (!(v is bool) && type == NodeType.Bool)
-                {
-                    v = false;
-                }
-                else if (!(v is MVector) && (type == NodeType.Float2 || type == NodeType.Float3 || type == NodeType.Float4 || type == NodeType.Gray || type == NodeType.Color))
-                {
-                    v = new MVector();
-                }
-
+                ValidateValue();
                 if (OnGraphParameterTypeChanged != null)
                 {
                     OnGraphParameterTypeChanged.Invoke(this);
@@ -67,6 +84,9 @@ namespace Materia.Nodes
         }
 
         protected ParameterInputType inputType;
+
+        [Dropdown(null, "FloatSlider", "FloatInput", "IntSlider", "IntInput", "Color", "Toggle")]
+        [Editable(ParameterInputType.Dropdown, "Input Type")]
         public ParameterInputType InputType
         {
             get
@@ -84,10 +104,11 @@ namespace Materia.Nodes
             }
         }
 
-        [TextInput]
+        [Editable(ParameterInputType.Text, "Description")]
         public string Description { get; set; }
 
         protected float min;
+        [Editable(ParameterInputType.FloatInput, "Min")]
         public float Min
         {
             get
@@ -105,6 +126,7 @@ namespace Materia.Nodes
         }
 
         protected float max;
+        [Editable(ParameterInputType.FloatInput, "Max")]
         public float Max
         {
             get
@@ -122,7 +144,6 @@ namespace Materia.Nodes
         }
 
         protected object v;
-        [HideProperty]
         public object Value
         {
             get
@@ -142,7 +163,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public float FloatValue
         {
             get
@@ -154,7 +174,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public int IntValue
         {
             get
@@ -163,7 +182,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public bool BoolValue
         {
             get
@@ -172,7 +190,6 @@ namespace Materia.Nodes
             }
         }
 
-        [HideProperty]
         public MVector VectorValue
         {
             get
@@ -200,6 +217,45 @@ namespace Materia.Nodes
             }
         }
 
+        public Matrix2 Matrix2Value
+        {
+            get
+            {
+                if(v is Matrix2)
+                {
+                    return (Matrix2)v;
+                }
+
+                return Matrix2.Identity;
+            }
+        }
+
+        public Matrix3 Matrix3Value
+        {
+            get
+            {
+                if(v is Matrix3)
+                {
+                    return (Matrix3)v;
+                }
+
+                return Matrix3.Identity;
+            }
+        }
+
+        public Matrix4 Matrix4Value
+        {
+            get
+            {
+                if(v is Matrix4)
+                {
+                    return (Matrix4)v;
+                }
+
+                return Matrix4.Identity;
+            }
+        }
+
         public class GraphParameterValueData
         {
             public string name;
@@ -215,7 +271,9 @@ namespace Materia.Nodes
         }
 
         public GraphParameterValue(string name, object value,
-            string desc = "", NodeType type = NodeType.Float, float min = 0, float max = 1, ParameterInputType itype = ParameterInputType.Input, string id = null)
+            string desc = "", NodeType type = NodeType.Float, float min = 0, 
+            float max = 1, ParameterInputType itype = ParameterInputType.FloatInput, 
+            string id = null)
         {
             Name = name;
             inputType = itype;
@@ -236,6 +294,27 @@ namespace Materia.Nodes
             this.max = max;
         }
 
+        private T DeserializeValueArray<T>(object v)
+        {
+            if(v is Newtonsoft.Json.Linq.JArray)
+            {
+                var jp = v as Newtonsoft.Json.Linq.JArray;
+
+                try
+                {
+                    string sjp = jp.ToString();
+                    T m = JsonConvert.DeserializeObject<T>(sjp);
+                    return m;
+                }
+                catch
+                {
+    
+                }
+            }
+
+            return default(T);
+        }
+
         private void ValidateValue()
         {
             if (v is FunctionGraph)
@@ -246,15 +325,48 @@ namespace Materia.Nodes
 
             if(v != null && v.GetType().IsEnum)
             {
-                v = (float)(int)v;
+                try
+                {
+                    v = Convert.ToSingle(v);
+                }
+                catch
+                {
+                    v = 0;
+                }
             }
-            else if (!(v is float) && !(v is double) && !(v is int) && !(v is long) && type == NodeType.Float)
+            else if (!Utils.IsNumber(v) && type == NodeType.Float)
             {
-                v = 0;
+                try
+                {
+                    v = Convert.ToSingle(v);
+                }
+                catch
+                {
+                    v = 0;
+                }
             }
             else if (!(v is bool) && type == NodeType.Bool)
             {
-                v = false;
+                try
+                {
+                    v = Convert.ToBoolean(v);
+                }
+                catch
+                {
+                    v = false;
+                }
+            }
+            else if(!(v is Matrix2) && type == NodeType.Matrix2)
+            {
+                v = Matrix2.Identity;
+            }
+            else if(!(v is Matrix3) && type == NodeType.Matrix3)
+            {
+                v = Matrix3.Identity;
+            }
+            else if(!(v is Matrix4) && type == NodeType.Matrix4)
+            {
+                v = Matrix4.Identity;
             }
             else if (!(v is MVector) && (type == NodeType.Float2 || type == NodeType.Float3 || type == NodeType.Float4 || type == NodeType.Gray || type == NodeType.Color))
             {
@@ -300,18 +412,58 @@ namespace Materia.Nodes
         public virtual void SetJson(GraphParameterValueData d, Node n)
         {
             Name = d.name;
-            if(d.isFunction)
+
+            type = (NodeType)d.type;
+            inputType = (ParameterInputType)d.inputType;
+            Id = d.id;
+            min = d.min;
+            max = d.max;
+
+            if (d.isFunction)
             {
                 FunctionGraph t = new FunctionGraph("temp");
+                t.AssignParentNode(n);
                 t.FromJson((string)d.value);
                 t.ExpectedOutput = (NodeType)d.type;
-                t.ParentNode = n;
                 t.SetConnections();
                 v = t;
             }
             else
             {
                 v = d.value;
+            }
+
+            //then it is a matrix
+            if(v is Newtonsoft.Json.Linq.JArray && (type == NodeType.Matrix2 || type == NodeType.Matrix3 || type == NodeType.Matrix4))
+            {
+                float[] m = DeserializeValueArray<float[]>(v);
+                //if this fails then the ValidateValue
+                //will simply fill it in with the corresponding
+                //matrix identity
+                if(m != null)
+                {
+                    //2x2 matrix
+                    if(m.Length == 4)
+                    {
+                        Matrix2 m2 = new Matrix2();
+                        m2.FromArray(m);
+                        v = m2;
+                    }
+                    //3x3 matrix
+                    else if(m.Length == 9)
+                    {
+                        Matrix3 m3 = new Matrix3();
+                        m3.FromArray(m);
+                        v = m3;
+                    }
+                    //4x4 matrix
+                    else if(m.Length == 16)
+                    {
+                        Matrix4 m4 = new Matrix4();
+                        m4.FromArray(m);
+                        v = m4;
+                    }
+                }
             }
 
             Description = d.description;
@@ -324,12 +476,6 @@ namespace Materia.Nodes
             {
                 Section = "Default";
             }
-
-            type = (NodeType)d.type;
-            inputType = (ParameterInputType)d.inputType;
-            Id = d.id;
-            min = d.min;
-            max = d.max;
 
             ValidateValue();
         }
@@ -355,7 +501,22 @@ namespace Materia.Nodes
             }
             else
             {
-                d.value = Value;
+                if (v is Matrix2)
+                {
+                    d.value = ((Matrix2)v).ToArray();
+                }
+                else if (v is Matrix3)
+                {
+                    d.value = ((Matrix3)v).ToArray();
+                }
+                else if (v is Matrix4)
+                {
+                    d.value = ((Matrix4)v).ToArray();
+                }
+                else
+                {
+                    d.value = v;
+                }
             }
 
             return JsonConvert.SerializeObject(d);
@@ -364,7 +525,9 @@ namespace Materia.Nodes
         public static GraphParameterValue FromJson(string data, Node n)
         {
             GraphParameterValueData d = JsonConvert.DeserializeObject<GraphParameterValueData>(data);
-            var g = new GraphParameterValue(d.name, d.value);
+            //create a dummy graph parameter
+            var g = new GraphParameterValue(d.name, 0);
+            //load real data
             g.SetJson(d, n);
             return g;
         }

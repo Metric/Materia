@@ -84,6 +84,8 @@ namespace Materia.Nodes.MathNodes
 
             output.Data = x >= y;
 
+            result = output.Data.ToString();
+
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;

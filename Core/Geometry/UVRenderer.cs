@@ -24,9 +24,12 @@ namespace Materia.Geometry
 
         public UVRenderer(MeshRenderer mesh)
         {
-            renderer = mesh;
-            indicesCount = mesh.IndicesCount;
-            shader = Material.Material.GetShader("uv.glsl", "uv.glsl");
+            if (mesh != null)
+            {
+                renderer = mesh;
+                indicesCount = mesh.IndicesCount;
+                shader = Material.Material.GetShader("uv.glsl", "uv.glsl");
+            }
         }
 
         public override void Draw()

@@ -19,10 +19,12 @@ namespace Materia.Nodes.Atomic
         protected float radius;
         CircleProcessor processor;
 
+        CancellationTokenSource ctk;
+
         NodeOutput Output;
 
         [Promote(NodeType.Float)]
-        [Slider(IsInt = false, Max = 1, Min = 0.001f, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.FloatSlider, "Radius")]
         public float Radius
         {
             get
@@ -32,14 +34,14 @@ namespace Materia.Nodes.Atomic
             set
             {
                 radius = value;
-                Process();
+                TryAndProcess();
             }
         }
 
         protected float outline;
 
         [Promote(NodeType.Float)]
-        [Slider(IsInt = false, Max = 1, Min = 0, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.FloatSlider, "Outline")]
         public float Outline
         {
             get
@@ -49,7 +51,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 outline = value;
-                Process();
+                TryAndProcess();
             }
         }
 
@@ -86,29 +88,68 @@ namespace Materia.Nodes.Atomic
 
         protected override void OnWidthHeightSet()
         {
-            Process();
+            TryAndProcess();
         }
 
         public override void TryAndProcess()
         {
-            Process();
+            if(!Async)
+            {
+                GetParams();
+                Process();
+                return;
+            }
+
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
+
+            //ctk = new CancellationTokenSource();
+
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
+
+                if (ParentGraph != null)
+                {
+                    ParentGraph.Schedule(this);
+                }
+            //}, Context);
         }
 
-        void Process()
+        public override Task GetTask()
         {
-            CreateBufferIfNeeded();
+            return Task.Factory.StartNew(() =>
+            {
+                GetParams();
+            })
+            .ContinueWith(t =>
+            {
+                Process();
+            }, Context);
+        }
 
-            float pradius = radius;
-            float poutline = outline;
+        private void GetParams()
+        {
+            pradius = radius;
+            poutline = outline;
 
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Radius"))
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Radius"))
             {
                 pradius = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Radius"));
             }
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Outline"))
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Outline"))
             {
                 poutline = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Outline"));
             }
+        }
+
+        float pradius;
+        float poutline;
+        void Process()
+        {
+            CreateBufferIfNeeded();
 
             processor.TileX = 1;
             processor.TileY = 1;

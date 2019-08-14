@@ -15,6 +15,7 @@ namespace Materia.Nodes.MathNodes
         protected bool val;
 
         [Promote(NodeType.Bool)]
+        [Editable(ParameterInputType.Toggle, "True")]
         public bool True
         {
             get

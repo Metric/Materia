@@ -26,7 +26,7 @@ namespace Materia.Nodes.Atomic
         NormalsProcessor processor;
 
         [Promote(NodeType.Float)]
-        [Slider(IsInt = false, Max = 32, Min = 0.001f, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.FloatSlider, "Intensity", "Default", 0.001f, 32)]
         public float Intensity
         {
             get
@@ -47,6 +47,7 @@ namespace Materia.Nodes.Atomic
         }
 
         bool directx;
+        [Editable(ParameterInputType.Toggle, "DirectX")]
         public bool DirectX
         {
             get
@@ -118,33 +119,60 @@ namespace Materia.Nodes.Atomic
             {
                 if (input.HasInput)
                 {
+                    GetParams();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(100, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput)
                 {
-                    if (input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                GetParams();
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
+        }
+
+        private void GetParams()
+        {
+            pintensity = intensity;
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
+            {
+                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
+            }
+        }
+
+        float pintensity;
         void Process() 
         {
             GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
@@ -153,13 +181,6 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
-
-            float pintensity = intensity;
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
-            {
-                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
-            }
 
             processor.TileX = tileX;
             processor.TileY = tileY;

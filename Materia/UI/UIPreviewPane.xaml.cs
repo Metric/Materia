@@ -93,6 +93,7 @@ namespace Materia
             Matrix4 model = sm * translation;
             Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
 
+            processor.FlipY = true;
             processor.Model = model;
             processor.View = view;
             processor.Projection = proj;

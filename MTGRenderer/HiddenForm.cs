@@ -16,8 +16,6 @@ namespace MTGRenderer
 {
     public partial class HiddenForm : Form
     {
-        protected SynchronizationContext context;
-
         public OpenTK.GLControl View { get; protected set; }
 
         Graph graph;
@@ -26,9 +24,7 @@ namespace MTGRenderer
         {
             InitializeComponent();
             View = glView;
-            context = new WindowsFormsSynchronizationContext();
-            Materia.Nodes.Node.AppContext = context;
-            HdriManager.Context = context;
+            Materia.Nodes.Node.Context = TaskScheduler.FromCurrentSynchronizationContext();
             HdriManager.OnHdriLoaded += HdriManager_OnHdriLoaded;
         }
 
@@ -66,18 +62,18 @@ namespace MTGRenderer
 
         public static Graph LoadGraph(string path)
         {
-            //set to sync only for node updates
-            //that way we ensure everything is ready for
-            //export properly without worrying about async tasks
-            //however it will cause slightly longer load times
-            //for the graph but meh
-            Materia.Nodes.Node.Async = false;
             Graph g = new Graph("temp");
 
             if(System.IO.File.Exists(path) && path.EndsWith(".mtg"))
             {
                 g.FromJson(System.IO.File.ReadAllText(path));
                 HdriManager.Selected = g.HdriIndex;
+                g.TryAndProcess();
+                while(g.IsProcessing)
+                {
+                    Thread.Sleep(1);
+                }
+
                 return g;
             }
 

@@ -31,6 +31,7 @@ namespace Materia.Nodes.Atomic
         FloatBitmap LUT;
 
         protected Gradient gradient;
+        [Editable(ParameterInputType.Gradient, "Gradient")]
         public Gradient Gradient
         {
             get
@@ -100,31 +101,32 @@ namespace Materia.Nodes.Atomic
             {
                 if (input.HasInput && gradient != null)
                 {
+                    FillLUT();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(25, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput && gradient != null)
                 {
-                    if (input.HasInput && gradient != null)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
         public override void Dispose()
@@ -144,6 +146,32 @@ namespace Materia.Nodes.Atomic
             }
 
             LUT = null;
+        }
+
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                FillLUT();
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
+        }
+
+        private void FillLUT()
+        {
+            if (LUT == null)
+            {
+                LUT = new FloatBitmap(256, 2);
+            }
+
+            //generate gradient
+            Utils.CreateGradient(LUT, gradient.positions, gradient.colors);
         }
 
         void Process()
@@ -168,13 +196,6 @@ namespace Materia.Nodes.Atomic
             {
                 colorLUT = new GLTextuer2D(PixelInternalFormat.Rgba8);
             }
-            if(LUT == null)
-            {
-                LUT = new FloatBitmap(256, 2);
-            }
-
-            //generate gradient
-            Utils.CreateGradient(LUT, gradient.positions, gradient.colors);
 
             colorLUT.Bind();
             colorLUT.SetData(LUT.Image, PixelFormat.Rgba, 256, 2);

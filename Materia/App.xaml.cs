@@ -95,6 +95,11 @@ namespace Materia
 
         private static void CleanUp()
         {
+            if(MateriaMainWindow.Instance != null)
+            {
+                MateriaMainWindow.Instance.CleanUp(null, true);
+            }
+
             //clear material and shader caches
             PBRMaterial.ReleaseBRDF();
             ImageProcessor.ReleaseAll();

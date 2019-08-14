@@ -72,11 +72,11 @@ namespace Materia.Nodes.MathNodes
 
             if (input.Input.Type == NodeType.Float2)
             {
-                return "float " + s + " = abs(rand(" + n1id + " + " + seed + "));\r\n";
+                return "float " + s + " = rand(pos + " + n1id + " + " + seed + ");\r\n";
             }
             else
             { 
-                return "float " + s + " = abs(rand(pos + " + seed + ")) * " + n1id + ";\r\n";
+                return "float " + s + " = rand(pos + " + n1id + " + " + seed + ");\r\n";
             }
         }
 
@@ -108,6 +108,8 @@ namespace Materia.Nodes.MathNodes
             {
                 output.Data = 0;
             }
+
+            result = output.Data.ToString();
 
             if (ParentGraph != null)
             {

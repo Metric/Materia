@@ -8,37 +8,57 @@ using System.Threading.Tasks;
 using Materia.GLInterfaces;
 using Materia.MathHelpers;
 using Materia.Nodes.Atomic;
+using Materia.Math3D;
 
 namespace Materia.Imaging.GLProcessing
 {
     public class FXProcessor : ImageProcessor
     {
-        IGLProgram shader;
-
         public FXPivot Pivot { get; set; }
         public MVector Translation { get; set; }
         public MVector Scale { get; set; }
         public float Angle { get; set; }
+        public FXBlend Blending { get; set; }
 
         public FXProcessor() : base()
         {
-            shader = GetShader("image.glsl", "image-basic.glsl");
+            Blending = FXBlend.Blend;
         }
 
         public void Prepare(int width, int height, GLTextuer2D tex, GLTextuer2D output)
         {
             base.Process(width, height, tex, output);
+
             //renable blending!
-            //make sure blending func is
-            //srcalpha, oneminussrcalpha
             IGL.Primary.Enable((int)EnableCap.Blend);
+        }
+
+        public override void Complete()
+        {
+            base.Complete();
+
+            IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.FuncAdd, (int)BlendEquationMode.FuncAdd);
             IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
         }
 
         public void Process(int quadrant, int width, int height, GLTextuer2D tex, GLTextuer2D output, int quads)
         {
-            if (shader != null)
-            {
+                if (Blending == FXBlend.Blend)
+                {
+                    IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.FuncAdd, (int)BlendEquationMode.FuncAdd);
+                    IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
+                }
+                else if (Blending == FXBlend.Add)
+                {
+                    IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.FuncAdd, (int)BlendEquationMode.FuncAdd);
+                    IGL.Primary.BlendFunc((int)BlendingFactor.One, (int)BlendingFactor.One);
+                }
+                else if (Blending == FXBlend.Max)
+                {
+                    IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.Max, (int)BlendEquationMode.Max);
+                    IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
+                }
+
                 float mw = width * 0.5f;
                 float mh = height * 0.5f;
 
@@ -60,48 +80,57 @@ namespace Materia.Imaging.GLProcessing
 
                 float fp = wp < hp ? wp : hp;
 
-                float mw2 = mw * 0.5f;
-                float mh2 = mh * 0.5f;
+                MVector pivotPoint = new MVector();
+                MVector quadOffset = new MVector();
+
+                float qx = 0.25f;
+                float qy = 0.25f;
 
                 if(quads <= 1)
                 {
-                    mw2 = 0;
-                    mh2 = 0;
+                    qx = 0;
+                    qy = 0;
                 }
-                else if(quads == 2)
+                else if(quads <= 2)
                 {
-                    mh2 = 0;
+                    qy = 0;
                 }
 
-                MVector pivotPoint = new MVector();
-                MVector t = new MVector();
-
-                if (quadrant == 0)
+                if(quadrant == 0)
                 {
-                    t = Translation - new MVector(mw2, mh2);
+                    quadOffset.X = -qx;
+                    quadOffset.Y = -qy;
                 }
                 else if(quadrant == 1)
                 {
-                    t = Translation + new MVector(mw2, -mh2);
+                    quadOffset.X = qx;
+                    quadOffset.Y = -qy;
                 }
                 else if(quadrant == 2)
                 {
-                    if (quads > 2)
+                    if(quads <= 2)
                     {
-                        t = Translation + new MVector(-mw2, mh2);
+                        quadOffset.X = qx;
                     }
                     else
                     {
-                        t = Translation + new MVector(mw2, -mh2);
+                        quadOffset.X = -qx;
                     }
+
+                    quadOffset.Y = qy;
                 }
                 else
                 {
-                    t = Translation + new MVector(mw2, mh2);
+                    quadOffset.X = qx;
+                    quadOffset.Y = qy;
                 }
 
                 switch (Pivot)
                 {
+                    case FXPivot.Center:
+                        pivotPoint.X = 0f;
+                        pivotPoint.Y = 0f;
+                        break;
                     case FXPivot.Max:
                         pivotPoint.X = 0.25f;
                         pivotPoint.Y = 0.25f;
@@ -112,25 +141,28 @@ namespace Materia.Imaging.GLProcessing
                         break;
                     case FXPivot.MaxX:
                         pivotPoint.X = 0.25f;
+                        pivotPoint.Y = 0f;
                         break;
                     case FXPivot.MinX:
                         pivotPoint.X = -0.25f;
+                        pivotPoint.Y = 0f;
                         break;
                     case FXPivot.MaxY:
+                        pivotPoint.X = 0f;
                         pivotPoint.Y = 0.25f;
                         break;
                     case FXPivot.MinY:
                         pivotPoint.Y = -0.25f;
+                        pivotPoint.X = 0f;
                         break;
                 }
 
-                ApplyTransform(tex, output, width, height, t, Scale * fp, Angle, pivotPoint);
-            }
+                ApplyTransform(tex, output, width, height, Translation + quadOffset, Scale * fp, Angle, pivotPoint);
         }
 
         public override void Release()
         {
-
+            
         }
     }
 }

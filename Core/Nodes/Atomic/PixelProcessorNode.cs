@@ -43,7 +43,7 @@ namespace Materia.Nodes.Atomic
             tileX = tileY = 1;
 
             function = new FunctionGraph("Pixel Processor Function");
-            function.ParentNode = this;
+            function.AssignParentNode(this);
 
             function.ExpectedOutput = NodeType.Float4 | NodeType.Float;
             function.OnGraphUpdated += Function_OnGraphUpdated;
@@ -97,33 +97,69 @@ namespace Materia.Nodes.Atomic
             {
                 if (function.HasExpectedOutput)
                 {
+                    Prepare();
+                    BuildShader();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(100, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (function.HasExpectedOutput)
                 {
-                    if (function.HasExpectedOutput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                Prepare();
+            })
+            .ContinueWith(t =>
+            {
+                BuildShader();
+                Process();
+            }, Context);
+        }
+
+        private void Prepare()
+        {
+            if(function != null)
+            {
+                function.PrepareShader();
+            }
+        }
+
+        private void BuildShader()
+        {
+            if (function != null)
+            {
+                shaderBuilt = function.BuildShader();
+            }
+            else
+            {
+                shaderBuilt = false;
+            }
+        }
+
+        bool shaderBuilt;
         void Process()
         {
             GLTextuer2D i1 = null;
@@ -151,7 +187,7 @@ namespace Materia.Nodes.Atomic
                 i4 = (GLTextuer2D)Inputs[3].Input.Data;
             }
 
-            if (!function.BuildShader())
+            if (!shaderBuilt)
             {
                 return;
             }
@@ -185,8 +221,8 @@ namespace Materia.Nodes.Atomic
             function = new FunctionGraph("Pixel Processor Function");
             function.ExpectedOutput = NodeType.Float4 | NodeType.Float;
             function.OnGraphUpdated += Function_OnGraphUpdated;
+            function.AssignParentNode(this);
             function.FromJson(d.functionGraph);
-            function.ParentNode = this;
             function.SetConnections();
         }
 

@@ -24,16 +24,21 @@ namespace Materia.UI.Components
         PropertyInfo property;
         object propertyOwner;
         bool initing;
+        bool readOnly;
 
         public PropertyInput()
         {
             InitializeComponent();
         }
 
-        public PropertyInput(PropertyInfo p, object owner)
+        public PropertyInput(PropertyInfo p, object owner, bool readOnly = false)
         {
             InitializeComponent();
             initing = true;
+
+            this.readOnly = readOnly;
+
+            IField.IsReadOnly = readOnly;
 
             property = p;
             propertyOwner = owner;
@@ -54,18 +59,17 @@ namespace Materia.UI.Components
                 return;
             }
 
-            property.SetValue(propertyOwner, IField.Text);
+            if (!readOnly)
+            {
+                property.SetValue(propertyOwner, IField.Text);
+            }
         }
 
         private void IField_KeyDown(object sender, KeyEventArgs e)
         {
             if(e.Key == Key.Enter || e.Key == Key.Escape)
             {
-                if(MainWindow.Instance != null)
-                {
-                    Keyboard.ClearFocus();
-                    Keyboard.Focus(MainWindow.Instance);
-                }
+                Keyboard.ClearFocus();
             }
         }
     }

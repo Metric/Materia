@@ -124,7 +124,7 @@ namespace Materia.UI.Components
             pc = new VectorPropertyContainer(new MVector());
         }
 
-        public VectorSlider(PropertyInfo prop, object owner, float min = 0, float max = 1, NodeType type = NodeType.Float4)
+        public VectorSlider(PropertyInfo prop, object owner, float min = 0, float max = 1, NodeType type = NodeType.Float4, bool isInt = false)
         {
             InitializeComponent();
             property = prop;
@@ -166,6 +166,11 @@ namespace Materia.UI.Components
             var yprop = pc.GetType().GetProperty("YProp");
             var zprop = pc.GetType().GetProperty("ZProp");
             var wprop = pc.GetType().GetProperty("WProp");
+
+            XValue.IsInt = isInt;
+            YValue.IsInt = isInt;
+            ZValue.IsInt = isInt;
+            WValue.IsInt = isInt;
 
             XValue.Set(min, max, xprop, pc);
             YValue.Set(min, max, yprop, pc);

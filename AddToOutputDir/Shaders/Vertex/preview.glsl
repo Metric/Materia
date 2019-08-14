@@ -9,7 +9,15 @@ uniform mat4 modelMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 
+uniform int flipY = 0;
+
 void main() {
     UV = uv0 * tiling;
-    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(pos.x,pos.y,pos.z, 1);
+
+    if(flipY == 1) {
+        UV.y = 1.0 - UV.y;
+    }
+
+
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(pos, 1);
 }

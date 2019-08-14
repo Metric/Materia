@@ -58,6 +58,16 @@ namespace Materia.UI.Components
 
             if(Node != null && !string.IsNullOrEmpty(Parameter))
             {
+                if(!Parameter.StartsWith("$Custom."))
+                {
+                    var prop = Node.GetType().GetProperty(Parameter);
+                    if (prop != null && prop.GetCustomAttribute<PromoteAttribute>() == null)
+                    {
+                        EditVar.Visibility = Visibility.Collapsed;
+                        return;
+                    }
+                }
+
                 EditVar.Visibility = Visibility.Visible;
 
                 var p = Node.ParentGraph;
@@ -220,7 +230,7 @@ namespace Materia.UI.Components
             if (Node == null || string.IsNullOrEmpty(Parameter)) return;
 
             FunctionGraph g = new FunctionGraph(Node.Name + " - " + Parameter.Replace("$Custom.", "") + " Function");
-            g.ParentNode = Node;
+            g.AssignParentNode(Node);
 
             try
             {
@@ -273,7 +283,6 @@ namespace Materia.UI.Components
                 }
                 else
                 {
-
                     info = Node.GetType().GetProperty(Parameter);
                     if (info == null)
                     {
@@ -363,9 +372,9 @@ namespace Materia.UI.Components
                     {
                         var v = g.GetParameterRaw(Node.Id, realParam);
 
-                        if(MainWindow.Instance != null)
+                        if(MateriaMainWindow.Instance != null)
                         {
-                            MainWindow.Instance.Push(Node, v.Value as Graph, Parameter);
+                            MateriaMainWindow.Instance.Push(Node, v.Value as Graph, Parameter);
                         }
                     }
                 }

@@ -19,7 +19,7 @@ namespace Materia.Nodes.Atomic
 
         int magnitude;
         [Promote(NodeType.Float)]
-        [Slider(IsInt = true, Max = 128, Min = 1, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.IntSlider, "Intensity", "Default", 1, 128)]
         public int Intensity
         {
             get
@@ -35,7 +35,7 @@ namespace Materia.Nodes.Atomic
 
         int direction;
         [Promote(NodeType.Float)]
-        [Slider(IsInt = true, Max = 180, Min = 0, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.IntSlider, "Direction", "Default", 0, 180)]
         public int Direction
         {
             get
@@ -106,33 +106,67 @@ namespace Materia.Nodes.Atomic
             {
                 if (input.HasInput)
                 {
+                    GetParams();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(100, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput)
                 {
-                    if (input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                GetParams();
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
+        }
+
+        private void GetParams()
+        {
+            pintensity = magnitude;
+            pdirection = direction;
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
+            {
+                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
+            }
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Direction"))
+            {
+                pdirection = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Direction"));
+            }
+        }
+
+        float pintensity;
+        float pdirection;
         void Process()
         {
             GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
@@ -140,19 +174,6 @@ namespace Materia.Nodes.Atomic
             if (i1 == null) return;
 
             CreateBufferIfNeeded();
-
-            float pintensity = magnitude;
-            float pdirection = direction;
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
-            {
-                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
-            }
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Direction"))
-            {
-                pdirection = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Direction"));
-            }
 
             processor.TileX = 1;
             processor.TileY = 1;

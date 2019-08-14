@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace Materia.UI
 {
-    public interface IUIGraphNode
+    public interface IUIGraphNode : IDisposable
     {
         double Scale
         {
@@ -54,6 +54,5 @@ namespace Materia.UI
         void HideBorder();
         void ShowBorder();
         void DisposeNoRemove();
-        void Dispose();
     }
 }

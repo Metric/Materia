@@ -5077,4 +5077,31 @@ namespace Materia.GLInterfaces
         //     Original was GL_COLOR_ATTACHMENT15 = 0x8CEF
         ColorAttachment15 = 36079
     }
+
+    //
+    // Summary:
+    //     Used in GL.Arb.BlendEquation, GL.BlendEquation and 2 other functions
+    public enum BlendEquationMode
+    {
+        //
+        // Summary:
+        //     Original was GL_FUNC_ADD = 0x8006
+        FuncAdd = 32774,
+        //
+        // Summary:
+        //     Original was GL_MIN = 0x8007
+        Min = 32775,
+        //
+        // Summary:
+        //     Original was GL_MAX = 0x8008
+        Max = 32776,
+        //
+        // Summary:
+        //     Original was GL_FUNC_SUBTRACT = 0x800A
+        FuncSubtract = 32778,
+        //
+        // Summary:
+        //     Original was GL_FUNC_REVERSE_SUBTRACT = 0x800B
+        FuncReverseSubtract = 32779
+    }
 }

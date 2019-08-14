@@ -84,6 +84,8 @@ namespace Materia.Nodes.MathNodes
 
             output.Data = (float)Math.Atan2(y, x);
 
+            result = output.Data.ToString();
+
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;

@@ -31,7 +31,7 @@ namespace Materia.Nodes.Atomic
         NodeOutput Output;
 
         Dictionary<int, List<Point>> points;
-        [CurveEditor(OutputProperty = "Curves")]
+        [Editable(ParameterInputType.Curves, "Points")]
         public Dictionary<int, List<Point>> Points
         {
             get
@@ -41,19 +41,6 @@ namespace Materia.Nodes.Atomic
             set
             {
                 points = value;
-            }
-        }
-
-        Dictionary<int, List<Point>> curves;
-        public Dictionary<int, List<Point>> Curves
-        {
-            get
-            {
-                return curves;
-            }
-            set
-            {
-                curves = value;
                 TryAndProcess();
             }
         }
@@ -67,7 +54,6 @@ namespace Materia.Nodes.Atomic
             height = h;
     
             points = new Dictionary<int, List<Point>>();
-            curves = new Dictionary<int, List<Point>>();
 
             previewProcessor = new BasicImageRenderer();
 
@@ -94,8 +80,6 @@ namespace Materia.Nodes.Atomic
             points[1] = pts;
             points[2] = pts;
             points[3] = pts;
-
-            InitializeCurves(0, pts, true);
 
             input = new NodeInput(NodeType.Color | NodeType.Gray, this, "Image Input");
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
@@ -133,37 +117,39 @@ namespace Materia.Nodes.Atomic
             {
                 if(input.HasInput)
                 {
+                    FillLUT();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(25, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput)
                 {
-                    if (input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
-        void InitializeCurves(int idx, List<Point> pts, bool allSame = false)
+        List<Point> GetNormalizedCurve(List<Point> pts)
         {
             List<Point> points = new List<Point>();
             List<Point> normalized = new List<Point>();
+
             int w = 255;
             int h = 255;
 
@@ -198,7 +184,7 @@ namespace Materia.Nodes.Atomic
                 }
             }
 
-            double[] sd = Materia.Nodes.Helpers.Curves.SecondDerivative(points.ToArray());
+            double[] sd = Curves.SecondDerivative(points.ToArray());
 
             for (int i = 0; i < points.Count - 1; i++)
             {
@@ -219,27 +205,88 @@ namespace Materia.Nodes.Atomic
                     if (y < 0) y = 0;
                     if (y > h) y = h;
 
-                    curve.Add(new Point(x, y));
                     normalized.Add(new Point(x / w, y / h));
                 }
             }
 
             Point lp = points[points.Count - 1];
-            //add our last point
-            curve.Add(lp);
+
             normalized.Add(new Point(lp.X / w, lp.Y / h));
 
-            if (!allSame)
+            return normalized;
+        }
+
+        private void FillLUT()
+        {
+            try
             {
-                curves[idx] = normalized;
+                List<Point> mids = GetNormalizedCurve(points[0]);
+                List<Point> reds = GetNormalizedCurve(points[1]);
+                List<Point> greens = GetNormalizedCurve(points[2]);
+                List<Point> blues = GetNormalizedCurve(points[3]);
+                for (int j = 0; j < reds.Count; j++)
+                {
+                    Point p = reds[j];
+                    int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
+                    for (int i = 0; i < 2; i++)
+                    {
+                        int idx2 = (x + i * 256) * 4;
+                        lutBrush.Image[idx2] = (float)p.Y;
+                    }
+                }
+
+                for (int j = 0; j < greens.Count; j++)
+                {
+                    Point p = greens[j];
+                    int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
+                    for (int i = 0; i < 2; i++)
+                    {
+                        int idx2 = (x + i * 256) * 4;
+                        lutBrush.Image[idx2 + 1] = (float)p.Y;
+                    }
+                }
+
+                for (int j = 0; j < blues.Count; j++)
+                {
+                    Point p = blues[j];
+                    int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
+                    for (int i = 0; i < 2; i++)
+                    {
+                        int idx2 = (x + i * 256) * 4;
+                        lutBrush.Image[idx2 + 2] = (float)p.Y;
+                    }
+                }
+
+                for (int j = 0; j < mids.Count; j++)
+                {
+                    Point p = mids[j];
+                    int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
+                    for (int i = 0; i < 2; i++)
+                    {
+                        int idx2 = (x + i * 256) * 4;
+                        lutBrush.Image[idx2 + 3] = (float)p.Y;
+                    }
+                }
             }
-            else
+            catch (Exception e)
             {
-                curves[0] = normalized;
-                curves[1] = normalized;
-                curves[2] = normalized;
-                curves[3] = normalized;
+                Log.Error(e);
             }
+        }
+
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                FillLUT();
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
         }
 
         void Process()
@@ -251,71 +298,14 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            try
-            {
-                List<Point> mids = curves[0];
-                List<Point> reds = curves[1];
-                List<Point> greens = curves[2];
-                List<Point> blues = curves[3];
-                for(int j = 0; j < reds.Count; j++)
-                {
-                    Point p = reds[j];
-                    int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
-                    for (int i = 0; i < 2; i++)
-                    {
-                        int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2] = (float)p.Y;
-                    }
-                }
-
-                for(int j = 0; j < greens.Count; j++)
-                {
-                    Point p = greens[j];
-                    int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
-                    for (int i = 0; i < 2; i++)
-                    {
-                        int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2 + 1] = (float)p.Y;
-                    }
-                }
-
-                for(int j = 0; j < blues.Count; j++)
-                {
-                    Point p = blues[j];
-                    int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
-                    for (int i = 0; i < 2; i++)
-                    {
-                        int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2 + 2] = (float)p.Y;
-                    }
-                }
-
-                for(int j = 0; j < mids.Count; j++)
-                {
-                    Point p = mids[j];
-                    int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
-                    for (int i = 0; i < 2; i++)
-                    {
-                        int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2 + 3] = (float)p.Y;
-                    }
-                }
-
-                curveLUT.Bind();
-                curveLUT.SetData(lutBrush.Image, GLInterfaces.PixelFormat.Rgba, 256, 2);
-                GLTextuer2D.Unbind();
-
-            }
-            catch (Exception e)
-            {
-                Log.Error(e);
-            }
+            curveLUT.Bind();
+            curveLUT.SetData(lutBrush.Image, GLInterfaces.PixelFormat.Rgba, 256, 2);
+            GLTextuer2D.Unbind();
 
             processor.TileX = tileX;
             processor.TileY = tileY;
             processor.Process(width, height, i1, buffer);
             processor.Complete();
-
 
             Updated();
             Output.Data = buffer;
@@ -349,7 +339,6 @@ namespace Materia.Nodes.Atomic
             CurvesData d = JsonConvert.DeserializeObject<CurvesData>(data);
             SetBaseNodeDate(d);
 
-            curves = new Dictionary<int, List<Point>>();
             points = new Dictionary<int, List<Point>>();
 
             foreach(int k in d.points.Keys)
@@ -362,11 +351,6 @@ namespace Materia.Nodes.Atomic
                     Graph.GPoint gp = pts[i];
                     points[k].Add(gp.ToPoint());
                 });
-            }
-
-            foreach(int k in points.Keys)
-            {
-                InitializeCurves(k, points[k]);
             }
         }
 

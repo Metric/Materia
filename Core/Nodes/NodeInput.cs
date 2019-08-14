@@ -15,10 +15,10 @@ namespace Materia.Nodes
         Float3 = 32,
         Float4 = 64,
         Bool = 128,
-        //todo: hide execute, color, and gray from custom parameters
-        //will need to modify ParameterList to do so
-        //and more
-        Execute = 256
+        Execute = 256,
+        Matrix2 = 512,
+        Matrix3 = 1024,
+        Matrix4 = 2048
     }
 
     public class NodeInput
@@ -77,6 +77,11 @@ namespace Materia.Nodes
             Type = t;
             Name = name;
             Node = n;
+        }
+
+        public void AssignInput(NodeOutput oinp)
+        {
+            input = oinp;
         }
 
         public void InputDataChanged()

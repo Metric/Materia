@@ -16,7 +16,7 @@
         <Canvas Name="ViewPort" ClipToBounds="True" Margin="0,0,0,0">
         </Canvas>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,32,0,0" FlowDirection="RightToLeft">
-            <Button Name="ApplySize" Click="ApplySize_Click" Width="48" Background="Transparent" Margin="5" BorderThickness="1" BorderBrush="#666" ToolTip="Apply Size to Selected Nodes" Style="{DynamicResource ImageTextButton}">
+            <Button Name="ApplySize" Click="ApplySize_Click" Width="48" Background="#444" Margin="5" BorderThickness="1" BorderBrush="#666" ToolTip="Apply Size to Selected Nodes" Style="{DynamicResource ImageTextButton}">
                 <TextBlock Foreground="LightGray" Text="APPLY" />
             </Button>
             <ComboBox Foreground="LightGray" SelectedIndex="0" Style="{StaticResource ComboBoxFlatStyle}" SelectionChanged="DefaultNodeSize_SelectionChanged" Name="DefaultNodeSize" FlowDirection="LeftToRight" Width="100"  Margin="4,4,4,4">
@@ -31,6 +31,7 @@
                     <ComboBoxItem Content="1024" />
                     <ComboBoxItem Content="2048" />
                     <ComboBoxItem Content="4096" />
+                    <ComboBoxItem Content="8192" />
                 </ComboBox.Items>
             </ComboBox>
             <TextBlock Name="ApplySizeLabel" Text="Size" Foreground="LightGray" VerticalAlignment="Center"  Margin="5,5,20,5"/>

@@ -19,8 +19,8 @@ namespace Materia.Nodes.MathNodes
 
         protected int sampleIndex;
 
-        [Title(Title = "Input")]
         [Dropdown(null, "Input0", "Input1", "Input2", "Input3")]
+        [Editable(ParameterInputType.Dropdown, "Image Input")]
         public int SampleIndex
         {
             get
@@ -142,12 +142,15 @@ namespace Materia.Nodes.MathNodes
                             }
                         }
 
+                        result = output.Data.ToString();
+
                         return;
                     }
                 }
             }
 
             output.Data = new MVector();
+            result = output.Data.ToString();
 
             if (ParentGraph != null)
             {

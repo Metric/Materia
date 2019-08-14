@@ -60,6 +60,11 @@ namespace Materia
             GL.BlendFunc((OpenTK.Graphics.OpenGL.BlendingFactor)src, (OpenTK.Graphics.OpenGL.BlendingFactor)dst);
         }
 
+        public override void BlendEquationSeparate(int rgbBlend, int alphaBlend)
+        {
+            GL.BlendEquationSeparate((OpenTK.Graphics.OpenGL.BlendEquationMode)rgbBlend, (OpenTK.Graphics.OpenGL.BlendEquationMode)alphaBlend);
+        }
+
         public override void BufferData(int target, int length, IntPtr data, int type)
         {
             GL.BufferData((OpenTK.Graphics.OpenGL.BufferTarget)target, length, data, (OpenTK.Graphics.OpenGL.BufferUsageHint)type);

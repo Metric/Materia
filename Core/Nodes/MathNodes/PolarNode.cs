@@ -96,6 +96,8 @@ namespace Materia.Nodes.MathNodes
             output.Data = radius;
             output2.Data = theta;
 
+            result = $"{radius},{theta}";
+
             if (ParentGraph != null)
             {
                 FunctionGraph g = (FunctionGraph)ParentGraph;

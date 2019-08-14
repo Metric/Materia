@@ -39,8 +39,7 @@ namespace Materia.Nodes.Atomic
         NodeInput input;
 
         OutputType outtype;
-        [Title(Title = "Type")]
-        [Dropdown(null)]
+        [Editable(ParameterInputType.Dropdown, "Out Type")]
         public OutputType OutType
         {
             get
@@ -53,7 +52,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
+       
         public new int Height
         {
             get
@@ -66,7 +65,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
+   
         public new int Width
         {
             get
@@ -79,7 +78,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
+   
         public new float TileX
         {
             get
@@ -92,7 +91,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [HideProperty]
+
         public new float TileY
         {
             get
@@ -172,25 +171,40 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(100, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input != null && input.HasInput)
                 {
-                    if (input != null && input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
+        }
+
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+
+            })
+            .ContinueWith(t =>
+            {
+                if(input != null && input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
         }
 
         void Process()
@@ -204,6 +218,8 @@ namespace Materia.Nodes.Atomic
 
             height = i1.Height;
             width = i1.Width;
+
+            if (previewProcessor == null) return;
 
             previewProcessor.Process(i1.Width, i1.Height, i1, buffer);
             previewProcessor.Complete();
@@ -238,7 +254,7 @@ namespace Materia.Nodes.Atomic
         {
             OutputNodeData d = new OutputNodeData();
             FillBaseNodeData(d);
-            d.outputs = new List<NodeOutputConnection>();
+            d.outputs = new List<NodeConnection>();
             d.outType = OutType;
 
             return JsonConvert.SerializeObject(d);

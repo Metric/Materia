@@ -14,8 +14,7 @@ namespace Materia.Nodes.MathNodes
 
         protected string varName;
 
-        [Title(Title = "Variable Name")]
-        [TextInput]
+        [Editable(ParameterInputType.Text, "Variable Name")]
         public string VarName
         {
             get
@@ -114,6 +113,11 @@ namespace Materia.Nodes.MathNodes
             }
 
             output.Data = d;
+
+            if (output.Data != null)
+            {
+                result = output.Data.ToString();
+            }
 
             if (ParentGraph != null)
             {

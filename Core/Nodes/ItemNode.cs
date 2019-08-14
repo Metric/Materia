@@ -13,7 +13,6 @@ namespace Materia.Nodes
         public delegate void ItemContentChange(ItemNode n);
         public event ItemContentChange OnItemContentChanged;
 
-        [HideProperty]
         public new string Name
         {
             get
@@ -27,8 +26,7 @@ namespace Materia.Nodes
         }
 
         protected string content;
-        [Section(Section = "Content")]
-        [TextInput]
+        [Editable(ParameterInputType.Text, "Content")]
         public string Content
         {
             get
@@ -49,6 +47,11 @@ namespace Materia.Nodes
         public class ItemNodeData : NodeData
         {
             public string content;
+        }
+
+        public override Task GetTask()
+        {
+            return null;
         }
 
         /// <summary>

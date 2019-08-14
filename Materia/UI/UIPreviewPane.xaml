@@ -16,64 +16,9 @@
 
         <WindowsFormsHost Background="#222" Name="FHost" Grid.Row="0" />
 
-        <!--<Grid Grid.Row="0" VerticalAlignment="Bottom" Height="128" Background="#222" Name="HistogramArea" Visibility="Collapsed">
-            <components:Histogram Margin="5,5,72,5" x:Name="Histogram" />
-            <ComboBox Foreground="LightGray" Name="HistMode" SelectedValue="RGB" Text="RGB" Margin="5"  Style="{StaticResource ComboBoxFlatStyle}" VerticalAlignment="Top" HorizontalAlignment="Right" Width="64" SelectionChanged="HistMode_SelectionChanged">
-                <ComboBox.Items>
-                    <ComboBoxItem Content="RGB" />
-                    <ComboBoxItem Content="Red" />
-                    <ComboBoxItem Content="Green" />
-                    <ComboBoxItem Content="Blue" />
-                </ComboBox.Items>
-            </ComboBox>
-        </Grid>-->
-        
         <Grid Grid.Row="1">
             <StackPanel Orientation="Horizontal" Width="233" HorizontalAlignment="Left" >
-                <!--<ToggleButton Width="32" Name="ToggleHistogram" BorderThickness="0" Background="#444" IsChecked="False" Foreground="LightGray" Click="ToggleHistogram_Click" ToolTip="Toggle histogram view" >
-                    <Image Source="/Materia;component/Images/levels.png" Margin="5"  />
-                    <ToggleButton.Style>
-                        <Style TargetType="{x:Type ToggleButton}">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
-                                        Background="{TemplateBinding Background}">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsChecked" Value="False">
-                                                <Setter Property="Background" TargetName="border" Value="Transparent" />
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ToggleButton.Style>
-                </ToggleButton>-->
-                <ToggleButton Width="32" Name="ToggleUV" BorderThickness="0" Background="#444" IsChecked="False" Foreground="LightGray" Click="ToggleUV_Click"  ToolTip="Toggle UV view" >
-                    <TextBlock Text="UV" FontWeight="Bold" />
-                    <ToggleButton.Style>
-                        <Style TargetType="{x:Type ToggleButton}">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
-                                        Background="{TemplateBinding Background}">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsChecked" Value="False">
-                                                <Setter Property="Background" TargetName="border" Value="Transparent" />
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ToggleButton.Style>
-                </ToggleButton>
+                <ToggleButton Width="32" Name="ToggleUV" BorderThickness="0" Background="#333" IsChecked="False" Foreground="LightGray" Click="ToggleUV_Click" Content="UV" ToolTip="Toggle UV view" Style="{StaticResource ToggleTextButton}"></ToggleButton>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Width="223" HorizontalAlignment="Right" FlowDirection="RightToLeft">
                 <Button Name="ZoomIn" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomIn_Click" ToolTip="Zoom in" Style="{DynamicResource ImageTextButton}">

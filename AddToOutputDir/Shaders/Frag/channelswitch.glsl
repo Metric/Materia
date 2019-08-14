@@ -35,7 +35,7 @@ void main() {
         final.b = c2[blueChannel - 4];
     }
     else {
-        final.g = c[greenChannel];
+        final.b = c[blueChannel];
     }
 
     if(alphaChannel > 3) {

@@ -25,7 +25,7 @@ namespace Materia.Nodes.Atomic
         EmbossProcessor processor;
 
         [Promote(NodeType.Float)]
-        [Slider(IsInt = true, Max = 360, Min = 0, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.IntSlider, "Angle", "Default", 0, 360)]
         public int Angle
         {
             get
@@ -42,7 +42,7 @@ namespace Materia.Nodes.Atomic
         int elevation;
 
         [Promote(NodeType.Float)]
-        [Slider(IsInt = true, Max = 90, Min = 0, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.IntSlider, "Elevation", "Default", 0, 90)]
         public int Elevation
         {
             get
@@ -137,33 +137,67 @@ namespace Materia.Nodes.Atomic
             {
                 if(input.HasInput)
                 {
+                    GetParams();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(25, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput)
                 {
-                    if (input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                GetParams();
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
+        }
+
+        private void GetParams()
+        {
+            pangle = angle;
+            pelevation = elevation;
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Angle"))
+            {
+                pangle = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Angle"));
+            }
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Elevation"))
+            {
+                pelevation = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Elevation"));
+            }
+        }
+
+        float pangle;
+        float pelevation;
         void Process()
         {
             GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
@@ -172,19 +206,6 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
-
-            float pangle = angle;
-            float pelevation = elevation;
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Angle"))
-            {
-                pangle = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Angle"));
-            }
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Elevation"))
-            {
-                pelevation = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Elevation"));
-            }
 
             processor.TileX = tileX;
             processor.TileY = tileY;

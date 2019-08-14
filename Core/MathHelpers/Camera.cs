@@ -13,10 +13,10 @@ namespace Materia.MathHelpers
         public delegate void CameraChange(Camera sender);
         public event CameraChange OnCameraChanged;
 
-        [HideProperty]
         public float Aspect { get; set; }
 
         protected float fov;
+        [Editable(Nodes.ParameterInputType.FloatInput, "Fov")]
         public float Fov
         {
             get
@@ -35,6 +35,7 @@ namespace Materia.MathHelpers
         }
 
         protected float near;
+        [Editable(Nodes.ParameterInputType.FloatInput, "Near")]
         public float Near
         {
             get
@@ -53,6 +54,7 @@ namespace Materia.MathHelpers
         }
 
         protected float far;
+        [Editable(Nodes.ParameterInputType.FloatInput, "Far")]
         public float Far
         {
             get
@@ -70,7 +72,6 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public Matrix4 Orthographic
         {
             get
@@ -79,7 +80,6 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public Matrix4 Perspective
         {
             get
@@ -88,7 +88,6 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public Matrix4 View
         {
             get
@@ -97,7 +96,6 @@ namespace Materia.MathHelpers
             }
         }
 
-        [HideProperty]
         public virtual Vector3 EyePosition
         {
             get

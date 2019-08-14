@@ -24,8 +24,6 @@ namespace Materia.UI.Components
     public partial class VectorInput : UserControl
     {
         object propertyOwner;
-        float min;
-        float max;
         PropertyInfo property;
         VectorPropertyContainer pc;
 
@@ -35,7 +33,7 @@ namespace Materia.UI.Components
             pc = new VectorPropertyContainer(new MVector());
         }
 
-        public VectorInput(PropertyInfo prop, object owner, NodeType type = NodeType.Float4)
+        public VectorInput(PropertyInfo prop, object owner, NodeType type = NodeType.Float4, NumberInputType ntype = NumberInputType.Float)
         {
             InitializeComponent();
             property = prop;
@@ -76,10 +74,10 @@ namespace Materia.UI.Components
             var zprop = pc.GetType().GetProperty("ZProp");
             var wprop = pc.GetType().GetProperty("WProp");
 
-            XPos.Set(NumberInputType.Float, pc, xprop);
-            YPos.Set(NumberInputType.Float, pc, yprop);
-            ZPos.Set(NumberInputType.Float, pc, zprop);
-            WPos.Set(NumberInputType.Float, pc, wprop);
+            XPos.Set(ntype, pc, xprop);
+            YPos.Set(ntype, pc, yprop);
+            ZPos.Set(ntype, pc, zprop);
+            WPos.Set(ntype, pc, wprop);
         }
 
         private void Pc_OnUpdate()

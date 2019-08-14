@@ -15,11 +15,13 @@ namespace Materia.Imaging.GLProcessing
         public GLTextuer2D ColorLUT { get; set; }
         public GLTextuer2D Mask { get; set; }
         public bool UseMask { get; set; }
+        public bool Horizontal { get; set; }
 
         IGLProgram shader;
 
         public GradientMapProcessor()
         {
+            Horizontal = true;
             shader = GetShader("image.glsl", "gradientmap.glsl");
             UseMask = false;
         }
@@ -46,6 +48,7 @@ namespace Materia.Imaging.GLProcessing
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
                 ColorLUT.Bind();
 
+                shader.SetUniform("horizontal", Horizontal);
                 shader.SetUniform2("tiling", ref tiling);
                 shader.SetUniform("Mask", 2);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture2);

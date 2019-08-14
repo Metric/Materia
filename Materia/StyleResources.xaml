@@ -426,15 +426,18 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- End Slider -->
+
     <SolidColorBrush x:Key="Button.Static.Background" Color="Transparent"/>
     <SolidColorBrush x:Key="Button.Static.Border" Color="Transparent"/>
     <SolidColorBrush x:Key="Button.MouseOver.Background" Color="Transparent"/>
     <SolidColorBrush x:Key="Button.MouseOver.Border" Color="Transparent"/>
-    <SolidColorBrush x:Key="Button.Pressed.Background" Color="Transparent"/>
+    <SolidColorBrush x:Key="Button.Pressed.Background" Color="#010101"/>
     <SolidColorBrush x:Key="Button.Pressed.Border" Color="Transparent"/>
     <SolidColorBrush x:Key="Button.Disabled.Background" Color="Transparent"/>
     <SolidColorBrush x:Key="Button.Disabled.Border" Color="Transparent"/>
     <SolidColorBrush x:Key="Button.Disabled.Foreground" Color="#FF838383"/>
+    <SolidColorBrush x:Key="ToggleButton.Checked.Background" Color="#222" />
     <Style x:Key="ImageTextButton" TargetType="{x:Type Button}">
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
         <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
@@ -472,7 +475,45 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <!-- End Slider -->
+
+    <Style x:Key="ToggleTextButton" TargetType="{x:Type ToggleButton}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
+        <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Button.Static.Border}"/>
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                    <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
+                                    Background="{TemplateBinding Background}">
+                        <ContentPresenter x:Name="contentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter Property="Background" TargetName="border" Value="{StaticResource ToggleButton.Checked.Background}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="true">
+                            <Setter Property="Background" TargetName="border" Value="{StaticResource Button.MouseOver.Background}"/>
+                            <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.MouseOver.Border}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="true">
+                            <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Pressed.Background}"/>
+                            <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Pressed.Border}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="false">
+                            <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Disabled.Background}"/>
+                            <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Disabled.Border}"/>
+                            <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource Button.Disabled.Foreground}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     
     <!-- Split Button -->
     <Style TargetType="{x:Type etk:SplitButton}">

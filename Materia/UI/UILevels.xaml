@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:Materia"
              xmlns:components="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="256" d:DesignWidth="256" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged">
+             d:DesignHeight="256" d:DesignWidth="256" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged" Unloaded="UserControl_Unloaded">
     <Grid MinWidth="256">
         <Grid.RowDefinitions>
             <RowDefinition Height="32" />
@@ -25,6 +25,6 @@
             <components:Histogram x:Name="Histogram" />
         </Border>
         <local:MultiRangeSlider x:Name="MultiSlider" OnValueChanged="MultiSlider_OnValueChanged" Grid.Row="2" Margin="5" />
-        <Button x:Name="ResetButton" Click="ResetButton_Click"  Background="#444" Foreground="LightGray" Content="RESET" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="42" Height="20" Margin="0,5,5,0" BorderThickness="0" />
+        <Button x:Name="ResetButton" Click="ResetButton_Click"  Background="#444" Foreground="LightGray" Content="RESET" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="42" Height="20" Margin="0,5,5,0" BorderThickness="0" Style="{StaticResource ImageTextButton}" />
     </Grid>
 </UserControl>

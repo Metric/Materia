@@ -117,9 +117,6 @@ namespace Materia
         {
             InitializeComponent();
 
-            Width = defaultSize - 10;
-            Height = defaultSize;
-
             Focusable = true;
 
             InputNodes = new List<UINodePoint>();
@@ -139,44 +136,100 @@ namespace Materia
             originX = ox;
             originY = oy;
 
-            Margin = new Thickness(0, 0, 0, 0);
-
             NodeName.Text = n.Name;
 
-            foreach (NodeOutput op in n.Outputs)
+            for(int i = 0; i < n.Outputs.Count; i++)
             {
+                NodeOutput op = n.Outputs[i];
                 UINodePoint outpoint = new UINodePoint(this, graph);
                 outpoint.Output = op;
                 outpoint.VerticalAlignment = VerticalAlignment.Center;
                 OutputNodes.Add(outpoint);
                 OutputStack.Children.Add(outpoint);
-                outpoint.UpdateColor();
             }
 
-            foreach(NodeInput i in n.Inputs)
+            for(int i = 0; i < n.Inputs.Count; i++)
             {
+                NodeInput inp = n.Inputs[i];
                 UINodePoint inputpoint = new UINodePoint(this, graph);
-                inputpoint.Input = i;
+                inputpoint.Input = inp;
                 inputpoint.VerticalAlignment = VerticalAlignment.Center;
                 InputStack.Children.Add(inputpoint);
                 InputNodes.Add(inputpoint);
-                inputpoint.UpdateColor();
             }
 
-            n.OnUpdate += N_OnUpdate;
             n.OnNameUpdate += N_OnNameUpdate;
             n.OnInputAddedToNode += N_OnInputAddedToNode;
             n.OnInputRemovedFromNode += N_OnInputRemovedFromNode;
             n.OnOutputAddedToNode += N_OnOutputAddedToNode;
             n.OnOutputRemovedFromNode += N_OnOutputRemovedFromNode;
             n.OnDescriptionChanged += N_OnDescriptionChanged;
-            N_OnUpdate(n);
 
             if(n is MathNode)
             {
                 DescPreview.Visibility = Visibility.Visible;
                 Desc.Text = n.GetDescription();
                 LoadIcon();
+            }
+
+            if(graph.Graph is FunctionGraph)
+            {
+                FunctionGraph f = graph.Graph as FunctionGraph;
+                f.OnOutputSet += F_OnOutputSet;
+
+                if(n == f.OutputNode)
+                {
+                    OutputIcon.Visibility = Visibility.Visible;
+                    DescPreview.Background = HighlightBrush;
+                }
+                else
+                {
+                    DescPreview.Background = DefaultBrush;
+                    OutputIcon.Visibility = Visibility.Collapsed;
+                }
+
+                if(n == f.Execute)
+                {
+                    InputIcon.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    InputIcon.Visibility = Visibility.Collapsed;
+                }
+            }
+            else
+            {
+                if(n is OutputNode)
+                {
+                    OutputIcon.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    OutputIcon.Visibility = Visibility.Collapsed;
+                }
+
+                if(n is InputNode)
+                {
+                    InputIcon.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    InputIcon.Visibility = Visibility.Collapsed;
+                }
+            }
+        }
+
+        private void F_OnOutputSet(Node n)
+        {
+            if(n == Node)
+            {
+                OutputIcon.Visibility = Visibility.Visible;
+                DescPreview.Background = HighlightBrush;
+            }
+            else
+            {
+                OutputIcon.Visibility = Visibility.Collapsed;
+                DescPreview.Background = DefaultBrush;
             }
         }
 
@@ -296,6 +349,8 @@ namespace Materia
                         //log error
                         Log.Warn("Node does not exist for connection");
                     }
+
+                    break;
                 }
             }
         }
@@ -637,17 +692,23 @@ namespace Materia
 
         public void DisposeNoRemove()
         {
+            if (Graph.Graph is FunctionGraph)
+            {
+                FunctionGraph f = Graph.Graph as FunctionGraph;
+                f.OnOutputSet -= F_OnOutputSet;
+            }
+
             foreach (UINodePoint p in OutputStack.Children)
             {
-                p.Dispose();
+                p.DisposeNoRemove();
             }
 
             foreach (UINodePoint p in InputStack.Children)
             {
-                p.Dispose();
+                p.DisposeNoRemove();
             }
 
-            if (UI3DPreview.Instance != null)
+            /*if (UI3DPreview.Instance != null)
             {
                 UI3DPreview.Instance.TryAndRemovePreviewNode(this);
             }
@@ -655,11 +716,17 @@ namespace Materia
             if (UIPreviewPane.Instance != null)
             {
                 UIPreviewPane.Instance.TryAndRemovePreviewNode(this);
-            }
+            }*/
         }
 
         public void Dispose()
         {
+            if(Graph.Graph is FunctionGraph)
+            {
+                FunctionGraph f = Graph.Graph as FunctionGraph;
+                f.OnOutputSet -= F_OnOutputSet;
+            }
+
             //register remove node first
             //for undo
             Graph.RemoveNode(this);
@@ -836,7 +903,18 @@ namespace Materia
 
             if (Node != null)
             {
-                N_OnUpdate(Node);
+                //we are actually going to delay this by 25ms
+                //in order to speed up UI load time
+                Task.Delay(25).ContinueWith(t =>
+                {
+                    if (t.IsCanceled) return;
+
+                    App.Current.Dispatcher.Invoke(() =>
+                    { 
+                        Node.OnUpdate += N_OnUpdate;
+                        N_OnUpdate(Node);
+                    });
+                });
             }
         }
     }

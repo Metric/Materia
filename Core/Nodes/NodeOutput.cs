@@ -3,20 +3,34 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Materia.Nodes
 {
-    public struct NodeOutputConnection
+    public struct NodeConnection
     {
+        //we ignore parent and order
+        //as those are only used for
+        //the undo redo system
+        //so no need to save the
+        //extra data on export
+        [JsonIgnore]
+        public string parent;
+
         public string node;
         public int index;
         public int outIndex;
 
-        public NodeOutputConnection(string n, int oi, int i)
+        [JsonIgnore]
+        public int order;
+
+        public NodeConnection(string p, string n, int oi, int i, int ord)
         {
+            parent = p;
             node = n;
             outIndex = oi;
             index = i;
+            order = ord;
         }
     }
 
@@ -84,7 +98,7 @@ namespace Materia.Nodes
             To = new List<NodeInput>();
         }
 
-        public bool InsertAt(int index, NodeInput inp)
+        public bool InsertAt(int index, NodeInput inp, bool triggerAddEvent = true)
         {
             if ((inp.Type & Type) != 0)
             {
@@ -96,9 +110,12 @@ namespace Materia.Nodes
                 inp.Input = this;
                 To.Insert(index,inp);
 
-                if (OnInputAdded != null)
+                if (triggerAddEvent)
                 {
-                    OnInputAdded(this);
+                    if (OnInputAdded != null)
+                    {
+                        OnInputAdded(this);
+                    }
                 }
 
                 return true;
@@ -111,12 +128,20 @@ namespace Materia.Nodes
         {
             if((inp.Type & Type) != 0)
             {
-                if(inp.Input != null )
+                if(inp.Input != null)
                 {
                     inp.Input.Remove(inp);
                 }
 
-                inp.Input = this;
+                if (triggerAddEvent)
+                {
+                    inp.Input = this;
+                }
+                else
+                {
+                    inp.AssignInput(this);
+                }
+
                 To.Add(inp);
 
                 if (triggerAddEvent)

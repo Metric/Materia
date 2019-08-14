@@ -250,5 +250,38 @@ namespace Materia.Nodes.Helpers
         {
             return Fract((float)Math.Sin(MVector.Dot(vec2, new MVector(12.9898f, 78.233f))) * 43758.5453f) * 2.0f - 1.0f;
         }
+
+        public static bool IsNumber(object o)
+        {
+            return o is float || o is long || o is double || o is int;
+        }
+
+        public static bool IsBool(Type t)
+        {
+            return t.Equals(typeof(bool));
+        }
+
+        public static bool IsVector(Type t)
+        {
+            return t.Equals(typeof(MVector));
+        }
+
+        public static bool IsNumber(Type t)
+        {
+            return t.Equals(typeof(float)) || t.Equals(typeof(int))
+                || t.Equals(typeof(long)) || t.Equals(typeof(double));
+        }
+
+        public static bool VectorToBool(object o)
+        {
+            if(o is MVector)
+            {
+                MVector v = (MVector)o;
+                float f = Math.Max(Math.Max(v.X, v.Y), Math.Max(v.Z, v.W));
+                return f > 0;
+            }
+
+            return false;
+        }
     }
 }

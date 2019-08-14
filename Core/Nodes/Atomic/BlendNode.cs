@@ -65,7 +65,7 @@ namespace Materia.Nodes.Atomic
 
         float alpha;
         [Promote(NodeType.Float)]
-        [Slider(IsInt = false, Max = 1, Min = 0, Snap = false, Ticks = new float[0])]
+        [Editable(ParameterInputType.FloatSlider, "Alpha")]
         public float Alpha
         {
             get
@@ -84,7 +84,7 @@ namespace Materia.Nodes.Atomic
 
         BlendType mode;
         [Promote(NodeType.Float)]
-        [Title(Title = "Blend Mode")]
+        [Editable(ParameterInputType.Dropdown, "Mode")]
         public BlendType Mode
         {
             get
@@ -100,7 +100,7 @@ namespace Materia.Nodes.Atomic
 
         AlphaModeType alphaMode;
         [Promote(NodeType.Float)]
-        [Title(Title = "Alpha Mode")]
+        [Editable(ParameterInputType.Dropdown, "Alpha Mode")]
         public AlphaModeType AlphaMode
         {
             get
@@ -181,33 +181,71 @@ namespace Materia.Nodes.Atomic
             {
                 if(first.HasInput && second.HasInput)
                 {
+                    GetParams();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(25, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (first.HasInput && second.HasInput)
                 {
-                    if (first.HasInput && second.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                GetParams();
+            }).ContinueWith(t =>
+            {
+                if(first.HasInput && second.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
+        }
+
+        private void GetParams()
+        {
+            pmode = (int)mode;
+            palpha = alpha;
+            amode = (int)alphaMode;
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Mode"))
+            {
+                pmode = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Mode"));
+            }
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alpha"))
+            {
+                palpha = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Alpha"));
+            }
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "AlphaMode"))
+            {
+                amode = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "AlphaMode"));
+            }
+        }
+
+        int pmode;
+        float palpha;
+        int amode;
         void Process()
         {
             GLTextuer2D i1 = (GLTextuer2D)first.Input.Data;
@@ -224,23 +262,6 @@ namespace Materia.Nodes.Atomic
             if (i2.Id == 0) return;
 
             CreateBufferIfNeeded();
-
-            int pmode = (int)mode;
-            float palpha = alpha;
-            int amode = (int)alphaMode;
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Mode"))
-            {
-                pmode = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Mode"));
-            }
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alpha"))
-            {
-                palpha = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Alpha"));
-            }
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "AlphaMode"))
-            {
-                amode = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "AlphaMode"));
-            }
 
             processor.TileX = tileX;
             processor.TileY = tileY;

@@ -18,9 +18,7 @@ namespace Materia.Settings
         public event MaterialUpdate OnMaterialUpdated;
 
         protected float heightScale;
-        [Section(Section = "General")]
-        [Title(Title = "Height Scale")]
-        [Slider(IsInt = false, Max = 1.0f, Min = 0f)]
+        [Editable(Nodes.ParameterInputType.FloatSlider, "Height Scale", "General")]
         public float HeightScale
         {
             get
@@ -38,8 +36,7 @@ namespace Materia.Settings
         }
 
         protected float indexOfRefraction;
-        [Section(Section = "General")]
-        [Title(Title = "Index of Refraction")]
+        [Editable(Nodes.ParameterInputType.FloatInput, "Index of Refraction", "General")]
         public float IndexOfRefraction
         {
             get
@@ -57,8 +54,7 @@ namespace Materia.Settings
         }
 
         protected float heightClipBias;
-        [Section(Section = "General")]
-        [Title(Title = "Height Clip Bias")]
+        [Editable(Nodes.ParameterInputType.FloatSlider, "Height Clip Bias", "General")]
         public float HeightClipBias
         {
             get
@@ -76,8 +72,7 @@ namespace Materia.Settings
         }
 
         protected bool clipHeight;
-        [Section(Section = "General")]
-        [Title(Title = "Clip Height")]
+        [Editable(Nodes.ParameterInputType.Toggle, "Clip Height", "General")]
         public bool Clip
         {
             get
@@ -95,8 +90,7 @@ namespace Materia.Settings
         }
 
         protected bool useDisplacement;
-        [Section(Section = "General")]
-        [Title(Title = "Use Displacement")]
+        [Editable(Nodes.ParameterInputType.Toggle, "Use Displacement", "General")]
         public bool Displacement
         {
             get
@@ -114,9 +108,7 @@ namespace Materia.Settings
         }
 
         protected float sssDistortion;
-        [Section(Section = "Subsurface Scattering")]
-        [Title(Title = "Distortion")]
-        [Slider(IsInt = false, Max = 1.0f, Min = 0.0f)]
+        [Editable(Nodes.ParameterInputType.FloatSlider, "Distortion", "Subsurface Scattering")]
         public float SSSDistortion
         {
             get
@@ -134,9 +126,7 @@ namespace Materia.Settings
         }
 
         protected float sssAmbient;
-        [Section(Section = "Subsurface Scattering")]
-        [Title(Title = "Ambient")]
-        [Slider(IsInt = false, Max = 1.0f, Min = 0.0f)]
+        [Editable(Nodes.ParameterInputType.FloatSlider, "Ambient", "Subsurface Scattering")]
         public float SSSAmbient
         {
             get
@@ -154,8 +144,7 @@ namespace Materia.Settings
         }
 
         protected float sssPower;
-        [Section(Section = "Subsurface Scattering")]
-        [Title(Title = "Power")]
+        [Editable(Nodes.ParameterInputType.FloatInput, "Power", "Subsurface Scattering")]
         public float SSSPower
         {
             get

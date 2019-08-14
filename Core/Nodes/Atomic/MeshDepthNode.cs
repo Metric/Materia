@@ -12,17 +12,18 @@ using RSMI;
 using Materia.Math3D;
 using System.IO;
 using Materia.Material;
+using Materia.MathHelpers;
+using System.Threading;
 
 namespace Materia.Nodes.Atomic
 {
     public class MeshDepthNode : ImageNode
     {
-        string relativePath;
+        CancellationTokenSource ctk;
 
+        string relativePath;
         string path;
-        [FileSelector(Filter = "FBX & OBJ (*.fbx;*.obj)|*.fbx;*.obj")]
-        [Title(Title = "Mesh File")]
-        [Section(Section = "Content")]
+        [Editable(ParameterInputType.MeshFile, "Mesh File", "Content")]
         public string Path
         {
             get
@@ -44,157 +45,61 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        [Section(Section = "Content")]
+        [Editable(ParameterInputType.Toggle, "Resource", "Content")]
         public bool Resource
         {
             get; set;
         }
 
-        float xOffset;
-        float yOffset;
-        float zOffset;
-
-        [Title(Title = "Offset X")]
-        public float TranslateX
+        MVector position;
+        [Editable(ParameterInputType.Float3Input, "Position")]
+        public MVector Position
         {
             get
             {
-                return xOffset;
+                return position;
             }
             set
             {
-                xOffset = value;
+                position = value;
                 TryAndProcess();
             }
         }
 
-        [Title(Title = "Offset Y")]
-        public float TranslateY
+        MVector rotation;
+        [Editable(ParameterInputType.Float3Slider, "Rotation", "Default", 0, 360)]
+        public MVector Rotation
         {
             get
             {
-                return yOffset;
+                return rotation;
             }
             set
             {
-                yOffset = value;
+                rotation = value;
                 TryAndProcess();
             }
         }
 
-        [Title(Title = "Offset Z")]
-        public float TranslateZ
+        MVector scale;
+        [Editable(ParameterInputType.Float3Input, "Scale")]
+        public MVector Scale
         {
             get
             {
-                return zOffset;
+                return scale;
             }
             set
             {
-                zOffset = value;
+                scale = value;
                 TryAndProcess();
             }
         }
-
-        int rotationX;
-        int rotationY;
-        int rotationZ;
-
-        [Slider(IsInt = true, Max = 360, Min = 0, Snap = false, Ticks = new float[0])]
-        [Title(Title = "Rotate X")]
-        public int RotationX
-        {
-            get
-            {
-                return rotationX;
-            }
-            set
-            {
-                rotationX = value;
-                TryAndProcess();
-            }
-        }
-
-        [Slider(IsInt = true, Max = 360, Min = 0, Snap = false, Ticks = new float[0])]
-        [Title(Title = "Rotate Y")]
-        public int RotationY
-        {
-            get
-            {
-                return rotationY;
-            }
-            set
-            {
-                rotationY = value;
-                TryAndProcess();
-            }
-        }
-
-        [Slider(IsInt = true, Max = 360, Min = 0, Snap = false, Ticks = new float[0])]
-        [Title(Title = "Rotate Z")]
-        public int RotationZ
-        {
-            get
-            {
-                return rotationZ;
-            }
-            set
-            {
-                rotationZ = value;
-                TryAndProcess();
-            }
-        }
-
-        float scaleX;
-        float scaleY;
-        float scaleZ;
 
         float cameraZoom;
 
-        [Title(Title = "Scale X")]
-        public float ScaleX
-        {
-            get
-            {
-                return scaleX;
-            }
-            set
-            {
-                scaleX = value;
-                TryAndProcess();
-            }
-        }
-
-        [Title(Title = "Scale Y")]
-        public float ScaleY
-        {
-            get
-            {
-                return scaleY;
-            }
-            set
-            {
-                scaleY = value;
-                TryAndProcess();
-            }
-        }
-
-        [Title(Title = "Scale Z")]
-        public float ScaleZ
-        {
-            get
-            {
-                return scaleZ;
-            }
-            set
-            {
-                scaleZ = value;
-                TryAndProcess();
-            }
-        }
-
-        [Title(Title = "Camera Z")]
-        public float CameraZoom
+        [Editable(ParameterInputType.FloatInput, "Camera Z")]
+        public float CameraZ
         {
             get
             {
@@ -225,9 +130,9 @@ namespace Materia.Nodes.Atomic
 
             tileX = tileY = 1;
 
-            scaleZ = scaleY = scaleX = 1;
-            rotationX = RotationY = rotationZ = 0;
-            xOffset = yOffset = zOffset = 0;
+            scale = new MVector(1, 1, 1);
+            position = new MVector(0, 0, 0);
+            rotation = new MVector(0, 0, 0);
             cameraZoom = 3;
 
             previewProcessor = new BasicImageRenderer();
@@ -245,10 +150,66 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            Process();
+            if (!Async)
+            {
+                ReadMeshFile();
+                LoadMesh();
+                Process();
+
+                return;
+            }
+
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
+
+            //ctk = new CancellationTokenSource();
+
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
+
+                if (ParentGraph != null)
+                {
+                    ParentGraph.Schedule(this);
+                }
+            //}, Context);
         }
 
-        void Process()
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                ReadMeshFile();
+            })
+            .ContinueWith(t =>
+            {
+                LoadMesh();
+                Process();
+            }, Context);
+        }
+
+        private void ReadMeshFile()
+        {
+            if (mesh == null && meshes == null)
+            {
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                {
+                    RSMI.Importer imp = new Importer();
+                    meshes = imp.Parse(path);
+                }
+                else if (!string.IsNullOrEmpty(relativePath) && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
+                {
+                    var p = System.IO.Path.Combine(ParentGraph.CWD, relativePath);
+
+                    RSMI.Importer imp = new Importer();
+                    meshes = imp.Parse(p);
+                }
+            }
+        }
+
+        private void LoadMesh()
         {
             if(string.IsNullOrEmpty(path))
             {
@@ -260,85 +221,16 @@ namespace Materia.Nodes.Atomic
                 mesh = null;
             }
 
-            if(Async) {
-                if (mesh == null)
-                {
-                    Task.Run(() =>
-                    {
-                        if (!string.IsNullOrEmpty(path) && File.Exists(path))
-                        {
-                            RSMI.Importer imp = new Importer();
-                            var meshes = imp.Parse(path);
-
-                            if (meshes != null && meshes.Count > 0)
-                            {
-                                //must be created on the main thread
-                                //as it creates the opengl related buffers
-                                RunInContext(() =>
-                                {
-                                    mesh = new MeshRenderer(meshes[0]);
-                                });
-                            }
-                        }
-                        else if (!string.IsNullOrEmpty(relativePath) && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
-                        {
-                            var p = System.IO.Path.Combine(ParentGraph.CWD, relativePath);
-
-                            RSMI.Importer imp = new Importer();
-                            var meshes = imp.Parse(p);
-
-                            if (meshes != null && meshes.Count > 0)
-                            {
-                                //must be created on the main thread
-                                //as it creates the opengl related buffers
-                                RunInContext(() =>
-                                {
-                                    mesh = new MeshRenderer(meshes[0]);
-                                });
-                            }
-                        }
-                    }).ContinueWith(t =>
-                    {
-                        RunInContext(() =>
-                        {
-                            FinalProcess();
-                        });
-                    });
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(path) && File.Exists(path))
-                    {
-                        RSMI.Importer imp = new Importer();
-                        var meshes = imp.Parse(path);
-
-                        if (meshes != null && meshes.Count > 0)
-                        {
-                            mesh = new MeshRenderer(meshes[0]);
-                        }
-                    }
-                    else if (!string.IsNullOrEmpty(relativePath) && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
-                    {
-                        var p = System.IO.Path.Combine(ParentGraph.CWD, relativePath);
-
-                        RSMI.Importer imp = new Importer();
-                        var meshes = imp.Parse(p);
-
-                        if (meshes != null && meshes.Count > 0)
-                        {
-                            mesh = new MeshRenderer(meshes[0]);
-                        }
-                    }
-                    FinalProcess();
-                }
-            }
-            else
+            if(meshes != null && meshes.Count > 0)
             {
-                FinalProcess();
+                mesh = new MeshRenderer(meshes[0]);
+                meshes.Clear();
+                meshes = null;
             }
         }
 
-        void FinalProcess()
+        List<RSMI.Containers.Mesh> meshes;
+        void Process()
         {
             if (mesh == null) return;
 
@@ -346,18 +238,17 @@ namespace Materia.Nodes.Atomic
 
             mesh.Mat = mat;
 
-            float rx = (float)rotationX * ((float)Math.PI / 180.0f);
-            float ry = (float)rotationY * ((float)Math.PI / 180.0f);
-            float rz = (float)rotationZ * ((float)Math.PI / 180.0f);
+            float rx = (float)this.rotation.X * ((float)Math.PI / 180.0f);
+            float ry = (float)this.rotation.Y * ((float)Math.PI / 180.0f);
+            float rz = (float)this.rotation.Z * ((float)Math.PI / 180.0f);
 
             Quaternion rot = Quaternion.FromEulerAngles(rx, ry, rz);
             Matrix4 rotation = Matrix4.CreateFromQuaternion(rot);
-            Matrix4 translation = Matrix4.CreateTranslation(xOffset, yOffset, zOffset);
-            Matrix4 scale = Matrix4.CreateScale(scaleX, scaleY, scaleZ);
+            Matrix4 translation = Matrix4.CreateTranslation(position.X, position.Y, position.Z);
+            Matrix4 scale = Matrix4.CreateScale(this.scale.X, this.scale.Y, this.scale.Z);
 
             Matrix4 view = rotation * Matrix4.CreateTranslation(0, 0, -cameraZoom);
             Vector3 pos = Vector3.Normalize((view * new Vector4(0, 0, 1, 1)).Xyz) * cameraZoom;
-
 
             mesh.View = view;
             mesh.CameraPosition = pos;
@@ -396,9 +287,9 @@ namespace Materia.Nodes.Atomic
             public float scaleY;
             public float scaleZ;
 
-            public int rotationX;
-            public int rotationY;
-            public int rotationZ;
+            public float rotationX;
+            public float rotationY;
+            public float rotationZ;
 
             public float cameraZoom;
         }
@@ -412,17 +303,9 @@ namespace Materia.Nodes.Atomic
             Resource = d.resource;
             relativePath = d.relativePath;
 
-            xOffset = d.translateX;
-            yOffset = d.translateY;
-            zOffset = d.translateZ;
-
-            scaleX = d.scaleX;
-            scaleY = d.scaleY;
-            scaleZ = d.scaleZ;
-
-            rotationX = d.rotationX;
-            rotationY = d.rotationY;
-            rotationZ = d.rotationZ;
+            position = new MVector(d.translateX, d.translateY, d.translateZ);
+            scale = new MVector(d.scaleX, d.scaleY, d.scaleZ);
+            rotation = new MVector(d.rotationX, d.rotationY, d.rotationZ);
 
             cameraZoom = d.cameraZoom;
         }
@@ -436,17 +319,17 @@ namespace Materia.Nodes.Atomic
             d.relativePath = relativePath;
             d.resource = Resource;
 
-            d.translateX = xOffset;
-            d.translateY = yOffset;
-            d.translateZ = zOffset;
+            d.translateX = position.X;
+            d.translateY = position.Y;
+            d.translateZ = position.Z;
 
-            d.scaleX = scaleX;
-            d.scaleY = scaleY;
-            d.scaleZ = scaleZ;
+            d.scaleX = scale.X;
+            d.scaleY = scale.Y;
+            d.scaleZ = scale.Z;
 
-            d.rotationX = rotationX;
-            d.rotationY = rotationY;
-            d.rotationZ = rotationZ;
+            d.rotationX = rotation.X;
+            d.rotationY = rotation.Y;
+            d.rotationZ = rotation.Z;
 
             d.cameraZoom = cameraZoom;
 
@@ -462,27 +345,7 @@ namespace Materia.Nodes.Atomic
         {
             if (!Resource) return;
 
-            if (string.IsNullOrEmpty(relativePath) || string.IsNullOrEmpty(path))
-            {
-                return;
-            }
-
-            string cpath = System.IO.Path.Combine(CWD, relativePath);
-            string opath = System.IO.Path.Combine(ParentGraph.CWD, relativePath);
-            if (!Directory.Exists(cpath))
-            {
-                Directory.CreateDirectory(cpath);
-            }
-
-
-            if (File.Exists(path))
-            {
-                File.Copy(path, cpath);
-            }
-            else if (File.Exists(opath) && !opath.ToLower().Equals(cpath.ToLower()))
-            {
-                File.Copy(opath, cpath);
-            }
+            CopyResourceTo(CWD, relativePath, path);
         }
 
         public override void Dispose()

@@ -27,53 +27,41 @@ namespace Materia
 
         PropertyInfo property;
         object propertyOwner;
-        SliderAttribute attributes;
         bool initValue;
-        bool isInt;
+        public bool IsInt { get; set; }
+
+        float[] ticks;
+        public float[] Ticks
+        {
+            get
+            {
+                return ticks;
+            }
+            set
+            {
+                ticks = value;
+                if(ticks != null)
+                {
+                    double[] d = new double[ticks.Length];
+                    for(int i = 0; i < ticks.Length; i++)
+                    {
+                        d[i] = ticks[i];
+                    }
+
+                    SlideInput.Ticks = new DoubleCollection(d);
+                    SlideInput.IsSnapToTickEnabled = true;
+                }
+                else
+                {
+                    SlideInput.Ticks = null;
+                    SlideInput.IsSnapToTickEnabled = false;
+                }
+            }
+        }
 
         public NumberSlider()
         {
             InitializeComponent();
-        }
-
-        public NumberSlider(SliderAttribute attributes, PropertyInfo p, object owner)
-        {
-            InitializeComponent();
-            this.attributes = attributes;
-            property = p;
-            propertyOwner = owner;
-
-            initValue = true;
-
-            SlideInput.Minimum = attributes.Min;
-
-            initValue = true;
-
-            SlideInput.Maximum = attributes.Max;
-
-            initValue = true;
-
-            if (attributes.Snap && attributes.Ticks != null && attributes.Ticks.Length > 0)
-            {
-                SlideInput.IsSnapToTickEnabled = true;
-                foreach (float t in attributes.Ticks)
-                {
-                    SlideInput.Ticks.Add(t);
-                }
-            }
-
-            isInt = attributes.IsInt;
-
-            if (isInt)
-            {
-                SlideInput.Value = Convert.ToInt32(p.GetValue(owner));
-                TextInput.Set(NumberInputType.Int, owner, p);
-            }
-            else
-            {
-                SlideInput.Value = Convert.ToSingle(p.GetValue(owner));
-                TextInput.Set(NumberInputType.Float, owner, p);
-            }
         }
 
         public void Set(float min, float max, PropertyInfo p, object owner)
@@ -91,15 +79,22 @@ namespace Materia
 
             initValue = true;
 
-            SlideInput.Value = Convert.ToSingle(p.GetValue(owner));
+            float f = Convert.ToSingle(p.GetValue(owner));
 
-            if (isInt)
+            if(float.IsInfinity(f) || float.IsNaN(f))
             {
-                TextInput.Set(NumberInputType.Int, owner, p);
+                f = 0;
+            }
+
+            SlideInput.Value = f;
+
+            if (IsInt)
+            {
+                Input.Set(NumberInputType.Int, owner, p);
             }
             else
             {
-                TextInput.Set(NumberInputType.Float, owner, p);
+                Input.Set(NumberInputType.Float, owner, p);
             }
         }
 
@@ -108,11 +103,11 @@ namespace Materia
 
             if (!initValue)
             {
-                if (isInt)
+                if (IsInt)
                 {
                     int v = (int)SlideInput.Value;
 
-                    TextInput.UpdateValue(NumberInputType.Int, v);
+                    Input.UpdateValue(NumberInputType.Int, v);
 
                     if (ctk != null)
                     {
@@ -135,7 +130,7 @@ namespace Materia
                 else
                 {
                     float v = (float)SlideInput.Value;
-                    TextInput.UpdateValue(NumberInputType.Float, v);
+                    Input.UpdateValue(NumberInputType.Float, v);
 
                     if (ctk != null)
                     {

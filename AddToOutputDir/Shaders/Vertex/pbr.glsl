@@ -34,6 +34,10 @@ void main()
     o.TBN = mat3(normalize(T),normalize(B),normalize(N));
 	o.WorldPos = (modelMatrix * vec4(pos, 1)).xyz;
     o.UV = uv0 * tiling;
+
+    //flip y for opengl textures
+    o.UV.y = 1.0 - o.UV.y;
+    
     o.ObjectPos = pos;
     o.Normal = normalize(N);
 

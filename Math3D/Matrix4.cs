@@ -1436,6 +1436,11 @@ namespace Materia.Math3D
             return Matrix4.Mult(left, right);
         }
 
+        public static Matrix4 operator *(float left, Matrix4 right)
+        {
+            return Matrix4.Mult(right, left);
+        }
+
         /// <summary>
         /// Matrix addition
         /// </summary>

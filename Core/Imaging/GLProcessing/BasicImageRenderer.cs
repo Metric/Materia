@@ -82,7 +82,6 @@ namespace Materia.Imaging.GLProcessing
 
         public override void Release()
         {
-
         }
     }
 }

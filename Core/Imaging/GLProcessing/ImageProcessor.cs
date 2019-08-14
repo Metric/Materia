@@ -47,11 +47,13 @@ namespace Materia.Imaging.GLProcessing
             Matrix4 proj = Matrix4.CreateOrthographic(owidth, oheight, 0.03f, 1000f);
             Matrix4 pTrans = Matrix4.CreateTranslation(-pivot.X, -pivot.Y, 0);
             Matrix4 iPTrans = Matrix4.CreateTranslation(pivot.X, pivot.Y, 0);
-            Matrix4 trans = Matrix4.CreateTranslation(translation.X, translation.Y, 0);
+            Matrix4 trans = Matrix4.CreateTranslation(translation.X * inc.Width, translation.Y * inc.Height, 0);
             Matrix4 sm = Matrix4.CreateScale(((float)inc.Width * 0.5f) * scale.X, ((float)inc.Height * 0.5f) * scale.Y, 1);
             Matrix4 rot = Matrix4.CreateRotationZ(angle);
             Matrix4 model = pTrans * sm * rot * iPTrans * trans;
             Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
+
+            IGL.Primary.Viewport(0, 0, owidth, oheight);
 
             resizeProcessor.Model = model;
             resizeProcessor.View = view;
@@ -60,16 +62,22 @@ namespace Materia.Imaging.GLProcessing
 
             resizeProcessor.Bind(inc);
 
+            inc.ClampToEdge();
+
             if(renderQuad != null)
             {
                 renderQuad.Draw();
             }
 
+            inc.Repeat();
             resizeProcessor.Unbind();
 
             o.Bind();
+            o.Repeat();
             o.CopyFromFrameBuffer(owidth, oheight);
             GLTextuer2D.Unbind();
+
+
         } 
 
         protected void ResizeViewTo(GLTextuer2D inc, GLTextuer2D o, int owidth, int oheight, int nwidth, int nheight)
@@ -82,7 +90,7 @@ namespace Materia.Imaging.GLProcessing
             Matrix4 proj = Matrix4.CreateOrthographic(nwidth, nheight, 0.03f, 1000f);
             Matrix4 translation = Matrix4.CreateTranslation(0, 0, 0);
             //half width/height for scale as it is centered based
-            Matrix4 sm = Matrix4.CreateScale(fp * (float)(owidth * 0.5f), -fp * (float)(oheight * 0.5f), 1);
+            Matrix4 sm = Matrix4.CreateScale(fp * (float)(owidth * 0.5f), fp * (float)(oheight * 0.5f), 1);
             Matrix4 model = sm * translation;
             Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
 
@@ -126,6 +134,7 @@ namespace Materia.Imaging.GLProcessing
                 colorBuff.Bind();
                 colorBuff.SetData(new float[0], PixelFormat.Rgba, 4096, 4096);
                 colorBuff.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
+                colorBuff.Repeat();
                 GLTextuer2D.Unbind();
             }
             if (frameBuff == null)
@@ -163,7 +172,7 @@ namespace Materia.Imaging.GLProcessing
             //these must be disabled
             //otherwise image processing will not work properly
             IGL.Primary.Disable((int)EnableCap.DepthTest);
-            IGL.Primary.Disable((int)EnableCap.CullFace);
+            //IGL.Primary.Disable((int)EnableCap.CullFace);
             IGL.Primary.Disable((int)EnableCap.Blend);
             frameBuff.Bind();
             IGL.Primary.Viewport(0, 0, width, height);
@@ -217,7 +226,7 @@ namespace Materia.Imaging.GLProcessing
             return null;
         }
 
-        public void Complete()
+        public virtual void Complete()
         {
             if(frameBuff != null)
             {

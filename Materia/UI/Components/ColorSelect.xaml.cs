@@ -50,7 +50,7 @@ namespace Materia.UI.Components
         private void SelectColor_Click(object sender, RoutedEventArgs e)
         {
             ColorPicker cp = new ColorPicker(c);
-            cp.Owner = MainWindow.Instance;
+            cp.Owner = MateriaMainWindow.Instance;
             cp.ShowDialog();
 
             if(cp.DialogResult == true)

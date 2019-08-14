@@ -25,6 +25,8 @@ using Materia.Hdri;
 using Materia.UI;
 using Materia.UI.ItemNodes;
 using NLog;
+using Materia.UI.Helpers;
+using Materia.Archive;
 
 namespace Materia
 {
@@ -38,7 +40,7 @@ namespace Materia
     /// <summary>
     /// Interaction logic for UIGraph.xaml
     /// </summary>
-    public partial class UIGraph : UserControl
+    public partial class UIGraph : UserControl, IDisposable
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
@@ -93,6 +95,11 @@ namespace Materia
         protected int pinIndex;
         protected List<UIPinNode> Pins;
 
+        private bool isDisposed;
+
+        public bool FromArchive { get; set; }
+        public string FromArchivePath { get; set; }
+
         public string GraphName
         {
             get
@@ -124,6 +131,7 @@ namespace Materia
 
         protected bool graphIsLoadingSizeSelect;
         protected bool graphInitedWithTemplate;
+        protected bool isLoadingGraph;
 
         protected HashSet<string> selectedStartedIn;
 
@@ -168,6 +176,8 @@ namespace Materia
         public UIGraph(Graph template = null)
         {
             InitializeComponent();
+
+            isDisposed = false;
 
             Id = Guid.NewGuid().ToString();
 
@@ -234,14 +244,17 @@ namespace Materia
 
         public void TryAndLoadGraphStack(string[] stack)
         {
-            if (stack == null) return;
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                if (stack == null) return;
 
-            StoredGraphStack = stack;
-            GraphStack.Clear();
-            Crumbs.Clear();
+                StoredGraphStack = stack;
+                GraphStack.Clear();
+                Crumbs.Clear();
 
-            BreadCrumb cb = new BreadCrumb(Crumbs, "Root", this, null);
-            RestoreStack();
+                BreadCrumb cb = new BreadCrumb(Crumbs, "Root", this, null);
+                RestoreStack();
+            });
         }
 
         public void MarkModified()
@@ -263,7 +276,7 @@ namespace Materia
             node.ViewOriginX = m.X - 32;
             node.ViewOriginY = m.Y - 32;
 
-            Graph.Add(node);
+            if (!Graph.Add(node)) return;
 
             UIPinNode unode = new UIPinNode(node, this, node.ViewOriginX, node.ViewOriginY, XShift, YShift, Scale);
             unode.HorizontalAlignment = HorizontalAlignment.Left;
@@ -305,7 +318,7 @@ namespace Materia
             node.ViewOriginX = area.Left - 32;
             node.ViewOriginY = area.Top - 52;
 
-            Graph.Add(node);
+            if (!Graph.Add(node)) return;
 
             UICommentNode unode = new UICommentNode(node, this, area.Left - 32, area.Top - 52, XShift, YShift, Scale);
             unode.HorizontalAlignment = HorizontalAlignment.Left;
@@ -351,22 +364,59 @@ namespace Materia
             {
                 List<string> nodes = new List<string>();
 
-                foreach (IUIGraphNode n in SelectedNodes)
-                {
-                    nodes.Add(n.Node.GetJson());
+                HashSet<IUIGraphNode> copied = new HashSet<IUIGraphNode>();
 
-                    //handles copying of the entire
-                    //entire comment group block
+                List<IUIGraphNode> comments = new List<IUIGraphNode>();
+                List<IUIGraphNode> regular = new List<IUIGraphNode>();
+
+                //splitting up comment nodes
+                //and non comment nodes
+                //so we can test for duplicates!
+                foreach(IUIGraphNode n in SelectedNodes)
+                {
                     if(n is UICommentNode)
                     {
-                        UICommentNode cn = n as UICommentNode;
-                        List<IUIGraphNode> contains = cn.GetContained();
-
-                        foreach(IUIGraphNode cnode in contains)
-                        {
-                            nodes.Add(cnode.Node.GetJson());
-                        }
+                        comments.Add(n);
                     }
+                    else
+                    {
+                        regular.Add(n);
+                    }
+                }
+
+                foreach(IUIGraphNode n in comments)
+                {
+                    nodes.Add(n.Node.GetJson());
+                    copied.Add(n);
+
+                    UICommentNode cm = n as UICommentNode;
+
+                    var contained = cm.GetContained();
+
+                    foreach(IUIGraphNode cn in contained)
+                    {
+                        //there is a possibility more
+                        //than one comment node share
+                        //the same node!
+                        if(copied.Contains(cn))
+                        {
+                            continue;
+                        }
+
+                        copied.Add(cn);
+                        nodes.Add(cn.Node.GetJson());
+                    }
+                }
+
+                foreach (IUIGraphNode n in regular)
+                {
+                    if (copied.Contains(n))
+                    {
+                        continue;
+                    }
+
+                    nodes.Add(n.Node.GetJson());
+                    copied.Add(n);
                 }
 
                 GraphCopyData cd = new GraphCopyData()
@@ -461,7 +511,7 @@ namespace Materia
                     n.OffsetTo(mp.X + dx, mp.Y + dy);
                 }
 
-                Task.Delay(250).ContinueWith((Task t) =>
+                Task.Delay(25).ContinueWith((Task t) =>
                 {
                     App.Current.Dispatcher.Invoke(() =>
                     {
@@ -487,7 +537,10 @@ namespace Materia
 
         public void CopyResources(string CWD)
         {
-            Original.CopyResources(CWD);
+            if (Original != null)
+            {
+                Original.CopyResources(CWD);
+            }
         }
 
         public void LoadGraph(string path)
@@ -498,7 +551,7 @@ namespace Materia
             LoadGraph(data, directory);
         }
 
-        protected void LoadGraph(Graph g)
+        protected void LoadGraph(Graph g, bool loadUI = true)
         {
             //no need to reload if it is the same graph already
             if (g == Graph) return;
@@ -506,9 +559,13 @@ namespace Materia
 
             pinIndex = 0;
 
-            Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
-            Graph.OnGraphNameChanged -= Graph_OnGraphNameChanged;
-            Graph.OnHdriChanged -= Graph_OnHdriChanged;
+            if (Graph != null)
+            {
+                Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
+                Graph.OnGraphNameChanged -= Graph_OnGraphNameChanged;
+                Graph.OnHdriChanged -= Graph_OnHdriChanged;
+                Graph.OnGraphLinesChanged -= Graph_OnGraphLinesChanged;
+            }
 
             ClearView();
 
@@ -526,13 +583,29 @@ namespace Materia
 
             ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
 
+            //whoops forgot to add this line back in
+            //when I separated the core to it's own project
+            Graph.HdriImages = HdriManager.Available.ToArray();
+
             Graph.OnGraphUpdated += Graph_OnGraphUpdated;
             Graph.OnGraphNameChanged += Graph_OnGraphNameChanged;
             Graph.OnHdriChanged += Graph_OnHdriChanged;
+            Graph.OnGraphLinesChanged += Graph_OnGraphLinesChanged;
+
+            NodePath.Type = Graph.GraphLinesDisplay;
 
             ReadOnly = Graph.ReadOnly;
             Graph.ReadOnly = false;
-            LoadGraphUI();
+
+            if (loadUI)
+            {
+                LoadGraphUI();
+            }
+        }
+
+        private void Graph_OnGraphLinesChanged(Graph g)
+        {
+            NodePath.Type = Graph.GraphLinesDisplay;
         }
 
         private void Graph_OnHdriChanged(Graph g)
@@ -547,6 +620,16 @@ namespace Materia
 
         private void Graph_OnGraphUpdated(Graph g)
         {
+            if(isLoadingGraph)
+            {
+                if (Graph is ImageGraph && !Graph.Synchronized)
+                {
+                    if (Graph.IsProcessing) return;
+                    else isLoadingGraph = false;
+                }
+
+                return;
+            }
             Modified = true;
         }
 
@@ -630,8 +713,7 @@ namespace Materia
                         {
                             if(n is PixelProcessorNode)
                             {
-                                graph = (n as PixelProcessorNode).Function;
-                                item.graph = graph;
+                                item.graph = graph = (n as PixelProcessorNode).Function;
 
                                 if(!GraphStack.Contains(item))
                                 {
@@ -657,7 +739,7 @@ namespace Materia
                                 if(graph.IsParameterValueFunction(item.id, item.parameter))
                                 {
                                     var v = graph.GetParameterRaw(item.id, item.parameter);
-                                    item.graph = v.Value as Graph;
+                                    graph = item.graph = v.Value as Graph;
 
                                     if (!GraphStack.Contains(item))
                                     {
@@ -792,7 +874,7 @@ namespace Materia
         {
             Release();
 
-            Graph = new ImageGraph("Untitled");
+            Graph g  = new ImageGraph("Untitled");
 
             if (string.IsNullOrEmpty(data))
             {   
@@ -801,37 +883,18 @@ namespace Materia
 
             pinIndex = 0;
 
-            Graph.CWD = CWD;
+            g.CWD = CWD;
             long ms = Environment.TickCount;
-            Graph.FromJson(data);
-            Original = Graph;
+            g.FromJson(data);
+            
+            Original = g;
+
             Log.Info("Loaded graph in {0:0}ms", Environment.TickCount - ms);
-            HdriManager.Selected = Graph.HdriIndex;
 
-            Graph.OnGraphUpdated += Graph_OnGraphUpdated;
-
-            Scale = Graph.Zoom;
-
-            if(Scale <= 0)
-            {
-                Scale = 1;
-            }
-
-            XShift = Graph.ShiftX;
-            YShift = Graph.ShiftY;
-
-            ZoomLevel.Text = String.Format("{0:0}", Scale * 100);
-
-            ReadOnly = readOnly;
-
-            if (loadUI)
-            {
-                LoadGraphUI();
-            }
-           
+            g.ReadOnly = ReadOnly;
             Crumbs.Clear();
-
             BreadCrumb cb = new BreadCrumb(Crumbs, "Root", this, null);
+            LoadGraph(g, loadUI);
         }
 
         public string GetGraphData()
@@ -943,7 +1006,7 @@ namespace Materia
 
             graphInitedWithTemplate = false;
 
-            Task.Delay(100).ContinueWith((Task t) =>
+            Task.Delay(25).ContinueWith((Task t) =>
             {
                 App.Current.Dispatcher.Invoke(() =>
                 {
@@ -956,6 +1019,13 @@ namespace Materia
                     }
 
                     Graph.ReadOnly = ReadOnly;
+
+                    isLoadingGraph = true;
+                    Graph.TryAndProcess();
+                    if(Graph is FunctionGraph || Graph.Synchronized)
+                    {
+                        isLoadingGraph = false;
+                    }
                 });
             });
         }
@@ -998,8 +1068,17 @@ namespace Materia
             }
         }
 
-        public void Save(string f)
+        public void Save(string f, bool saveAs = false)
         {
+            bool saveAsArchive = System.IO.Path.GetExtension(f).Contains("mtga");
+            string archivePath = null;
+
+            if(saveAsArchive)
+            {
+                archivePath = f;
+                f = f.Replace(".mtga", ".mtg");
+            }
+
             if(Original == null)
             {
                 if (!string.IsNullOrEmpty(StoredGraph))
@@ -1016,45 +1095,61 @@ namespace Materia
             string cwd = System.IO.Path.GetDirectoryName(f);
             string name = System.IO.Path.GetFileNameWithoutExtension(f);
 
-            if (Original.Name.Equals("Untitled"))
+            if (Original.Name.Equals("Untitled") || saveAs)
             {
-                Original.Name = name;
+                StoredGraphName = Original.Name = name;
             }
 
             FilePath = f;
 
-            Original.CopyResources(cwd);
+            Original.CopyResources(cwd, saveAs && !saveAsArchive && !FromArchive);
 
             System.IO.File.WriteAllText(f, GetGraphData());
 
             Modified = false;
+
+            ///save as archive and remove temporary files
+            if (saveAsArchive && !string.IsNullOrEmpty(archivePath))
+            {
+                MTGArchive archive = new MTGArchive(archivePath);
+                if(!archive.Create(f))
+                {
+                    Log.Error("Failed to create materia graph archive file");
+                    return;
+                }
+
+                FromArchive = true;
+                FromArchivePath = archivePath;
+            }
         }
 
         public void Save()
         {
             if (string.IsNullOrEmpty(FilePath)) return;
 
-            System.IO.File.WriteAllText(FilePath, GetGraphData());
+            if (FromArchive)
+            {
+                Save(FromArchivePath, false);
+            }
+            else
+            {
+                System.IO.File.WriteAllText(FilePath, GetGraphData());
+            }
 
             Modified = false;
         }
 
-        public void SaveAs(string f)
+        public void DeleteTempArchiveData()
         {
-            if (Original == null) return;
+            if(FromArchive && !string.IsNullOrEmpty(FromArchivePath))
+            {
+                string tempdir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp", System.IO.Path.GetFileNameWithoutExtension(FromArchivePath));
 
-            string cwd = System.IO.Path.GetDirectoryName(f);
-            string name = System.IO.Path.GetFileNameWithoutExtension(f);
-
-            Original.Name = name;
-
-            FilePath = f;
-
-            Original.CopyResources(cwd);
-
-            System.IO.File.WriteAllText(f, GetGraphData());
-
-            Modified = false;
+                if(System.IO.Directory.Exists(tempdir))
+                {
+                    System.IO.Directory.Delete(tempdir, true);
+                }
+            }
         }
 
         public void ClearView()
@@ -1069,6 +1164,8 @@ namespace Materia
 
             foreach(IUIGraphNode n in GraphNodes)
             {
+                //remove UI components only
+                n.DisposeNoRemove();
                 ViewPort.Children.Remove(n as UIElement);
             }
 
@@ -1086,6 +1183,9 @@ namespace Materia
 
             foreach (IUIGraphNode n in GraphNodes)
             {
+                //whoops forgot to properly dispose
+                //the nodes but not do an actual remove undo
+                n.DisposeNoRemove();
                 ViewPort.Children.Remove(n as UIElement);
             }
 
@@ -1100,6 +1200,7 @@ namespace Materia
                 Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
                 Graph.OnHdriChanged -= Graph_OnHdriChanged;
                 Graph.OnGraphNameChanged -= Graph_OnGraphNameChanged;
+                Graph.OnGraphLinesChanged -= Graph_OnGraphLinesChanged;
 
                 Graph.Dispose();
                 Graph = null;
@@ -1129,15 +1230,15 @@ namespace Materia
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Tuple<string, Point, List<Tuple<string, List<NodeOutputConnection>>>> RemoveNode(string id)
+        public Tuple<string, Point, List<NodeConnection>> RemoveNode(string id)
         {
             var n = GraphNodes.Find(m => m.Id.Equals(id));
 
-            Tuple<string, Point, List<Tuple<string, List<NodeOutputConnection>>>> result = null;
+            Tuple<string, Point, List<NodeConnection>> result = null;
 
             if(n != null)
             {
-                result = new Tuple<string, Point, List<Tuple<string, List<NodeOutputConnection>>>>(n.Node.GetJson(), n.Origin, n.Node.GetParentsConnections());
+                result = new Tuple<string, Point, List<NodeConnection>>(n.Node.GetJson(), n.Origin, n.Node.GetParentConnections());
 
                 if(n is UIPinNode)
                 {
@@ -1187,7 +1288,7 @@ namespace Materia
                 {
                     n.Id = nd.id;
                     n.FromJson(json);
-                    Graph.Add(n);
+                    if (!Graph.Add(n)) return unode;
 
                     n.SetConnections(Graph.NodeLookup, nd.outputs);
 
@@ -1211,9 +1312,11 @@ namespace Materia
                     ViewPort.Children.Add(unode as UIElement);
                     GraphNodes.Add(unode);
 
+                    n.TryAndProcess();
+
                     Modified = true;
 
-                    Task.Delay(250).ContinueWith(t =>
+                    Task.Delay(25).ContinueWith(t =>
                     {
                         App.Current.Dispatcher.Invoke(() =>
                         {
@@ -1257,7 +1360,7 @@ namespace Materia
                 {
                     realLookup[nd.id] = n;
                     n.FromJson(json);
-                    Graph.Add(n);
+                    if (!Graph.Add(n)) return unode;
 
                     if (n is CommentNode)
                     {
@@ -1278,6 +1381,8 @@ namespace Materia
                     lookup[n.Id] = unode;
                     ViewPort.Children.Add(unode as UIElement);
                     GraphNodes.Add(unode);
+
+                    n.TryAndProcess();
 
                     UndoRedoManager.AddUndo(new CreateNode(Id, unode.Id, this));
 
@@ -1319,7 +1424,8 @@ namespace Materia
                 n.ViewOriginX = p.X;
                 n.ViewOriginY = p.Y;
 
-                Graph.Add(n);
+                if (!Graph.Add(n)) return unode;
+
                 if (n is CommentNode)
                 {
                     unode = new UICommentNode(n, this, p.X, p.Y, XShift, YShift, Scale);
@@ -1339,6 +1445,8 @@ namespace Materia
                 lookup[n.Id] = unode;
                 ViewPort.Children.Add(unode as UIElement);
                 GraphNodes.Add(unode);
+
+                n.TryAndProcess();
 
                 UndoRedoManager.AddUndo(new CreateNode(Id, unode.Id, this));
 
@@ -1434,7 +1542,7 @@ namespace Materia
             string json = n.Node.GetJson();
             Point p = n.Origin;
 
-            UndoRedoManager.AddUndo(new DeleteNode(Id, json, p, n.Node.GetParentsConnections(), this));
+            UndoRedoManager.AddUndo(new DeleteNode(Id, json, n.Node.Id, p, n.Node.GetParentConnections(), this));
 
             //update pin references
             if(n is UIPinNode)
@@ -1520,18 +1628,21 @@ namespace Materia
 
                     Point r1 = new Point();
 
-                    if (origin.Output != null)
+                    if (origin.Parent != null)
                     {
-                        r1 = origin.TransformToAncestor(ViewPort).Transform(new Point(origin.ActualWidth, w2));
-                    }
-                    else if (origin.Input != null)
-                    {
-                        r1 = origin.TransformToAncestor(ViewPort).Transform(new Point(0f, w2));
+                        if (origin.Output != null)
+                        {
+                            r1 = origin.TransformToAncestor(ViewPort).Transform(new Point(origin.ActualWidth, w2));
+                        }
+                        else if (origin.Input != null)
+                        {
+                            r1 = origin.TransformToAncestor(ViewPort).Transform(new Point(0f, w2));
+                        }
                     }
 
                     Point r2 = Mouse.GetPosition(ViewPort);
   
-                    if (dest != null)
+                    if (dest != null && origin.Parent != null)
                     {
                         if (origin.Output != null)
                         {
@@ -2202,8 +2313,16 @@ namespace Materia
                 IUIGraphNode n = SelectedNodes[i];
                 if (n is UINode)
                 {
-                    n.Node.Width = Graph.Width;
-                    n.Node.Height = Graph.Height;
+                    //do not update bitmap nodes
+                    //as they are controlled by
+                    //the loaded image
+                    if (!(n.Node is BitmapNode))
+                    {
+                        //slight optimization
+                        //so only OnWidthHeightSet is triggered once
+                        //instead of twice
+                        n.Node.SetSize(Graph.Width, Graph.Height);
+                    }
                 }
             }
         }
@@ -2283,6 +2402,14 @@ namespace Materia
                     }
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            if (isDisposed) return;
+
+            isDisposed = true;
+            Release();
         }
     }
 }

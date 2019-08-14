@@ -59,8 +59,8 @@ namespace Materia.UI
                 {
                     Graph.Insert(src.Type);
 
+                    Keyboard.ClearFocus();
                     Graph.Focus();
-                    Keyboard.Focus(Graph);
                 }
 
                 Hide();
@@ -140,8 +140,8 @@ namespace Materia.UI
         {
             if(Graph != null)
             {
+                Keyboard.ClearFocus();
                 Graph.Focus();
-                Keyboard.Focus(Graph);
             }
 
             Hide();

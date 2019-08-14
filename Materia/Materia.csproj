@@ -81,6 +81,10 @@
   <PropertyGroup>
     <ApplicationIcon>Images\Icons\App\icon.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -166,6 +170,12 @@
     <Compile Include="UI\Components\GradientEditor.xaml.cs">
       <DependentUpon>GradientEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Components\GraphFunction.xaml.cs">
+      <DependentUpon>GraphFunction.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\GraphFunctionEditor.xaml.cs">
+      <DependentUpon>GraphFunctionEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\Components\GraphParameter.xaml.cs">
       <DependentUpon>GraphParameter.xaml</DependentUpon>
     </Compile>
@@ -177,9 +187,6 @@
     </Compile>
     <Compile Include="UI\Components\Magnifier.xaml.cs">
       <DependentUpon>Magnifier.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="UI\Components\ParameterList.xaml.cs">
-      <DependentUpon>ParameterList.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Components\ParameterMap.xaml.cs">
       <DependentUpon>ParameterMap.xaml</DependentUpon>
@@ -215,6 +222,7 @@
     <Compile Include="UI\Helpers\MateriaInputManager.cs" />
     <Compile Include="UI\Helpers\MenuItemExtensions.cs" />
     <Compile Include="UI\Helpers\NodeExtensions.cs" />
+    <Compile Include="UI\Helpers\NodePath.cs" />
     <Compile Include="UI\Helpers\RawBitmapExtensions.cs" />
     <Compile Include="UI\Helpers\ShelfBuilder.cs" />
     <Compile Include="UI\Helpers\VisualExtensions.cs" />
@@ -319,7 +327,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MainWindow.xaml">
+    <Page Include="MateriaMainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -327,8 +335,8 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
+    <Compile Include="MateriaMainWindow.xaml.cs">
+      <DependentUpon>MateriaMainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Page Include="UI\Components\FileSelector.xaml">
@@ -336,6 +344,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\Components\GradientEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\GraphFunction.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\GraphFunctionEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -372,10 +388,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="StyleResources.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="UI\Components\ParameterList.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -502,6 +514,7 @@
     <Resource Include="Images\drag.png" />
     <Resource Include="Images\pin.png" />
     <Resource Include="Images\functionedit.png" />
+    <Resource Include="Images\output.png" />
     <Content Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -522,6 +535,10 @@
     <Resource Include="Images\node-icon.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Archive\Archive.csproj">
+      <Project>{92888af6-1cdb-4459-845f-d65763d3baf7}</Project>
+      <Name>Archive</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{53335848-4c43-4625-9226-a12dd2543e44}</Project>
       <Name>Core</Name>

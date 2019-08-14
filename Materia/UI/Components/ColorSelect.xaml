@@ -22,7 +22,7 @@
                     </VisualBrush.Visual>
                 </VisualBrush>
             </Grid.Background>
-            <Button Name="SelectColor" Click="SelectColor_Click" BorderThickness="0" Margin="0" />
+            <Button Name="SelectColor" Click="SelectColor_Click" BorderThickness="0" Margin="0" Background="Black" Style="{StaticResource ImageTextButton}"/>
         </Grid>
     </Grid>
 </UserControl>

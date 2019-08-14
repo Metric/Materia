@@ -241,5 +241,10 @@ namespace Materia.MathHelpers
         {
             return new MVector(Utils.Lerp(v1.X, v2.X, t), Utils.Lerp(v1.Y, v2.Y, t), Utils.Lerp(v1.Z, v2.Z, t), Utils.Lerp(v1.W, v2.W, t));
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0:0.00},{1:0.00},{2:0.00},{3:0.00}", X, Y, Z, W);
+        }
     }
 }

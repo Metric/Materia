@@ -105,6 +105,7 @@ namespace Materia.GLInterfaces
         public abstract void Disable(int cap);
         public abstract void DepthFunc(int func);
         public abstract void BlendFunc(int src, int dst);
+        public abstract void BlendEquationSeparate(int rgbMode, int alphaMode);
         public abstract void CullFace(int mode);
 
         ///Draw

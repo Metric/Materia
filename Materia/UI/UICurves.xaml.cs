@@ -26,7 +26,6 @@ namespace Materia
     public partial class UICurves : UserControl
     {
         PropertyInfo property;
-        PropertyInfo outputProperty;
         object propertyOwner;
 
         Dictionary<int, List<CurvePoint>> Points { get; set; }
@@ -76,11 +75,10 @@ namespace Materia
             Input[3] = new List<MathHelpers.Point>();
         }
 
-        public UICurves(PropertyInfo p, PropertyInfo output, object owner)
+        public UICurves(PropertyInfo p, object owner)
         {
             InitializeComponent();
             mode = CurveMode.RGB;
-            outputProperty = output;
             property = p;
             propertyOwner = owner;
 
@@ -93,7 +91,6 @@ namespace Materia
             inited = false;
 
             Input = (Dictionary<int, List<MathHelpers.Point>>)p.GetValue(owner);
-            Normalized = (Dictionary<int, List<MathHelpers.Point>>)output.GetValue(owner);
 
             Sort(Input[0]);
             Sort(Input[1]);
@@ -288,7 +285,7 @@ namespace Materia
             return normalized;
         }
 
-        protected void UpdatePath(bool updateProperty = true)
+        protected void UpdatePath()
         {
             List<MathHelpers.Point> normals = new List<MathHelpers.Point>();
             if(display == null)
@@ -343,11 +340,6 @@ namespace Materia
             }
 
             CurvePixels.Source = display.ToImageSource();
-
-            if (updateProperty)
-            {
-                outputProperty.SetValue(propertyOwner, Normalized);
-            }
         }
 
         private void Point_MouseDown(object sender, MouseButtonEventArgs e)
@@ -561,7 +553,7 @@ namespace Materia
         private void ToggleAll_Click(object sender, RoutedEventArgs e)
         {
             ShowAllCurves = ToggleAll.IsChecked.Value;
-            UpdatePath(false);
+            UpdatePath();
         }
     }
 }

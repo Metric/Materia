@@ -79,7 +79,7 @@ namespace Materia.Nodes.MathNodes
             n1id += index;
             n2id += index2;
             
-            return "float " + s + " = rand(vec2(rand(" + n1id + " + " + seed + ")," + n2id + ") + " + seed + ");\r\n";
+            return "float " + s + " = rand(vec2(rand(pos + " + n1id + " + " + seed + ")," + n2id + ") + " + seed + ");\r\n";
         }
 
         void Process()
@@ -106,6 +106,8 @@ namespace Materia.Nodes.MathNodes
             {
                 output.Data = 0;
             }
+
+            result = output.Data.ToString();
 
             if (ParentGraph != null)
             {

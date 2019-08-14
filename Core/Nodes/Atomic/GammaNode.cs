@@ -19,6 +19,7 @@ namespace Materia.Nodes.Atomic
         protected float gamma;
 
         [Promote(NodeType.Float)]
+        [Editable(ParameterInputType.FloatInput, "Gamma")]
         public float Gamma
         {
             get
@@ -87,33 +88,60 @@ namespace Materia.Nodes.Atomic
             {
                 if (input.HasInput)
                 {
+                    GetParams();
                     Process();
                 }
 
                 return;
             }
 
-            if (ctk != null)
-            {
-                ctk.Cancel();
-            }
+            //if (ctk != null)
+            //{
+            //    ctk.Cancel();
+            //}
 
-            ctk = new CancellationTokenSource();
+            //ctk = new CancellationTokenSource();
 
-            Task.Delay(25, ctk.Token).ContinueWith(t =>
-            {
-                if (t.IsCanceled) return;
+            //Task.Delay(25, ctk.Token).ContinueWith(t =>
+            //{
+            //    if (t.IsCanceled) return;
 
-                RunInContext(() =>
+                if (input.HasInput)
                 {
-                    if (input.HasInput)
+                    if (ParentGraph != null)
                     {
-                        Process();
+                        ParentGraph.Schedule(this);
                     }
-                });
-            });
+                }
+            //}, Context);
         }
 
+        public override Task GetTask()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                GetParams();
+            })
+            .ContinueWith(t =>
+            {
+                if(input.HasInput)
+                {
+                    Process();
+                }
+            }, Context);
+        }
+
+        private void GetParams()
+        {
+            pgamma = gamma;
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Gamma"))
+            {
+                pgamma = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Gamma"));
+            }
+        }
+
+        float pgamma;
         void Process()
         {
             GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
@@ -122,13 +150,6 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
-
-            float pgamma = gamma;
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Gamma"))
-            {
-                pgamma = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Gamma"));
-            }
 
             processor.TileX = tileX;
             processor.TileY = tileY;
