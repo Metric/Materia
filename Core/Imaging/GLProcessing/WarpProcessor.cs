@@ -40,6 +40,7 @@ namespace Materia.Imaging.GLProcessing
                 shader.SetUniform("intensity", Intensity);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
                 tex.Bind();
+                tex.ClampToEdge();
                 shader.SetUniform("Warp", 1);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
                 warp.Bind();
@@ -48,6 +49,9 @@ namespace Materia.Imaging.GLProcessing
                 {
                     renderQuad.Draw();
                 }
+
+                tex.Bind();
+                tex.Repeat();
 
                 GLTextuer2D.Unbind();
                 output.Bind();

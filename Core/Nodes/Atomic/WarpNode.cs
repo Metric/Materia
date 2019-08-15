@@ -16,6 +16,7 @@ namespace Materia.Nodes.Atomic
         CancellationTokenSource ctk;
 
         protected WarpProcessor processor;
+        protected BlurProcessor blur;
 
         protected NodeInput input;
         protected NodeInput input1;
@@ -23,7 +24,6 @@ namespace Materia.Nodes.Atomic
         protected NodeOutput output;
 
         protected float intensity;
-
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Intensity")]
         public float Intensity
@@ -35,6 +35,22 @@ namespace Materia.Nodes.Atomic
             set
             {
                 intensity = value;
+                TryAndProcess();
+            }
+        }
+
+        protected float blurIntensity;
+        [Promote(NodeType.Float)]
+        [Editable(ParameterInputType.IntSlider, "Blur Intensity", "Default", 0, 128)]
+        public float BlurIntensity
+        {
+            get
+            {
+                return blurIntensity;
+            }
+            set
+            {
+                blurIntensity = value;
                 TryAndProcess();
             }
         }
@@ -53,6 +69,7 @@ namespace Materia.Nodes.Atomic
 
             previewProcessor = new BasicImageRenderer();
             processor = new WarpProcessor();
+            blur = new BlurProcessor();
 
             internalPixelType = p;
 
@@ -145,13 +162,20 @@ namespace Materia.Nodes.Atomic
         private void GetParams()
         {
             pintensity = intensity;
+            bintensity = blurIntensity;
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
             {
                 pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
             }
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "BlurIntensity"))
+            {
+                bintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "BlurIntensity"));
+            }
         }
 
+        float bintensity;
         float pintensity;
         void Process()
         {
@@ -166,11 +190,17 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            if (processor == null || blur == null) return;
+
             processor.TileX = tileX;
             processor.TileY = TileY;
             processor.Intensity = pintensity;
             processor.Process(width, height, i1, i2, buffer);
             processor.Complete();
+
+            blur.Intensity = Math.Max(0, bintensity);
+            blur.Process(width, height, buffer, buffer);
+            blur.Complete();
 
             Updated();
             output.Data = buffer;
@@ -180,6 +210,7 @@ namespace Materia.Nodes.Atomic
         public class WarpData : NodeData
         {
             public float intensity;
+            public float blurIntensity;
         }
 
         public override string GetJson()
@@ -187,6 +218,7 @@ namespace Materia.Nodes.Atomic
             WarpData d = new WarpData();
             FillBaseNodeData(d);
             d.intensity = intensity;
+            d.blurIntensity = blurIntensity;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -196,6 +228,7 @@ namespace Materia.Nodes.Atomic
             WarpData d = JsonConvert.DeserializeObject<WarpData>(data);
             SetBaseNodeDate(d);
             intensity = d.intensity;
+            blurIntensity = d.blurIntensity;
         }
 
         public override void Dispose()
@@ -206,6 +239,12 @@ namespace Materia.Nodes.Atomic
             {
                 processor.Release();
                 processor = null;
+            }
+
+            if(blur != null)
+            {
+                blur.Release();
+                blur = null;
             }
         }
     }

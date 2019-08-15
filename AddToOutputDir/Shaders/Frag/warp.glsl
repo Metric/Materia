@@ -43,30 +43,12 @@ vec3 createNormal(vec2 uv) {
         norm.y = (cy.r + cy.g + cy.b) / 3.0;
     }
 
-    norm = (normalize(norm) + 1.0) * 0.5;
+    norm = normalize(norm);
     return norm;
 }
 
 void main() {
-    vec2 offset = 1.0 / textureSize(Warp, 0);
-    FragColor = vec4(0);
     vec2 uv = UV;
-
-    int count = 0;
-    for(int i = -16; i <= 16; i++) {
-        vec2 n = createNormal(uv + vec2(offset.x * i, 0)).xy - 0.5;
-        FragColor += texture(MainTex, uv + n * intensity);
-        count++;
-    }
-
-    for(int i = -16; i <= 16; i++) {
-        vec2 n = createNormal(uv + vec2(0, offset.y * i)).xy - 0.5;
-        FragColor += texture(MainTex, uv + n * intensity);
-        count++;
-    }
-
-   FragColor /= count;
-
-   //vec2 n = createNormal(UV).xy;
-   //FragColor = texture(MainTex, UV + (n - 0.5) * intensity);
+    vec2 n = createNormal(uv).xy * 0.5;
+    FragColor = texture(MainTex, uv + n * intensity);
 }

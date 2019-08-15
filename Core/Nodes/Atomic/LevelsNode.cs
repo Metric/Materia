@@ -11,6 +11,7 @@ using Materia.Nodes.Helpers;
 using Newtonsoft.Json;
 using Materia.Imaging.GLProcessing;
 using Materia.Textures;
+using Materia.MathHelpers;
 
 namespace Materia.Nodes.Atomic
 {
@@ -25,6 +26,7 @@ namespace Materia.Nodes.Atomic
 
         LevelsProcessor processor;
 
+        [Promote(NodeType.Float4)]
         [Editable(ParameterInputType.Levels, "Range")]
         public MultiRange Range
         {
@@ -133,7 +135,7 @@ namespace Materia.Nodes.Atomic
         {
             return Task.Factory.StartNew(() =>
             {
-
+                GetParams();
             })
             .ContinueWith(t =>
             {
@@ -144,6 +146,42 @@ namespace Materia.Nodes.Atomic
             }, Context);
         }
 
+        private void GetParams()
+        {
+            prange = range;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Range"))
+            {
+                MVector v = ParentGraph.GetParameterValue<MVector>(Id, "Range");
+
+                if(v.W <= 0)
+                {
+                    prange.min[0] = prange.min[1] = prange.min[2] = v.X;
+                    prange.mid[0] = prange.mid[1] = prange.mid[2] = v.Y;
+                    prange.max[0] = prange.max[1] = prange.max[2] = v.Z;
+                }
+                else if(v.W <= 1)
+                {
+                    prange.min[0] = v.X;
+                    prange.mid[0] = v.Y;
+                    prange.max[0] = v.Z;
+                }
+                else if(v.W <= 2)
+                {
+                    prange.min[1] = v.X;
+                    prange.mid[1] = v.Y;
+                    prange.max[1] = v.Z;
+                }
+                else if(v.W <= 3)
+                {
+                    prange.min[2] = v.X;
+                    prange.mid[2] = v.Y;
+                    prange.max[2] = v.Z;
+                }
+            }
+        }
+
+        MultiRange prange;
         void Process()
         {
             GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
@@ -155,9 +193,9 @@ namespace Materia.Nodes.Atomic
 
             processor.TileX = tileX;
             processor.TileY = tileY;
-            processor.Min = new Math3D.Vector3(range.min[0], range.min[1], range.min[2]);
-            processor.Max = new Math3D.Vector3(range.max[0], range.max[1], range.max[2]);
-            processor.Mid = new Math3D.Vector3(range.mid[0], range.mid[1], range.mid[2]);
+            processor.Min = new Math3D.Vector3(prange.min[0], prange.min[1], prange.min[2]);
+            processor.Max = new Math3D.Vector3(prange.max[0], prange.max[1], prange.max[2]);
+            processor.Mid = new Math3D.Vector3(prange.mid[0], prange.mid[1], prange.mid[2]);
 
             processor.Process(width, height, i1, buffer);
             processor.Complete();

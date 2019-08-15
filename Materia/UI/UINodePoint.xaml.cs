@@ -132,7 +132,13 @@ namespace Materia
 
         private void Output_OnTypeChanged(NodeOutput inp)
         {
-            UpdateColor();
+            //be sure to invoke on main thread
+            //as it is possible for this event
+            //to trigger from another thread now
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                UpdateColor();
+            });
         }
 
         public UINodePoint()

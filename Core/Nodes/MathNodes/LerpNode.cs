@@ -69,10 +69,10 @@ namespace Materia.Nodes.MathNodes
         public override void UpdateOutputType()
         {
             if (Inputs.Count == 0) return;
-            if (Inputs[2].HasInput && Inputs[3].HasInput)
+            if (Inputs[1].HasInput && Inputs[2].HasInput)
             {
-                NodeType t1 = Inputs[2].Input.Type;
-                NodeType t2 = Inputs[3].Input.Type;
+                NodeType t1 = Inputs[1].Input.Type;
+                NodeType t2 = Inputs[2].Input.Type;
 
                 if (t1 == NodeType.Float && t2 == NodeType.Float)
                 {
@@ -156,7 +156,8 @@ namespace Materia.Nodes.MathNodes
 
             if ((from is float || from is double || from is int || from is long) && to is MVector)
             {
-                MVector f = new MVector(Convert.ToSingle(from), Convert.ToSingle(from), Convert.ToSingle(from), Convert.ToSingle(from));
+                float vt = Convert.ToSingle(from);
+                MVector f = new MVector(vt, vt, vt, vt);
                 MVector r = MVector.Lerp(f, (MVector)to, delta);
                 output.Data = r;
             }
@@ -167,7 +168,8 @@ namespace Materia.Nodes.MathNodes
             }
             else if (from is MVector && (to is float || to is double || to is int || to is long))
             {
-                MVector f = new MVector(Convert.ToSingle(from), Convert.ToSingle(from), Convert.ToSingle(from), Convert.ToSingle(from));
+                float vt = Convert.ToSingle(to);
+                MVector f = new MVector(vt, vt, vt, vt);
                 MVector r = MVector.Lerp((MVector)from, f, delta);
                 output.Data = r;
             }

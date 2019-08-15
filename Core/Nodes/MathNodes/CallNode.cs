@@ -431,7 +431,10 @@ namespace Materia.Nodes.MathNodes
 
             output.Data = selectedFunction.Result;
 
-            result = output.Data.ToString();
+            if (output.Data != null)
+            {
+                result = output.Data.ToString();
+            }
 
             if (ParentGraph != null)
             {
@@ -486,6 +489,15 @@ namespace Materia.Nodes.MathNodes
             }
 
             base.AssignParentGraph(g);
+
+            OnParentSet();
+        }
+
+        public override void AssignParentNode(Node n)
+        {
+            base.AssignParentNode(n);
+
+            OnParentSet();
         }
 
         public override void FromJson(string data)

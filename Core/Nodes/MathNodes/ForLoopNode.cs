@@ -163,11 +163,18 @@ namespace Materia.Nodes.MathNodes
                             //everything else requires
                             //an execute flow
                             forward.Add(op.Input.Node);
+                            //we have to tell the node to update output type
+                            (op.Input.Node as MathNode).UpdateOutputType();
                         }
                     }
                 }
 
                 forward.Add(n);
+                //tell the node to update output type
+                //this handles a case where
+                //the default function graph updateoutputtype
+                //when loaded does not reach the for loop inner
+                (n as MathNode).UpdateOutputType();
 
                 if (n.Outputs.Count > 0)
                 {
