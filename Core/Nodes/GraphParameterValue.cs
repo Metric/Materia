@@ -64,7 +64,7 @@ namespace Materia.Nodes
         public string Id { get; set; }
 
         protected NodeType type;
-        [Dropdown(null, "Bool", "Float", "Float2", "Float3", "Float4")]
+        [Dropdown(null, false, "Bool", "Float", "Float2", "Float3", "Float4")]
         [Editable(ParameterInputType.Dropdown, "Type")]
         public NodeType Type
         {
@@ -85,7 +85,7 @@ namespace Materia.Nodes
 
         protected ParameterInputType inputType;
 
-        [Dropdown(null, "FloatSlider", "FloatInput", "IntSlider", "IntInput", "Color", "Toggle")]
+        [Dropdown(null, false, "FloatSlider", "FloatInput", "IntSlider", "IntInput", "Color", "Toggle")]
         [Editable(ParameterInputType.Dropdown, "Input Type")]
         public ParameterInputType InputType
         {
@@ -356,15 +356,7 @@ namespace Materia.Nodes
                     v = false;
                 }
             }
-            else if(!(v is Matrix2) && type == NodeType.Matrix2)
-            {
-                v = Matrix2.Identity;
-            }
-            else if(!(v is Matrix3) && type == NodeType.Matrix3)
-            {
-                v = Matrix3.Identity;
-            }
-            else if(!(v is Matrix4) && type == NodeType.Matrix4)
+            else if(!(v is Matrix4) && type == NodeType.Matrix)
             {
                 v = Matrix4.Identity;
             }
@@ -434,7 +426,7 @@ namespace Materia.Nodes
             }
 
             //then it is a matrix
-            if(v is Newtonsoft.Json.Linq.JArray && (type == NodeType.Matrix2 || type == NodeType.Matrix3 || type == NodeType.Matrix4))
+            if(v is Newtonsoft.Json.Linq.JArray && type == NodeType.Matrix)
             {
                 float[] m = DeserializeValueArray<float[]>(v);
                 //if this fails then the ValidateValue
@@ -442,27 +434,29 @@ namespace Materia.Nodes
                 //matrix identity
                 if(m != null)
                 {
-                    //2x2 matrix
-                    if(m.Length == 4)
-                    {
-                        Matrix2 m2 = new Matrix2();
-                        m2.FromArray(m);
-                        v = m2;
-                    }
-                    //3x3 matrix
-                    else if(m.Length == 9)
-                    {
-                        Matrix3 m3 = new Matrix3();
-                        m3.FromArray(m);
-                        v = m3;
-                    }
                     //4x4 matrix
-                    else if(m.Length == 16)
+                    if(m.Length == 16)
                     {
                         Matrix4 m4 = new Matrix4();
                         m4.FromArray(m);
                         v = m4;
                     }
+                }
+            }
+            //handle this in case parser actually returns it as
+            //a float[] instead of a JArray
+            //not sure which it will return at the moment
+            //when it encodes it from the value field
+            //which is classified as a generic object
+            else if(v is float[] && type == NodeType.Matrix)
+            {
+                float[] m = (float[])v;
+
+                if(m != null && m.Length == 16)
+                {
+                    Matrix4 m4 = new Matrix4();
+                    m4.FromArray(m);
+                    v = m4;
                 }
             }
 
@@ -501,15 +495,7 @@ namespace Materia.Nodes
             }
             else
             {
-                if (v is Matrix2)
-                {
-                    d.value = ((Matrix2)v).ToArray();
-                }
-                else if (v is Matrix3)
-                {
-                    d.value = ((Matrix3)v).ToArray();
-                }
-                else if (v is Matrix4)
+                if (v is Matrix4)
                 {
                     d.value = ((Matrix4)v).ToArray();
                 }

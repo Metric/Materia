@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="256">
     <Grid>
-        <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="Input" TextChanged="Input_TextChanged" PreviewTextInput="Input_PreviewTextInput" Grid.Column="1" HorizontalAlignment="Left" Width="48" Margin="5" KeyDown="Input_KeyDown"></TextBox>
+        <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="Input" TextChanged="Input_TextChanged" PreviewTextInput="Input_PreviewTextInput" HorizontalAlignment="Left" Width="48" Margin="5" KeyDown="Input_KeyDown"></TextBox>
     </Grid>
 </UserControl>

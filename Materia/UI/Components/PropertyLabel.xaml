@@ -6,9 +6,9 @@
              xmlns:local="clr-namespace:Materia.UI.Components"
              xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
              mc:Ignorable="d" 
-             d:DesignHeight="32" d:DesignWidth="256">
-    <Grid Height="32">
-        <TextBlock Name="LabelContent" TextAlignment="Left" Foreground="LightGray" FontSize="12" Margin="5" />
+             d:DesignHeight="32" d:DesignWidth="256" Height="32" Margin="0" HorizontalAlignment="Stretch">
+    <Grid Margin="0">
+        <TextBlock Name="LabelContent" TextAlignment="Left" Foreground="LightGray" FontSize="12" Margin="5,5,5,5" />
         <xctk:SplitButton Background="Transparent" BorderThickness="0" Click="EditVar_Click" Name="EditVar" HorizontalAlignment="Right" Width="48">
             <xctk:SplitButton.Content>
                 <Image x:Name="FIcon" Source="/Materia;component/Images/functionedit.png" />

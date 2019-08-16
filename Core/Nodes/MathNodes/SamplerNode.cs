@@ -19,7 +19,7 @@ namespace Materia.Nodes.MathNodes
 
         protected int sampleIndex;
 
-        [Dropdown(null, "Input0", "Input1", "Input2", "Input3")]
+        [Dropdown(null, false, "Input0", "Input1", "Input2", "Input3")]
         [Editable(ParameterInputType.Dropdown, "Image Input")]
         public int SampleIndex
         {

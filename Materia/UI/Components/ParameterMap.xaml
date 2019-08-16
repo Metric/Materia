@@ -5,8 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <StackPanel Name="Stack">
+             d:DesignHeight="450" d:DesignWidth="800" Margin="0">
+    <StackPanel Name="Stack" Margin="0">
             
     </StackPanel>
 </UserControl>

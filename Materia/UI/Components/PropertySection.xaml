@@ -5,11 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="32" d:DesignWidth="256" x:Name="PSection">
+             d:DesignHeight="32" d:DesignWidth="256" x:Name="PSection" Margin="0" HorizontalAlignment="Stretch">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVisible" />
     </UserControl.Resources>
-    <StackPanel>
+    <StackPanel Margin="0">
         <Grid Name="Header" Background="#222">
             <TextBlock x:Name="LabelContent" Foreground="LightGray" Margin="32,5,5,5" FontSize="18"  />
             <Button x:Name="CollapsedButton" Click="CollapsedButton_Click" Background="Transparent" BorderBrush="Transparent" Width="32" Height="32" HorizontalAlignment="Left" Style="{StaticResource ImageTextButton}">

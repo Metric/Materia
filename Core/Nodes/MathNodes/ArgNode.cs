@@ -21,13 +21,23 @@ namespace Materia.Nodes.MathNodes
             }
             set
             {
+                if(!string.IsNullOrEmpty(inputName))
+                {
+                    if(ParentGraph != null && ParentGraph is FunctionGraph)
+                    {
+                        FunctionGraph g = ParentGraph as FunctionGraph;
+                        g.RemoveVar(inputName);
+                    }
+                }
+
                 inputName = value;
                 OnDescription(inputName);
+                TryAndProcess();
             }
         }
 
         protected NodeType inputType;
-        [Dropdown(null, "Bool", "Float", "Float2", "Float3", "Float4", "Matrix2", "Matrix3", "Matrix4")]
+        [Dropdown(null, false, "Bool", "Float", "Float2", "Float3", "Float4", "Matrix")]
         [Editable(ParameterInputType.Dropdown, "Input Type")]
         public NodeType InputType
         {
@@ -38,6 +48,7 @@ namespace Materia.Nodes.MathNodes
             set
             {
                 inputType = value;
+                TryAndProcess();
             }
         }
 
@@ -59,6 +70,38 @@ namespace Materia.Nodes.MathNodes
             Outputs = new List<NodeOutput>();
         }
 
+        public override void TryAndProcess()
+        {
+            if(!string.IsNullOrEmpty(inputName))
+            {
+                if (ParentGraph != null && ParentGraph is FunctionGraph)
+                {
+                    FunctionGraph g = ParentGraph as FunctionGraph;
+
+                    object temp = 0;
+
+                    if(inputType == NodeType.Float)
+                    {
+                        temp = 0;
+                    }
+                    else if(inputType == NodeType.Bool)
+                    {
+                        temp = false;
+                    }
+                    else if(inputType == NodeType.Matrix)
+                    {
+                        temp = Math3D.Matrix4.Identity;
+                    }
+                    else
+                    {
+                        temp = new MathHelpers.MVector();
+                    }
+
+                    g.SetVar(inputName, temp, inputType);
+                }
+            }
+        }
+
         public override string GetDescription()
         {
             return inputName;
@@ -68,6 +111,20 @@ namespace Materia.Nodes.MathNodes
         {
             public string inputName;
             public int inputType;
+        }
+
+        public override void Dispose()
+        {
+            if (ParentGraph != null && ParentGraph is FunctionGraph)
+            {
+                FunctionGraph g = ParentGraph as FunctionGraph;
+
+                if(!string.IsNullOrEmpty(inputName))
+                {
+                    g.RemoveVar(inputName);
+                }
+            }
+            base.Dispose();
         }
 
         public override string GetJson()

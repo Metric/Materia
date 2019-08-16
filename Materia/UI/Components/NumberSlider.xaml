@@ -5,9 +5,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia"
              mc:Ignorable="d" 
-             d:DesignHeight="32" d:DesignWidth="256">
-    <Grid Height="32">
-        <Slider Foreground="#666" Name="SlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" ValueChanged="SlideInput_ValueChanged" VerticalAlignment="Center" Margin="5,0,56,0" />
-        <local:NumberInput x:Name="Input" HorizontalAlignment="Right" />
+             d:DesignHeight="32" d:DesignWidth="256" Height="32" HorizontalAlignment="Stretch">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="62" />
+        </Grid.ColumnDefinitions>
+        <Slider Grid.Column="0" Foreground="#666" Name="SlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" ValueChanged="SlideInput_ValueChanged" VerticalAlignment="Center" Margin="5,0,5,0" />
+        <local:NumberInput Grid.Column="1" x:Name="Input" HorizontalAlignment="Right" />
     </Grid>
 </UserControl>

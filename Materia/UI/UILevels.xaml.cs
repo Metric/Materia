@@ -24,7 +24,7 @@ namespace Materia
     /// <summary>
     /// Interaction logic for UILevels.xaml
     /// </summary>
-    public partial class UILevels : UserControl, IParameter
+    public partial class UILevels : UserControl
     {
         object propertyOwner;
         PropertyInfo property;

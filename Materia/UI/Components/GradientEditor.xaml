@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="64" d:DesignWidth="256" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged">
+             d:DesignHeight="64" d:DesignWidth="256" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged" HorizontalAlignment="Stretch">
     <Grid Height="64" Margin="8,0,8,8">
         <Grid Name="ImageWrapper" Height="32" VerticalAlignment="Top"  MouseDown="UserControl_MouseDoubleClick">
             <Grid.Background>

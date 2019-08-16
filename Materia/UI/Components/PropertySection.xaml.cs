@@ -32,7 +32,7 @@ namespace Materia.UI.Components
                 collapsed = value;
                 if(collapsed)
                 {
-                    CollapseButtonRotation.Angle = -90;
+                    CollapseButtonRotation.Angle = 0;
                     PanelItems.Visibility = Visibility.Collapsed;
                 }
                 else

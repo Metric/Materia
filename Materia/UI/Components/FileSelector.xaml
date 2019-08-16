@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="42" d:DesignWidth="256">
+             d:DesignHeight="42" d:DesignWidth="256" HorizontalAlignment="Stretch">
     <Grid Height="42">
         <TextBlock Name="PathLabel"  Margin="5,5,144,5" Foreground="LightGray" />
         <Button Name="SelectFile" Click="SelectFile_Click" Background="#444" BorderThickness="0" Foreground="LightGray" Content="Select" Margin="0,5,75,5" Width="64" HorizontalAlignment="Right" Style="{StaticResource ImageTextButton}" />

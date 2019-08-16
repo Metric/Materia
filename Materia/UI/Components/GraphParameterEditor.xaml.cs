@@ -21,20 +21,17 @@ namespace Materia.UI.Components
     /// </summary>
     public partial class GraphParameterEditor : UserControl
     {
-        Dictionary<string, PropertyLabel> labelLookup;
         Graph graph;
 
         public GraphParameterEditor()
         {
             InitializeComponent();
-            labelLookup = new Dictionary<string, PropertyLabel>();
         }
 
         public GraphParameterEditor(Graph g, Dictionary<string, GraphParameterValue> values)
         {
             InitializeComponent();
             graph = g;
-            labelLookup = new Dictionary<string, PropertyLabel>();
 
             foreach(var k in values.Keys)
             {
@@ -46,48 +43,31 @@ namespace Materia.UI.Components
                     Node n = null;
                     g.NodeLookup.TryGetValue(split[0], out n);
 
-                    PropertyLabel lbl = new PropertyLabel();
+                    string title = split[1];
 
                     if(n == null)
                     {
                         n = g.FindSubNodeById(split[0]);
                     }
 
-                    if (n == null)
-                    {
-                        lbl.Title = split[1];
-                    }
-                    else
-                    {
-                        lbl.Title = n.Name + " - " + split[1];
+                    if(n != null)
+                    { 
+                        title = n.Name + "." + split[1];
                     }
 
-                    Stack.Children.Add(lbl);
 
-                    GraphParameter cp = new GraphParameter(v, k);
+                    ParameterView cp = new ParameterView(title, k, v, "Name", "Type", "InputType");
                     cp.OnRemove += Cp_OnRemove;
-
-                    labelLookup[k] = lbl;
-
                     Stack.Children.Add(cp);
                 }
             }
         }
 
-        private void Cp_OnRemove(GraphParameter c)
+        private void Cp_OnRemove(ParameterView c)
         {
-            PropertyLabel lb = null;
-
-            if(labelLookup.TryGetValue(c.Id, out lb))
-            {
-                Stack.Children.Remove(lb);
-                labelLookup.Remove(c.Id);
-            }
-
-            Stack.Children.Remove(c);
-
             string[] split = c.Id.Split('.');
             graph.RemoveParameterValue(split[0], split[1]);
+            Stack.Children.Remove(c);
         }
     }
 }

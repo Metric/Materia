@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia"
              mc:Ignorable="d" 
-             d:DesignHeight="16" d:DesignWidth="800">
+             d:DesignHeight="16" d:DesignWidth="800" HorizontalAlignment="Stretch">
     <Grid MouseLeave="GridView_MouseLeave" MouseMove="GridView_MouseMove" MouseUp="GridView_MouseUp" Name="GridView" Background="Transparent">
         <Border BorderThickness="0" Background="#222" VerticalAlignment="Center" Height="2" Margin="8,0,8,0"></Border>
         <Border BorderBrush="White" MouseDown="Min_MouseDown" MouseMove="Min_MouseMove" HorizontalAlignment="Left" VerticalAlignment="Center"  Name="Min" Width="16" Height="16" BorderThickness="0">

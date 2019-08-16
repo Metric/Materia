@@ -14,7 +14,21 @@ namespace Materia.Nodes.MathNodes
 
         protected string varName;
 
-        [Editable(ParameterInputType.Text, "Variable Name")]
+        [Dropdown("VarName", true)]
+        [Editable(ParameterInputType.Dropdown, "Variable Name")]
+        public string[] AvailableVariables
+        {
+            get
+            {
+                if(ParentGraph != null)
+                {
+                    return ParentGraph.GetAvailableVariables(output.Type);
+                }
+
+                return new string[0];
+            }
+        }
+
         public string VarName
         {
             get
@@ -23,14 +37,6 @@ namespace Materia.Nodes.MathNodes
             }
             set
             {
-                if (!string.IsNullOrEmpty(varName))
-                {
-                    if (ParentGraph != null)
-                    {
-                        ParentGraph.RemoveVar(varName);
-                    }
-                }
-
                 varName = value;
                 OnDescription(varName);
                 Updated();

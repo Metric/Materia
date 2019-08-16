@@ -8,21 +8,21 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <StackPanel Orientation="Vertical">
-        <StackPanel>
+        <local:StackPanelAuto Direction="Horizontal" HalfAndHalf="False">
             <TextBlock Foreground="LightGray" Text="X" Margin="5" />
             <o:NumberSlider x:Name="XValue" />
-        </StackPanel>
-        <StackPanel>
+        </local:StackPanelAuto>
+        <local:StackPanelAuto Direction="Horizontal" HalfAndHalf="False">
             <TextBlock Foreground="LightGray" Text="Y" Margin="5" />
             <o:NumberSlider x:Name="YValue" />
-        </StackPanel>
-        <StackPanel Name="ZView">
+        </local:StackPanelAuto>
+        <local:StackPanelAuto Direction="Horizontal" x:Name="ZView" HalfAndHalf="False">
             <TextBlock Foreground="LightGray" Text="Z" Margin="5" />
             <o:NumberSlider x:Name="ZValue" />
-        </StackPanel>
-        <StackPanel Name="WView">
+        </local:StackPanelAuto>
+        <local:StackPanelAuto Direction="Horizontal" x:Name="WView" HalfAndHalf="False">
             <TextBlock Foreground="LightGray" Text="W" Margin="5" />
             <o:NumberSlider x:Name="WValue" />
-        </StackPanel>
+        </local:StackPanelAuto>
     </StackPanel>
 </UserControl>

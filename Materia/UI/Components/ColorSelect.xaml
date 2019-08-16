@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="42" d:DesignWidth="256">
+             d:DesignHeight="42" d:DesignWidth="256" HorizontalAlignment="Stretch">
     <Grid Height="42">
         <Grid Height="32" Margin="5,5,5,5">
             <Grid.Background>

@@ -336,15 +336,7 @@ namespace Materia.Nodes.MathNodes
             {
                 prefix = "bool ";
             }
-            else if(output.Type == NodeType.Matrix2)
-            {
-                prefix = "mat2 ";
-            }
-            else if(output.Type == NodeType.Matrix3)
-            {
-                prefix = "mat3 ";
-            }
-            else if(output.Type == NodeType.Matrix4)
+            else if(output.Type == NodeType.Matrix)
             {
                 prefix = "mat4 ";
             }
@@ -423,7 +415,7 @@ namespace Materia.Nodes.MathNodes
             {
                 if (i != executeInput)
                 {
-                    selectedFunction.SetVar(i.Name, i.Input.Data);
+                    selectedFunction.SetVar(i.Name, i.Input.Data, i.Input.Type);
                 }
             }
 

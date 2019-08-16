@@ -23,7 +23,7 @@ namespace Materia.Nodes.Atomic
         protected int redChannel;
 
         [Promote(NodeType.Float)]
-        [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
+        [Dropdown(null, false, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
         [Editable(ParameterInputType.Dropdown, "Red Channel")]
         public int RedChannel
         {
@@ -41,7 +41,7 @@ namespace Materia.Nodes.Atomic
         protected int greenChannel;
 
         [Promote(NodeType.Float)]
-        [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
+        [Dropdown(null, false, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
         [Editable(ParameterInputType.Dropdown, "Green Channel")]
         public int GreenChannel
         {
@@ -59,7 +59,7 @@ namespace Materia.Nodes.Atomic
         protected int blueChannel;
 
         [Promote(NodeType.Float)]
-        [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
+        [Dropdown(null, false, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
         [Editable(ParameterInputType.Dropdown, "Blue Channel")]
         public int BlueChannel
         {
@@ -77,7 +77,7 @@ namespace Materia.Nodes.Atomic
         protected int alphaChannel;
 
         [Promote(NodeType.Float)]
-        [Dropdown(null, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
+        [Dropdown(null, false, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
         [Editable(ParameterInputType.Dropdown, "Alpha Channel")]
         public int AlphaChannel
         {

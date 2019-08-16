@@ -39,22 +39,22 @@ namespace Materia.UI.Components
             Stack.Children.Clear();
         }
 
-        public ParameterMap(object n, string[] ignore = null,  bool showLabel = true)
+        public ParameterMap(object n, string[] ignore = null,  bool showLabel = true, bool inlinePropertyLabels = false)
         {
             InitializeComponent();
-            Set(n, ignore, showLabel);
+            Set(n, ignore, showLabel, inlinePropertyLabels);
         }
 
-        public ParameterMap(Node n, List<GraphParameterValue> values, bool showLabel = true)
+        public ParameterMap(Node n, List<GraphParameterValue> values, bool showLabel = true, bool inlinePropertyLabels = false)
         {
             InitializeComponent();
-            Set(n, values, showLabel);
+            Set(n, values, showLabel, inlinePropertyLabels);
         }
 
-        public ParameterMap(Graph g, Dictionary<string, GraphParameterValue> values, bool showLabel = true)
+        public ParameterMap(Graph g, Dictionary<string, GraphParameterValue> values, bool showLabel = true, bool inlinePropertyLabels = false)
         {
             InitializeComponent();
-            Set(g, values, showLabel);
+            Set(g, values, showLabel, inlinePropertyLabels);
         }
 
         ParameterInputType GetParamInputType(GraphParameterValue v)
@@ -121,7 +121,7 @@ namespace Materia.UI.Components
             return ptype;
         }
 
-        public void Set(object n, string[] ignore = null, bool showLabel = true)
+        public void Set(object n, string[] ignore = null, bool showLabel = true, bool inlinePropertyLabels = false)
         {
             Clear();
 
@@ -187,6 +187,10 @@ namespace Materia.UI.Components
                         UIElement ele = BuildParamater(n, t.Item2, t.Item1);
                         if (ele != null)
                         {
+                            StackPanelAuto inlinePanel = new StackPanelAuto();
+                            inlinePanel.Direction = Orientation.Horizontal;
+                            inlinePanel.HalfAndHalf = true;
+
                             //special case to eliminate the labels for 
                             //Parameter, CustomParameters, and CustomFunctions
                             if (!(n is GraphInstanceNode && t.Item1.Name.Equals("Parameters"))
@@ -199,16 +203,38 @@ namespace Materia.UI.Components
                                 if (n is Node && t.Item1.GetCustomAttribute<PromoteAttribute>() != null)
                                 {
                                     PropertyLabel pl = new PropertyLabel(name, n as Node, t.Item1.Name);
-                                    sect.Add(pl);
+                                    if (!inlinePropertyLabels)
+                                    {
+                                        sect.Add(pl);
+                                    }
+                                    else
+                                    {
+                                        inlinePanel.Children.Add(pl);
+                                    }
                                 }
                                 else
                                 {
                                     PropertyLabel pl = new PropertyLabel(name, null, t.Item1.Name);
-                                    sect.Add(pl);
+                                    if (!inlinePropertyLabels)
+                                    {
+                                        sect.Add(pl);
+                                    }
+                                    else
+                                    {
+                                        inlinePanel.Children.Add(pl);
+                                    }
                                 }
                             }
 
-                            sect.Add(ele);
+                            if (!inlinePropertyLabels)
+                            {
+                                sect.Add(ele);
+                            }
+                            else
+                            {
+                                inlinePanel.Children.Add(ele);
+                                sect.Add(inlinePanel);
+                            }
                         }
                     }
                 }
@@ -225,6 +251,10 @@ namespace Materia.UI.Components
                         UIElement ele = BuildParamater(n, t.Item2, t.Item1);
                         if (ele != null)
                         {
+                            StackPanelAuto inlinePanel = new StackPanelAuto();
+                            inlinePanel.Direction = Orientation.Horizontal;
+                            inlinePanel.HalfAndHalf = true;
+
                             //special case to eliminate the labels for 
                             //Parameter, CustomParameters, and CustomFunctions
                             if (!(n is GraphInstanceNode && t.Item1.Name.Equals("Parameters"))
@@ -237,23 +267,45 @@ namespace Materia.UI.Components
                                 if (n is Node)
                                 {
                                     PropertyLabel pl = new PropertyLabel(name, n as Node, t.Item1.Name);
-                                    Stack.Children.Add(pl);
+                                    if (!inlinePropertyLabels)
+                                    {
+                                        Stack.Children.Add(pl);
+                                    }
+                                    else
+                                    {
+                                        inlinePanel.Children.Add(pl);
+                                    }
                                 }
                                 else
                                 {
                                     PropertyLabel pl = new PropertyLabel(name, null, t.Item1.Name);
-                                    Stack.Children.Add(pl);
+                                    if (!inlinePropertyLabels)
+                                    {
+                                        Stack.Children.Add(pl);
+                                    }
+                                    else
+                                    {
+                                        inlinePanel.Children.Add(pl);
+                                    }
                                 }
                             }
 
-                            Stack.Children.Add(ele);
+                            if (!inlinePropertyLabels)
+                            {
+                                Stack.Children.Add(ele);
+                            }
+                            else
+                            {
+                                inlinePanel.Children.Add(ele);
+                                Stack.Children.Add(inlinePanel);
+                            }
                         }
                     }
                 }
             }
         }
 
-        public void Set(Node n, List<GraphParameterValue> values, bool showLabel = true)
+        public void Set(Node n, List<GraphParameterValue> values, bool showLabel = true, bool inlinePropertyLabels = false)
         {
             Clear();
             Dictionary<string, List<GraphParameterValue>> sorter = new Dictionary<string, List<GraphParameterValue>>();
@@ -304,8 +356,21 @@ namespace Materia.UI.Components
                         if (ele != null)
                         {
                             PropertyLabel lbl = new PropertyLabel(v.Name, n, "$Custom." + v.Name);
-                            sect.Add(lbl);
-                            sect.Add(ele);
+
+                            if (!inlinePropertyLabels)
+                            {
+                                sect.Add(lbl);
+                                sect.Add(ele);
+                            }
+                            else
+                            {
+                                StackPanelAuto inlinePanel = new StackPanelAuto();
+                                inlinePanel.Direction = Orientation.Horizontal;
+                                inlinePanel.HalfAndHalf = true;
+                                inlinePanel.Children.Add(lbl);
+                                inlinePanel.Children.Add(ele);
+                                sect.Add(inlinePanel);
+                            }
                         }
                     }
                 }
@@ -319,15 +384,28 @@ namespace Materia.UI.Components
                         if (ele != null)
                         {
                             PropertyLabel lbl = new PropertyLabel(v.Name, n, "$Custom." + v.Name);
-                            Stack.Children.Add(lbl);
-                            Stack.Children.Add(ele);
+
+                            if (!inlinePropertyLabels)
+                            {
+                                Stack.Children.Add(lbl);
+                                Stack.Children.Add(ele);
+                            }
+                            else
+                            {
+                                StackPanelAuto inlinePanel = new StackPanelAuto();
+                                inlinePanel.Direction = Orientation.Horizontal;
+                                inlinePanel.HalfAndHalf = true;
+                                inlinePanel.Children.Add(lbl);
+                                inlinePanel.Children.Add(ele);
+                                Stack.Children.Add(inlinePanel);
+                            }
                         }
                     }
                 }
             }
         }
 
-        public void Set(Graph g, Dictionary<string, GraphParameterValue> values, bool showLabel = true)
+        public void Set(Graph g, Dictionary<string, GraphParameterValue> values, bool showLabel = true, bool inlinePropertyLabels = false)
         {
             Clear();
             Dictionary<string, List<Tuple<PropertyLabel, UIElement>>> sorter = new Dictionary<string, List<Tuple<PropertyLabel, UIElement>>>();
@@ -433,16 +511,40 @@ namespace Materia.UI.Components
 
                     foreach (var t in items)
                     {
-                        sect.Add(t.Item1);
-                        sect.Add(t.Item2);
+                        if (!inlinePropertyLabels)
+                        {
+                            sect.Add(t.Item1);
+                            sect.Add(t.Item2);
+                        }
+                        else
+                        {
+                            StackPanelAuto inlinePanel = new StackPanelAuto();
+                            inlinePanel.Direction = Orientation.Horizontal;
+                            inlinePanel.HalfAndHalf = true;
+                            inlinePanel.Children.Add(t.Item1);
+                            inlinePanel.Children.Add(t.Item2);
+                            sect.Add(inlinePanel);
+                        }
                     }
                 }
                 else
                 {
                     foreach (var t in items)
                     {
-                        Stack.Children.Add(t.Item1);
-                        Stack.Children.Add(t.Item2);
+                        if (!inlinePropertyLabels)
+                        {
+                            Stack.Children.Add(t.Item1);
+                            Stack.Children.Add(t.Item2);
+                        }
+                        else
+                        {
+                            StackPanelAuto inlinePanel = new StackPanelAuto();
+                            inlinePanel.Direction = Orientation.Horizontal;
+                            inlinePanel.HalfAndHalf = true;
+                            inlinePanel.Children.Add(t.Item1);
+                            inlinePanel.Children.Add(t.Item2);
+                            Stack.Children.Add(inlinePanel);
+                        }
                     }
                 }
             }
@@ -498,7 +600,7 @@ namespace Materia.UI.Components
                     }
                     if(da != null)
                     {
-                        return new DropDown(dvalues, owner, v, da.OutputProperty);
+                        return new DropDown(dvalues, owner, v, da.OutputProperty, da.IsEditable);
                     }
 
                     return new DropDown(dvalues, owner, v);

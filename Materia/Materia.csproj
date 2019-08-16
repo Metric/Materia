@@ -149,14 +149,14 @@
     <Compile Include="UI\Components\ColorSelect.xaml.cs">
       <DependentUpon>ColorSelect.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UI\Components\CustomFunction.xaml.cs">
-      <DependentUpon>CustomFunction.xaml</DependentUpon>
+    <Compile Include="UI\Components\FunctionView.xaml.cs">
+      <DependentUpon>FunctionView.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Components\CustomFunctionEditor.xaml.cs">
       <DependentUpon>CustomFunctionEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UI\Components\CustomParameter.xaml.cs">
-      <DependentUpon>CustomParameter.xaml</DependentUpon>
+    <Compile Include="UI\Components\ParameterView.xaml.cs">
+      <DependentUpon>ParameterView.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Components\CustomParameterEditor.xaml.cs">
       <DependentUpon>CustomParameterEditor.xaml</DependentUpon>
@@ -170,14 +170,8 @@
     <Compile Include="UI\Components\GradientEditor.xaml.cs">
       <DependentUpon>GradientEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UI\Components\GraphFunction.xaml.cs">
-      <DependentUpon>GraphFunction.xaml</DependentUpon>
-    </Compile>
     <Compile Include="UI\Components\GraphFunctionEditor.xaml.cs">
       <DependentUpon>GraphFunctionEditor.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="UI\Components\GraphParameter.xaml.cs">
-      <DependentUpon>GraphParameter.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Components\GraphParameterEditor.xaml.cs">
       <DependentUpon>GraphParameterEditor.xaml</DependentUpon>
@@ -203,6 +197,7 @@
     <Compile Include="UI\Components\ShelfItem.xaml.cs">
       <DependentUpon>ShelfItem.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Components\StackPanelAuto.cs" />
     <Compile Include="UI\Components\ToggleControl.xaml.cs">
       <DependentUpon>ToggleControl.xaml</DependentUpon>
     </Compile>
@@ -230,7 +225,6 @@
       <DependentUpon>UIPinNode.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\IUIGraphNode.cs" />
-    <Compile Include="UI\IParameter.cs" />
     <Compile Include="UI\Components\MultiRangeSlider.xaml.cs">
       <DependentUpon>MultiRangeSlider.xaml</DependentUpon>
     </Compile>
@@ -307,7 +301,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Components\CustomFunction.xaml">
+    <Page Include="UI\Components\FunctionView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -315,7 +309,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Components\CustomParameter.xaml">
+    <Page Include="UI\Components\ParameterView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -347,15 +341,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Components\GraphFunction.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="UI\Components\GraphFunctionEditor.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="UI\Components\GraphParameter.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

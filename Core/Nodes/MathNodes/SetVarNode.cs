@@ -73,7 +73,7 @@ namespace Materia.Nodes.MathNodes
         {
             if(ParentGraph != null && !string.IsNullOrEmpty(varName))
             {
-                ParentGraph.SetVar(varName, null);
+                ParentGraph.SetVar(varName, null, output.Type);
             }
         }
 
@@ -85,6 +85,14 @@ namespace Materia.Nodes.MathNodes
         private void Input_OnInputAdded(NodeInput n)
         {
             UpdateOutputType();
+
+            //just set the var here in case 
+            //try and process is not triggered by update
+            if (ParentGraph != null && !string.IsNullOrEmpty(varName))
+            {
+                ParentGraph.SetVar(varName, input.Input.Data, output.Type);
+            }
+
             Updated();
         }
 
@@ -115,7 +123,7 @@ namespace Materia.Nodes.MathNodes
 
             if(ParentGraph != null)
             {
-                ParentGraph.SetVar(varName, input.Input.Data);
+                ParentGraph.SetVar(varName, input.Input.Data, output.Type);
             }
 
             output.Data = input.Input.Data;
@@ -196,27 +204,7 @@ namespace Materia.Nodes.MathNodes
                 }
                 return op;
             }
-            else if(t == NodeType.Matrix2)
-            {
-                string op = "mat2 " + varName + " = " + n1id + ";\r\n mat2 " + s + " = " + n1id + ";\r\n";
-                Regex ftest = new Regex(string.Format(FunctionArgTest, "mat2 " + varName), RegexOptions.Multiline);
-                if (currentFrag.IndexOf("mat2 " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
-                {
-                    op = varName + " = " + n1id + ";\r\n mat2 " + s + " = " + n1id + ";\r\n";
-                }
-                return op;
-            }
-            else if (t == NodeType.Matrix3)
-            {
-                string op = "mat3 " + varName + " = " + n1id + ";\r\n mat3 " + s + " = " + n1id + ";\r\n";
-                Regex ftest = new Regex(string.Format(FunctionArgTest, "mat3 " + varName), RegexOptions.Multiline);
-                if (currentFrag.IndexOf("mat3 " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
-                {
-                    op = varName + " = " + n1id + ";\r\n mat3 " + s + " = " + n1id + ";\r\n";
-                }
-                return op;
-            }
-            else if (t == NodeType.Matrix4)
+            else if (t == NodeType.Matrix)
             {
                 string op = "mat4 " + varName + " = " + n1id + ";\r\n mat4 " + s + " = " + n1id + ";\r\n";
                 Regex ftest = new Regex(string.Format(FunctionArgTest, "mat4 " + varName), RegexOptions.Multiline);

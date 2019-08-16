@@ -27,7 +27,7 @@ namespace Materia
     /// <summary>
     /// Interaction logic for NumberInput.xaml
     /// </summary>
-    public partial class NumberInput : UserControl, IParameter
+    public partial class NumberInput : UserControl
     {
         bool initing;
 
@@ -156,11 +156,6 @@ namespace Materia
                         break;
                 }
             }
-        }
-
-        public void OnUpdate(object obj)
-        {
-            
         }
 
         private void Input_KeyDown(object sender, KeyEventArgs e)

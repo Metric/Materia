@@ -419,9 +419,9 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "Blending"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Blending").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(x, y));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
+                    g.SetVar("pos", new MVector(x, y), NodeType.Float2);
+                    g.SetVar("iteration", i, NodeType.Float);
+                    g.SetVar("maxIterations", imax, NodeType.Float);
                     g.TryAndProcess();
                     blend = (FXBlend)Convert.ToInt32(g.Result);
                 }
@@ -436,9 +436,9 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(x, y));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
+                    g.SetVar("pos", new MVector(x, y), NodeType.Float2);
+                    g.SetVar("iteration", i, NodeType.Float);
+                    g.SetVar("maxIterations", imax, NodeType.Float);
                     g.TryAndProcess();
                     luminosity = Convert.ToSingle(g.Result);
                 }
@@ -453,9 +453,9 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(x, y));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
+                    g.SetVar("pos", new MVector(x, y), NodeType.Float2);
+                    g.SetVar("iteration", i, NodeType.Float);
+                    g.SetVar("maxIterations", imax, NodeType.Float);
                     g.TryAndProcess();
                     luminosityRandomness = Convert.ToSingle(g.Result);
                 }
@@ -470,9 +470,9 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "PatternPivot"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "PatternPivot").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(x, y));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
+                    g.SetVar("pos", new MVector(x, y), NodeType.Float2);
+                    g.SetVar("iteration", i, NodeType.Float);
+                    g.SetVar("maxIterations", imax, NodeType.Float);
                     g.TryAndProcess();
                     pivot = (FXPivot)Convert.ToInt32(g.Result);
                 }
@@ -487,9 +487,9 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "Translation"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Translation").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(x, y));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
+                    g.SetVar("pos", new MVector(x, y), NodeType.Float2);
+                    g.SetVar("iteration", i, NodeType.Float);
+                    g.SetVar("maxIterations", imax, NodeType.Float);
                     g.TryAndProcess();
 
                     object o = g.Result;
@@ -513,9 +513,9 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "Scale"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Scale").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(x, y));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
+                    g.SetVar("pos", new MVector(x, y), NodeType.Float2);
+                    g.SetVar("iteration", i, NodeType.Float);
+                    g.SetVar("maxIterations", imax, NodeType.Float);
                     g.TryAndProcess();
 
                     object o = g.Result;
@@ -539,9 +539,9 @@ namespace Materia.Nodes.Atomic
                 if (ParentGraph.IsParameterValueFunction(Id, "Rotation"))
                 {
                     FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Rotation").Value as FunctionGraph;
-                    g.SetVar("pos", new MVector(x, y));
-                    g.SetVar("iteration", i);
-                    g.SetVar("maxIterations", imax);
+                    g.SetVar("pos", new MVector(x, y), NodeType.Float2);
+                    g.SetVar("iteration", i, NodeType.Float);
+                    g.SetVar("maxIterations", imax, NodeType.Float);
                     g.TryAndProcess();
                     rot = Convert.ToSingle(g.Result);
                 }

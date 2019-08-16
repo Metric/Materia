@@ -23,11 +23,11 @@ namespace Materia.Nodes.MathNodes
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
      
-            output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Matrix2 | NodeType.Matrix3 | NodeType.Matrix4, this);
+            output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Matrix, this);
 
             for (int i = 0; i < 2; i++)
             {
-                var input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Matrix2 | NodeType.Matrix3 | NodeType.Matrix4, this, "Input " + i);
+                var input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Matrix, this, "Input " + i);
                 Inputs.Add(input);
 
                 input.OnInputAdded += Input_OnInputAdded;
@@ -102,36 +102,28 @@ namespace Materia.Nodes.MathNodes
                 {
                     output.Type = NodeType.Float4;
                 }
-                else if((t1 == NodeType.Matrix2 && t2 == NodeType.Float2) || (t1 == NodeType.Float2 && t2 == NodeType.Matrix2))
+                else if((t1 == NodeType.Matrix && t2 == NodeType.Float2) || (t1 == NodeType.Float2 && t2 == NodeType.Matrix))
                 {
                     output.Type = NodeType.Float2;
                 }
-                else if((t1 == NodeType.Matrix3 && t2 == NodeType.Float3) || (t1 == NodeType.Float3 && t2 == NodeType.Matrix3))
+                else if((t1 == NodeType.Matrix && t2 == NodeType.Float3) || (t1 == NodeType.Float3 && t2 == NodeType.Matrix))
                 {
                     output.Type = NodeType.Float3;
                 }
-                else if ((t1 == NodeType.Matrix4 && t2 == NodeType.Float4) || (t1 == NodeType.Float4 && t2 == NodeType.Matrix4))
+                else if ((t1 == NodeType.Matrix && t2 == NodeType.Float4) || (t1 == NodeType.Float4 && t2 == NodeType.Matrix))
                 {
                     output.Type = NodeType.Float4;
                 }
-                else if(t1 == NodeType.Matrix2 && t2 == NodeType.Matrix2)
-                {
-                    output.Type = NodeType.Matrix2;
-                }
-                else if(t1 == NodeType.Matrix3 && t2 == NodeType.Matrix3)
-                {
-                    output.Type = NodeType.Matrix3;
-                }
-                else if(t1 == NodeType.Matrix4 && t2 == NodeType.Matrix4)
-                {
-                    output.Type = NodeType.Matrix4;
+                else if(t1 == NodeType.Matrix && t2 == NodeType.Matrix)
+                { 
+                    output.Type = NodeType.Matrix;
                 }
             }
         }
 
         protected override void AddPlaceholderInput()
         {
-            var input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Matrix2 | NodeType.Matrix3 | NodeType.Matrix4, this, "Input " + Inputs.Count);
+            var input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Matrix, this, "Input " + Inputs.Count);
 
             input.OnInputAdded += Input_OnInputAdded;
             input.OnInputChanged += Input_OnInputChanged;
@@ -209,27 +201,27 @@ namespace Materia.Nodes.MathNodes
             {
                 return "vec4 " + s + " = " + n1id + " * " + n2id + ";\r\n";
             }
-            else if((t1 == NodeType.Float2 && t2 == NodeType.Matrix2) || (t1 == NodeType.Matrix2 && t2 == NodeType.Float2))
+            else if(t1 == NodeType.Float2 && t2 == NodeType.Matrix)
             {
-                return "vec2 " + s + " = " + n1id + " * " + n2id + ";\r\n";
+                return "vec2 " + s + " = (vec4(" + n1id + ",0,1) * " + n2id + ").xy;\r\n";
             }
-            else if ((t1 == NodeType.Float3 && t2 == NodeType.Matrix3) || (t1 == NodeType.Matrix3 && t2 == NodeType.Float3))
+            else if (t1 == NodeType.Matrix && t2 == NodeType.Float2)
             {
-                return "vec3 " + s + " = " + n1id + " * " + n2id + ";\r\n";
+                return "vec2 " + s + " = (" + n1id + " * vec4(" + n2id + ",0,1)).xy;\r\n"; 
             }
-            else if ((t1 == NodeType.Float4 && t2 == NodeType.Matrix4) || (t1 == NodeType.Matrix4 && t2 == NodeType.Float4))
+            else if (t1 == NodeType.Float3 && t2 == NodeType.Matrix)
+            {
+                return "vec3 " + s + " = (vec4(" + n1id + ",1) * " + n2id + ").xyz;\r\n";
+            }
+            else if (t1 == NodeType.Matrix && t2 == NodeType.Float3)
+            {
+                return "vec3 " + s + " = (" + n1id + " * vec4(" + n2id + ",1)).xyz;\r\n";
+            }
+            else if ((t1 == NodeType.Float4 && t2 == NodeType.Matrix) || (t1 == NodeType.Matrix && t2 == NodeType.Float4))
             {
                 return "vec4 " + s + " = " + n1id + " * " + n2id + ";\r\n";
             }
-            else if(t1 == NodeType.Matrix2 && t2 == NodeType.Matrix2)
-            {
-                return "mat2 " + s + " = " + n1id + " * " + n2id + ";\r\n";
-            }
-            else if (t1 == NodeType.Matrix3 && t2 == NodeType.Matrix3)
-            {
-                return "mat3 " + s + " = " + n1id + " * " + n2id + ";\r\n";
-            }
-            else if (t1 == NodeType.Matrix4 && t2 == NodeType.Matrix4)
+            else if(t1 == NodeType.Matrix && t2 == NodeType.Matrix)
             {
                 return "mat4 " + s + " = " + n1id + " * " + n2id + ";\r\n";
             }
@@ -255,12 +247,12 @@ namespace Materia.Nodes.MathNodes
                             matrixOnly = false;
                             hasVector = true;
                         }
-                        else if(inp.Input.Data is float || inp.Input.Data is long || inp.Input.Data is double || inp.Input.Data is int)
+                        else if(Utils.IsNumber(inp.Input.Data))
                         {
                             hasSingle = true;
                             matrixOnly = false;
                         }
-                        else if(inp.Input.Data is Matrix2 || inp.Input.Data is Matrix3 || inp.Input.Data is Matrix4)
+                        else if(inp.Input.Data is Matrix4)
                         {
                             hasMatrix = true;
                         }
@@ -272,50 +264,18 @@ namespace Materia.Nodes.MathNodes
             {
                 object i1 = Inputs[1].Input.Data;
                 object i2 = Inputs[2].Input.Data;
+                NodeType t1 = Inputs[1].Input.Type;
+                NodeType t2 = Inputs[2].Input.Type;
 
-                if(i1 is MVector && i2 is Matrix2)
+                 if(i1 is MVector && i2 is Matrix4)
                 {
                     MVector v = (MVector)i1;
-                    Vector2 v2 = new Vector2(v.X, v.Y);
-                    Matrix2 m2 = (Matrix2)i2;
 
-                    v2 = v2 * m2;
+                    if(t1 == NodeType.Float2 || t1 == NodeType.Float3)
+                    {
+                        v.W = 1;
+                    } 
 
-                    output.Data = new MVector(v2.X, v2.Y);
-                }
-                else if(i1 is Matrix2 && i2 is MVector)
-                {
-                    MVector v = (MVector)i2;
-                    Vector2 v2 = new Vector2(v.X, v.Y);
-                    Matrix2 m2 = (Matrix2)i1;
-
-                    v2 = m2 * v2;
-
-                    output.Data = new MVector(v2.X, v2.Y);
-                }
-                else if(i1 is MVector && i2 is Matrix3)
-                {
-                    MVector v = (MVector)i1;
-                    Vector3 v2 = new Vector3(v.X, v.Y, v.Z);
-                    Matrix3 m2 = (Matrix3)i2;
-
-                    v2 = v2 * m2;
-
-                    output.Data = new MVector(v2.X, v2.Y, v2.Z);
-                }
-                else if(i1 is Matrix3 && i2 is MVector)
-                {
-                    MVector v = (MVector)i2;
-                    Vector3 v2 = new Vector3(v.X, v.Y, v.Z);
-                    Matrix3 m2 = (Matrix3)i1;
-
-                    v2 = m2 * v2;
-
-                    output.Data = new MVector(v2.X, v2.Y, v2.Z);
-                }
-                else if(i1 is MVector && i2 is Matrix4)
-                {
-                    MVector v = (MVector)i1;
                     Vector4 v2 = new Vector4(v.X, v.Y, v.Z, v.W);
                     Matrix4 m2 = (Matrix4)i2;
 
@@ -326,6 +286,12 @@ namespace Materia.Nodes.MathNodes
                 else if(i1 is Matrix4 && i2 is MVector)
                 {
                     MVector v = (MVector)i2;
+
+                    if(t2 == NodeType.Float2 || t2 == NodeType.Float3)
+                    {
+                        v.W = 1;
+                    }
+
                     Vector4 v2 = new Vector4(v.X, v.Y, v.Z, v.W);
                     Matrix4 m2 = (Matrix4)i1;
 
@@ -343,21 +309,7 @@ namespace Materia.Nodes.MathNodes
                 object i1 = Inputs[1].Input.Data;
                 object i2 = Inputs[2].Input.Data;
 
-                if(i1 is Matrix2 && i2 is Matrix2)
-                {
-                    Matrix2 m1 = (Matrix2)i1;
-                    Matrix2 m2 = (Matrix2)i2;
-
-                    output.Data = m1 * m2; 
-                }
-                else if(i1 is Matrix3 && i2 is Matrix3)
-                {
-                    Matrix3 m1 = (Matrix3)i1;
-                    Matrix3 m2 = (Matrix3)i2;
-
-                    output.Data = m1 * m2;
-                }
-                else if(i1 is Matrix4 && i1 is Matrix4)
+                if(i1 is Matrix4 && i1 is Matrix4)
                 {
                     Matrix4 m1 = (Matrix4)i1;
                     Matrix4 m2 = (Matrix4)i2;
@@ -374,35 +326,7 @@ namespace Materia.Nodes.MathNodes
                 object i1 = Inputs[1].Input.Data;
                 object i2 = Inputs[2].Input.Data;
 
-                if(Utils.IsNumber(i1) && i2 is Matrix2)
-                {
-                    float f = Convert.ToSingle(i1);
-                    Matrix2 m2 = (Matrix2)i2;
-
-                    output.Data = f * m2;
-                }
-                else if(i1 is Matrix2 && Utils.IsNumber(i2))
-                {
-                    float f = Convert.ToSingle(i2);
-                    Matrix2 m2 = (Matrix2)i1;
-
-                    output.Data = m2 * f;
-                }
-                else if(Utils.IsNumber(i1) && i2 is Matrix3)
-                {
-                    float f = Convert.ToSingle(i1);
-                    Matrix3 m2 = (Matrix3)i2;
-
-                    output.Data = f * m2;
-                }
-                else if(i1 is Matrix3 && Utils.IsNumber(i2))
-                {
-                    float f = Convert.ToSingle(i2);
-                    Matrix3 m2 = (Matrix3)i1;
-
-                    output.Data = m2 * f;
-                }
-                else if(Utils.IsNumber(i1) && i2 is Matrix4)
+                if(Utils.IsNumber(i1) && i2 is Matrix4)
                 {
                     float f = Convert.ToSingle(i1);
                     Matrix4 m2 = (Matrix4)i2;
@@ -435,7 +359,7 @@ namespace Materia.Nodes.MathNodes
                             object o = inp.Input.Data;
                             if (o == null) continue;
 
-                            if (o is float || o is int || o is double || o is long)
+                            if (Utils.IsNumber(o))
                             {
                                 if (i == 0)
                                 {
@@ -491,7 +415,7 @@ namespace Materia.Nodes.MathNodes
                             object o = inp.Input.Data;
                             if (o == null) continue;
 
-                            if (o is float || o is int || o is double || o is long)
+                            if (Utils.IsNumber(o))
                             {
                                 if (i == 0)
                                 {
@@ -512,7 +436,10 @@ namespace Materia.Nodes.MathNodes
                 output.Data = v;
             }
 
-            result = output.Data.ToString();
+            if (output.Data != null)
+            {
+                result = output.Data.ToString();
+            }
 
             if (ParentGraph != null)
             {

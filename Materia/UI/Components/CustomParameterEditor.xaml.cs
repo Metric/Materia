@@ -39,13 +39,13 @@ namespace Materia.UI.Components
         {
             foreach(var p in graph.CustomParameters)
             {
-                CustomParameter cp = new CustomParameter(p);
+                ParameterView cp = new ParameterView(p, p.Id, false, "Name");
                 cp.OnRemove += Cp_OnRemove;
                 Stack.Children.Add(cp);
             }
         }
 
-        private void Cp_OnRemove(CustomParameter c)
+        private void Cp_OnRemove(ParameterView c)
         {
             if(graph != null)
             {
@@ -63,7 +63,7 @@ namespace Materia.UI.Components
                 string name = "Param" + index;
                 GraphParameterValue gp = new GraphParameterValue(name, 0, "", NodeType.Float);
                 graph.AddCustomParameter(gp);
-                CustomParameter cp = new CustomParameter(gp);
+                ParameterView cp = new ParameterView(gp, gp.Id, false, "Name");
                 cp.OnRemove += Cp_OnRemove;
                 Stack.Children.Add(cp);
             }

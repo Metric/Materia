@@ -1751,6 +1751,16 @@ namespace Materia
                     }
                 }
 
+                //handle a quick shortcut to load graph settings
+                if(selectedStartedIn.Count == 0 && e.ClickCount > 1)
+                {
+                    if(UINodeParameters.Instance != null)
+                    {
+                        UINodeParameters.Instance.SetActive(Graph);
+                        return;
+                    }
+                }
+
                 selectionRect.Width = 0;
                 selectionRect.Height = 0;
 

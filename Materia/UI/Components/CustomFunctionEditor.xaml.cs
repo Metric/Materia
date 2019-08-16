@@ -39,13 +39,13 @@ namespace Materia.UI.Components
         {
             foreach (var p in graph.CustomFunctions)
             {
-                CustomFunction cp = new CustomFunction(p);
+                FunctionView cp = new FunctionView(p);
                 cp.OnRemove += Cp_OnRemove;
                 Stack.Children.Add(cp);
             }
         }
 
-        private void Cp_OnRemove(CustomFunction c)
+        private void Cp_OnRemove(FunctionView c)
         {
             Stack.Children.Remove(c);
         }
@@ -57,9 +57,9 @@ namespace Materia.UI.Components
                 int index = graph.CustomFunctions.Count;
                 string name = "Func" + index;
                 FunctionGraph gp = new FunctionGraph(name);
-                gp.ParentGraph = graph;
+                gp.AssignParentGraph(graph);
                 graph.AddCustomFunction(gp);
-                CustomFunction cp = new CustomFunction(gp);
+                FunctionView cp = new FunctionView(gp);
                 cp.OnRemove += Cp_OnRemove;
                 Stack.Children.Add(cp);
             }

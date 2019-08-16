@@ -42,7 +42,7 @@ namespace Materia.Nodes.Atomic
 
             tileX = tileY = 1;
 
-            function = new FunctionGraph("Pixel Processor Function");
+            function = new FunctionGraph("Pixel Processor Function", w, h);
             function.AssignParentNode(this);
 
             function.ExpectedOutput = NodeType.Float4 | NodeType.Float;

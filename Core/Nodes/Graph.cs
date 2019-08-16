@@ -35,6 +35,18 @@ namespace Materia.Nodes
         Luminance32F = PixelInternalFormat.R32f,
     }
 
+    public struct VariableDefinition
+    {
+        public NodeType Type;
+        public object Value;
+
+        public VariableDefinition(object v, NodeType type)
+        {
+            Type = type;
+            Value = v;
+        }
+    }
+
     public class Graph : IDisposable
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
@@ -67,7 +79,7 @@ namespace Materia.Nodes
         public List<string> OutputNodes { get; protected set; }
         public List<string> InputNodes { get; protected set; }
 
-        protected Dictionary<string, object> Variables { get; set; }
+        protected Dictionary<string, VariableDefinition> Variables { get; set; }
         protected Dictionary<string, Point> OriginSizes;
 
         protected Dictionary<string, Node.NodeData> tempData;
@@ -311,7 +323,7 @@ namespace Materia.Nodes
             width = w;
             height = h;
 
-            Variables = new Dictionary<string, object>();
+            Variables = new Dictionary<string, VariableDefinition>();
             defaultTextureType = GraphPixelType.RGBA;
             Nodes = new List<Node>();
             NodeLookup = new Dictionary<string, Node>();
@@ -354,7 +366,7 @@ namespace Materia.Nodes
 
             if(Variables.ContainsKey(k))
             {
-                return Variables[k];
+                return Variables[k].Value;
             }
 
             return null;
@@ -383,6 +395,26 @@ namespace Materia.Nodes
             }
 
             return this;
+        }
+
+        public virtual string[] GetAvailableVariables(NodeType type)
+        {
+            List<string> available = new List<string>();
+
+            foreach(string k in Variables.Keys)
+            {
+                VariableDefinition o = Variables[k];
+
+                if(o.Type == type || (o.Type & type) != 0)
+                {
+                    available.Add(k);
+                }
+            }
+
+            //sort alphabetically
+            available.Sort();
+
+            return available.ToArray();
         }
 
         public Node FindSubNodeById(string id)
@@ -463,9 +495,9 @@ namespace Materia.Nodes
             Variables.Remove(k);
         }
 
-        public virtual void SetVar(string k, object v)
+        public virtual void SetVar(string k, object v, NodeType type)
         {
-            Variables[k] = v;
+            Variables[k] = new VariableDefinition(v, type);
         }
 
         public class GraphData

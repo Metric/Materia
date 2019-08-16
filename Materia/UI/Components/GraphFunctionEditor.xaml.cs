@@ -43,14 +43,14 @@ namespace Materia.UI.Components
 
                 if (split.Length >= 2)
                 {
-                    GraphFunction fp = new GraphFunction(split[0], split[1], graph.ParameterFunctions[k]);
+                    FunctionView fp = new FunctionView(split[0], split[1], graph.ParameterFunctions[k]);
                     fp.OnRemove += Cp_OnRemove;
                     Stack.Children.Add(fp);
                 }
             }
         }
 
-        private void Cp_OnRemove(GraphFunction c)
+        private void Cp_OnRemove(FunctionView c)
         {
             Stack.Children.Remove(c);
         }

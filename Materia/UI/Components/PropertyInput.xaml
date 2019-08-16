@@ -5,8 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="32" d:DesignWidth="256">
-    <Grid Height="32">
-        <TextBox Name="IField" Margin="5" Background="#222" Foreground="LightGray" TextChanged="TextInput_TextChanged" KeyDown="IField_KeyDown" />
+             d:DesignHeight="32" d:DesignWidth="256" Height="32" HorizontalAlignment="Stretch">
+    <Grid>
+        <TextBox Name="IField" Margin="5" Background="#222" Foreground="LightGray" GotFocus="IField_GotFocus" LostFocus="IField_LostFocus" TextChanged="TextInput_TextChanged" KeyDown="IField_KeyDown" />
     </Grid>
 </UserControl>

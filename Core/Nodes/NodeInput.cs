@@ -16,9 +16,7 @@ namespace Materia.Nodes
         Float4 = 64,
         Bool = 128,
         Execute = 256,
-        Matrix2 = 512,
-        Matrix3 = 1024,
-        Matrix4 = 2048
+        Matrix = 512,
     }
 
     public class NodeInput

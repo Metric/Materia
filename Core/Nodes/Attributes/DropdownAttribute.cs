@@ -13,9 +13,12 @@ namespace Materia.Nodes.Attributes
             get; set;
         }
         public string OutputProperty { get; set; }
-        public DropdownAttribute(string outputProperty, params object[] values)
+        public bool IsEditable { get; set; }
+
+        public DropdownAttribute(string outputProperty, bool isEditable = false, params object[] values)
         {
             Values = values;
+            IsEditable = isEditable;
             OutputProperty = outputProperty;
         }
     }

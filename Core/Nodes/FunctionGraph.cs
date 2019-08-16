@@ -146,7 +146,7 @@ namespace Materia.Nodes
         private void G_OnGraphUpdated(Graph g)
         {
             randomSeed = g.RandomSeed;
-            SetVar("RandomSeed", randomSeed);
+            SetVar("RandomSeed", randomSeed, NodeType.Float);
         }
 
         public new int Width
@@ -178,10 +178,15 @@ namespace Materia.Nodes
             calls = new List<CallNode>();
             args = new List<ArgNode>();
             Name = name;
-            SetVar("PI", 3.14159265359f);
-            SetVar("Rad2Deg", (180.0f / 3.14159265359f));
-            SetVar("Deg2Rad", (3.14159265359f / 180.0f));
-            SetVar("RandomSeed", randomSeed);
+            SetVar("PI", 3.14159265359f, NodeType.Float);
+            SetVar("Rad2Deg", (180.0f / 3.14159265359f), NodeType.Float);
+            SetVar("Deg2Rad", (3.14159265359f / 180.0f), NodeType.Float);
+            SetVar("RandomSeed", randomSeed, NodeType.Float);
+
+            //just set these so they are available
+            //as a drop down selection
+            SetVar("pos", new MVector(0, 0), NodeType.Float2);
+            SetVar("size", new MVector(w, h), NodeType.Float2);
         }
 
         public override bool Add(Node n)
@@ -354,15 +359,7 @@ namespace Materia.Nodes
             {
                 frag += "bool ";
             }
-            else if(outtype.Value == NodeType.Matrix2)
-            {
-                frag += "mat2 ";
-            }
-            else if(outtype.Value == NodeType.Matrix3)
-            {
-                frag += "mat3 ";
-            }
-            else if(outtype.Value == NodeType.Matrix4)
+            else if(outtype.Value == NodeType.Matrix)
             {
                 frag += "mat4 ";
             }
@@ -398,15 +395,7 @@ namespace Materia.Nodes
                 {
                     frag += "bool " + a.InputName + ",";
                 }
-                else if(a.InputType == NodeType.Matrix2)
-                {
-                    frag += "mat2 " + a.InputName + ",";
-                }
-                else if(a.InputType == NodeType.Matrix3)
-                {
-                    frag += "mat3 " + a.InputName + ",";
-                }
-                else if(a.InputType == NodeType.Matrix4)
+                else if(a.InputType == NodeType.Matrix)
                 {
                     frag += "mat4 " + a.InputName + ",";
                 }
@@ -857,6 +846,17 @@ namespace Materia.Nodes
         public void AssignParentGraph(Graph g)
         {
             parentGraph = g;
+
+            var top = TopGraph();
+            SetParentGraphVars(top);
+        }
+
+        public override void AssignParentNode(Node n)
+        {
+            base.AssignParentNode(n);
+
+            var top = TopGraph();
+            SetParentNodeVars(top);
         }
 
         public override void ResizeWith(int width, int height)
@@ -893,15 +893,7 @@ namespace Materia.Nodes
             {
                 type = "vec3 ";
             }
-            else if(param.Type == NodeType.Matrix2)
-            {
-                type = "mat2 ";
-            }
-            else if(param.Type == NodeType.Matrix3)
-            {
-                type = "mat3 ";
-            }
-            else if(param.Type == NodeType.Matrix4)
+            else if(param.Type == NodeType.Matrix)
             {
                 type = "mat4 ";
             }
@@ -990,21 +982,7 @@ namespace Materia.Nodes
 
                 builder.Append("vec3(" + vec.X + "," + vec.Y + "," + vec.Z + ");\r\n");
             }
-            else if(param.Type == NodeType.Matrix2)
-            {
-                Matrix2 m2 = param.Matrix2Value;
-                //glsl matrices are column major order
-                builder.Append("mat2(" + m2.Column0.X + ", " + m2.Column0.Y + ", " + m2.Column1.X + ", " + m2.Column1.Y + ");\r\n");
-            }
-            else if(param.Type == NodeType.Matrix3)
-            {
-                Matrix3 m3 = param.Matrix3Value;
-                //glsl matrices are column major order
-                builder.Append("mat3(" + m3.Column0.X + ", " + m3.Column0.Y + ", " + m3.Column0.Z + ", "
-                                        + m3.Column1.X + ", " + m3.Column1.Y + ", " + m3.Column1.Z + ", "
-                                        + m3.Column2.X + ", " + m3.Column2.Y + ", " + m3.Column2.Z + ");\r\n");
-            }
-            else if(param.Type == NodeType.Matrix4)
+            else if(param.Type == NodeType.Matrix)
             {
                 Matrix4 m4 = param.Matrix4Value;
                 //glsl matrices are column major order
@@ -1062,21 +1040,7 @@ namespace Materia.Nodes
 
                 builder.Append("vec3(" + vec.X + "," + vec.Y + "," + vec.Z + ");\r\n");
             }
-            else if (param.Type == NodeType.Matrix2 && value is Matrix2)
-            {
-                Matrix2 m2 = (Matrix2)value;
-                //glsl matrices are column major order
-                builder.Append("mat2(" + m2.Column0.X + ", " + m2.Column0.Y + ", " + m2.Column1.X + ", " + m2.Column1.Y + ");\r\n");
-            }
-            else if (param.Type == NodeType.Matrix3 && value is Matrix3)
-            {
-                Matrix3 m3 = (Matrix3)value;
-                //glsl matrices are column major order
-                builder.Append("mat3(" + m3.Column0.X + ", " + m3.Column0.Y + ", " + m3.Column0.Z + ", "
-                                        + m3.Column1.X + ", " + m3.Column1.Y + ", " + m3.Column1.Z + ", "
-                                        + m3.Column2.X + ", " + m3.Column2.Y + ", " + m3.Column2.Z + ");\r\n");
-            }
-            else if (param.Type == NodeType.Matrix4 && value is Matrix4)
+            else if (param.Type == NodeType.Matrix && value is Matrix4)
             {
                 Matrix4 m4 = (Matrix4)value;
                 //glsl matrices are column major order
@@ -1137,7 +1101,7 @@ namespace Materia.Nodes
 
                         if (!param.IsFunction())
                         {
-                            SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value);
+                            SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value, param.Type);
                         }
                     }
 
@@ -1148,7 +1112,7 @@ namespace Materia.Nodes
 
                         if (!param.IsFunction())
                         {
-                            SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value);
+                            SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value, param.Type);
                         }
                     }
                 }
@@ -1177,6 +1141,7 @@ namespace Materia.Nodes
                     for(int i = 0; i < count; i++)
                     {
                         var prop = props[i];
+                        PromoteAttribute promote = prop.GetCustomAttribute<PromoteAttribute>();
                         EditableAttribute editable = prop.GetCustomAttribute<EditableAttribute>();
 
                         if(editable == null)
@@ -1186,17 +1151,44 @@ namespace Materia.Nodes
 
                         object v = null;
 
+                        NodeType pType = NodeType.Float;
+
                         if (p.HasParameterValue(parentNode.Id, prop.Name))
                         {
                             var gp = p.GetParameterRaw(parentNode.Id, prop.Name);
                             if (!gp.IsFunction())
                             {
                                 v = gp.Value;
+                                pType = gp.Type;
+                            }
+                            else
+                            {
+                                continue;
                             }
                         }
                         else
                         {
                             v = prop.GetValue(parentNode);
+
+                            if(promote != null)
+                            {
+                                pType = promote.ExpectedType;
+                            }
+                            else
+                            {
+                                if(Helpers.Utils.IsNumber(v))
+                                {
+                                    pType = NodeType.Float;
+                                }
+                                else if(v != null && v is MVector)
+                                {
+                                    pType = NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Gray | NodeType.Color;
+                                }
+                                else if(v != null && v is Vector4)
+                                {
+                                    pType = NodeType.Float4;
+                                }
+                            }
                         }
 
 
@@ -1208,7 +1200,7 @@ namespace Materia.Nodes
                                 v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
                             }
 
-                            SetVar(prop.Name, v);
+                            SetVar(prop.Name, v, pType);
                         }
                     }
                 }
@@ -1217,7 +1209,9 @@ namespace Materia.Nodes
                     int count = props.Length;
                     for(int i = 0; i < count; i++)
                     {
+                        NodeType pType = NodeType.Float;
                         var prop = props[i];
+                        PromoteAttribute promote = prop.GetCustomAttribute<PromoteAttribute>();
                         EditableAttribute editable = prop.GetCustomAttribute<EditableAttribute>();
 
                         if(editable == null)
@@ -1228,6 +1222,27 @@ namespace Materia.Nodes
                         object v = prop.GetValue(parentNode);
 
 
+                        if(promote != null)
+                        {
+                            pType = promote.ExpectedType;
+                        }
+                        else
+                        {
+                            if (Helpers.Utils.IsNumber(v))
+                            {
+                                pType = NodeType.Float;
+                            }
+                            else if (v != null && v is MVector)
+                            {
+                                pType = NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Gray | NodeType.Color;
+                            }
+                            else if(v != null && v is Vector4)
+                            {
+                                pType = NodeType.Float4;
+                            }
+                        }
+
+
                         if (v != null)
                         {
                             if (v is Vector4)
@@ -1236,7 +1251,7 @@ namespace Materia.Nodes
                                 v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
                             }
 
-                            SetVar(prop.Name, v);
+                            SetVar(prop.Name, v, pType);
                         }
                     }
                 }
@@ -1265,15 +1280,15 @@ namespace Materia.Nodes
                 int w = n.Width;
                 int h = n.Height;
 
-                SetVar("size", new MVector(w, h));
+                SetVar("size", new MVector(w, h), NodeType.Float2);
             }
             else if(parentGraph != null)
             {
-                SetVar("size", new MVector(parentGraph.Width, parentGraph.Height));
+                SetVar("size", new MVector(parentGraph.Width, parentGraph.Height), NodeType.Float2);
             }
             else
             {
-                SetVar("size", new MVector());
+                SetVar("size", new MVector(), NodeType.Float2);
             }
 
             if (OutputNode == null) return;
@@ -1331,6 +1346,32 @@ namespace Materia.Nodes
             {
                 NodeLookup.TryGetValue(d.outputNode, out n);
                 OutputNode = n;
+            }
+
+            //we also want to set vars for argument if we have any
+            //so they appear in the dropdown
+
+            foreach(ArgNode arg in args)
+            {
+                object temp = 0;
+                if(arg.InputType == NodeType.Float)
+                {
+                    temp = 0;
+                }
+                else if(arg.InputType == NodeType.Bool)
+                {
+                    temp = false;
+                }
+                else if(arg.InputType == NodeType.Matrix)
+                {
+                    temp = Matrix4.Identity;
+                }
+                else
+                {
+                    temp = new MVector();
+                }
+
+                SetVar(arg.InputName, temp, arg.InputType);
             }
         }
 

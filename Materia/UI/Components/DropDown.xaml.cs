@@ -20,9 +20,11 @@ namespace Materia
     /// <summary>
     /// Interaction logic for EnumDropDown.xaml
     /// </summary>
-    public partial class DropDown : UserControl, IParameter
+    public partial class DropDown : UserControl
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
+
+        private static SolidColorBrush LightGrayColor = new SolidColorBrush(Colors.LightGray);
 
         PropertyInfo property;
         object propertyOwner;
@@ -35,12 +37,14 @@ namespace Materia
             InitializeComponent();
         }
 
-        public DropDown(object[] data, object owner, PropertyInfo p, string outputProperty = null)
+        public DropDown(object[] data, object owner, PropertyInfo p, string outputProperty = null, bool isEditable = false)
         {
             InitializeComponent();
             property = p;
             propertyOwner = owner;
             Dropdown.ItemsSource = data;
+
+            Dropdown.IsEditable = isEditable;
 
             output = outputProperty;
 
@@ -51,9 +55,13 @@ namespace Materia
                 Dropdown.SelectedIndex = Array.IndexOf(data, p.GetValue(owner).ToString());
             }
             else
-            {
-                
+            {              
                 object b = property.GetValue(owner);
+
+                if(data == null && b is object[])
+                {
+                    data = (object[])b;
+                }
 
                 if(!string.IsNullOrEmpty(output))
                 {
@@ -61,7 +69,7 @@ namespace Materia
                     {
                         var prop = propertyOwner.GetType().GetProperty(output);
                         if (prop == null) return;
-                        if (prop.PropertyType.Equals(typeof(int)) || prop.PropertyType.Equals(typeof(float)))
+                        if (prop.PropertyType.Equals(typeof(int)) || prop.PropertyType.Equals(typeof(float)) || prop.PropertyType.Equals(typeof(string)))
                         {
                             b = prop.GetValue(propertyOwner);
                         }
@@ -94,6 +102,10 @@ namespace Materia
                             Dropdown.SelectedIndex = g;
                         }
                     }
+                    else if(b.GetType().Equals(typeof(string)))
+                    {
+                        Dropdown.SelectedItem = b;
+                    }
                     else
                     {
                         Dropdown.SelectedIndex = 0;
@@ -102,9 +114,21 @@ namespace Materia
             }
         }
 
-        public void OnUpdate(object obj)
+        public override void OnApplyTemplate()
         {
-            
+            base.OnApplyTemplate();
+
+            try
+            { 
+                Dropdown.ApplyTemplate();
+                TextBox tb = Dropdown.Template.FindName("PART_EditableTextBox", Dropdown) as TextBox;
+                if (tb != null)
+                {
+                    tb.Foreground = Dropdown.Foreground;
+                    tb.Background = Dropdown.Background;
+                }
+            }
+            catch {}
         }
 
         private void Dropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -143,7 +167,14 @@ namespace Materia
                         }
                         else if(prop.PropertyType.Equals(typeof(string)))
                         {
-                            prop.SetValue(propertyOwner, Dropdown.SelectedItem);
+                            if (Dropdown.SelectedItem != null)
+                            {
+                                prop.SetValue(propertyOwner, Dropdown.SelectedItem.ToString());
+                            }
+                            else
+                            {
+                                prop.SetValue(propertyOwner, null);
+                            }
                         }
                     }
                     catch (Exception ex)

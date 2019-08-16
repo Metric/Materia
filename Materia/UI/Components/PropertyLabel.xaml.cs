@@ -229,7 +229,7 @@ namespace Materia.UI.Components
         {
             if (Node == null || string.IsNullOrEmpty(Parameter)) return;
 
-            FunctionGraph g = new FunctionGraph(Node.Name + " - " + Parameter.Replace("$Custom.", "") + " Function");
+            FunctionGraph g = new FunctionGraph(Node.Name + " - " + Parameter.Replace("$Custom.", "") + " Function", Node.Width, Node.Height);
             g.AssignParentNode(Node);
 
             try
