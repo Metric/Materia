@@ -153,7 +153,7 @@ vec3 Copy(vec4 a, vec4 b, float alpha) {
 }
 
 float AddSub(float a, float b) {
-    if(a < 0.5) {
+    if(a >= 0.5) {
         return min(1, max(0, a + b));
     }
     else {
@@ -325,7 +325,7 @@ void main() {
         final.b = AddSub(a.b * alpha * m, b.b);
     }
     else if(blendMode == 1) {
-        final.rgb = Copy(a, b, a.a * alpha * m);
+        final.rgb = Copy(a, b, alpha * m);
     }
     else if(blendMode == 2) {
         final.r = Multiple(a.r * alpha * m, b.r);

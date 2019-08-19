@@ -10,9 +10,11 @@
     <Grid MinWidth="256">
         <Grid.RowDefinitions>
             <RowDefinition Height="32" />
+            <RowDefinition Height="28" />
             <RowDefinition Height="100" />
             <RowDefinition Height="28" />
         </Grid.RowDefinitions>
+        <local:MultiRangeSlider x:Name="MultiSlider" OnValueChanged="MultiSlider_OnValueChanged" Grid.Row="1" Margin="5" />
         <ComboBox Style="{StaticResource ComboBoxFlatStyle}" Foreground="LightGray" HorizontalAlignment="Left" SelectionChanged="Channels_SelectionChanged" SelectedValue="RGB" Text="RGB" Width="64" Margin="5" Name="Channels">
             <ComboBox.Items>
                 <ComboBoxItem Content="RGB" />
@@ -21,10 +23,10 @@
                 <ComboBoxItem Content="Blue" />
             </ComboBox.Items>
         </ComboBox>
-        <Border Grid.Row="1" Name="HistoContainer" Background="#222">
+        <Border Grid.Row="2" Name="HistoContainer" Background="#222">
             <components:Histogram x:Name="Histogram" />
         </Border>
-        <local:MultiRangeSlider x:Name="MultiSlider" OnValueChanged="MultiSlider_OnValueChanged" Grid.Row="2" Margin="5" />
+        <components:RangeSlider x:Name="ValueRange" OnValueChanged="Range_OnValueChanged" Grid.Row="3" Margin="5" />
         <Button x:Name="ResetButton" Click="ResetButton_Click"  Background="#444" Foreground="LightGray" Content="RESET" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="42" Height="20" Margin="0,5,5,0" BorderThickness="0" Style="{StaticResource ImageTextButton}" />
     </Grid>
 </UserControl>

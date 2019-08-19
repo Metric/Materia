@@ -3,28 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Materia.Textures;
-using Materia.Shaders;
-using Materia.Math3D;
 using Materia.GLInterfaces;
+using Materia.Textures;
+using Materia.Math3D;
 
 namespace Materia.Imaging.GLProcessing
 {
-    public class LevelsProcessor : ImageProcessor
+    public class DistanceProcessor : ImageProcessor
     {
         IGLProgram shader;
 
-        public Vector3 Min { get; set; }
-        public Vector3 Mid { get; set; }
-        public Vector3 Max { get; set; }
-        public Vector2 Value { get; set; }
+        public float Distance { get; set; }
 
-        public LevelsProcessor() : base()
+        public DistanceProcessor() : base()
         {
-            shader = GetShader("image.glsl", "levels.glsl");
+            shader = GetShader("image.glsl", "distance.glsl");
         }
 
-        public override void Process(int width, int height, GLTextuer2D tex, GLTextuer2D output)
+        public void Process(int width, int height, GLTextuer2D tex, GLTextuer2D other, GLTextuer2D output)
         {
             base.Process(width, height, tex, output);
 
@@ -34,21 +30,16 @@ namespace Materia.Imaging.GLProcessing
                 tex = output;
                 IGL.Primary.Clear((int)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
 
-                Vector3 min = Min;
-                Vector3 max = Max;
-                Vector3 mid = Mid;
-                Vector2 value = Value;
                 Vector2 tiling = new Vector2(TileX, TileY);
-
                 shader.Use();
                 shader.SetUniform2("tiling", ref tiling);
                 shader.SetUniform("MainTex", 0);
+                shader.SetUniform("maxDistance", Distance);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
                 tex.Bind();
-                shader.SetUniform3("maxValues", ref max);
-                shader.SetUniform3("minValues", ref min);
-                shader.SetUniform3("midValues", ref mid);
-                shader.SetUniform2("value", ref value);
+                //shader.SetUniform("Other", 1);
+                //IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
+                //other.Bind();
 
                 if (renderQuad != null)
                 {

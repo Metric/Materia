@@ -13,6 +13,7 @@ using System.Reflection;
 using Materia.Math3D;
 using Materia.GLInterfaces;
 using NLog;
+using Materia.Archive;
 
 namespace Materia.Nodes
 {
@@ -791,51 +792,18 @@ namespace Materia.Nodes
             }
         }
 
-        //this was not needed in the long run
-       /* public override bool Add(Node n)
-        {
-            if(n is MathNode)
-            {
-                MathNode mn = n as MathNode;
-                bool suc = base.Add(n);
-
-                //this handles a case where a node
-                //is added from undo / redo / paste
-                //for certain nodes such as call node
-                if(suc)
-                {
-                    if(parentNode != null && mn.ParentNode == null)
-                    {
-                        mn.ParentNode = parentNode;
-                    }
-                    else if(parentGraph != null)
-                    {
-                        mn.OnFunctionParentSet();
-                    }
-                }
-
-                return suc;
-            }
-            else if(n is ItemNode)
-            {
-                return base.Add(n);
-            }
-
-            return false;
-        }*/
-
         //a function graph does not allow embedded graph instances
         //and the type must be coming from MathNodes path
         public override Node CreateNode(string type)
         {
-            if (type.Contains("MathNodes") && !type.Contains(System.IO.Path.DirectorySeparatorChar))
+            if (type.Contains("MathNodes") && !type.Contains("/") && !type.Contains("\\"))
             {
                 MathNode n = base.CreateNode(type) as MathNode;
                 n.AssignParentNode(parentNode);
                 n.AssignParentGraph(this);
                 return n;
             }
-            else if(type.Contains("Items") && !type.Contains(System.IO.Path.DirectorySeparatorChar))
+            else if(type.Contains("Items") && !type.Contains("/") && !type.Contains("\\"))
             {
                 return base.CreateNode(type);
             }
@@ -1335,7 +1303,12 @@ namespace Materia.Nodes
             return JsonConvert.SerializeObject(d);
         }
 
-        public override void FromJson(string data)
+        public override void FromJson(string data, MTGArchive archive = null)
+        {
+            FromJson(data);
+        }
+
+        public virtual void FromJson(string data)
         {
             FunctionGraphData d = JsonConvert.DeserializeObject<FunctionGraphData>(data);
             base.FromJson(d);

@@ -10,6 +10,7 @@ using Materia.Nodes.Attributes;
 using Materia.Textures;
 using System.Threading;
 using NLog;
+using Materia.Archive;
 
 namespace Materia.Nodes.Atomic
 {
@@ -29,6 +30,10 @@ namespace Materia.Nodes.Atomic
         protected bool updatingParams;
 
         protected bool loading;
+        private bool isArchive;
+
+        private MTGArchive archive;
+        private MTGArchive child;
 
         [Editable(ParameterInputType.GraphFile, "Materia Graph File", "Content")]
         public string GraphFilePath
@@ -257,11 +262,16 @@ namespace Materia.Nodes.Atomic
             }, Context);
         }
 
-        //used for initial loading
-        //not used for restoring from .materia
         public bool Load(string path)
         {
-            if(GraphInst != null)
+            if (string.IsNullOrEmpty(path)) return false;
+
+            isArchive = path.ToLower().EndsWith(".mtga");
+
+            //convert path to a relative resource path
+            string relative = Path.Combine("resources", Path.GetFileName(path));
+
+            if (GraphInst != null)
             {
                 GraphData = null;
                 GraphInst.OnGraphParameterUpdate -= GraphParameterValue_OnGraphParameterUpdate;
@@ -271,37 +281,123 @@ namespace Materia.Nodes.Atomic
 
             nameMap = new Dictionary<string, GraphParameterValue>();
 
-            if (File.Exists(path) && Path.GetExtension(path).ToLower().Contains("mtg"))
+            //handle archives within archives
+            if(isArchive && archive != null)
+            {
+                archive.Open();
+                var files = archive.GetAvailableFiles();
+                var m = files.Find(f => f.path.Equals(relative));
+                if(m != null)
+                {
+                    loading = true;
+                    child = new MTGArchive(relative, m.ExtractBinary());
+                    child.Open();
+                    var childFiles = child.GetAvailableFiles();
+                    if (childFiles != null)
+                    {
+                        var mtg = childFiles.Find(f => f.path.ToLower().EndsWith(".mtg"));
+                        if (mtg != null)
+                        {
+                            loading = true;
+                            this.path = path;
+                            string nm = Path.GetFileNameWithoutExtension(path);
+                            Name = nm;
+                            GraphData = mtg.ExtractText();
+                            child.Close();
+                            PrepareGraph();
+                            archive.Close();
+                            loading = false;
+                            return true;
+                        } 
+                        else
+                        {
+                            this.path = null;
+                        }
+                    }
+                    else
+                    {
+                        this.path = null;
+                    }
+                }
+                else
+                {
+                    this.path = null;
+                }
+
+                archive.Close();
+            }
+            //handle absolute path to archive when not in another archive
+            else if(File.Exists(path) && isArchive && archive == null)
+            {
+                loading = true;
+                child = new MTGArchive(path);
+                child.Open();
+                var childFiles = child.GetAvailableFiles();
+                if (childFiles != null)
+                {
+                    var mtg = childFiles.Find(f => f.path.ToLower().EndsWith(".mtg"));
+                    if (mtg != null)
+                    {
+                        loading = true;
+                        this.path = path;
+                        string nm = Path.GetFileNameWithoutExtension(path);
+                        Name = nm;
+                        GraphData = mtg.ExtractText();
+                        child.Close();
+                        PrepareGraph();
+                        loading = false;
+                        return true;
+                    }
+                    else
+                    {
+                        this.path = null;
+                    }
+                }
+                else
+                {
+                    this.path = null;
+                }
+            }
+            //otherwise try relative storage for the archive when not in another archive
+            else if(isArchive && archive == null && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(Path.Combine(ParentGraph.CWD, relative)))
+            {
+                string realPath = Path.Combine(ParentGraph.CWD, relative);
+                child = new MTGArchive(realPath);
+                child.Open();
+                var childFiles = child.GetAvailableFiles();
+                if (childFiles != null)
+                {
+                    var mtg = childFiles.Find(f => f.path.ToLower().EndsWith(".mtg"));
+                    if (mtg != null)
+                    {
+                        loading = true;
+                        this.path = path;
+                        string nm = Path.GetFileNameWithoutExtension(path);
+                        Name = nm;
+                        GraphData = mtg.ExtractText();
+                        child.Close();
+                        PrepareGraph();
+                        loading = false;
+                        return true;
+                    }
+                    else
+                    {
+                        this.path = null;
+                    }
+                }
+                else
+                {
+                    this.path = null;
+                }
+            }
+            else if (!isArchive && File.Exists(path) && Path.GetExtension(path).ToLower().EndsWith("mtg"))
             {
                 loading = true;
                 this.path = path;
-
                 string nm = Path.GetFileNameWithoutExtension(path);
-
                 Name = nm;
-
-                //the width and height here don't matter
-                GraphInst = new Graph(nm);
-
                 GraphData = File.ReadAllText(path);
-                GraphInst.AssignParentNode(this);
-                GraphInst.Synchronized = !Async;
-                GraphInst.FromJson(GraphData);
-                GraphInst.AssignParameters(jsonParameters);
-                GraphInst.AssignCustomParameters(jsonCustomParameters);
-     
-                GraphInst.AssignSeed(randomSeed);
-
-                //now do real initial resize
-                GraphInst.ResizeWith(width, height);
-
-                //mark as readonly
-                GraphInst.ReadOnly = true;
-
-                GraphInst.OnGraphParameterUpdate += GraphParameterValue_OnGraphParameterUpdate;
-
-                //setup inputs and outputs
-                Setup();
+                PrepareGraph();
                 loading = false;
                 return true;
             }
@@ -311,6 +407,31 @@ namespace Materia.Nodes.Atomic
             }
 
             return false;
+        }
+
+        void PrepareGraph()
+        {
+            //the width and height here don't matter
+            GraphInst = new Graph(Name);
+            GraphInst.AssignParentNode(this);
+            GraphInst.Synchronized = !Async;
+            GraphInst.FromJson(GraphData, child);
+            GraphInst.AssignParameters(jsonParameters);
+            GraphInst.AssignCustomParameters(jsonCustomParameters);
+
+            GraphInst.AssignSeed(randomSeed);
+
+            //now do real initial resize
+            GraphInst.ResizeWith(width, height);
+
+            //mark as readonly
+            GraphInst.ReadOnly = true;
+
+            GraphInst.OnGraphParameterUpdate += GraphParameterValue_OnGraphParameterUpdate;
+
+            //setup inputs and outputs
+            Setup();
+            loading = false;
         }
 
         void Setup()
@@ -414,6 +535,21 @@ namespace Materia.Nodes.Atomic
             public string path;
         }
 
+        public override void CopyResources(string CWD)
+        {
+            if(isArchive && archive == null && !string.IsNullOrEmpty(path))
+            {
+                string relative = Path.Combine("resources", Path.GetFileName(path));
+                CopyResourceTo(CWD, relative, path);
+            }
+        }
+
+        public override void FromJson(string data, MTGArchive arch = null)
+        {
+            archive = arch;
+            FromJson(data);
+        }
+
         public override void FromJson(string data)
         {
             GraphInstanceNodeData d = JsonConvert.DeserializeObject<GraphInstanceNodeData>(data);
@@ -433,11 +569,10 @@ namespace Materia.Nodes.Atomic
             //if it exists
             //otherwise we fall back on
             //last saved graph data
-
-            if(File.Exists(path))
-            {
-                didLoad = Load(path);
-            }
+            //also we do this
+            //to try and load from 
+            //archive first
+            didLoad = Load(path);
 
             //if path not found or could not load
             //fall back to last instance data saved
@@ -486,6 +621,12 @@ namespace Materia.Nodes.Atomic
 
         public override void Dispose()
         {
+            if(child != null)
+            {
+                child.Dispose();
+                child = null;
+            }
+
             base.Dispose();
 
             if(GraphInst != null)

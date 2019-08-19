@@ -13,6 +13,7 @@ using Materia.Textures;
 using Materia.Imaging.GLProcessing;
 using Newtonsoft.Json;
 using NLog;
+using Materia.Archive;
 
 namespace Materia.Nodes.Atomic
 {
@@ -98,9 +99,18 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        //we override here as the bitmap is always
+        //absolute
+        public new bool AbsoluteSize { get; set; }
+
+        private MTGArchive archive;
+        private new RawBitmap brush;
+
         public BitmapNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
             Name = "Bitmap";
+
+            AbsoluteSize = true;
 
             Id = Guid.NewGuid().ToString();
 
@@ -151,28 +161,55 @@ namespace Materia.Nodes.Atomic
         {
             try
             {
+                if(archive != null && !string.IsNullOrEmpty(relativePath) && Resource)
+                {
+                    archive.Open();
+                    List<MTGArchive.ArchiveFile> files = archive.GetAvailableFiles();
+
+                    var m = files.Find(f => f.path.Equals(relativePath));
+                    if (m != null)
+                    {
+                        using(Stream ms = m.GetStream())
+                        using (Bitmap bmp = (Bitmap)Bitmap.FromStream(ms))
+                        {
+                            if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
+                            {
+                                width = bmp.Width;
+                                height = bmp.Height;
+                                brush = RawBitmap.FromBitmap(bmp);
+                                archive.Close();
+                                return;
+                            }
+                        }
+                    }
+
+                    archive.Close();
+                }
+
                 if (!string.IsNullOrEmpty(path) && File.Exists(path))
                 {
-                    Bitmap bmp = (Bitmap)Bitmap.FromFile(path);
-
-                    if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
+                    using (Bitmap bmp = (Bitmap)Bitmap.FromFile(path))
                     {
-                        width = bmp.Width;
-                        height = bmp.Height;
+                        if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
+                        {
+                            width = bmp.Width;
+                            height = bmp.Height;
 
-                        brush = FloatBitmap.FromBitmap(bmp);
+                            brush = RawBitmap.FromBitmap(bmp);
+                        }
                     }
                 }
                 else if (!string.IsNullOrEmpty(relativePath) && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
                 {
-                    Bitmap bmp = (Bitmap)Bitmap.FromFile(System.IO.Path.Combine(ParentGraph.CWD, relativePath));
-
-                    if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
+                    using (Bitmap bmp = (Bitmap)Bitmap.FromFile(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
                     {
-                        width = bmp.Width;
-                        height = bmp.Height;
+                        if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
+                        {
+                            width = bmp.Width;
+                            height = bmp.Height;
 
-                        brush = FloatBitmap.FromBitmap(bmp);
+                            brush = RawBitmap.FromBitmap(bmp);
+                        }
                     }
                 }
 
@@ -204,7 +241,22 @@ namespace Materia.Nodes.Atomic
             CreateBufferIfNeeded();
 
             buffer.Bind();
-            buffer.SetData(brush.Image, GLInterfaces.PixelFormat.Rgba, width, height);
+            GLInterfaces.PixelFormat format = GLInterfaces.PixelFormat.Bgra;
+
+            if (brush.BPP == 24)
+            {
+                format = GLInterfaces.PixelFormat.Bgr;
+            }
+            else if(brush.BPP == 16)
+            {
+                format = GLInterfaces.PixelFormat.Rg;
+            }
+            else if(brush.BPP == 8)
+            {
+                format = GLInterfaces.PixelFormat.Red;
+            }
+
+            buffer.SetData(brush.Image, format, width, height);
             GLTextuer2D.Unbind();
 
             brush = null;
@@ -219,6 +271,12 @@ namespace Materia.Nodes.Atomic
             public string path;
             public string relativePath;
             public bool resource;
+        }
+
+        public override void FromJson(string data, MTGArchive arch = null)
+        {
+            archive = arch;
+            FromJson(data);
         }
 
         public override void FromJson(string data)
@@ -251,6 +309,16 @@ namespace Materia.Nodes.Atomic
         protected override void OnWidthHeightSet()
         {
             //we don't do anything here in this one
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            if(brush != null)
+            {
+                brush = null;
+            }
         }
     }
 }

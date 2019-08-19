@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using System.Threading;
 using Materia.Math3D;
 using Materia.MathHelpers;
+using Materia.Archive;
 
 namespace Materia.Nodes.Atomic
 {
@@ -42,6 +43,8 @@ namespace Materia.Nodes.Atomic
                 }
             }
         }
+
+        private MTGArchive archive;
 
         public static GLTextuer2D DefaultBlack { get; set; }
         public static GLTextuer2D DefaultDarkGray { get; set; }
@@ -329,6 +332,26 @@ namespace Materia.Nodes.Atomic
         {
             if (mesh == null && meshes == null)
             {
+                if(archive != null && !string.IsNullOrEmpty(relativePath) && Resource)
+                {
+                    archive.Open();
+                    List<MTGArchive.ArchiveFile> files = archive.GetAvailableFiles();
+
+                    var m = files.Find(f => f.path.Equals(relativePath));
+                    if (m != null)
+                    {
+                        using (Stream ms = m.GetStream())
+                        {
+                            RSMI.Importer imp = new Importer();
+                            meshes = imp.Parse(ms);
+                            archive.Close();
+                            return;
+                        }
+                    }
+
+                    archive.Close();
+                }
+
                 if (!string.IsNullOrEmpty(path) && File.Exists(path))
                 {
                     RSMI.Importer imp = new Importer();
@@ -480,6 +503,12 @@ namespace Materia.Nodes.Atomic
 
             public float meshTileX;
             public float meshTileY;
+        }
+
+        public override void FromJson(string data, MTGArchive arch = null)
+        {
+            archive = arch;
+            FromJson(data);
         }
 
         public override void FromJson(string data)

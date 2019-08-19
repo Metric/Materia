@@ -28,6 +28,9 @@ namespace Materia
         PropertyInfo property;
         object propertyOwner;
 
+        PropertyInfo minProperty;
+        PropertyInfo maxProperty;
+
         Dictionary<int, List<CurvePoint>> Points { get; set; }
         Dictionary<int, List<MathHelpers.Point>> Normalized { get; set; }
         Dictionary<int, List<MathHelpers.Point>> Input { get; set; }
@@ -73,6 +76,8 @@ namespace Materia
             Input[1] = new List<MathHelpers.Point>();
             Input[2] = new List<MathHelpers.Point>();
             Input[3] = new List<MathHelpers.Point>();
+
+            ValueRange.Set(0, 1);
         }
 
         public UICurves(PropertyInfo p, object owner)
@@ -81,6 +86,24 @@ namespace Materia
             mode = CurveMode.RGB;
             property = p;
             propertyOwner = owner;
+
+            try
+            {
+                minProperty = propertyOwner.GetType().GetProperty("MinValue");
+            }
+            catch { }
+
+            try
+            {
+                maxProperty = propertyOwner.GetType().GetProperty("MaxValue");
+            }
+            catch { }
+
+            Normalized = new Dictionary<int, List<MathHelpers.Point>>();
+            Normalized[0] = new List<MathHelpers.Point>();
+            Normalized[1] = new List<MathHelpers.Point>();
+            Normalized[2] = new List<MathHelpers.Point>();
+            Normalized[3] = new List<MathHelpers.Point>();
 
             Points = new Dictionary<int, List<CurvePoint>>();
             Points[0] = new List<CurvePoint>();
@@ -96,6 +119,20 @@ namespace Materia
             Sort(Input[1]);
             Sort(Input[2]);
             Sort(Input[3]);
+
+            float min = 0;
+            float max = 1;
+
+            if (minProperty != null)
+            {
+                min = Convert.ToSingle(minProperty.GetValue(propertyOwner));
+            }
+            if (maxProperty != null)
+            {
+                max = Convert.ToSingle(maxProperty.GetValue(propertyOwner));
+            }
+
+            ValueRange.Set(min, max);
         }
 
         void UpdateProperty()
@@ -201,6 +238,8 @@ namespace Materia
             }
 
             UpdatePath();
+
+            ValueRange.SetButtonPositions();
         }
 
         /// <summary>
@@ -460,6 +499,7 @@ namespace Materia
             UpdatePath();
 
             Channels.SelectedIndex = 0;
+            ValueRange.SetButtonPositions();
         }
 
         void HidePoints(CurveMode m)
@@ -518,6 +558,9 @@ namespace Materia
             AddPointNormalized(new MathHelpers.Point(0, 1));
             AddPointNormalized(new MathHelpers.Point(1, 0));
 
+            ValueRange.Set(0, 1);
+            UpdateValueRange(0, 1);
+
             UpdatePath();
             UpdateProperty();
         }
@@ -554,6 +597,23 @@ namespace Materia
         {
             ShowAllCurves = ToggleAll.IsChecked.Value;
             UpdatePath();
+        }
+
+        private void UpdateValueRange(float min, float max)
+        {
+            if (minProperty != null)
+            {
+                minProperty.SetValue(propertyOwner, min);
+            }
+            if (maxProperty != null)
+            {
+                maxProperty.SetValue(propertyOwner, max);
+            }
+        }
+
+        private void RangeSlider_OnValueChanged(object sender, float min, float max)
+        {
+            UpdateValueRange(min, max);
         }
     }
 }

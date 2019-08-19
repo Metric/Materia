@@ -61,7 +61,8 @@ namespace Materia.UI.Helpers
                         foreach (string p in files)
                         {
                             if (System.IO.Path.GetExtension(p).Equals(".mtg")
-                                || System.IO.Path.GetExtension(p).Equals(".mti"))
+                                || System.IO.Path.GetExtension(p).Equals(".mti")
+                                || System.IO.Path.GetExtension(p).Equals(".mtga"))
                             {
                                 string fname = System.IO.Path.GetFileNameWithoutExtension(p);
                                 sorter.Add(fname);
@@ -78,7 +79,8 @@ namespace Materia.UI.Helpers
                             {
                                 ShelfResourceItem r = new ShelfResourceItem();
                                 r.Title = fname;
-                                if (System.IO.Path.GetExtension(p).Equals(".mtg"))
+                                if (System.IO.Path.GetExtension(p).Equals(".mtg") 
+                                || System.IO.Path.GetExtension(p).Equals(".mtga"))
                                 {
                                     r.Type = p;
                                     child.Add(r);

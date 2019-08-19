@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Materia.Nodes.Helpers;
+using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace Materia.Imaging
 {
@@ -30,32 +32,62 @@ namespace Materia.Imaging
 
         public byte[] Image { get; set; }
 
-        public RawBitmap(int w, int h, byte[] data)
+        public int BPP { get; protected set; } 
+
+        public RawBitmap(int w, int h, byte[] data, int bpp = 32)
         {
             Width = w;
             Height = h;
             Image = data;
+            BPP = bpp;
         }
 
-        public RawBitmap(int w, int h)
+        public RawBitmap(int w, int h, int bpp = 32)
         {
             Width = w;
             Height = h;
-            Image = new byte[w * h * 4];
+            BPP = bpp;
+            Image = new byte[w * h * (BPP / 8)];
+        }
+
+        public static RawBitmap FromBitmap(Bitmap bmp)
+        {
+            int bpp = System.Drawing.Bitmap.GetPixelFormatSize(bmp.PixelFormat);
+            var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
+            byte[] raw = new byte[data.Height * data.Stride];
+            Marshal.Copy(data.Scan0, raw, 0, raw.Length);
+            bmp.UnlockBits(data);
+            return new RawBitmap(bmp.Width, bmp.Height, raw, bpp);
         }
 
         public void GetPixel(int x, int y, out byte r, out byte g, out byte b, out byte a)
         {
             r = g = b = 0;
             a = 0;
-            int idx = (x + y * Width) * 4;
+            int idx = (x + y * Width) * (BPP / 8);
 
             if (x >= 0 && x < Width && y >= 0 && y < Height)
             {
-                r = Image[idx + 2];
-                g = Image[idx + 1];
-                b = Image[idx];
-                a = Image[idx + 3];
+                if (BPP == 8)
+                {
+                    r = g = b = Image[idx];
+                }
+                else if (BPP >= 16)
+                {
+                    r = Image[idx];
+                    g = Image[idx + 1];
+                }
+                else if (BPP >= 24)
+                {
+                    r = Image[idx + 2];
+                    g = Image[idx + 1];
+                    b = Image[idx];
+                }
+
+                if (BPP == 32)
+                    a = Image[idx + 3];
+                else
+                    a = 1;
             }
         }
 
@@ -68,7 +100,22 @@ namespace Materia.Imaging
                     int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * 4;
                     int idx = (x + y * Width) * 4;
 
-                    Image[idx + 1] = src.Image[idxsrc + 2];
+                    if (BPP >= 16 && src.BPP >= 24)
+                    {
+                        Image[idx + 1] = src.Image[idxsrc + 2];
+                    }
+                    else if(BPP >= 16 && src.BPP >= 8)
+                    {
+                        Image[idx + 1] = src.Image[idxsrc];
+                    }
+                    else if(BPP >= 8 && src.BPP >= 24)
+                    {
+                        Image[idx] = src.Image[idxsrc + 2];
+                    }
+                    else if(BPP >= 8 && src.BPP >= 8)
+                    {
+                        Image[idx] = src.Image[idxsrc];
+                    }
                 }
             });
         }
@@ -79,10 +126,26 @@ namespace Materia.Imaging
             {
                 for (int x = 0; x < Width; x++)
                 {
-                    int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * 4;
-                    int idx = (x + y * Width) * 4;
+                    int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * (src.BPP / 8);
+                    int idx = (x + y * Width) * (BPP / 8);
 
-                    Image[idx] = src.Image[idxsrc + 2];
+
+                    if (BPP >= 24 && src.BPP >= 24)
+                    {
+                        Image[idx] = src.Image[idxsrc + 2];
+                    }
+                    else if (BPP >= 24 && src.BPP >= 8)
+                    {
+                        Image[idx] = src.Image[idxsrc];
+                    }
+                    else if(BPP >= 8 && src.BPP >= 24)
+                    {
+                        Image[idx] = src.Image[idxsrc + 2];
+                    }
+                    else if (BPP >= 8 && src.BPP >= 8)
+                    {
+                        Image[idx] = src.Image[idxsrc];
+                    }
                 }
             });
         }
@@ -92,24 +155,48 @@ namespace Materia.Imaging
             Parallel.For(0, Height, y => { 
                 for (int x = 0; x < Width; x++)
                 {
-                    int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * 4;
-                    int idx = (x + y * Width) * 4;
+                    int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * (src.BPP / 8);
+                    int idx = (x + y * Width) * (BPP / 8);
 
-                    Image[idx + 2] = src.Image[idxsrc + 2];
+                    if (BPP >= 24 && src.BPP >= 24)
+                    {
+                        Image[idx + 2] = src.Image[idxsrc + 2];
+                    }
+                    else if(BPP >= 8 && src.BPP >= 24)
+                    {
+                        Image[idx] = src.Image[idxsrc + 2];
+                    }
+                    else if(BPP >= 24 && src.BPP >= 8)
+                    {
+                        Image[idx + 2] = src.Image[idxsrc];
+                    }
+                    else if(BPP >= 8 && src.BPP >= 8)
+                    {
+                        Image[idx] = src.Image[idxsrc];
+                    }
                 }
             });
         }
 
         public void CopyRedToAlpha(RawBitmap src)
         {
+            if (BPP < 32) return;
+
             Parallel.For(0, Height, y =>
             {
                 for (int x = 0; x < Width; x++)
                 {
-                    int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * 4;
-                    int idx = (x + y * Width) * 4;
+                    int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * (src.BPP / 8);
+                    int idx = (x + y * Width) * (BPP / 8);
 
-                    Image[idx + 3] = src.Image[idxsrc + 2];
+                    if (src.BPP >= 24)
+                    {
+                        Image[idx + 3] = src.Image[idxsrc + 2];
+                    }
+                    else if(src.BPP >= 8)
+                    {
+                        Image[idx + 3] = src.Image[idxsrc];
+                    }
                 }
             });
         }
@@ -176,13 +263,27 @@ namespace Materia.Imaging
 
         public void SetPixel(int x, int y, byte r, byte g, byte b, byte a)
         {
-            int idx = (x + y * Width) * 4;
+            int idx = (x + y * Width) * (BPP / 8);
             if (x >= 0 && x < Width && y >= 0 && y < Height)
             {
-                Image[idx + 2] = r;
-                Image[idx + 1] = g;
-                Image[idx] = b;
-                Image[idx + 3] = a;
+                if(BPP == 8)
+                {
+                    Image[idx] = r;
+                }
+                else if(BPP == 16)
+                {
+                    Image[idx] = r;
+                    Image[idx + 1] = g;
+                }
+                else if (BPP >= 24)
+                {
+                    Image[idx + 2] = r;
+                    Image[idx + 1] = g;
+                    Image[idx] = b;
+                }
+
+                if(BPP == 32)
+                    Image[idx + 3] = a;
             }
         }
 

@@ -92,6 +92,7 @@
     <Compile Include="Imaging\GLProcessing\ChannelSwitchProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\CircleProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\CurvesProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\DistanceProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\EmbossProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\FXProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\GammaProcessor.cs" />
@@ -131,6 +132,7 @@
     <Compile Include="Nodes\Atomic\ChannelSwitchNode.cs" />
     <Compile Include="Nodes\Atomic\CircleNode.cs" />
     <Compile Include="Nodes\Atomic\CurvesNode.cs" />
+    <Compile Include="Nodes\Atomic\DistanceNode.cs" />
     <Compile Include="Nodes\Atomic\EmbossNode.cs" />
     <Compile Include="Nodes\Atomic\FXNode.cs" />
     <Compile Include="Nodes\Atomic\GammaNode.cs" />
@@ -256,6 +258,10 @@
     <Compile Include="Textures\GLTextureCube.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Archive\Archive.csproj">
+      <Project>{92888af6-1cdb-4459-845f-d65763d3baf7}</Project>
+      <Name>Archive</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.csproj">
       <Project>{4d41515c-8095-425e-b844-1eae5fc326ec}</Project>
       <Name>Interfaces</Name>

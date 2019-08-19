@@ -13,18 +13,18 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Materia
+namespace Materia.UI.Components
 {
     /// <summary>
-    /// Interaction logic for MultiRangeSlider.xaml
+    /// Interaction logic for RangeSlider.xaml
     /// </summary>
-    public partial class MultiRangeSlider : UserControl
+    public partial class RangeSlider : UserControl
     {
         float minValue;
         float midValue;
         float maxValue;
 
-        public delegate void ValueChangeEvent(object sender, float min, float mid, float max);
+        public delegate void ValueChangeEvent(object sender, float min, float max);
         public event ValueChangeEvent OnValueChanged;
 
         Point start;
@@ -45,9 +45,9 @@ namespace Materia
             {
                 minValue = Math.Min(1, Math.Max(0, value));
 
-                if(OnValueChanged != null)
+                if (OnValueChanged != null)
                 {
-                    OnValueChanged.Invoke(this, minValue, midValue, maxValue);
+                    OnValueChanged.Invoke(this, minValue, maxValue);
                 }
             }
         }
@@ -64,29 +64,12 @@ namespace Materia
 
                 if (OnValueChanged != null)
                 {
-                    OnValueChanged.Invoke(this, minValue, midValue, maxValue);
+                    OnValueChanged.Invoke(this, minValue, maxValue);
                 }
             }
         }
 
-        public float MidValue
-        {
-            get
-            {
-                return midValue;
-            }
-            set
-            {
-                midValue = Math.Min(1, Math.Max(0, value));
-
-                if (OnValueChanged != null)
-                {
-                    OnValueChanged.Invoke(this, minValue, midValue, maxValue);
-                }
-            }
-        }
-
-        public MultiRangeSlider()
+        public RangeSlider()
         {
             InitializeComponent();
             minValue = 0;
@@ -95,19 +78,17 @@ namespace Materia
             SetButtonPositions();
         }
 
-        public MultiRangeSlider(float min, float mid, float max)
+        public RangeSlider(float min, float max)
         {
             InitializeComponent();
             minValue = Math.Min(1, Math.Max(0, min));
             maxValue = Math.Min(1, Math.Max(0, max));
-            midValue = Math.Min(1, Math.Max(0, mid));
             SetButtonPositions();
         }
 
-        public void Set(float min, float mid, float max)
+        public void Set(float min, float max)
         {
             minValue = Math.Min(1, Math.Max(0, min));
-            midValue = Math.Min(1, Math.Max(0, mid));
             maxValue = Math.Min(1, Math.Max(0, max));
 
             SetButtonPositions();
@@ -119,11 +100,9 @@ namespace Materia
             double bw = Min.ActualWidth;
 
             minx = Math.Max(0, (w - bw) * minValue);
-            midx = Math.Max(0, (w - bw) * midValue);
             maxx = Math.Max(0, (w - bw) * maxValue);
 
             Min.RenderTransform = new TranslateTransform(minx, 0);
-            Mid.RenderTransform = new TranslateTransform(midx, 0);
             Max.RenderTransform = new TranslateTransform(maxx, 0);
         }
 
@@ -147,31 +126,6 @@ namespace Materia
                 minx = l;
 
                 Min.RenderTransform = new TranslateTransform(minx, 0);
-
-                start = p;
-            }
-        }
-
-        private void Mid_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (target == Mid)
-            {
-                e.Handled = true;
-                double w = GridView.ActualWidth;
-                double bw = Min.ActualWidth;
-                Point p = e.GetPosition(GridView);
-                double dx = p.X - start.X;
-                double l = midx;
-
-                l += dx;
-
-                l = Math.Min(w - bw, Math.Max(0, l));
-
-                MidValue = (float)Math.Max(0, l) / (float)(w - bw);
-
-                midx = l;
-
-                Mid.RenderTransform = new TranslateTransform(midx, 0);
 
                 start = p;
             }
@@ -218,15 +172,11 @@ namespace Materia
 
         private void GridView_MouseMove(object sender, MouseEventArgs e)
         {
-            if(target == Min)
+            if (target == Min)
             {
                 Min_MouseMove(sender, e);
             }
-            else if(target == Mid)
-            {
-                Mid_MouseMove(sender, e);
-            }
-            else if(target == Max)
+            else if (target == Max)
             {
                 Max_MouseMove(sender, e);
             }

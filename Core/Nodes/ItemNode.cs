@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
+using Materia.Archive;
 
 namespace Materia.Nodes
 {
@@ -64,7 +65,12 @@ namespace Materia.Nodes
             content = d;
         }
 
-        public override void FromJson(string data)
+        public override void FromJson(string data, MTGArchive archive = null)
+        {
+            FromJson(data);
+        }
+
+        public virtual void FromJson(string data)
         {
             ItemNodeData d = JsonConvert.DeserializeObject<ItemNodeData>(data);
             SetBaseNodeDate(d);

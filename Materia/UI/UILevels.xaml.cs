@@ -64,6 +64,7 @@ namespace Materia
 
             fromBit = fromBitmap;
             MultiSlider.Set(range.min[0], range.mid[0], range.max[0]);
+            ValueRange.Set(range.min[3], range.max[3]);
 
             inputFromUser = false;
         }
@@ -127,14 +128,7 @@ namespace Materia
                 ctk = null;
             }
 
-            ctk = new CancellationTokenSource();
-
-            Task.Delay(250, ctk.Token)
-                .ContinueWith(t =>
-                {
-                    if (t.IsCanceled) return;
-                    property.SetValue(propertyOwner, range);
-                });
+            property.SetValue(propertyOwner, range);
         }
 
         private void Channels_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -185,6 +179,7 @@ namespace Materia
         private void UserControl_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             MultiSlider.SetButtonPositions();
+            ValueRange.SetButtonPositions();
         }
 
         private void ResetButton_Click(object sender, RoutedEventArgs e)
@@ -211,7 +206,11 @@ namespace Materia
                 range.mid[g] = 0.5f;
             }
 
+            range.min[3] = 0;
+            range.max[3] = 1;
+
             MultiSlider.Set(0, 0.5f, 1);
+            ValueRange.Set(0, 1);
             property.SetValue(propertyOwner, range);
         }
 
@@ -221,6 +220,14 @@ namespace Materia
             {
                 (propertyOwner as ImageNode).OnUpdate -= OnNodeUpdate;
             }
+        }
+
+        private void Range_OnValueChanged(object sender, float min, float max)
+        {
+            inputFromUser = true;
+            range.min[3] = min;
+            range.max[3] = max;
+            property.SetValue(propertyOwner, range);
         }
     }
 }

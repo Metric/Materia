@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
+using Materia.Archive;
 
 namespace Materia.Nodes
 {
@@ -106,8 +107,14 @@ namespace Materia.Nodes
             }
         }
 
+        //redefine so we remove the attribute from it
+        public new bool AbsoluteSize { get; set; }
+
         public MathNode()
         {
+            //math nodes are always absolute size
+            //since we ignore their size competely already
+            AbsoluteSize = true;
             CanPreview = false;
 
             Inputs = new List<NodeInput>();
@@ -135,7 +142,12 @@ namespace Materia.Nodes
             return p;
         }
 
-        public override void FromJson(string data)
+        public override void FromJson(string data, MTGArchive archive = null)
+        {
+            FromJson(data);
+        }
+
+        public virtual void FromJson(string data)
         {
             NodeData d = JsonConvert.DeserializeObject<NodeData>(data);
             SetBaseNodeDate(d);

@@ -12,6 +12,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 using NLog;
 using Materia.Nodes.Atomic;
+using Materia.Archive;
 
 namespace Materia.Nodes
 {
@@ -104,6 +105,7 @@ namespace Materia.Nodes
             public string id;
             public int width;
             public int height;
+            public bool absoluteSize;
             public string type;
             public List<NodeConnection> outputs;
             public float tileX;
@@ -155,6 +157,9 @@ namespace Materia.Nodes
                 OnWidthHeightSet();
             }
         }
+
+        [Editable(ParameterInputType.Toggle, "Absolute Size", "Basic")]
+        public bool AbsoluteSize { get; set; }
 
         protected float tileX;
         protected float tileY;
@@ -288,7 +293,7 @@ namespace Materia.Nodes
             }
         }
         public abstract string GetJson();
-        public abstract void FromJson(string data);
+        public abstract void FromJson(string data, MTGArchive archive = null);
 
         public virtual void AssignWidth(int w)
         {
@@ -397,6 +402,7 @@ namespace Materia.Nodes
         {
             width = d.width;
             height = d.height;
+            AbsoluteSize = d.absoluteSize;
             internalPixelType = d.internalPixelType;
             name = d.name;
             tileX = d.tileX;
@@ -446,6 +452,7 @@ namespace Materia.Nodes
         {
             d.width = width;
             d.height = height;
+            d.absoluteSize = AbsoluteSize;
             d.internalPixelType = internalPixelType;
             d.name = name;
             d.outputs = GetConnections();

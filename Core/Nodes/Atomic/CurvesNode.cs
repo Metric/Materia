@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using Materia.Textures;
 using Materia.MathHelpers;
 using Materia.Imaging.GLProcessing;
+using Materia.Nodes.Containers;
 using NLog;
 
 namespace Materia.Nodes.Atomic
@@ -45,6 +46,40 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        float minValue;
+        public float MinValue
+        {
+            get
+            {
+                return minValue;
+            }
+            set
+            {
+                if (minValue != value)
+                {
+                    minValue = Math.Min(1, Math.Max(0, value));
+                    TryAndProcess();
+                }
+            }
+        }
+
+        float maxValue;
+        public float MaxValue
+        {
+            get
+            {
+                return maxValue;
+            }
+            set
+            {
+                if (maxValue != value)
+                {
+                    maxValue = Math.Min(1, Math.Max(0, value));
+                    TryAndProcess();
+                }
+            }
+        }
+
         public CurvesNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
             Name = "Curves";
@@ -52,7 +87,10 @@ namespace Materia.Nodes.Atomic
 
             width = w;
             height = h;
-    
+
+            minValue = 0;
+            maxValue = 1;
+
             points = new Dictionary<int, List<Point>>();
 
             previewProcessor = new BasicImageRenderer();
@@ -231,18 +269,18 @@ namespace Materia.Nodes.Atomic
                     for (int i = 0; i < 2; i++)
                     {
                         int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2] = (float)p.Y;
+                        lutBrush.Image[idx2] = Math.Min(1, Math.Max(0, (float)p.Y * (maxValue - minValue) + minValue));
                     }
                 }
 
                 for (int j = 0; j < greens.Count; j++)
                 {
                     Point p = greens[j];
-                    int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
+                    int x = 255 -(int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
                     for (int i = 0; i < 2; i++)
                     {
                         int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2 + 1] = (float)p.Y;
+                        lutBrush.Image[idx2 + 1] = Math.Min(1, Math.Max(0, (float)p.Y * (maxValue - minValue) + minValue));
                     }
                 }
 
@@ -253,7 +291,7 @@ namespace Materia.Nodes.Atomic
                     for (int i = 0; i < 2; i++)
                     {
                         int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2 + 2] = (float)p.Y;
+                        lutBrush.Image[idx2 + 2] = Math.Min(1, Math.Max(0, (float)p.Y * (maxValue - minValue) + minValue));
                     }
                 }
 
@@ -264,7 +302,7 @@ namespace Materia.Nodes.Atomic
                     for (int i = 0; i < 2; i++)
                     {
                         int idx2 = (x + i * 256) * 4;
-                        lutBrush.Image[idx2 + 3] = (float)p.Y;
+                        lutBrush.Image[idx2 + 3] = Math.Min(1, Math.Max(0, (float)p.Y * (maxValue - minValue) + minValue));
                     }
                 }
             }
@@ -332,6 +370,8 @@ namespace Materia.Nodes.Atomic
         public class CurvesData : NodeData
         {
             public Dictionary<int, List<Graph.GPoint>> points;
+            public float min = 0;
+            public float max = 1;
         }
 
         public override void FromJson(string data)
@@ -340,6 +380,8 @@ namespace Materia.Nodes.Atomic
             SetBaseNodeDate(d);
 
             points = new Dictionary<int, List<Point>>();
+            minValue = d.min;
+            maxValue = d.max;
 
             foreach(int k in d.points.Keys)
             {
@@ -360,6 +402,8 @@ namespace Materia.Nodes.Atomic
             CurvesData d = new CurvesData();
             FillBaseNodeData(d);
             d.points = new Dictionary<int, List<Graph.GPoint>>();
+            d.min = minValue;
+            d.max = maxValue;
 
             foreach(int k in points.Keys)
             {

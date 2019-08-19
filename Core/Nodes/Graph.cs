@@ -14,6 +14,7 @@ using System.Threading;
 using Materia.Nodes.Items;
 using NLog;
 using Materia.Nodes.MathNodes;
+using Materia.Archive;
 
 namespace Materia.Nodes
 {
@@ -295,6 +296,9 @@ namespace Materia.Nodes
             }
         }
 
+        [Editable(ParameterInputType.Toggle, "Absolute Size", "Basic")]
+        public bool AbsoluteSize { get; set; }
+
         /// <summary>
         /// A graph must be instantiated on the UI / Main Thread
         /// So it can acquire the proper TaskScheduler for nodes
@@ -515,6 +519,7 @@ namespace Materia.Nodes
 
             public int width;
             public int height;
+            public bool absoluteSize;
 
             public string hdriIndex;
 
@@ -575,6 +580,9 @@ namespace Materia.Nodes
         {
             int c = Nodes.Count;
 
+            //do not resize if the graph is not relative
+            if (AbsoluteSize) return;
+
             float wp = (float)width / (float)this.width;
             float hp = (float)height / (float)this.height;
 
@@ -590,6 +598,9 @@ namespace Materia.Nodes
                     {
                         int fwidth = (int)Math.Min(8192, Math.Max(8, Math.Round(osize.X * wp)));
                         int fheight = (int)Math.Min(8192, Math.Max(8, Math.Round(osize.Y * hp)));
+
+                        //if not relative skip
+                        if (n.AbsoluteSize) continue;
 
                         if (n is GraphInstanceNode)
                         {
@@ -633,6 +644,7 @@ namespace Materia.Nodes
             d.parameters = GetJsonReadyParameters();
             d.width = width;
             d.height = height;
+            d.absoluteSize = AbsoluteSize;
             d.customParameters = GetJsonReadyCustomParameters();
             d.customFunctions = GetJsonReadyCustomFunctions();
             d.graphLinesDisplay = graphLinesDisplay;
@@ -976,7 +988,7 @@ namespace Materia.Nodes
                 return null;
             }
 
-            if(type.Contains(System.IO.Path.DirectorySeparatorChar))
+            if(type.Contains("/") || type.Contains("\\"))
             {
                 var n = new GraphInstanceNode(width, height);
                 n.ParentGraph = this;
@@ -1033,7 +1045,7 @@ namespace Materia.Nodes
             }
         }
 
-        public virtual void FromJson(GraphData d)
+        public virtual void FromJson(GraphData d, MTGArchive archive = null)
         {
             if (d == null) return;
 
@@ -1051,6 +1063,7 @@ namespace Materia.Nodes
             Zoom = d.zoom;
             width = d.width;
             height = d.height;
+            AbsoluteSize = d.absoluteSize;
 
             if (width <= 0 || width == int.MaxValue) width = 256;
             if (height <= 0 || height == int.MaxValue) height = 256;
@@ -1086,7 +1099,7 @@ namespace Materia.Nodes
                                     lookup[nd.id] = n;
                                     Nodes.Add(n);
                                     tempData[nd.id] = nd;
-                                    LoadNode(n, s);
+                                    LoadNode(n, s, archive);
                                 }
                                 else if (t.Equals(typeof(InputNode)))
                                 {
@@ -1097,7 +1110,7 @@ namespace Materia.Nodes
                                     lookup[nd.id] = n;
                                     Nodes.Add(n);
                                     tempData[nd.id] = nd;
-                                    LoadNode(n, s);
+                                    LoadNode(n, s, archive);
                                 }
                                 else if (t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
                                 {
@@ -1110,7 +1123,7 @@ namespace Materia.Nodes
                                         lookup[nd.id] = n;
                                         Nodes.Add(n);
                                         tempData[nd.id] = nd;
-                                        LoadNode(n, s);
+                                        LoadNode(n, s, archive);
                                     }
                                 }
                                 else
@@ -1124,7 +1137,7 @@ namespace Materia.Nodes
                                         lookup[nd.id] = n;
                                         Nodes.Add(n);
                                         tempData[nd.id] = nd;
-                                        LoadNode(n, s);
+                                        LoadNode(n, s, archive);
                                     }
                                 }
                             }
@@ -1150,17 +1163,79 @@ namespace Materia.Nodes
             }
         }
 
-        public virtual void FromJson(string data)
+        public void PasteParameters(Dictionary<string, string> cparams, Node.NodeData from, Node to)
         {
+            var t = to.GetType();
+            var props = t.GetProperties();
+
+            foreach(var prop in props)
+            {
+                string pdata = null;
+                string cid = from.id + "." + prop.Name;
+                string nid = to.Id + "." + prop.Name;
+                if(cparams.TryGetValue(cid, out pdata))
+                {
+                    GraphParameterValue gv = GraphParameterValue.FromJson(pdata, to);
+                    Parameters[nid] = gv;
+
+                    //setup event handlers
+                    if(gv.IsFunction())
+                    {
+                        FunctionGraph func = gv.Value as FunctionGraph;
+                        func.OnGraphUpdated += Graph_OnGraphUpdated;
+                    }
+                }
+            }
+        }
+
+        public virtual Dictionary<string, string> CopyParameters(Node n)
+        {
+            Dictionary<string, string> cparams = new Dictionary<string, string>();
+            var t = n.GetType();
+            var props = t.GetProperties();
+
+            foreach(var prop in props)
+            {
+                if(HasParameterValue(n.Id, prop.Name))
+                {
+                    string cid = n.Id + "." + prop.Name;
+                    cparams[cid] = GetParameterRaw(n.Id, prop.Name).GetJson();
+                }
+            }
+            return cparams;
+        }
+
+        public virtual void FromJson(string data, MTGArchive archive = null)
+        {
+            List<MTGArchive.ArchiveFile> archiveFiles = null;
+            if (string.IsNullOrEmpty(data) && archive != null)
+            {
+                archive.Open();
+                archiveFiles = archive.GetAvailableFiles();
+                //there is only ever one .mtg in an archive
+                var mtgFile = archiveFiles.Find(m => m.path.EndsWith(".mtg"));
+                if(mtgFile == null)
+                {
+                    return;
+                }
+
+                data = mtgFile.ExtractText();
+                archive.Close();
+            }
+            else if (string.IsNullOrEmpty(data) && archive == null)
+            {
+                return;
+            }
+
             GraphData d = JsonConvert.DeserializeObject<GraphData>(data);
 
             if (d != null)
             {
-                FromJson(d);
+                FromJson(d, archive);
             }
         }
 
-        private void LoadNode(Node n, string data)
+        private void LoadNode(Node n, string data, MTGArchive archive = null)
         {
             //slight optimization for function graphs
             if(n is MathNode && this is FunctionGraph)
@@ -1183,7 +1258,7 @@ namespace Materia.Nodes
                 }
             }
 
-            n.FromJson(data);
+            n.FromJson(data, archive);
 
             //origin sizes are only for graph instances
             //not actually used in the current one being edited

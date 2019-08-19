@@ -49,6 +49,7 @@ namespace Materia
         public struct GraphCopyData
         {
             public List<string> nodes;
+            public Dictionary<string, string> parameters;
         }
 
         bool moving;
@@ -368,11 +369,12 @@ namespace Materia
 
                 List<IUIGraphNode> comments = new List<IUIGraphNode>();
                 List<IUIGraphNode> regular = new List<IUIGraphNode>();
+                Dictionary<string, string> copiedParams = new Dictionary<string, string>();
 
                 //splitting up comment nodes
                 //and non comment nodes
                 //so we can test for duplicates!
-                foreach(IUIGraphNode n in SelectedNodes)
+                foreach (IUIGraphNode n in SelectedNodes)
                 {
                     if(n is UICommentNode)
                     {
@@ -403,6 +405,13 @@ namespace Materia
                             continue;
                         }
 
+                        var cparams = Graph.CopyParameters(cn.Node);
+
+                        foreach (string k in cparams.Keys)
+                        {
+                            copiedParams[k] = cparams[k];
+                        }
+
                         copied.Add(cn);
                         nodes.Add(cn.Node.GetJson());
                     }
@@ -415,6 +424,13 @@ namespace Materia
                         continue;
                     }
 
+                    var cparams = Graph.CopyParameters(n.Node);
+
+                    foreach(string k in cparams.Keys)
+                    {
+                        copiedParams[k] = cparams[k];
+                    }
+
                     nodes.Add(n.Node.GetJson());
                     copied.Add(n);
                 }
@@ -422,6 +438,7 @@ namespace Materia
                 GraphCopyData cd = new GraphCopyData()
                 {
                     nodes = nodes,
+                    parameters = copiedParams
                 };
 
                 //copy to clipboard
@@ -464,17 +481,18 @@ namespace Materia
 
 
                 List<IUIGraphNode> added = new List<IUIGraphNode>();
-                Dictionary<string, string> jsonContent = new Dictionary<string, string>();
+                Dictionary<string, Node.NodeData> jsonContent = new Dictionary<string, Node.NodeData>();
                 Dictionary<string, Node> realLookup = new Dictionary<string, Node>();
 
                 for (int i = 0; i < cd.nodes.Count; i++)
                 {
                     string json = cd.nodes[i];
-                    var unode = AddNodeFromJson(json, realLookup);
+                    Node.NodeData ndata = null;
+                    var unode = AddNodeFromJson(json, realLookup, cd.parameters, out ndata);
                     if (unode != null)
                     {
                         added.Add(unode);
-                        jsonContent[unode.Node.Id] = json;
+                        jsonContent[unode.Node.Id] = ndata;
                     }
                 }
 
@@ -501,11 +519,10 @@ namespace Materia
                     double dy = n.Node.ViewOriginY - minY;
 
                     //also set node connections as needed
-                    string json = null;
+                    Node.NodeData json = null;
                     if (jsonContent.TryGetValue(n.Node.Id, out json))
                     {
-                        Node.NodeData nd = JsonConvert.DeserializeObject<Node.NodeData>(json);
-                        n.Node.SetConnections(realLookup, nd.outputs);
+                        n.Node.SetConnections(realLookup, json.outputs);
                     }
 
                     n.OffsetTo(mp.X + dx, mp.Y + dy);
@@ -1344,11 +1361,11 @@ namespace Materia
         /// <param name="json"></param>
         /// <param name="realLookup"></param>
         /// <returns></returns>
-        protected IUIGraphNode AddNodeFromJson(string json, Dictionary<string, Node> realLookup)
+        protected IUIGraphNode AddNodeFromJson(string json, Dictionary<string, Node> realLookup, Dictionary<string, string> cparams, out Node.NodeData data)
         {
             try
             {
-                Node.NodeData nd = JsonConvert.DeserializeObject<Node.NodeData>(json);
+                Node.NodeData nd = data = JsonConvert.DeserializeObject<Node.NodeData>(json);
                 if (nd == null) return null;
 
                 Node n = null;
@@ -1357,10 +1374,14 @@ namespace Materia
                 n = Graph.CreateNode(nd.type);
 
                 if (n != null)
-                {
+                { 
+                    n.GetType();
+                    if (!Graph.Add(n)) return unode;
+
                     realLookup[nd.id] = n;
                     n.FromJson(json);
-                    if (!Graph.Add(n)) return unode;
+
+                    Graph.PasteParameters(cparams, nd, n);
 
                     if (n is CommentNode)
                     {
@@ -1394,6 +1415,7 @@ namespace Materia
             catch (Exception e)
             {
                 Log.Error(e);
+                data = null;
                 return null;
             }
         }
@@ -1579,6 +1601,23 @@ namespace Materia
                     ToWorld(ref p);
  
                     AddNode(res.Type, p);
+                }
+            }
+            else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] path = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+                foreach (string p in path)
+                {
+                    string fname = System.IO.Path.GetFileNameWithoutExtension(p);
+                    string ext = System.IO.Path.GetExtension(p);
+
+                    if (ext.Equals(".mtg") || ext.Equals(".mtga"))
+                    {
+                        Point pt = e.GetPosition(ViewPort);
+                        ToWorld(ref pt);
+                        AddNode(p, pt);
+                    }
                 }
             }
         }

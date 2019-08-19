@@ -115,8 +115,9 @@ namespace Materia.UI
                 foreach (string p in path)
                 {
                     string fname = Path.GetFileNameWithoutExtension(p);
+                    string ext = Path.GetExtension(p);
 
-                    if (Path.GetExtension(p).Equals(".mtg"))
+                    if (ext.Equals(".mtg") || ext.Equals(".mtga"))
                     {
                         NodeResource nsr = new NodeResource();
                         nsr.Title = fname;

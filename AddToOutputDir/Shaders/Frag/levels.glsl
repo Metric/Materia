@@ -6,6 +6,7 @@ uniform sampler2D MainTex;
 uniform vec3 minValues;
 uniform vec3 maxValues;
 uniform vec3 midValues;
+uniform vec2 value;
 
 float Gamma(float mid) {
     float gamma = 1;
@@ -48,6 +49,9 @@ void main() {
     if(bgamma > 1 || bgamma < 1) {
         adjusted.b = min(1, max(0, pow(adjusted.b, bgamma)));
     }
+
+    //apply min max value range
+    adjusted = min(vec3(1), max(vec3(0), adjusted * (value.y - value.x) + value.x));
 
     FragColor = vec4(adjusted, c.a);
 }

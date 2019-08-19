@@ -93,6 +93,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Archive\Archive.csproj">
+      <Project>{92888af6-1cdb-4459-845f-d65763d3baf7}</Project>
+      <Name>Archive</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{53335848-4c43-4625-9226-a12dd2543e44}</Project>
       <Name>Core</Name>

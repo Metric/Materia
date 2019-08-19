@@ -10,6 +10,7 @@ namespace RSMI
 {
     public abstract class AbstractImporter
     {
+        public abstract List<Containers.Mesh> Parse(Stream stream);
         public abstract List<Mesh> Parse(string path);
     }
 }

@@ -6,23 +6,52 @@ using System.Threading.Tasks;
 using RSMI.Containers;
 using Assimp.Configs;
 using Assimp;
+using System.IO;
 
 namespace RSMI
 {
     public class Importer : AbstractImporter
     {
+        public override List<Containers.Mesh> Parse(Stream stream)
+        {
+            List<Containers.Mesh> meshes = new List<Containers.Mesh>();
+            using (AssimpContext ctx = new AssimpContext())
+            {
+                var scene = ctx.ImportFileFromStream(stream, PostProcessSteps.Triangulate);
+
+                if (scene != null)
+                {
+                    meshes = Process(scene);
+                }
+
+                return meshes;
+            }
+        }
+
         public override List<Containers.Mesh> Parse(string path)
         {
             List<Containers.Mesh> meshes = new List<Containers.Mesh>();
-            AssimpContext ctx = new AssimpContext();
-
-            var scene = ctx.ImportFile(path, PostProcessSteps.Triangulate);
-
-            if(scene.HasMeshes)
+            using (AssimpContext ctx = new AssimpContext())
             {
-                foreach(Assimp.Mesh m in scene.Meshes)
+                var scene = ctx.ImportFile(path, PostProcessSteps.Triangulate);
+
+                if (scene != null)
                 {
-                    if(m.HasNormals && m.HasTextureCoords(0) && m.HasVertices)
+                    meshes = Process(scene);
+                }
+
+                return meshes;
+            }
+        }
+
+        protected List<Containers.Mesh> Process(Assimp.Scene scene)
+        {
+            List<Containers.Mesh> meshes = new List<Containers.Mesh>();
+            if (scene.HasMeshes)
+            {
+                foreach (Assimp.Mesh m in scene.Meshes)
+                {
+                    if (m.HasNormals && m.HasTextureCoords(0) && m.HasVertices)
                     {
                         Containers.Mesh ms = new Containers.Mesh();
 
@@ -33,23 +62,23 @@ namespace RSMI
                             ms.tangents.Add(new Materia.Math3D.Vector4(0, 0, 0, 1));
                         }
 
-                        foreach(Vector3D v in m.Vertices)
+                        foreach (Vector3D v in m.Vertices)
                         {
                             ms.vertices.Add(new Materia.Math3D.Vector3(v.X, v.Y, v.Z));
                         }
 
-                        foreach(Vector3D v in m.TextureCoordinateChannels[0])
+                        foreach (Vector3D v in m.TextureCoordinateChannels[0])
                         {
                             ms.uv.Add(new Materia.Math3D.Vector2(v.X, v.Y));
                         }
 
-                        
+
                         ms.indices = new List<int>(m.GetIndices());
 
 
                         //store faces for use with Mikktspace generation
                         //and for displaying UVs
-                        foreach(Face f in m.Faces)
+                        foreach (Face f in m.Faces)
                         {
                             if (f.IndexCount == 3)
                             {
@@ -70,9 +99,6 @@ namespace RSMI
                     }
                 }
             }
-
-            ctx.Dispose();
-
             return meshes;
         }
     }

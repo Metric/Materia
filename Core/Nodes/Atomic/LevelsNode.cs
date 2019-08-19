@@ -196,6 +196,7 @@ namespace Materia.Nodes.Atomic
             processor.Min = new Math3D.Vector3(prange.min[0], prange.min[1], prange.min[2]);
             processor.Max = new Math3D.Vector3(prange.max[0], prange.max[1], prange.max[2]);
             processor.Mid = new Math3D.Vector3(prange.mid[0], prange.mid[1], prange.mid[2]);
+            processor.Value = new Math3D.Vector2(prange.min[3], prange.max[3]);
 
             processor.Process(width, height, i1, buffer);
             processor.Complete();
@@ -214,7 +215,8 @@ namespace Materia.Nodes.Atomic
         {
             LevelsData d = JsonConvert.DeserializeObject<LevelsData>(data);
             SetBaseNodeDate(d);
-            range = d.range;
+            //to ensure backwards compat with older multi range size
+            range = new MultiRange(d.range.min, d.range.mid, d.range.max);
         }
 
         public override string GetJson()

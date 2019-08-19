@@ -194,6 +194,9 @@
     <Compile Include="UI\Components\PropertySection.xaml.cs">
       <DependentUpon>PropertySection.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Components\RangeSlider.xaml.cs">
+      <DependentUpon>RangeSlider.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\Components\ShelfItem.xaml.cs">
       <DependentUpon>ShelfItem.xaml</DependentUpon>
     </Compile>
@@ -390,6 +393,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\Components\PropertySection.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\RangeSlider.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
