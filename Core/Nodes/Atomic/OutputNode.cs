@@ -34,8 +34,6 @@ namespace Materia.Nodes.Atomic
     /// </summary>
     public class OutputNode : ImageNode
     {
-        CancellationTokenSource ctk;
-
         NodeInput input;
 
         OutputType outtype;
@@ -171,25 +169,13 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (input != null && input.HasInput)
+            if (input != null && input.HasInput)
+            {
+                if (ParentGraph != null)
                 {
-                    if (ParentGraph != null)
-                    {
-                        ParentGraph.Schedule(this);
-                    }
+                    ParentGraph.Schedule(this);
                 }
-            //}, Context);
+            }
         }
 
         public override Task GetTask()

@@ -14,8 +14,6 @@ namespace Materia.Nodes.Atomic
 {
     public class UniformColorNode : ImageNode
     {
-        CancellationTokenSource ctk;
-
         MVector color;
 
         [Promote(NodeType.Float4)]
@@ -97,22 +95,10 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            //}, Context);
+            if (ParentGraph != null)
+            {
+                ParentGraph.Schedule(this);
+            }
         }
 
         public override Task GetTask()

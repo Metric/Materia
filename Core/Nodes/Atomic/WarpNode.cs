@@ -13,8 +13,6 @@ namespace Materia.Nodes.Atomic
 {
     public class WarpNode : ImageNode
     {
-        CancellationTokenSource ctk;
-
         protected WarpProcessor processor;
         protected BlurProcessor blur;
 
@@ -123,25 +121,13 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (input.HasInput && input1.HasInput)
+            if (input.HasInput && input1.HasInput)
+            {
+                if (ParentGraph != null)
                 {
-                    if (ParentGraph != null)
-                    {
-                        ParentGraph.Schedule(this);
-                    }
+                    ParentGraph.Schedule(this);
                 }
-            //}, Context);
+            }
         }
 
         public override Task GetTask()

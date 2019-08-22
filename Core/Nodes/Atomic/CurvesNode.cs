@@ -21,8 +21,6 @@ namespace Materia.Nodes.Atomic
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
-        CancellationTokenSource ctk;
-
         NodeInput input;
 
         FloatBitmap lutBrush;
@@ -162,25 +160,13 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (input.HasInput)
+            if (input.HasInput)
+            {
+                if (ParentGraph != null)
                 {
-                    if (ParentGraph != null)
-                    {
-                        ParentGraph.Schedule(this);
-                    }
+                    ParentGraph.Schedule(this);
                 }
-            //}, Context);
+            }
         }
 
         List<Point> GetNormalizedCurve(List<Point> pts)

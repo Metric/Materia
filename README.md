@@ -1,24 +1,16 @@
 Materia
 ===================
-
 An open source alternative to Substance Designer written in C#. 
+
+Want to ask a question, found a bug, need help, or have a suggestion?
+===========================================================
+Then feel free to drop into the official discord channel: https://discord.gg/VEW5cP7
+
 
 Alpha RC 0.0.2 - Eye Example
 --------------------------
 ![image](https://github.com/Metric/Materia/blob/master/alpha-rc.0.0.2.png)
 
-A simple setup
------------------
-![image](https://github.com/Metric/Materia/blob/master/screenshot1.png)
-
-Pre-existing Textures
----------------------
-![image](https://github.com/Metric/Materia/blob/master/screenshot2.png)
-
-
-Why did I start making this?
-============================
-I got tired of paying the fee for the Substance suite.
 
 What is the current state of it?
 =================================
@@ -30,7 +22,7 @@ Computer Requirements
  - OpenGL 3.3 compatible video card with as much vram as possible.
     - OpenGL 4.1 compatible video card for real time tessellation displacement
  - Windows 7, 8, or 10 64-Bit
- - Approx Hard Drive Space Needed: 300MB (Not Including .Net 4.6.1 Runtime)
+ - Approx Hard Drive Space Needed: 300MB (Not Including .Net 4.6 Runtime)
  - Approx system memory required: 1GB+
 
 Currently only runs on Windows as some Win32Api is used.
@@ -45,7 +37,7 @@ Major TODO
   * Re-creation of various substance graph instances.
   * More Undo and Redo tracking operations.
   * Thorough testing of function graphs for both CPU and GPU.
-  * Add various Matrix4, Matrix3, and Matrix2 math nodes.
+  * Add various Matrix nodes for rotation, translation, scale, shear, etc.
 
 Known Bugs
 ====================
@@ -74,9 +66,9 @@ Editor Build Instructions
  * Load up the main solution
  * Make sure Math3D Project is referenced in Interfaces project.
  * Make sure Assimp and Math3D project is referenced properly in RSMI (Really Simple Mesh Importer) project
- * Make sure Newtonsoft JSON, NLog, System.Drawing, Math3D Project, RSMI Project, and Interfaces Project is properly referenced in Core project
+ * Make sure Newtonsoft JSON, NLog, System.Drawing, Math3D Project, RSMI Project, Interfaces Project, and Archive Project is properly referenced in Core project
  * Make sure Core Project is referenced in Exporters Project.
- * Make sure OpenTK, OpenTK control, Newtonsoft JSON, NLog, DDSReader Project, Core Project, Math3D Project, Interfaces Project, and Exporters Project is referenced in Materia project
+ * Make sure OpenTK, OpenTK control, Newtonsoft JSON, NLog, DDSReader Project, Core Project, Math3D Project, Interfaces Project, Exporters Project, and Archive Project is referenced in Materia project
  * Build
  * May have to copy runtimes folder for assimp from RSMI project build folder to the built materia.exe location
  * May have to copy language folders for Avalon Dock from the Xceed.WPF.AvalanDock build folder to the built materia.exe location.

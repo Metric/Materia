@@ -3,19 +3,13 @@ out vec4 FragColor;
 in vec2 UV;
 
 uniform sampler2D MainTex;
-uniform float maxDistance = 10.0;
-
-vec2 random2( vec2 p ) {
-    return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
-}
+uniform float maxDistance = 0.2;
 
 void main() {
     //note to self: the below can actually
     //be converted to work as an euclidean distance transform
     //simply change the >= to < 0.5
-    //and from 1.0 - on final dist calc
-    //and remove max distance out of the equation
-    //entirely
+    //and remove 1.0 - on final dist calc
     vec2 offset = 1.0 / textureSize(MainTex, 0);
     float r = texture(MainTex, UV).r;
 

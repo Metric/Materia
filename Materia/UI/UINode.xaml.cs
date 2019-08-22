@@ -64,9 +64,6 @@ namespace Materia
         public List<UINodePoint> InputNodes { get; set; }
         public List<UINodePoint> OutputNodes { get; set; }
 
-        int clickCount = 0;
-        long lastClickTime = 0;
-
         public const double defaultSize = 100;
 
         public Rect UnscaledBounds
@@ -598,17 +595,8 @@ namespace Materia
 
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                if(new TimeSpan(DateTime.Now.Ticks - lastClickTime).TotalMilliseconds > 200)
+                if(e.ClickCount > 1)
                 {
-                    clickCount = 0;
-                }
-
-                clickCount++;
-                lastClickTime = DateTime.Now.Ticks;
-
-                if(clickCount > 1)
-                {
-                    clickCount = 0;
                     if (Node.CanPreview)
                     {
                         if (UIPreviewPane.Instance != null)

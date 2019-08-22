@@ -20,8 +20,6 @@ namespace Materia.Nodes.Atomic
 {
     public class MeshDepthNode : ImageNode
     {
-        CancellationTokenSource ctk;
-
         private MTGArchive archive;
 
         string relativePath;
@@ -162,22 +160,10 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            //}, Context);
+            if (ParentGraph != null)
+            {
+                ParentGraph.Schedule(this);
+            }
         }
 
         public override Task GetTask()

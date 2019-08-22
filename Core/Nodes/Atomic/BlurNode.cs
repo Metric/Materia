@@ -15,7 +15,6 @@ namespace Materia.Nodes.Atomic
 {
     public class BlurNode : ImageNode
     {
-        CancellationTokenSource ctk;
         NodeInput input;
 
         int intensity;
@@ -108,25 +107,13 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (input.HasInput)
+            if (input.HasInput)
+            {
+                if (ParentGraph != null)
                 {
-                    if (ParentGraph != null)
-                    {
-                        ParentGraph.Schedule(this);
-                    }
+                    ParentGraph.Schedule(this);
                 }
-            //}, Context);
+            }
         }
 
         public override Task GetTask()

@@ -23,8 +23,6 @@ namespace Materia.Nodes.Atomic
 
         NodeOutput Output;
 
-        CancellationTokenSource ctk;
-
         string relativePath;
 
         string path;
@@ -139,22 +137,10 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            //}, Context);
+            if (ParentGraph != null)
+            {
+                ParentGraph.Schedule(this);
+            }
         }
 
         private void LoadBitmap()

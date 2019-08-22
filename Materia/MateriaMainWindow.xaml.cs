@@ -760,17 +760,45 @@ namespace Materia
             });
             MateriaInputManager.Add(InputManagerCommand.Undo, (e) =>
             {
+                if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
+                    && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                {
+                    return;
+                }
+
                 if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
                     var g = graphs[GraphDocuments.SelectedContentIndex];
+
+                    Point m2 = Mouse.GetPosition(g.ViewPort);
+
+                    if (m2.X < 0 || m2.Y < 0 || m2.X > g.ViewPort.ActualWidth || m2.Y > g.ViewPort.ActualHeight)
+                    {
+                        return;
+                    }
+
                     g.TryAndUndo();
                 }
             });
             MateriaInputManager.Add(InputManagerCommand.Redo, (e) =>
             {
+                if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
+                    && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                {
+                    return;
+                }
+
                 if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
                     var g = graphs[GraphDocuments.SelectedContentIndex];
+
+                    Point m2 = Mouse.GetPosition(g.ViewPort);
+
+                    if (m2.X < 0 || m2.Y < 0 || m2.X > g.ViewPort.ActualWidth || m2.Y > g.ViewPort.ActualHeight)
+                    {
+                        return;
+                    }
+
                     g.TryAndRedo();
                 }
             });

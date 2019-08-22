@@ -18,8 +18,6 @@ namespace Materia.Nodes.Atomic
 {
     public class GradientMapNode : ImageNode
     {
-        CancellationTokenSource ctk;
-
         NodeInput input;
         NodeInput input2;
 
@@ -108,25 +106,13 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (input.HasInput && gradient != null)
+            if (input.HasInput && gradient != null)
+            {
+                if (ParentGraph != null)
                 {
-                    if (ParentGraph != null)
-                    {
-                        ParentGraph.Schedule(this);
-                    }
+                    ParentGraph.Schedule(this);
                 }
-            //}, Context);
+            }
         }
 
         public override void Dispose()
@@ -156,7 +142,7 @@ namespace Materia.Nodes.Atomic
             })
             .ContinueWith(t =>
             {
-                if(input.HasInput)
+                if(input.HasInput && gradient != null)
                 {
                     Process();
                 }

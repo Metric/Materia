@@ -20,8 +20,6 @@ namespace Materia.Nodes.Atomic
 
         public Graph GraphInst { get; protected set; }
 
-        CancellationTokenSource ctk;
-
         protected string path;
         protected Dictionary<string, object> jsonParameters;
         protected Dictionary<string, object> jsonCustomParameters;
@@ -182,22 +180,10 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            //}, Context);
+            if (ParentGraph != null)
+            {
+                ParentGraph.Schedule(this);
+            }
         }
 
         private void PrepareProcess()

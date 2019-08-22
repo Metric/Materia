@@ -36,8 +36,6 @@ namespace Materia.Nodes.Atomic
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
-        CancellationTokenSource ctk;
-
         NodeInput q1;
         NodeInput q2;
         NodeInput q3;
@@ -296,25 +294,13 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (ParentGraph != null)
+            if (ParentGraph != null)
+            {
+                if (q1.HasInput || q2.HasInput || q3.HasInput || q4.HasInput)
                 {
-                    if (q1.HasInput || q2.HasInput || q3.HasInput || q4.HasInput)
-                    {
-                        ParentGraph.Schedule(this);
-                    }
+                    ParentGraph.Schedule(this);
                 }
-            //}, Context);
+            }
         }
 
         float CalculateRandomLuminosity(float iter, float randLum)
@@ -561,7 +547,10 @@ namespace Materia.Nodes.Atomic
             })
             .ContinueWith(t =>
             {
-                Process();
+                if (q1.HasInput || q2.HasInput || q3.HasInput || q4.HasInput)
+                {
+                    Process();
+                }
             }, Context);
         }
 

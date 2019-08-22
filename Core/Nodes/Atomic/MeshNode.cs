@@ -50,8 +50,6 @@ namespace Materia.Nodes.Atomic
         public static GLTextuer2D DefaultDarkGray { get; set; }
         public static GLTextuer2D DefaultWhite { get; set; }
 
-        CancellationTokenSource ctk;
-
         string relativePath;
 
         string path;
@@ -297,22 +295,10 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            //}, Context);
+            if (ParentGraph != null)
+            {
+                ParentGraph.Schedule(this);
+            }
         }
 
         public override Task GetTask()

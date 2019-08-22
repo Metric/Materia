@@ -13,7 +13,6 @@ namespace Materia.Nodes.Atomic
 {
     public class ChannelSwitchNode : ImageNode
     {
-        CancellationTokenSource ctk;
         protected ChannelSwitchProcessor processor;
 
         protected NodeInput input;
@@ -162,25 +161,13 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (input.HasInput && input2.HasInput)
+            if (input.HasInput && input2.HasInput)
+            {
+                if (ParentGraph != null)
                 {
-                    if (ParentGraph != null)
-                    {
-                        ParentGraph.Schedule(this);
-                    }
+                    ParentGraph.Schedule(this);
                 }
-            //}, Context);
+            }
         }
 
         public override Task GetTask()

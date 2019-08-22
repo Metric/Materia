@@ -13,8 +13,6 @@ namespace Materia.Nodes.Atomic
 {
     public class InputNode : ImageNode
     {
-        CancellationTokenSource ctk;
-
         public new int Height
         {
             get
@@ -140,25 +138,13 @@ namespace Materia.Nodes.Atomic
                 return;
             }
 
-            //if (ctk != null)
-            //{
-            //    ctk.Cancel();
-            //}
-
-            //ctk = new CancellationTokenSource();
-
-            //Task.Delay(25, ctk.Token).ContinueWith(t =>
-            //{
-            //    if (t.IsCanceled) return;
-
-                if (Input != null && Input.HasInput)
+            if (Input != null && Input.HasInput)
+            {
+                if (ParentGraph != null)
                 {
-                    if (ParentGraph != null)
-                    {
-                        ParentGraph.Schedule(this);
-                    }
+                    ParentGraph.Schedule(this);
                 }
-            //}, Context);
+            }
         }
 
         public override Task GetTask()
