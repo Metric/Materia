@@ -89,6 +89,22 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        protected float spacing;
+        [Promote(NodeType.Float)]
+        [Editable(ParameterInputType.FloatInput, "Spacing")]
+        public float Spacing
+        {
+            get
+            {
+                return spacing;
+            }
+            set
+            {
+                spacing = value;
+                TryAndProcess();
+            }
+        }
+
         protected MVector position;
         [Promote(NodeType.Float2)]
         [Editable(ParameterInputType.Float2Input, "Position")]
@@ -205,6 +221,7 @@ namespace Materia.Nodes.Atomic
             scale = new MVector(1, 1);
             style = FontStyle.Regular;
             alignment = TextAlignment.Center;
+            spacing = 1;
             
 
             processor = new TextProcessor();
@@ -256,6 +273,7 @@ namespace Materia.Nodes.Atomic
             public float scaleY;
             public int style;
             public int alignment;
+            public float spacing;
         }
 
         public override void FromJson(string data)
@@ -270,6 +288,7 @@ namespace Materia.Nodes.Atomic
             scale = new MVector(d.scaleX, d.scaleY);
             position = new MVector(d.positionX, d.positionY);
             alignment = (TextAlignment)d.alignment;
+            spacing = d.spacing;
         }
 
         public override string GetJson()
@@ -286,6 +305,7 @@ namespace Materia.Nodes.Atomic
             d.scaleX = scale.X;
             d.scaleY = scale.Y;
             d.alignment = (int)alignment;
+            d.spacing = spacing;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -354,9 +374,15 @@ namespace Materia.Nodes.Atomic
             pfontSize = fontSize;
             palignment = alignment;
             pstyle = style;
+            pspacing = spacing;
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "FontSize"))
             { 
                 pfontSize = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "FontSize"));
+            }
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Spacing"))
+            {
+                pspacing = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Spacing"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Style"))
@@ -454,7 +480,7 @@ namespace Materia.Nodes.Atomic
                     {  
                         if (map.TryGetValue(ch, out data))
                         {
-                            alignmentAdjustment += data.size.X + 1;
+                            alignmentAdjustment += data.size.X + pspacing;
                         }
                     }
                 }
@@ -471,6 +497,7 @@ namespace Materia.Nodes.Atomic
         List<CharacterTransform> transforms = new List<CharacterTransform>();
         Dictionary<string, FontManager.CharData> map = new Dictionary<string, FontManager.CharData>();
         float pfontSize;
+        float pspacing;
         string[] lines;
         TextAlignment palignment;
         FontStyle pstyle;
@@ -522,7 +549,7 @@ namespace Materia.Nodes.Atomic
                             CharacterTransform ct = transforms[tindex];
                             MVector finalPos = new MVector((ct.position.X + left * ct.scale.X) * width - alignmentAdjustment, (ct.position.Y + (i * data.bearing) * py * ct.scale.Y) * height);
 
-                            left += (data.size.X + 1) * px;
+                            left += (data.size.X + pspacing) * px;
 
                             character.Bind();
                             character.SetData(data.texture.Image, GLInterfaces.PixelFormat.Bgra, (int)Math.Ceiling(data.size.X), (int)Math.Ceiling(data.size.Y));
