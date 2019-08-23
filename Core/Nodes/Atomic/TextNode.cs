@@ -14,6 +14,13 @@ using Materia.Math3D;
 
 namespace Materia.Nodes.Atomic
 {
+    public enum TextAlignment
+    {
+        Left = 0,
+        Center = 1,
+        Right = 2
+    }
+
     public class TextNode : ImageNode
     {
         NodeOutput Output;
@@ -48,6 +55,7 @@ namespace Materia.Nodes.Atomic
         }
 
         protected FontStyle style;
+        [Promote(NodeType.Float)]
         [Editable(ParameterInputType.Dropdown, "Style")]
         public FontStyle Style
         {
@@ -62,6 +70,22 @@ namespace Materia.Nodes.Atomic
                     style = value;
                     TryAndProcess();
                 }
+            }
+        }
+
+        protected TextAlignment alignment;
+        [Promote(NodeType.Float)]
+        [Editable(ParameterInputType.Dropdown, "Alignment")]
+        public TextAlignment Alignment
+        {
+            get
+            {
+                return alignment;
+            }
+            set
+            {
+                alignment = value;
+                TryAndProcess();
             }
         }
 
@@ -180,6 +204,8 @@ namespace Materia.Nodes.Atomic
             rotation = 0;
             scale = new MVector(1, 1);
             style = FontStyle.Regular;
+            alignment = TextAlignment.Center;
+            
 
             processor = new TextProcessor();
 
@@ -229,6 +255,7 @@ namespace Materia.Nodes.Atomic
             public float scaleX;
             public float scaleY;
             public int style;
+            public int alignment;
         }
 
         public override void FromJson(string data)
@@ -242,6 +269,7 @@ namespace Materia.Nodes.Atomic
             rotation = d.rotation;
             scale = new MVector(d.scaleX, d.scaleY);
             position = new MVector(d.positionX, d.positionY);
+            alignment = (TextAlignment)d.alignment;
         }
 
         public override string GetJson()
@@ -257,6 +285,7 @@ namespace Materia.Nodes.Atomic
             d.positionY = position.Y;
             d.scaleX = scale.X;
             d.scaleY = scale.Y;
+            d.alignment = (int)alignment;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -323,12 +352,24 @@ namespace Materia.Nodes.Atomic
         private void GetParams()
         {
             pfontSize = fontSize;
+            palignment = alignment;
+            pstyle = style;
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "FontSize"))
             { 
                 pfontSize = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "FontSize"));
             }
 
-            if(string.IsNullOrEmpty(text))
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Style"))
+            {
+                pstyle = (FontStyle)Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Style"));
+            }
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alignment"))
+            {
+                palignment = (TextAlignment)Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Alignment"));
+            }
+
+            if (string.IsNullOrEmpty(text))
             {
                 lines = new string[0];
             }
@@ -343,11 +384,17 @@ namespace Materia.Nodes.Atomic
             transforms.Clear();
             if (map == null || map.Count == 0) return;
 
+            adjustments.Clear();
+
             for (int i = 0; i < lines.Length; i++)
             {
                 string line = lines[i];
+                float alignmentAdjustment = 0;
                 for (int j = 0; j < line.Length; j++)
                 {
+                    string ch = line.Substring(j, 1);
+                    FontManager.CharData data = null;
+
                     MVector pPos = position;
                     float pcharRotation = rotation;
                     MVector pScale = scale;
@@ -396,7 +443,28 @@ namespace Materia.Nodes.Atomic
 
                     CharacterTransform ct = new CharacterTransform(pcharRotation * (float)(Math.PI / 180.0f), pPos, pScale);
                     transforms.Add(ct);
+
+                    //for these two alignments we need to calculate the 
+                    //actual full line width first before we do final
+                    //positing and rendering
+                    //to apply the proper adjustment
+                    //for right alignment all we need is the total
+                    //for center we need the halfway point
+                    if (palignment == TextAlignment.Center || palignment == TextAlignment.Right)
+                    {  
+                        if (map.TryGetValue(ch, out data))
+                        {
+                            alignmentAdjustment += data.size.X + 1;
+                        }
+                    }
                 }
+
+                if (palignment == TextAlignment.Center)
+                {
+                    alignmentAdjustment *= 0.5f;
+                }
+
+                adjustments.Add(alignmentAdjustment);
             }
         }
 
@@ -404,6 +472,9 @@ namespace Materia.Nodes.Atomic
         Dictionary<string, FontManager.CharData> map = new Dictionary<string, FontManager.CharData>();
         float pfontSize;
         string[] lines;
+        TextAlignment palignment;
+        FontStyle pstyle;
+        List<float> adjustments = new List<float>();
         void Process()
         {
             //need a clean buffer
@@ -423,6 +494,8 @@ namespace Materia.Nodes.Atomic
             float px = 1.0f / width;
             float py = 1.0f / height;
 
+            MVector pivot = new MVector(-1, 0);
+
             if (map != null && map.Count > 0 && transforms.Count > 0)
             {
                 int tindex = 0;
@@ -430,6 +503,8 @@ namespace Materia.Nodes.Atomic
                 {
                     string line = lines[i];
                     float left = 0;
+                    float alignmentAdjustment = adjustments[i];
+
                     for (int j = 0; j < line.Length; j++)
                     {
                         if (tindex >= transforms.Count) continue;
@@ -445,7 +520,7 @@ namespace Materia.Nodes.Atomic
                             }
 
                             CharacterTransform ct = transforms[tindex];
-                            MVector finalPos = new MVector((ct.position.X + left * ct.scale.X) * width, (ct.position.Y + (i * data.bearing) * py * ct.scale.Y) * height);
+                            MVector finalPos = new MVector((ct.position.X + left * ct.scale.X) * width - alignmentAdjustment, (ct.position.Y + (i * data.bearing) * py * ct.scale.Y) * height);
 
                             left += (data.size.X + 1) * px;
 
@@ -455,6 +530,7 @@ namespace Materia.Nodes.Atomic
 
                             processor.Translation = finalPos;
                             processor.Angle = ct.angle;
+                            processor.Pivot = pivot;
                             processor.Scale = ct.scale * (new MVector(data.size.X, data.size.Y) * 0.5f);
                             processor.ProcessCharacter(width, height, character, buffer);
                         }

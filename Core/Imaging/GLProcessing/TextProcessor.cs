@@ -14,6 +14,7 @@ namespace Materia.Imaging.GLProcessing
         public MVector Translation { get; set; }
         public MVector Scale { get; set; }
         public float Angle { get; set; }
+        public MVector Pivot { get; set; }
 
         public void Prepare(int width, int height, GLTextuer2D tex, GLTextuer2D output)
         {
@@ -36,7 +37,7 @@ namespace Materia.Imaging.GLProcessing
             IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.FuncAdd, (int)BlendEquationMode.FuncAdd);
             IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
 
-            ApplyTransformNoAuto(tex, output, width, height, Translation, Scale, Angle, new MVector(-1,0));
+            ApplyTransformNoAuto(tex, output, width, height, Translation, Scale, Angle, Pivot);
         }
     }
 }

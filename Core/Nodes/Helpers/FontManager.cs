@@ -57,6 +57,15 @@ namespace Materia.Nodes.Helpers
 
         public static Dictionary<string, CharData> Generate(string fontFamily, float fontSize, string text, FontStyle style)
         {
+            string[] fonts = GetAvailableFonts();
+
+            if (fonts.Length == 0) return new Dictionary<string, CharData>();
+       
+            if(Array.IndexOf(fonts, fontFamily) == -1)
+            {
+                fontFamily = fonts[0];
+            }
+
             Dictionary<string, CharData> map = null;
             cache.TryGetValue(fontFamily, out map);
 
@@ -66,37 +75,43 @@ namespace Materia.Nodes.Helpers
 
             string[] lines = text.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
 
-            for (int i = 0; i < lines.Length; i++)
+            try
             {
-                string line = lines[i];
-                for (int j = 0; j < line.Length; j++)
+                using (Font f = new Font(fontFamily, fontSize, style, GraphicsUnit.Pixel))
                 {
-                    string ch = line.Substring(j, 1);
-                    CharData chData = null;
-                    if (map.TryGetValue(ch, out chData))
+                    for (int i = 0; i < lines.Length; i++)
                     {
-                        if (chData.fontSize != fontSize || chData.style != style)
+                        string line = lines[i];
+                        for (int j = 0; j < line.Length; j++)
                         {
-                            CreateCharacter(chData, fontFamily, fontSize, ch, style);
+                            string ch = line.Substring(j, 1);
+                            CharData chData = null;
+                            if (map.TryGetValue(ch, out chData))
+                            {
+                                if (chData.fontSize != fontSize || chData.style != style)
+                                {
+                                    CreateCharacter(f, chData, fontFamily, fontSize, ch, style);
+                                }
+                            }
+                            else
+                            {
+                                CharData nData = new CharData(fontSize, Vector2.Zero, 0, null, style);
+                                CreateCharacter(f, nData, fontFamily, fontSize, ch, style);
+                                map[ch] = nData;
+                            }
                         }
                     }
-                    else
-                    {
-                        CharData nData = new CharData(fontSize, Vector2.Zero, 0, null, style);
-                        CreateCharacter(nData, fontFamily, fontSize, ch, style);
-                        map[ch] = nData;
-                    }
                 }
-            }
 
-            cache[fontFamily] = map;
+                cache[fontFamily] = map;
+            }
+            catch { }
 
             return map;
         }
 
-        protected static void CreateCharacter(CharData data, string fontFamily, float fontSize, string ch, FontStyle style)
+        protected static void CreateCharacter(Font f, CharData data, string fontFamily, float fontSize, string ch, FontStyle style)
         {
-            using (Font f = new Font(fontFamily, fontSize, style, GraphicsUnit.Pixel))
             using (var ghelper = Graphics.FromImage(fontHelper))
             {
                 StringFormat format = StringFormat.GenericTypographic;
