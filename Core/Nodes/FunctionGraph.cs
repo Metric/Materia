@@ -753,7 +753,7 @@ namespace Materia.Nodes
                 return false;
             }
 
-            //Log.Debug(frag);
+            //Log.Debug(lastShaderCode);
 
             Shader = Material.Material.CompileFragWithVert("image.glsl", lastShaderCode);
 

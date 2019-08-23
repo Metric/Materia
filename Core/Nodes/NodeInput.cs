@@ -68,7 +68,7 @@ namespace Materia.Nodes
             }
         }
 
-        public NodeType Type { get; protected set; }
+        public NodeType Type { get; set; }
         
         public NodeInput(NodeType t, Node n, string name = "")
         {

@@ -221,6 +221,7 @@
     <Compile Include="Nodes\MathNodes\MakeFloat2Node.cs" />
     <Compile Include="Nodes\MathNodes\MakeFloat3Node.cs" />
     <Compile Include="Nodes\MathNodes\MakeFloat4Node.cs" />
+    <Compile Include="Nodes\MathNodes\MatrixNode.cs" />
     <Compile Include="Nodes\MathNodes\MaxNode.cs" />
     <Compile Include="Nodes\MathNodes\MinNode.cs" />
     <Compile Include="Nodes\MathNodes\ModuloNode.cs" />
@@ -235,13 +236,17 @@
     <Compile Include="Nodes\MathNodes\PowNode.cs" />
     <Compile Include="Nodes\MathNodes\Random2Node.cs" />
     <Compile Include="Nodes\MathNodes\RandomNode.cs" />
+    <Compile Include="Nodes\MathNodes\RotateMatrixNode.cs" />
     <Compile Include="Nodes\MathNodes\RoundNode.cs" />
     <Compile Include="Nodes\MathNodes\SamplerNode.cs" />
+    <Compile Include="Nodes\MathNodes\ScaleMatrixNode.cs" />
     <Compile Include="Nodes\MathNodes\SetVarNode.cs" />
+    <Compile Include="Nodes\MathNodes\ShearMatrixNode.cs" />
     <Compile Include="Nodes\MathNodes\SineNode.cs" />
     <Compile Include="Nodes\MathNodes\SqrtNode.cs" />
     <Compile Include="Nodes\MathNodes\SubtractNode.cs" />
     <Compile Include="Nodes\MathNodes\TangentNode.cs" />
+    <Compile Include="Nodes\MathNodes\TranslateMatrixNode.cs" />
     <Compile Include="Nodes\Node.cs" />
     <Compile Include="Nodes\NodeInput.cs" />
     <Compile Include="Nodes\NodeOutput.cs" />

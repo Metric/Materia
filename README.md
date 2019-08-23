@@ -37,7 +37,6 @@ Major TODO
   * Re-creation of various substance graph instances.
   * More Undo and Redo tracking operations.
   * Thorough testing of function graphs for both CPU and GPU.
-  * Add various Matrix nodes for rotation, translation, scale, shear, etc.
 
 Known Bugs
 ====================
