@@ -1156,6 +1156,15 @@ namespace Materia.Nodes
                                 {
                                     pType = NodeType.Float4;
                                 }
+                                else if(v != null && v is bool)
+                                {
+                                    pType = NodeType.Bool;
+                                }
+                                else
+                                {
+                                    //do not add it
+                                    continue;
+                                }
                             }
                         }
 
@@ -1207,6 +1216,15 @@ namespace Materia.Nodes
                             else if(v != null && v is Vector4)
                             {
                                 pType = NodeType.Float4;
+                            }
+                            else if(v != null &&  v is bool)
+                            {
+                                pType = NodeType.Bool;
+                            }
+                            else
+                            {
+                                //do not add
+                                continue;
                             }
                         }
 

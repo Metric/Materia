@@ -110,6 +110,7 @@
     <Compile Include="Imaging\GLProcessing\PixelShaderProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\PreviewProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\SharpenProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\TextProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\TransformProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\UniformColorProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\WarpProcessor.cs" />
@@ -152,6 +153,7 @@
     <Compile Include="Nodes\Atomic\PixelProcessorNode.cs" />
     <Compile Include="Nodes\Atomic\SequenceNode.cs" />
     <Compile Include="Nodes\Atomic\SharpenNode.cs" />
+    <Compile Include="Nodes\Atomic\TextNode.cs" />
     <Compile Include="Nodes\Atomic\TransformNode.cs" />
     <Compile Include="Nodes\Atomic\UniformColorNode.cs" />
     <Compile Include="Nodes\Atomic\WarpNode.cs" />
@@ -166,6 +168,7 @@
     <Compile Include="Nodes\GraphParameterValue.cs" />
     <Compile Include="Nodes\Helpers\Blur.cs" />
     <Compile Include="Nodes\Helpers\Curves.cs" />
+    <Compile Include="Nodes\Helpers\FontManager.cs" />
     <Compile Include="Nodes\Helpers\Utils.cs" />
     <Compile Include="Nodes\ImageGraph.cs" />
     <Compile Include="Nodes\ImageNode.cs" />

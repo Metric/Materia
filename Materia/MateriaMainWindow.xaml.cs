@@ -30,6 +30,7 @@ using Materia.Settings;
 using NLog;
 using System.Windows.Threading;
 using Materia.Archive;
+using Materia.Nodes.Helpers;
 
 namespace Materia
 {
@@ -614,6 +615,8 @@ namespace Materia
             }
 
             graphs.Clear();
+
+            FontManager.Release();
 
             //clear material and shader caches
             PBRMaterial.ReleaseBRDF();

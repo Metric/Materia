@@ -49,29 +49,13 @@ namespace Materia.UI.Components
             IField.Foreground = GrayColor;
         }
 
-        public PropertyInput(PropertyInfo p, object owner, bool readOnly = false)
+        public PropertyInput(PropertyInfo p, object owner, bool readOnly = false, bool multi = false)
         {
             InitializeComponent();
-            initing = true;
-
-            this.readOnly = readOnly;
-
-            IField.IsReadOnly = readOnly;
-
-            property = p;
-            propertyOwner = owner;
-
-            var v = property.GetValue(owner);
-
-            if (v != null)
-            {
-                IField.Text = property.GetValue(owner).ToString();
-            }
-
-            IField.Foreground = GrayColor;
+            Set(p, owner, readOnly, multi);
         }
 
-        public void Set(string text)
+        public void Set(string text, bool multi = false)
         {
             initing = true;
             this.readOnly = true;
@@ -79,9 +63,22 @@ namespace Materia.UI.Components
             property = null;
             propertyOwner = null;
             IField.Text = text;
+
+            if (multi)
+            {
+                IField.TextWrapping = TextWrapping.Wrap;
+                IField.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+                Height = 128;
+            }
+            else
+            {
+                IField.TextWrapping = TextWrapping.NoWrap;
+                IField.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
+                Height = 32;
+            }
         }
 
-        public void Set(PropertyInfo p, object owner, bool readOnly = false)
+        public void Set(PropertyInfo p, object owner, bool readOnly = false, bool multi = false)
         {
             initing = true;
 
@@ -96,7 +93,26 @@ namespace Materia.UI.Components
 
             if (v != null)
             {
-                IField.Text = property.GetValue(owner).ToString();
+                try
+                {
+                    IField.Text = property.GetValue(owner).ToString();
+                }
+                catch { }
+            }
+
+            if (multi)
+            {
+                IField.TextWrapping = TextWrapping.Wrap;
+                IField.AcceptsReturn = true;
+                IField.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+                Height = 128;
+            }
+            else
+            {
+                IField.TextWrapping = TextWrapping.NoWrap;
+                IField.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
+                IField.AcceptsReturn = false;
+                Height = 32;
             }
         }
 
@@ -121,7 +137,7 @@ namespace Materia.UI.Components
 
         private void IField_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.Key == Key.Enter || e.Key == Key.Escape)
+            if((e.Key == Key.Enter || e.Key == Key.Escape) && !IField.AcceptsReturn)
             {
                 Keyboard.ClearFocus();
             }

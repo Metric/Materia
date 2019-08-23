@@ -40,7 +40,8 @@ namespace Materia.Nodes
         Text = 25,
         Dropdown = 26,
         Map = 27,
-        MapEdit = 28
+        MapEdit = 28,
+        MultiText = 29
     }
 
     public class GraphParameterValue

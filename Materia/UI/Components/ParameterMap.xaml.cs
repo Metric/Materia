@@ -661,6 +661,8 @@ namespace Materia.UI.Components
                     return new FileSelector(v, owner, "Materia Graph|*.mtg");
                 case ParameterInputType.Text:
                     return new PropertyInput(v, owner, template.GetCustomAttribute<ReadOnlyAttribute>() != null);
+                case ParameterInputType.MultiText:
+                    return new PropertyInput(v, owner, template.GetCustomAttribute<ReadOnlyAttribute>() != null, true);
                 case ParameterInputType.Toggle:
                     return new ToggleControl(edit.Name, v, owner);
                 case ParameterInputType.Gradient:

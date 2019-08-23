@@ -112,6 +112,8 @@ namespace Materia
                     }
                 }
             }
+
+            isIniting = false;
         }
 
         public override void OnApplyTemplate()
@@ -126,21 +128,25 @@ namespace Materia
                 {
                     tb.Foreground = Dropdown.Foreground;
                     tb.Background = Dropdown.Background;
+                    tb.TextChanged += Tb_TextChanged;
                 }
             }
             catch {}
         }
 
+        private void Tb_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            TextBox tb = sender as TextBox;
+            UpdateProperty(tb.Text);
+        }
+
         private void Dropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if(isIniting)
-            {
-                isIniting = false;
-                return;
-            }
+            UpdateProperty(Dropdown.SelectedValue);
+        }
 
-            object s = Dropdown.SelectedValue;
-
+        private void UpdateProperty(object s)
+        {
             if (property.PropertyType.IsEnum)
             {
                 try
@@ -152,28 +158,28 @@ namespace Materia
                     Log.Error(ex);
                 }
             }
-            else if(property.PropertyType.Equals(typeof(string[])))
+            else if (property.PropertyType.Equals(typeof(string[])))
             {
-                if(!string.IsNullOrEmpty(output))
+                if (!string.IsNullOrEmpty(output))
                 {
                     try
                     {
                         var index = Dropdown.SelectedIndex;
                         var prop = propertyOwner.GetType().GetProperty(output);
-                        if (prop == null) return;
+                        if (prop == null) return;   
                         if (prop.PropertyType.Equals(typeof(int)) || prop.PropertyType.Equals(typeof(float)))
                         {
                             prop.SetValue(propertyOwner, index);
                         }
-                        else if(prop.PropertyType.Equals(typeof(string)))
+                        else if (prop.PropertyType.Equals(typeof(string)))
                         {
                             if (Dropdown.SelectedItem != null)
                             {
                                 prop.SetValue(propertyOwner, Dropdown.SelectedItem.ToString());
                             }
-                            else
+                            else if(s is string)
                             {
-                                prop.SetValue(propertyOwner, null);
+                                prop.SetValue(propertyOwner, s);
                             }
                         }
                     }

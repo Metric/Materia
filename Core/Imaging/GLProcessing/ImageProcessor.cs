@@ -42,6 +42,43 @@ namespace Materia.Imaging.GLProcessing
             TileY = 1;
         }
 
+        protected void ApplyTransformNoAuto(GLTextuer2D inc, GLTextuer2D o, int owidth, int oheight, MVector translation, MVector scale, float angle, MVector pivot)
+        {
+            Matrix4 proj = Matrix4.CreateOrthographic(owidth, oheight, 0.03f, 1000f);
+            Matrix4 pTrans = Matrix4.CreateTranslation(-pivot.X, -pivot.Y, 0);
+            Matrix4 iPTrans = Matrix4.CreateTranslation(pivot.X, pivot.Y, 0);
+            Matrix4 trans = Matrix4.CreateTranslation(translation.X, translation.Y, 0);
+            Matrix4 sm = Matrix4.CreateScale(scale.X, scale.Y, 1);
+            Matrix4 rot = Matrix4.CreateRotationZ(angle);
+            Matrix4 model = pTrans * sm * rot * iPTrans * trans;
+            
+            Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
+
+            IGL.Primary.Viewport(0, 0, owidth, oheight);
+
+            resizeProcessor.Model = model;
+            resizeProcessor.View = view;
+            resizeProcessor.Projection = proj;
+            resizeProcessor.Luminosity = Luminosity;
+
+            resizeProcessor.Bind(inc);
+
+            inc.ClampToEdge();
+
+            if (renderQuad != null)
+            {
+                renderQuad.Draw();
+            }
+
+            inc.Repeat();
+            resizeProcessor.Unbind();
+
+            o.Bind();
+            o.Repeat();
+            o.CopyFromFrameBuffer(owidth, oheight);
+            GLTextuer2D.Unbind();
+        }
+
         protected void ApplyTransform(GLTextuer2D inc, GLTextuer2D o, int owidth, int oheight, MVector translation, MVector scale, float angle, MVector pivot)
         {
             Matrix4 proj = Matrix4.CreateOrthographic(owidth, oheight, 0.03f, 1000f);
@@ -76,8 +113,6 @@ namespace Materia.Imaging.GLProcessing
             o.Repeat();
             o.CopyFromFrameBuffer(owidth, oheight);
             GLTextuer2D.Unbind();
-
-
         } 
 
         protected void ResizeViewTo(GLTextuer2D inc, GLTextuer2D o, int owidth, int oheight, int nwidth, int nheight)
