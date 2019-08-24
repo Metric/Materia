@@ -44,6 +44,9 @@ Known Bugs
   - Work around for now is to set scaling for all displays to 100% in Windows 10.
   - UPDATE: I just received an email that this issue has now been added to the dotnot WPF github issues tracker at: https://github.com/dotnet/wpf/issues/1320
 
+* Sometimes node graph lines are not properly deleted, when deleting a node where the input is connected.
+* For some weird reason, when pasting a node and when connecting the output of it to another node, it does not properly connect in the underly UI / graph.
+
 How-To and Various Info
 ========================
 How-to and various info on available features can be found in the github wiki: https://github.com/Metric/Materia/wiki

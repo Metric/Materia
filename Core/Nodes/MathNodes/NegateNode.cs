@@ -46,7 +46,7 @@ namespace Materia.Nodes.MathNodes
 
         public override void UpdateOutputType()
         {
-            if(input.HasInput && executeInput.HasInput)
+            if(input.HasInput)
             {
                 output.Type = input.Input.Type;
             }

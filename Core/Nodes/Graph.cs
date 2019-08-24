@@ -1406,7 +1406,7 @@ namespace Materia.Nodes
             ClearParameters();
         }
 
-        protected void Updated()
+        protected virtual void Updated()
         {
             if(OnGraphUpdated != null)
             {

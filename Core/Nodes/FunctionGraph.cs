@@ -19,6 +19,9 @@ namespace Materia.Nodes
 {
     public class FunctionGraph : Graph
     {
+        protected bool modified = false;
+        protected List<Node> orderCache = new List<Node>();
+
         public delegate void OutputNodeSet(Node n);
         public event OutputNodeSet OnOutputSet;
 
@@ -176,6 +179,7 @@ namespace Materia.Nodes
 
         public FunctionGraph(string name, int w = 256, int h = 256) : base(name, w, h, false)
         {
+            orderCache = new List<Node>();
             calls = new List<CallNode>();
             args = new List<ArgNode>();
             Name = name;
@@ -190,6 +194,13 @@ namespace Materia.Nodes
             SetVar("size", new MVector(w, h), NodeType.Float2);
         }
 
+        protected override void Updated()
+        {
+            base.Updated();
+
+            modified = true;
+        }
+
         public override bool Add(Node n)
         {
             if(n is ExecuteNode && Execute == null)
@@ -197,6 +208,7 @@ namespace Materia.Nodes
                 if(base.Add(n))
                 {
                     Execute = n as ExecuteNode;
+                    modified = true;
                     return true;
                 }
 
@@ -211,6 +223,7 @@ namespace Materia.Nodes
                 if(base.Add(n))
                 {
                     args.Add(n as ArgNode);
+                    modified = true;
                     return true;
                 }
 
@@ -221,6 +234,7 @@ namespace Materia.Nodes
                 if(base.Add(n))
                 {
                     calls.Add(n as CallNode);
+                    modified = true;
                     return true;
                 }
 
@@ -228,8 +242,14 @@ namespace Materia.Nodes
             }
             else
             {
-                return base.Add(n);
+                if(base.Add(n))
+                {
+                    modified = true;
+                    return true;
+                }
             }
+
+            return false;
         }
 
         public override void Remove(Node n)
@@ -249,6 +269,8 @@ namespace Materia.Nodes
             }  
 
             base.Remove(n);
+
+            modified = true;
         }
 
         public override Graph TopGraph()
@@ -443,7 +465,7 @@ namespace Materia.Nodes
                 seen.Add(n);
 
                 count = n.Inputs.Count;
-                for(int i = 0; i < count; i++)
+                for (int i = 0; i < count; i++)
                 {
                     NodeInput op = n.Inputs[i];
 
@@ -474,7 +496,7 @@ namespace Materia.Nodes
                 //in case the graphs have
                 //nodes after the output
                 //for some reason
-                if(n == OutputNode)
+                if (n == OutputNode)
                 {
                     continue;
                 }
@@ -483,7 +505,7 @@ namespace Materia.Nodes
                 {
                     int i = 0;
                     count = n.Outputs.Count;
-                    for(i = 0; i < count; i++)
+                    for (i = 0; i < count; i++)
                     {
                         NodeOutput op = n.Outputs[i];
 
@@ -503,7 +525,7 @@ namespace Materia.Nodes
                                 //otherwise we queue up in queue
                                 //and proceed in order
                                 int count2 = op.To.Count;
-                                for(int j = 0; j < count2; j++)
+                                for (int j = 0; j < count2; j++)
                                 {
                                     NodeInput t = op.To[j];
                                     var branch = TravelBranch(t.Node, seen);
@@ -524,64 +546,72 @@ namespace Materia.Nodes
 
         protected List<Node> OrderNodesForShader()
         {
-            Stack<Node> reverse = new Stack<Node>();
-            Stack<Node> stack = new Stack<Node>();
-            List<Node> forward = new List<Node>();
-
-            //oops forgot to check this!
-            if(OutputNode == null)
+            if (modified || orderCache.Count == 0)
             {
-                return forward;
-            }
+                Stack<Node> reverse = new Stack<Node>();
+                Stack<Node> stack = new Stack<Node>();
+                List<Node> forward = new List<Node>();
 
-            if (Execute != null)
-            {
-                stack.Push(Execute);
-            }
-
-            //If we do not have an execute node
-            //then fall back to old method
-            //of starting from output
-            //to find first node
-            if (stack.Count == 0)
-            {
-                reverse.Push(OutputNode);
-
-                while (reverse.Count > 0)
+                //oops forgot to check this!
+                if (OutputNode == null)
                 {
-                    Node n = reverse.Pop();
-                    stack.Push(n);
+                    return forward;
+                }
 
-                    for (int i = 0; i < n.Inputs.Count; i++)
+                if (Execute != null)
+                {
+                    stack.Push(Execute);
+                }
+
+                //If we do not have an execute node
+                //then fall back to old method
+                //of starting from output
+                //to find first node
+                if (stack.Count == 0)
+                {
+                    reverse.Push(OutputNode);
+
+                    while (reverse.Count > 0)
                     {
-                        NodeInput op = n.Inputs[i];
-                        if (op.HasInput)
+                        Node n = reverse.Pop();
+                        stack.Push(n);
+
+                        for (int i = 0; i < n.Inputs.Count; i++)
                         {
-                            if (op.Type == NodeType.Execute)
+                            NodeInput op = n.Inputs[i];
+                            if (op.HasInput)
                             {
-                                reverse.Push(op.Input.Node);
+                                if (op.Type == NodeType.Execute)
+                                {
+                                    reverse.Push(op.Input.Node);
+                                }
                             }
                         }
                     }
                 }
+
+                HashSet<Node> seen = new HashSet<Node>();
+                var sc = stack.ToList();
+                stack.Clear();
+
+                var branch = TravelBranch(sc[0], seen);
+                forward.AddRange(branch);
+
+                //remove execute from it
+                //so it does not interfere with the shader generation
+                //etc
+                if (Execute != null)
+                {
+                    forward.Remove(Execute);
+                }
+
+                orderCache = forward;
+                modified = false;
+
+                return forward;
             }
 
-            HashSet<Node> seen = new HashSet<Node>();
-            var sc = stack.ToList();
-            stack.Clear();
-
-            var branch = TravelBranch(sc[0], seen);
-            forward.AddRange(branch);
-
-            //remove execute from it
-            //so it does not interfere with the shader generation
-            //etc
-            if (Execute != null)
-            {
-                forward.Remove(Execute);
-            }
-
-            return forward;
+            return orderCache;
         }
 
         public void UpdateOutputTypes()
@@ -799,6 +829,12 @@ namespace Materia.Nodes
             if (type.Contains("MathNodes") && !type.Contains("/") && !type.Contains("\\"))
             {
                 MathNode n = base.CreateNode(type) as MathNode;
+
+                if(n == null)
+                {
+                    return null;
+                }
+
                 n.AssignParentNode(parentNode);
                 n.AssignParentGraph(this);
                 return n;
@@ -1280,10 +1316,11 @@ namespace Materia.Nodes
             if (OutputNode == null) return;
 
             List<Node> ordered = OrderNodesForShader();
+
             //this ensures the function graph is processed
             //in the proper order
             //just as if it was running in the shader code
-            if(ordered.Count > 0)
+            if (ordered.Count > 0)
             {
                 int count = ordered.Count;
                 for(int i = 0; i < count; i++)

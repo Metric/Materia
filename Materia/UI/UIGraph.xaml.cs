@@ -2435,9 +2435,13 @@ namespace Materia
 
                         ClearView();
 
+                        string oldName = Graph.Name;
+
                         Graph.Dispose();
                         Graph.FromJson(txt);
                         Graph.SetConnections();
+
+                        Graph.Name = oldName;
 
                         LoadGraphUI();
 

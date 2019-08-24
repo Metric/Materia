@@ -436,9 +436,9 @@ namespace Materia.Nodes.Atomic
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "LuminosityRandomness"))
             {
-                if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
+                if (ParentGraph.IsParameterValueFunction(Id, "LuminosityRandomness"))
                 {
-                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as FunctionGraph;
+                    FunctionGraph g = ParentGraph.GetParameterRaw(Id, "LuminosityRandomness").Value as FunctionGraph;
                     g.SetVar("pos", new MVector(x, y), NodeType.Float2);
                     g.SetVar("iteration", i, NodeType.Float);
                     g.SetVar("maxIterations", imax, NodeType.Float);

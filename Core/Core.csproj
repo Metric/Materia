@@ -153,6 +153,7 @@
     <Compile Include="Nodes\Atomic\PixelProcessorNode.cs" />
     <Compile Include="Nodes\Atomic\SequenceNode.cs" />
     <Compile Include="Nodes\Atomic\SharpenNode.cs" />
+    <Compile Include="Nodes\Atomic\SwitchNode.cs" />
     <Compile Include="Nodes\Atomic\TextNode.cs" />
     <Compile Include="Nodes\Atomic\TransformNode.cs" />
     <Compile Include="Nodes\Atomic\UniformColorNode.cs" />
