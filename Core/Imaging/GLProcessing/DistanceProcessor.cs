@@ -14,13 +14,14 @@ namespace Materia.Imaging.GLProcessing
         IGLProgram shader;
 
         public float Distance { get; set; }
+        public bool SourceOnly { get; set; }
 
         public DistanceProcessor() : base()
         {
             shader = GetShader("image.glsl", "distance.glsl");
         }
 
-        public void Process(int width, int height, GLTextuer2D tex, GLTextuer2D other, GLTextuer2D output)
+        public void Process(int width, int height, GLTextuer2D tex, GLTextuer2D source, GLTextuer2D output)
         {
             base.Process(width, height, tex, output);
 
@@ -34,12 +35,16 @@ namespace Materia.Imaging.GLProcessing
                 shader.Use();
                 shader.SetUniform2("tiling", ref tiling);
                 shader.SetUniform("MainTex", 0);
+                shader.SetUniform("sourceOnly", SourceOnly);
                 shader.SetUniform("maxDistance", Distance);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
                 tex.Bind();
-                //shader.SetUniform("Other", 1);
-                //IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
-                //other.Bind();
+                shader.SetUniform("Source", 1);
+                IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
+                if (source != null)
+                {
+                    source.Bind();
+                }
 
                 if (renderQuad != null)
                 {
