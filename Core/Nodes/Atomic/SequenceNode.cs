@@ -12,6 +12,8 @@ namespace Materia.Nodes.Atomic
 { 
     public class SequenceNode : ImageNode
     {
+        public new bool AbsoluteSize { get; set; }
+
         public new int Height
         {
             get

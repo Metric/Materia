@@ -39,6 +39,77 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        /// <summary>
+        /// Replacing with new
+        /// to remove attributes
+        /// and stay hidden in editor
+        /// as these are not really
+        /// used for this node
+        /// </summary>
+
+        public new bool AbsoluteSize { get; set; }
+
+        public new GraphPixelType InternalPixelFormat
+        {
+            get
+            {
+                return internalPixelType;
+            }
+            set
+            {
+                internalPixelType = value;
+                OnPixelFormatChange();
+            }
+        }
+
+        public new float TileY
+        {
+            get
+            {
+                return tileY;
+            }
+            set
+            {
+                tileY = value;
+            }
+        }
+
+        public new float TileX
+        {
+            get
+            {
+                return tileX;
+            }
+            set
+            {
+                tileX = value;
+            }
+        }
+
+        public new int Height
+        {
+            get
+            {
+                return height;
+            }
+            set
+            {
+                height = value;
+            }
+        }
+
+        public new int Width
+        {
+            get
+            {
+                return width;
+            }
+            set
+            {
+                width = value;
+            }
+        }
+
         public SwitchNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
             Name = "Switch";
