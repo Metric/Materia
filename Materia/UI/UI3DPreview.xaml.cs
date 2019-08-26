@@ -116,6 +116,10 @@ namespace Materia.UI
 
         public static UI3DPreview Instance { get; protected set; }
 
+        protected float updateTime = 0;
+        protected float lastUpdate = 0;
+        protected const float maxUpdateTime = 1.0f / 20.0f;
+
         public UI3DPreview()
         {
             HdriManager.Scan();
@@ -210,44 +214,51 @@ namespace Materia.UI
 
         private void Glview_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if(e.Button == System.Windows.Forms.MouseButtons.Left)
+            if (updateTime >= maxUpdateTime)
             {
-                System.Windows.Point p = new System.Windows.Point(e.Location.X, e.Location.Y);
+                updateTime = 0;
+                if (e.Button == System.Windows.Forms.MouseButtons.Left)
+                {
+                    System.Windows.Point p = new System.Windows.Point(e.Location.X, e.Location.Y);
 
-                Quaternion n = camera.LocalRotation;
+                    Quaternion n = camera.LocalRotation;
 
-                Vector3 up = n * new Vector3(0, 1, 0);
+                    Vector3 up = n * new Vector3(0, 1, 0);
 
-                Vector3 euler = camera.LocalEulerAngles;
+                    Vector3 euler = camera.LocalEulerAngles;
 
-                euler.X += ((float)p.Y - (float)mouseStart.Y) * 0.25f;
-                euler.Y += ((float)p.X - (float)mouseStart.X) * 0.25f * Math.Sign(up.Y);
+                    euler.X += ((float)p.Y - (float)mouseStart.Y) * 0.25f;
+                    euler.Y += ((float)p.X - (float)mouseStart.X) * 0.25f * Math.Sign(up.Y);
 
-                euler.X %= 360;
-                euler.Y %= 360;
+                    euler.X %= 360;
+                    euler.Y %= 360;
 
-                camera.LocalEulerAngles = euler;
+                    camera.LocalEulerAngles = euler;
 
-                mouseStart = p;
+                    mouseStart = p;
 
-                Invalidate();
+                    Invalidate();
+                }
+                else if (e.Button == System.Windows.Forms.MouseButtons.Middle)
+                {
+                    System.Windows.Point p = new System.Windows.Point(e.Location.X, e.Location.Y);
+
+                    Vector3 right = camera.Right;
+                    Vector3 up = camera.Up;
+
+                    float dx = ((float)p.X - (float)mouseStart.X) * 0.0005f;
+                    float dy = ((float)p.Y - (float)mouseStart.Y) * -0.0005f;
+
+                    Vector3 t = right * dx + up * dy;
+
+                    previewObject.LocalPosition += t;
+
+                    Invalidate();
+                }
             }
-            else if(e.Button == System.Windows.Forms.MouseButtons.Middle)
-            {
-                System.Windows.Point p = new System.Windows.Point(e.Location.X, e.Location.Y);
 
-                Vector3 right = camera.Right;
-                Vector3 up = camera.Up;
-
-                float dx = ((float)p.X - (float)mouseStart.X) * 0.0005f;
-                float dy = ((float)p.Y - (float)mouseStart.Y) * -0.0005f;
-
-                Vector3 t = right * dx + up * dy;
-
-                previewObject.LocalPosition += t;
-
-                Invalidate();
-            }
+            updateTime += Environment.TickCount - lastUpdate;
+            lastUpdate = Environment.TickCount;
         }
 
         private void Glview_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)

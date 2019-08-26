@@ -67,9 +67,10 @@ namespace Materia.Imaging.GLProcessing
                 }
 
                 GLTextuer2D.Unbind();
-                output.Bind();
+                /*output.Bind();
                 output.CopyFromFrameBuffer(width, height);
-                GLTextuer2D.Unbind();
+                GLTextuer2D.Unbind();*/
+                Blit(output, width, height);
 
                 tex.Bind();
                 tex.Repeat();
@@ -91,9 +92,10 @@ namespace Materia.Imaging.GLProcessing
                 }
 
                 GLTextuer2D.Unbind();
-                output.Bind();
+                /*output.Bind();
                 output.CopyFromFrameBuffer(width, height);
-                GLTextuer2D.Unbind();
+                GLTextuer2D.Unbind();*/
+                Blit(output, width, height);
 
                 //begin second box
                 shader.SetUniform("horizontal", true);
@@ -128,9 +130,12 @@ namespace Materia.Imaging.GLProcessing
                 }
 
                 GLTextuer2D.Unbind();
-                output.Bind();
+                /*output.Bind();
                 output.CopyFromFrameBuffer(width, height);
                 GLTextuer2D.Unbind();
+                */
+
+                Blit(output, width, height);
 
                 //begin third box
                 shader.SetUniform("horizontal", true);
@@ -147,9 +152,12 @@ namespace Materia.Imaging.GLProcessing
                 }
 
                 GLTextuer2D.Unbind();
-                output.Bind();
+                /*output.Bind();
                 output.CopyFromFrameBuffer(width, height);
                 GLTextuer2D.Unbind();
+                */
+
+                Blit(output, width, height);
 
                 shader.SetUniform("horizontal", false);
                 shader.SetUniform("intensity", (boxes[2] - 1.0f) / 2.0f);
@@ -165,9 +173,10 @@ namespace Materia.Imaging.GLProcessing
                 }
 
                 GLTextuer2D.Unbind();
-                output.Bind();
+                /*output.Bind();
                 output.CopyFromFrameBuffer(width, height);
-                GLTextuer2D.Unbind();
+                GLTextuer2D.Unbind();*/
+                Blit(output, width, height);
             }
 
             output.Bind();

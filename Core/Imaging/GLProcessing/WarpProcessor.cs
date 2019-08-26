@@ -54,9 +54,10 @@ namespace Materia.Imaging.GLProcessing
                 tex.Repeat();
 
                 GLTextuer2D.Unbind();
-                output.Bind();
-                output.CopyFromFrameBuffer(width, height);
-                GLTextuer2D.Unbind();
+                //output.Bind();
+                //output.CopyFromFrameBuffer(width, height);
+                //GLTextuer2D.Unbind();
+                Blit(output, width, height);
             }
         }
     }

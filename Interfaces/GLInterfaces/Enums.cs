@@ -5104,4 +5104,19 @@ namespace Materia.GLInterfaces
         //     Original was GL_FUNC_REVERSE_SUBTRACT = 0x800B
         FuncReverseSubtract = 32779
     }
+
+    //
+    // Summary:
+    //     Used in GL.BlitFramebuffer, GL.BlitNamedFramebuffer and 1 other function
+    public enum BlitFramebufferFilter
+    {
+        //
+        // Summary:
+        //     Original was GL_NEAREST = 0x2600
+        Nearest = 9728,
+        //
+        // Summary:
+        //     Original was GL_LINEAR = 0x2601
+        Linear = 9729
+    }
 }

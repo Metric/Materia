@@ -200,19 +200,12 @@ namespace Materia.Nodes.Atomic
             if (i1 == null) return;
             if (i1.Id == 0) return;
 
-            CreateBufferIfNeeded();
-
             height = i1.Height;
             width = i1.Width;
 
-            if (previewProcessor == null) return;
-
-            previewProcessor.Process(i1.Width, i1.Height, i1, buffer);
-            previewProcessor.Complete();
-
             if (Output != null)
             {
-                Output.Data = buffer;
+                Output.Data = i1;
                 Output.Changed();
             }
 
@@ -221,7 +214,25 @@ namespace Materia.Nodes.Atomic
 
         public override GLTextuer2D GetActiveBuffer()
         {
-            return buffer;
+            if(input != null && input.HasInput && input.Input.Data != null)
+            {
+                return input.Input.Node.GetActiveBuffer();
+            }
+
+            return null;
+        }
+
+        public override byte[] GetPreview(int width, int height)
+        {
+            GLTextuer2D active = GetActiveBuffer();
+
+            if (active == null) return null;
+            if (active.Id == 0) return null;
+
+            previewProcessor.Process(width, height, active);
+            byte[] bits = previewProcessor.ReadByte(width, height);
+            previewProcessor.Complete();
+            return bits;
         }
 
         public class OutputNodeData : NodeData

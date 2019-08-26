@@ -39,14 +39,16 @@ namespace Materia.Imaging.GLProcessing
                 //draw in depth
                 Mesh.DrawForDepth();
 
-                output.Bind();
-                output.CopyFromFrameBuffer(width, height);
-                GLTextuer2D.Unbind();
+                //output.Bind();
+                //output.CopyFromFrameBuffer(width, height);
+                //GLTextuer2D.Unbind();
+
+                Blit(output, width, height);
 
                 GLFrameBuffer.Unbind();
             }
 
-            Process(width, height, output, output);
+            base.Process(width, height, output, output);
 
             if(shader != null)
             {
@@ -66,9 +68,10 @@ namespace Materia.Imaging.GLProcessing
 
                 GLTextuer2D.Unbind();
 
-                output.Bind();
-                output.CopyFromFrameBuffer(width, height);
-                GLTextuer2D.Unbind();
+                //output.Bind();
+                //output.CopyFromFrameBuffer(width, height);
+                //GLTextuer2D.Unbind();
+                Blit(output, width, height);
             }
         }
     }

@@ -316,7 +316,12 @@ void main() {
     float m = 1;
     if(hasMask == 1) {
         vec2 ra = texture(Mask, UV).ra;
-        m = min(ra.x + ra.y, 1);        
+        if(ra.y >= 1) {
+            m = min(ra.x, 1);
+        }
+        else {
+            m = min(ra.x + ra.y, 1);
+        }        
     }
 
     if(blendMode == 0) {
@@ -325,7 +330,7 @@ void main() {
         final.b = AddSub(a.b * alpha * m, b.b);
     }
     else if(blendMode == 1) {
-        final.rgb = Copy(a, b, alpha * m);
+        final.rgb = Copy(a, b, alpha * m * a.a);
     }
     else if(blendMode == 2) {
         final.r = Multiple(a.r * alpha * m, b.r);

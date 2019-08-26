@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Reflection;
+using System.Threading;
 
 namespace Materia.UI.Components
 {
@@ -25,6 +26,8 @@ namespace Materia.UI.Components
         object propertyOwner;
         bool initing;
         bool readOnly;
+
+        CancellationTokenSource ctk;
 
         private static SolidColorBrush GrayColor = new SolidColorBrush(Colors.Gray);
         private static SolidColorBrush LightGrayColor = new SolidColorBrush(Colors.LightGray);
@@ -129,10 +132,25 @@ namespace Materia.UI.Components
                 return;
             }
 
-            if (!readOnly && property != null && propertyOwner != null)
+            if(ctk != null)
             {
-                property.SetValue(propertyOwner, IField.Text);
+                ctk.Cancel();
             }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(250, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (!readOnly && property != null && propertyOwner != null)
+                    {
+                        property.SetValue(propertyOwner, IField.Text);
+                    }
+                });
+            });
         }
 
         private void IField_KeyDown(object sender, KeyEventArgs e)

@@ -117,7 +117,7 @@ namespace Materia
 
             if(ctk != null)
             {
-                return;
+                ctk.Cancel();
             }
 
             ctk = new CancellationTokenSource();
@@ -130,6 +130,8 @@ namespace Materia
                         Task.Delay(250, ctk.Token)
                             .ContinueWith(t =>
                             {
+                                if (t.IsCanceled) return;
+
                                 App.Current.Dispatcher.Invoke(() =>
                                 {
                                     ctk = null;
@@ -144,6 +146,8 @@ namespace Materia
                         Task.Delay(250, ctk.Token)
                             .ContinueWith(t =>
                             {
+                                if (t.IsCanceled) return;
+
                                 App.Current.Dispatcher.Invoke(() =>
                                 {
                                     ctk = null;

@@ -11,6 +11,7 @@ uniform int directx = 0;
 uniform sampler2D MainTex;
 
 void main() {
+    float noiseReduction = (intensity * 0.004);
     vec2 rpos = vec2(UV.x * width, UV.y * height);
 
     //uses the normal algorithm kernel
@@ -43,6 +44,11 @@ void main() {
     }
 
     norm = normalize(norm);
+
+    //help reduce noise
+    if(length(vec2(norm.x, norm.y)) <= noiseReduction) {
+        norm.x = norm.y = 0;
+    }
 
     if(directx == 1)
     {

@@ -35,7 +35,7 @@ namespace Materia.Rendering
 
             for(int i = 0; i < color.Length; i++)
             {
-                color[i] = new GLTextuer2D(PixelInternalFormat.Rgba32f);
+                color[i] = new GLTextuer2D(PixelInternalFormat.Rgba16f);
                 color[i].Bind();
                 color[i].SetData(IntPtr.Zero, PixelFormat.Rgba, w, h);
                 color[i].Linear();

@@ -202,6 +202,11 @@ namespace Materia
             GL.DrawBuffers(fmodes.Length, fmodes);
         }
 
+        public override void BlitFramebuffer(int sleft, int stop, int swidth, int sheight, int tleft, int ttop, int twidth, int theight, int bit, int filter)
+        {
+            GL.BlitFramebuffer(sleft, stop, swidth, sheight, tleft, ttop, twidth, theight, (OpenTK.Graphics.OpenGL.ClearBufferMask)bit, (OpenTK.Graphics.OpenGL.BlitFramebufferFilter)filter);
+        }
+
         public override void DrawElements(int mode, int count, int type, int indices)
         {
             GL.DrawElements((OpenTK.Graphics.OpenGL.BeginMode)mode, count, (OpenTK.Graphics.OpenGL.DrawElementsType)type, indices);

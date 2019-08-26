@@ -31,7 +31,7 @@
                     <ComboBoxItem Content="1024" />
                     <ComboBoxItem Content="2048" />
                     <ComboBoxItem Content="4096" />
-                    <ComboBoxItem Content="8192" />
+                    <!--<ComboBoxItem Content="8192" /> -->
                 </ComboBox.Items>
             </ComboBox>
             <TextBlock Name="ApplySizeLabel" Text="Size" Foreground="LightGray" VerticalAlignment="Center"  Margin="5,5,20,5"/>

@@ -612,10 +612,10 @@ namespace Materia.UI.Components
                     Imaging.RawBitmap raw = null;
                     if (owner is ImageNode)
                     {
-                        byte[] bits = (owner as ImageNode).GetPreview(512, 512);
+                        byte[] bits = (owner as ImageNode).GetPreview(256, 256);
                         if (bits != null)
                         {
-                            raw = new Imaging.RawBitmap(512, 512, bits);
+                            raw = new Imaging.RawBitmap(256, 256, bits);
                         }
                     }
                     return new UILevels(raw, owner, v);

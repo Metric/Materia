@@ -129,7 +129,7 @@ namespace Materia.Nodes
 
         protected int width;
 
-        [Editable(ParameterInputType.IntSlider, "Width", "Basic", 8, 8192, new float[] { 8, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192 })]
+        [Editable(ParameterInputType.IntSlider, "Width", "Basic", 8, 8192, new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
         public int Width
         {
             get
@@ -144,7 +144,7 @@ namespace Materia.Nodes
         }
 
         protected int height;
-        [Editable(ParameterInputType.IntSlider, "Height", "Basic", 8, 8192, new float[] { 8, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192 })]
+        [Editable(ParameterInputType.IntSlider, "Height", "Basic", 8, 8192, new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
         public int Height
         {
             get
@@ -313,6 +313,12 @@ namespace Materia.Nodes
         public virtual void AssignParentNode(Node n)
         {
            
+        }
+
+        public virtual void AssignPixelType(GraphPixelType pix)
+        {
+            internalPixelType = pix;
+            ReleaseBuffer();
         }
 
         public virtual void SetSize(int w, int h)
@@ -525,13 +531,23 @@ namespace Materia.Nodes
             {
                 buffer = new GLTextuer2D((GLInterfaces.PixelInternalFormat)((int)internalPixelType));
                 buffer.Bind();
-                buffer.Nearest();
+                buffer.SetData(IntPtr.Zero, GLInterfaces.PixelFormat.Rgba, width, height);
+                buffer.Linear();
                 buffer.Repeat();
                 if(internalPixelType == GraphPixelType.Luminance16F || internalPixelType == GraphPixelType.Luminance32F)
                 {
                     buffer.SetSwizzleLuminance();
                 }
                 GLTextuer2D.Unbind();
+            }
+        }
+
+        public virtual void ReleaseBuffer()
+        {
+            if(buffer != null)
+            {
+                buffer.Release();
+                buffer = null;
             }
         }
 

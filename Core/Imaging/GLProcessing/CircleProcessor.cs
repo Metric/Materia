@@ -42,9 +42,10 @@ namespace Materia.Imaging.GLProcessing
                     renderQuad.Draw();
                 }
 
-                output.Bind();
-                output.CopyFromFrameBuffer(width, height);
-                GLTextuer2D.Unbind();
+                //output.Bind();
+                //output.CopyFromFrameBuffer(width, height);
+                //GLTextuer2D.Unbind();
+                Blit(output, width, height);
             }
         }
     }

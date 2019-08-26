@@ -82,6 +82,8 @@ namespace Materia.GLInterfaces
         public abstract void DrawBuffers(int[] modes);
         public abstract void ReadBuffer(int mode);
 
+        public abstract void BlitFramebuffer(int sleft, int stop, int swidth, int sheight, int tleft, int ttop, int twidth, int theight, int blit, int filter);
+
         ///Textures
         public abstract int GenTexture();
         public abstract void BindTexture(int target, int id);

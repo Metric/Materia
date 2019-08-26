@@ -33,7 +33,7 @@ namespace Materia.Buffers
 
         public void SetBufferStorageAsDepth(int width, int height)
         {
-            IGL.Primary.RenderbufferStorage((int)RenderbufferTarget.Renderbuffer, (int)RenderbufferStorage.Depth32fStencil8, width, height);
+            IGL.Primary.RenderbufferStorage((int)RenderbufferTarget.Renderbuffer, (int)RenderbufferStorage.Depth24Stencil8, width, height);
         }
 
         public void Release()

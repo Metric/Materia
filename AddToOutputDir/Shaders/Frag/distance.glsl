@@ -29,8 +29,8 @@ void main() {
 
     float dist = 1;
     vec4 last = c;
-    for(float y = -0.5; y <= 0.5; y+=offset.y) {
-        for(float x = -0.5; x <= 0.5; x+=offset.x) {
+    for(float y = -0.25; y <= 0.25; y+=offset.y) {
+        for(float x = -0.25; x <= 0.25; x+=offset.x) {
             vec2 pos = UV + vec2(x,y);
             if(pos.x >= 0 && pos.x <= 1 && pos.y >= 0 && pos.y <= 1) {
                 if(texture(MainTex, pos).r >= 0.5) {

@@ -162,6 +162,29 @@ namespace Materia.Nodes.Atomic
             }, Context);
         }
 
+        public override GLTextuer2D GetActiveBuffer()
+        {
+            if(Input != null && Input.HasInput)
+            {
+                return Input.Input.Node.GetActiveBuffer();
+            }
+
+            return null;
+        }
+
+        public override byte[] GetPreview(int width, int height)
+        {
+            GLTextuer2D active = GetActiveBuffer();
+
+            if (active == null) return null;
+            if (active.Id == 0) return null;
+
+            previewProcessor.Process(width, height, active);
+            byte[] bits = previewProcessor.ReadByte(width, height);
+            previewProcessor.Complete();
+            return bits;
+        }
+
         void Process()
         {
             GLTextuer2D i1 = (GLTextuer2D)Input.Input.Data;
@@ -169,18 +192,11 @@ namespace Materia.Nodes.Atomic
             if (i1 == null) return;
             if (i1.Id == 0) return;
 
-            CreateBufferIfNeeded();
-
             width = i1.Width;
             height = i1.Height;
 
-            if (previewProcessor == null) return;
-
-            previewProcessor.Process(i1.Width, i1.Height, i1, buffer);
-            previewProcessor.Complete();
-
             Updated();
-            Output.Data = buffer;
+            Output.Data = i1;
             Output.Changed();
         }
 

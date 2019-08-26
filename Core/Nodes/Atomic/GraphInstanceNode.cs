@@ -33,6 +33,9 @@ namespace Materia.Nodes.Atomic
         private MTGArchive archive;
         private MTGArchive child;
 
+        //a shortcut reference
+        private Graph topGraph;
+
         [Editable(ParameterInputType.GraphFile, "Materia Graph File", "Content")]
         public string GraphFilePath
         {
@@ -117,18 +120,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        public new GraphPixelType InternalPixelFormat
-        {
-            get
-            {
-                return internalPixelType;
-            }
-            set
-            {
-                internalPixelType = value;
-            }
-        }
-
         protected string GraphData { get; set; }
 
         public GraphInstanceNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
@@ -141,6 +132,8 @@ namespace Materia.Nodes.Atomic
             Id = Guid.NewGuid().ToString();
 
             tileX = tileY = 1;
+
+            internalPixelType = p;
 
             Name = "Graph Instance";
 
@@ -234,17 +227,6 @@ namespace Materia.Nodes.Atomic
                 {
                     GraphInst.TryAndProcess();
                 }
-            }, Context)
-            .ContinueWith(t =>
-            {
-                while (GraphInst != null && GraphInst.IsProcessing)
-                {
-                    Thread.Sleep(1);
-                }
-            })
-            .ContinueWith(t =>
-            {
-                TryAndReleaseBuffers();
             }, Context);
         }
 
@@ -398,15 +380,14 @@ namespace Materia.Nodes.Atomic
         void PrepareGraph()
         {
             //the width and height here don't matter
-            GraphInst = new Graph(Name);
+            GraphInst = new Graph(Name, 256, 256, true, topGraph);
             GraphInst.AssignParentNode(this);
             GraphInst.Synchronized = !Async;
             GraphInst.FromJson(GraphData, child);
             GraphInst.AssignParameters(jsonParameters);
             GraphInst.AssignCustomParameters(jsonCustomParameters);
-
             GraphInst.AssignSeed(randomSeed);
-
+            GraphInst.AssignPixelType(internalPixelType);
             //now do real initial resize
             GraphInst.ResizeWith(width, height);
 
@@ -508,6 +489,40 @@ namespace Materia.Nodes.Atomic
             return null;
         }
 
+        public override void AssignParentGraph(Graph g)
+        {
+            base.AssignParentGraph(g);
+
+            if (g != null)
+            {
+                topGraph = g.TopGraph();
+            }
+            else
+            {
+                topGraph = null;
+            }
+        }
+
+        protected override void OnPixelFormatChange()
+        {
+            if (GraphInst != null)
+            {
+                GraphInst.AssignPixelType(internalPixelType);
+            }
+
+            base.OnPixelFormatChange();
+        }
+
+        public override void AssignPixelType(GraphPixelType pix)
+        {
+            base.AssignPixelType(pix);
+
+            if(GraphInst != null)
+            {
+                GraphInst.AssignPixelType(pix);
+            }
+        }
+
         //we actually store the graph raw data
         //so this file can be transported without needing
         //the original graph file
@@ -536,6 +551,22 @@ namespace Materia.Nodes.Atomic
             FromJson(data);
         }
 
+        //helper function for older graphs
+        protected void ValidatePixelType()
+        {
+            if(internalPixelType != GraphPixelType.Luminance32F 
+                && internalPixelType != GraphPixelType.Luminance16F
+                && internalPixelType != GraphPixelType.RGB
+                && internalPixelType != GraphPixelType.RGB16F
+                && internalPixelType != GraphPixelType.RGB32F
+                && internalPixelType != GraphPixelType.RGBA
+                && internalPixelType != GraphPixelType.RGBA16F
+                && internalPixelType != GraphPixelType.RGBA32F)
+            {
+                internalPixelType = GraphPixelType.RGBA;
+            }
+        }
+
         public override void FromJson(string data)
         {
             GraphInstanceNodeData d = JsonConvert.DeserializeObject<GraphInstanceNodeData>(data);
@@ -545,7 +576,8 @@ namespace Materia.Nodes.Atomic
             jsonParameters = d.parameters;
             jsonCustomParameters = d.customParameters;
             randomSeed = d.randomSeed;
-            
+
+            ValidatePixelType();
 
             bool didLoad = false;
 
@@ -566,13 +598,14 @@ namespace Materia.Nodes.Atomic
             {
                 nameMap = new Dictionary<string, GraphParameterValue>();
                 loading = true;
-                GraphInst = new Graph(Name);
+                GraphInst = new Graph(Name, 256, 256, true, topGraph);
                 GraphInst.AssignParentNode(this);
                 GraphInst.Synchronized = !Async;
                 GraphInst.FromJson(GraphData);
                 GraphInst.AssignParameters(jsonParameters);
                 GraphInst.AssignCustomParameters(jsonCustomParameters);
                 GraphInst.AssignSeed(randomSeed);
+                GraphInst.AssignPixelType(internalPixelType);
                 GraphInst.ResizeWith(width, height);
                 GraphInst.OnGraphParameterUpdate += GraphParameterValue_OnGraphParameterUpdate;
 

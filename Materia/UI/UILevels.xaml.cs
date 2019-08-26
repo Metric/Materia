@@ -69,11 +69,6 @@ namespace Materia
             inputFromUser = false;
         }
 
-        private void OnNodeUpdate(Node n)
-        {
-            OnUpdate(n);
-        }
-
         public void OnUpdate(object obj)
         {
             if (!inputFromUser)
@@ -82,11 +77,11 @@ namespace Materia
 
                 if (n != null)
                 {
-                    byte[] result = n.GetPreview(512, 512);
+                    byte[] result = n.GetPreview(256, 256);
 
                     if(result != null)
                     {
-                        fromBit = new RawBitmap(512, 512, result);
+                        fromBit = new RawBitmap(256, 256, result);
                         
                         Histogram.GenerateHistograph(fromBit);
                     }
@@ -125,10 +120,19 @@ namespace Materia
             if(ctk != null)
             {
                 ctk.Cancel();
-                ctk = null;
             }
 
-            property.SetValue(propertyOwner, range);
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(250, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    property.SetValue(propertyOwner, range);
+                });
+            });
         }
 
         private void Channels_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -161,11 +165,6 @@ namespace Materia
 
             Channels.SelectedIndex = 0;
             inputFromUser = false;
-
-            if (propertyOwner is ImageNode)
-            {
-                (propertyOwner as ImageNode).OnUpdate += OnNodeUpdate;
-            }
 
             Task.Delay(10).ContinueWith(t =>
             {
@@ -211,15 +210,28 @@ namespace Materia
 
             MultiSlider.Set(0, 0.5f, 1);
             ValueRange.Set(0, 1);
-            property.SetValue(propertyOwner, range);
+
+            if (ctk != null)
+            {
+                ctk.Cancel();
+            }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(250, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    property.SetValue(propertyOwner, range);
+                });
+            });
         }
 
         private void UserControl_Unloaded(object sender, RoutedEventArgs e)
         {
-            if(propertyOwner is ImageNode)
-            {
-                (propertyOwner as ImageNode).OnUpdate -= OnNodeUpdate;
-            }
+
         }
 
         private void Range_OnValueChanged(object sender, float min, float max)
@@ -227,7 +239,24 @@ namespace Materia
             inputFromUser = true;
             range.min[3] = min;
             range.max[3] = max;
-            property.SetValue(propertyOwner, range);
+
+            if (ctk != null)
+            {
+                ctk.Cancel();
+                ctk = null;
+            }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Delay(250, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    property.SetValue(propertyOwner, range);
+                });
+            });
         }
     }
 }

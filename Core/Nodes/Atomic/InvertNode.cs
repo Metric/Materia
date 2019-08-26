@@ -23,6 +23,7 @@ namespace Materia.Nodes.Atomic
 
         InvertProcessor processor;
 
+        [Promote(NodeType.Bool)]
         [Editable(ParameterInputType.Toggle, "Red")]
         public bool Red
         {
@@ -37,6 +38,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        [Promote(NodeType.Bool)]
         [Editable(ParameterInputType.Toggle, "Green")]
         public bool Green
         {
@@ -51,6 +53,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        [Promote(NodeType.Bool)]
         [Editable(ParameterInputType.Toggle, "Blue")]
         public bool Blue
         {
@@ -65,6 +68,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        [Promote(NodeType.Bool)]
         [Editable(ParameterInputType.Toggle, "Alpha")]
         public bool Alpha
         {
@@ -135,6 +139,7 @@ namespace Materia.Nodes.Atomic
             {
                 if (input.HasInput)
                 {
+                    GetParams();
                     Process();
                 }
 
@@ -154,7 +159,7 @@ namespace Materia.Nodes.Atomic
         {
             return Task.Factory.StartNew(() =>
             {
-
+                GetParams();
             })
             .ContinueWith(t =>
             {
@@ -165,6 +170,38 @@ namespace Materia.Nodes.Atomic
             }, Context);
         }
 
+        private void GetParams()
+        {
+            pred = red;
+            pgreen = green;
+            pblue = blue;
+            palpha = alpha;
+
+            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Red"))
+            {
+                pred = Convert.ToBoolean(ParentGraph.GetParameterValue(Id, "Red"));
+            }
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Green"))
+            {
+                pgreen = Convert.ToBoolean(ParentGraph.GetParameterValue(Id, "Green"));
+            }
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Blue"))
+            {
+                pblue = Convert.ToBoolean(ParentGraph.GetParameterValue(Id, "Blue"));
+            }
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alpha"))
+            {
+                palpha = Convert.ToBoolean(ParentGraph.GetParameterValue(Id, "Alpha"));
+            }
+        }
+
+        bool pred;
+        bool pgreen;
+        bool pblue;
+        bool palpha;
         void Process()
         {
             GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
@@ -176,10 +213,10 @@ namespace Materia.Nodes.Atomic
 
             processor.TileX = tileX;
             processor.TileY = tileY;
-            processor.Red = red;
-            processor.Green = green;
-            processor.Blue = blue;
-            processor.Alpha = alpha;
+            processor.Red = pred;
+            processor.Green = pgreen;
+            processor.Blue = pblue;
+            processor.Alpha = palpha;
 
             processor.Process(width, height, i1, buffer);
             processor.Complete();

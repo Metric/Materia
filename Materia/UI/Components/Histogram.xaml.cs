@@ -155,17 +155,61 @@ namespace Materia.UI.Components
 
             RawBitmap bmp = new RawBitmap((int)ActualWidth, (int)ActualHeight);
 
-            if (histograph != null && maxValue != null)
+            if(ctk != null)
             {
-                if (mode == LevelMode.RGB)
+                ctk.Cancel();
+            }
+
+            ctk = new CancellationTokenSource();
+
+            Task.Run(() =>
+            {
+                if (histograph != null && maxValue != null)
                 {
-                    for (int g = 0; g < 3; g++)
+                    if (mode == LevelMode.RGB)
                     {
+                        for (int g = 0; g < 3; g++)
+                        {
+                            if (maxValue[g] != 0)
+                            {
+                                //gather initial points
+                                List<Vector2> points = new List<Vector2>();
+
+                                for (int x = 0; x < 256; x++)
+                                {
+                                    int t = histograph[g, x];
+                                    float w = (float)x / 255.0f;
+                                    int ax = (int)Math.Floor(w * ActualWidth);
+
+                                    float p = (float)t / (float)maxValue[g];
+                                    int may = (int)Math.Min((int)ActualHeight, Math.Floor(p * (int)ActualHeight));
+
+                                    points.Add(new Vector2(ax, may));
+                                }
+
+                                List<Vector2> spline = CatmullRomSpline.GetSpline(points, 8);
+
+                                Parallel.For(0, spline.Count, i =>
+                                {
+                                    Vector2 p = spline[i];
+
+                                    for (int k = 0; k < p.Y; k++)
+                                    {
+                                        bmp.SetPixel((int)p.X, bmp.Height - 1 - k, 175, 175, 175, 255);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    else
+                    {
+                        int g = (int)mode;
+
                         if (maxValue[g] != 0)
                         {
-                            //gather initial points
                             List<Vector2> points = new List<Vector2>();
 
+                            //gather initial points
                             for (int x = 0; x < 256; x++)
                             {
                                 int t = histograph[g, x];
@@ -173,7 +217,7 @@ namespace Materia.UI.Components
                                 int ax = (int)Math.Floor(w * ActualWidth);
 
                                 float p = (float)t / (float)maxValue[g];
-                                int may = (int)Math.Min((int)ActualHeight, Math.Floor(p * (int)ActualHeight));
+                                int may = (int)Math.Min(ActualHeight, Math.Floor(p * ActualHeight));
 
                                 points.Add(new Vector2(ax, may));
                             }
@@ -192,42 +236,17 @@ namespace Materia.UI.Components
                         }
                     }
                 }
-                else
-                { 
-                    int g = (int)mode;
+            }, ctk.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled) return;
 
-                    if (maxValue[g] != 0)
-                    {
-                        List<Vector2> points = new List<Vector2>();
+                if (bmp == null) return;
 
-                        //gather initial points
-                        for (int x = 0; x < 256; x++)
-                        {
-                            int t = histograph[g, x];
-                            float w = (float)x / 255.0f;
-                            int ax = (int)Math.Floor(w * ActualWidth);
-
-                            float p = (float)t / (float)maxValue[g];
-                            int may = (int)Math.Min(ActualHeight, Math.Floor(p * ActualHeight));
-
-                            points.Add(new Vector2(ax, may));
-                        }
-
-                        List<Vector2> spline = CatmullRomSpline.GetSpline(points, 8);
-
-                        Parallel.For(0, spline.Count, i => {
-                            Vector2 p = spline[i];
-
-                            for (int k = 0; k < p.Y; k++)
-                            {
-                                bmp.SetPixel((int)p.X, bmp.Height - 1 - k, 175, 175, 175, 255);
-                            }
-                        });
-                    }
-                }
-            }
-
-            PreviewView.Source = bmp.ToImageSource();
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    PreviewView.Source = bmp.ToImageSource();
+                });
+            }); 
         }
 
         int[] MaxHistographValue()

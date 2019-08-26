@@ -14,6 +14,14 @@ namespace Materia.Textures
         public int Width { get; protected set; }
         public int Height { get; protected set; }
 
+        public PixelInternalFormat InternalFormat
+        {
+            get
+            {
+                return iformat;
+            }
+        }
+
         PixelInternalFormat iformat;
 
         public GLTextuer2D(PixelInternalFormat format)
@@ -63,7 +71,8 @@ namespace Materia.Textures
         {
             Width = width;
             Height = height;
-            IGL.Primary.CopyTexImage2D((int)TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba8, 0, 0, width, height, 0);
+            int format = (int)iformat;
+            IGL.Primary.CopyTexImage2D((int)TextureTarget.Texture2D, 0, format, 0, 0, width, height, 0);
         }
 
         public void SetData(IntPtr data, PixelFormat format, int width, int height, int mipLevel = 0)

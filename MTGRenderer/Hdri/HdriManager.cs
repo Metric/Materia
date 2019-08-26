@@ -147,7 +147,7 @@ namespace Materia.Hdri
                             Irradiance.Release();
                         }
 
-                        Irradiance = new GLTextuer2D(PixelInternalFormat.Rgb8);
+                        Irradiance = new GLTextuer2D(PixelInternalFormat.Rgb16f);
                         Irradiance.Bind();
                         Irradiance.SetData(data, PixelFormat.Rgb, (int)mip.Width, (int)mip.Height);
                         Irradiance.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
@@ -164,7 +164,7 @@ namespace Materia.Hdri
                             Prefiltered.Release();
                         }
 
-                        Prefiltered = new GLTextuer2D(PixelInternalFormat.Rgb8);
+                        Prefiltered = new GLTextuer2D(PixelInternalFormat.Rgb16f);
                         Prefiltered.Bind();
                         Prefiltered.SetMaxMipLevel(4);
 

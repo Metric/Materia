@@ -89,8 +89,7 @@ namespace Materia.Nodes
             }
         }
 
-        protected Graph parentGraph;
-        public Graph ParentGraph
+        public new Graph ParentGraph
         {
             get
             {
@@ -689,7 +688,7 @@ namespace Materia.Nodes
             if (!asFunc)
             {
                 
-                frag += "FragColor = vec4(" + last.ShaderId + endIndex.ToString() + ");\r\n";
+                frag += "FragColor = min(vec4(1), max(vec4(0), vec4(" + last.ShaderId + endIndex.ToString() + ")));\r\n";
             }
             else
             {

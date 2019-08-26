@@ -82,6 +82,8 @@ namespace Materia
 
                 if (b == null || data == null)
                 {
+                    Dropdown.SelectedIndex = 0;
+                    isIniting = false;
                     return;
                 }
 
@@ -136,12 +138,22 @@ namespace Materia
 
         private void Tb_TextChanged(object sender, TextChangedEventArgs e)
         {
+            if(isIniting)
+            {
+                return;
+            }
+
             TextBox tb = sender as TextBox;
             UpdateProperty(tb.Text);
         }
 
         private void Dropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if(isIniting)
+            {
+                return;
+            }
+
             UpdateProperty(Dropdown.SelectedValue);
         }
 

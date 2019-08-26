@@ -51,6 +51,10 @@ namespace Materia
 
         FullScreenQuad quad;
 
+        protected float updateTime = 0;
+        protected float lastUpdate = 0;
+        protected const float maxUpdateTime = 1.0f / 20.0f;
+
         public UIPreviewPane()
         {
             InitializeComponent();
@@ -159,25 +163,32 @@ namespace Materia
 
         private void Glview_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (e.Button == System.Windows.Forms.MouseButtons.Middle)
+            if (updateTime >= maxUpdateTime)
             {
-                glview.Cursor = System.Windows.Forms.Cursors.SizeAll;
+                updateTime = 0;
+                if (e.Button == System.Windows.Forms.MouseButtons.Middle)
+                {
+                    glview.Cursor = System.Windows.Forms.Cursors.SizeAll;
 
-                var p = e.Location;
-                double dx = p.X - start.X;
-                double dy = p.Y - start.Y;
+                    var p = e.Location;
+                    double dx = p.X - start.X;
+                    double dy = p.Y - start.Y;
 
-                start = p;
+                    start = p;
 
-                pan.X += dx;
-                pan.Y += dy;
+                    pan.X += dx;
+                    pan.Y += dy;
 
-                Invalidate();
+                    Invalidate();
+                }
+                else
+                {
+                    glview.Cursor = System.Windows.Forms.Cursors.Arrow;
+                }
             }
-            else
-            {
-                glview.Cursor = System.Windows.Forms.Cursors.Arrow;
-            }
+
+            updateTime += Environment.TickCount - lastUpdate;
+            lastUpdate = Environment.TickCount;
         }
 
         private void Glview_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)

@@ -52,7 +52,7 @@ namespace Materia.Nodes
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
-        public static int[] GRAPH_SIZES = new int[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
+        public static int[] GRAPH_SIZES = new int[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
         public const int DEFAULT_SIZE = 256;
 
         public delegate void GraphUpdate(Graph g);
@@ -296,6 +296,19 @@ namespace Materia.Nodes
             }
         }
 
+        protected Graph parentGraph;
+        public Graph ParentGraph
+        {
+            get
+            {
+                return parentGraph;
+            }
+            set
+            {
+                parentGraph = value;
+            }
+        }
+
         [Editable(ParameterInputType.Toggle, "Absolute Size", "Basic")]
         public bool AbsoluteSize { get; set; }
 
@@ -307,12 +320,14 @@ namespace Materia.Nodes
         /// <param name="w"></param>
         /// <param name="h"></param>
         /// <param name="async"></param>
-        public Graph(string name, int w = DEFAULT_SIZE, int h = DEFAULT_SIZE, bool async = true)
+        public Graph(string name, int w = DEFAULT_SIZE, int h = DEFAULT_SIZE, bool async = true, Graph parent = null)
         {
             if (Node.Context == null)
             {
                 Node.Context = TaskScheduler.FromCurrentSynchronizationContext();
             }
+
+            parentGraph = parent;
 
             TaskQueue = new Queue<Node>();
             QueueCanceller = new CancellationTokenSource();
@@ -339,7 +354,7 @@ namespace Materia.Nodes
             CustomFunctions = new List<FunctionGraph>();
             ParameterFunctions = new Dictionary<string, FunctionGraph>();
 
-            if (async)
+            if (async && parentGraph == null)
             {
                 IsActive = true;
                 Scheduler = Task.Run(async () =>
@@ -379,6 +394,11 @@ namespace Materia.Nodes
         public virtual Graph TopGraph()
         {
             Graph p = null;
+
+            if(parentGraph != null)
+            {
+                return parentGraph.TopGraph();
+            }
 
             if (ParentNode != null)
             {
@@ -549,14 +569,33 @@ namespace Materia.Nodes
             } 
         }
 
+        public virtual void AssignPixelType(GraphPixelType pixel)
+        {
+            defaultTextureType = pixel;
+
+            int c = Nodes.Count;
+            for(int i = 0; i < c; i++)
+            {
+                Node n = Nodes[i];
+                n.AssignPixelType(pixel);
+            }
+        }
+
         public virtual void Schedule(Node n)
         {
             if (Synchronized) return;
 
-            if(n != null && !n.IsScheduled)
+            if (parentGraph == null)
             {
-                n.IsScheduled = true;
-                TaskQueue.Enqueue(n);
+                if (n != null && !n.IsScheduled)
+                {
+                    n.IsScheduled = true;
+                    TaskQueue.Enqueue(n);
+                }
+            }
+            else
+            {
+                parentGraph.Schedule(n);
             }
         }
 
@@ -596,8 +635,8 @@ namespace Materia.Nodes
 
                     if (OriginSizes.TryGetValue(n.Id, out osize))
                     {
-                        int fwidth = (int)Math.Min(8192, Math.Max(8, Math.Round(osize.X * wp)));
-                        int fheight = (int)Math.Min(8192, Math.Max(8, Math.Round(osize.Y * hp)));
+                        int fwidth = (int)Math.Min(4096, Math.Max(8, Math.Round(osize.X * wp)));
+                        int fheight = (int)Math.Min(4096, Math.Max(8, Math.Round(osize.Y * hp)));
 
                         //if not relative skip
                         if (n.AbsoluteSize) continue;

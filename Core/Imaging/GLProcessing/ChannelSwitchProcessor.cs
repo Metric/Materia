@@ -31,8 +31,13 @@ namespace Materia.Imaging.GLProcessing
 
             if (shader != null)
             {
-                GLTextuer2D tempColor = new GLTextuer2D(PixelInternalFormat.Rgba);
+                GLTextuer2D tempColor = new GLTextuer2D(tex.InternalFormat);
                 tempColor.Bind();
+                tempColor.SetData(IntPtr.Zero, PixelFormat.Rgba, tex.Width, tex.Height);
+                if (tex.InternalFormat == PixelInternalFormat.R16f || tex.InternalFormat == PixelInternalFormat.R32f)
+                {
+                    tempColor.SetSwizzleLuminance();
+                }
                 tempColor.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
                 GLTextuer2D.Unbind();
 
@@ -68,9 +73,7 @@ namespace Materia.Imaging.GLProcessing
                 }
 
                 GLTextuer2D.Unbind();
-                output.Bind();
-                output.CopyFromFrameBuffer(width, height);
-                GLTextuer2D.Unbind();
+                Blit(output, width, height);
                 tempColor.Release();
             }
         }

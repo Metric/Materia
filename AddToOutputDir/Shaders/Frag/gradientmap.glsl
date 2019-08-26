@@ -25,8 +25,14 @@ void main() {
     if(useMask == 1) {
         vec2 maskSize = textureSize(Mask, 0);
         vec2 m2 = texture(Mask, UV).ra;
-        float m = min(m2.x + m2.y, 1);
-        c *= m;
+        if(m2.y >= 1) {
+            float m = min(m2.x, 1);
+            c *= m;
+        }
+        else {
+            float m = min(m2.x + m2.y, 1);
+            c *= m;
+        }
     }
 
     c.a = rgba.a * c.a;

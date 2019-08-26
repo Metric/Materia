@@ -10,14 +10,18 @@ using Materia.Math3D;
 using Materia.GLInterfaces;
 using Materia.Shaders;
 using Materia.MathHelpers;
+using NLog;
 
 namespace Materia.Imaging.GLProcessing
 {
     public class ImageProcessor
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         protected static FullScreenQuad renderQuad;
         protected static GLRenderBuffer renderBuff;
         protected static GLFrameBuffer frameBuff;
+        protected static GLFrameBuffer temp;
         protected static GLTextuer2D colorBuff;
 
         protected static PreviewProcessor resizeProcessor;
@@ -75,8 +79,14 @@ namespace Materia.Imaging.GLProcessing
 
             o.Bind();
             o.Repeat();
-            o.CopyFromFrameBuffer(owidth, oheight);
             GLTextuer2D.Unbind();
+
+            Blit(o, owidth, oheight);
+
+            /*o.Bind();
+            o.Repeat();
+            o.CopyFromFrameBuffer(owidth, oheight);
+            GLTextuer2D.Unbind();*/
         }
 
         protected void ApplyTransform(GLTextuer2D inc, GLTextuer2D o, int owidth, int oheight, MVector translation, MVector scale, float angle, MVector pivot)
@@ -111,8 +121,15 @@ namespace Materia.Imaging.GLProcessing
 
             o.Bind();
             o.Repeat();
-            o.CopyFromFrameBuffer(owidth, oheight);
             GLTextuer2D.Unbind();
+
+            Blit(o, owidth, oheight);
+
+            /*o.Bind();
+            o.Repeat();
+            o.CopyFromFrameBuffer(owidth, oheight);
+            GLTextuer2D.Unbind();*/
+
         } 
 
         protected void ResizeViewTo(GLTextuer2D inc, GLTextuer2D o, int owidth, int oheight, int nwidth, int nheight)
@@ -143,9 +160,7 @@ namespace Materia.Imaging.GLProcessing
 
             resizeProcessor.Unbind();
 
-            o.Bind();
-            o.CopyFromFrameBuffer(nwidth, nheight);
-            GLTextuer2D.Unbind();
+            Blit(o, owidth, oheight);
         }
 
         protected void CreateBuffersIfNeeded()
@@ -168,7 +183,7 @@ namespace Materia.Imaging.GLProcessing
                 colorBuff = new GLTextuer2D(PixelInternalFormat.Rgba32f);
                 colorBuff.Bind();
                 colorBuff.SetData(new float[0], PixelFormat.Rgba, 4096, 4096);
-                colorBuff.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
+                colorBuff.SetFilter((int)TextureMinFilter.Nearest, (int)TextureMagFilter.Nearest);
                 colorBuff.Repeat();
                 GLTextuer2D.Unbind();
             }
@@ -194,6 +209,8 @@ namespace Materia.Imaging.GLProcessing
 
         public virtual void Process(int width, int height, GLTextuer2D tex, GLTextuer2D output)
         {
+            IGL.Primary.Enable((int)EnableCap.Dither);
+
             Width = width;
             Height = height;
 
@@ -214,6 +231,30 @@ namespace Materia.Imaging.GLProcessing
             IGL.Primary.ClearColor(0, 0, 0, 0);
             IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit);
             IGL.Primary.Clear((int)ClearBufferMask.DepthBufferBit);
+        }
+
+        protected void Blit(GLTextuer2D output, int width, int height)
+        {
+            if (temp == null)
+            {
+                temp = new GLFrameBuffer();
+            }
+            temp.Bind();
+            temp.BindRead();
+            temp.AttachColor(colorBuff, 0);
+            IGL.Primary.ReadBuffer((int)ReadBufferMode.ColorAttachment0);
+            temp.AttachColor(output, 1);
+            IGL.Primary.DrawBuffer((int)DrawBufferMode.ColorAttachment1);
+
+            if (!temp.IsValid)
+            {
+                Log.Error("Frame buff is invalid on blit:\r\n" + Environment.StackTrace);
+            }
+
+            IGL.Primary.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, (int)ClearBufferMask.ColorBufferBit, (int)BlitFramebufferFilter.Linear);
+            GLFrameBuffer.UnbindRead();
+            GLFrameBuffer.Unbind();
+            frameBuff.Bind();
         }
 
         protected IGLProgram GetShader(string vertFile, string fragFile)
@@ -281,21 +322,30 @@ namespace Materia.Imaging.GLProcessing
 
         public static void ReleaseAll()
         {
+            if(temp != null)
+            {
+                temp.Release();
+                temp = null;
+            }
+
             if (colorBuff != null)
             {
                 colorBuff.Release();
                 colorBuff = null;
             }
+
             if (renderQuad != null)
             {
                 renderQuad.Release();
                 renderQuad = null;
             }
+
             if (renderBuff != null)
             {
                 renderBuff.Release();
                 renderBuff = null;
             }
+
             if (frameBuff != null)
             {
                 frameBuff.Release();

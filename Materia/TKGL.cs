@@ -65,6 +65,11 @@ namespace Materia
             GL.BlendEquationSeparate((OpenTK.Graphics.OpenGL.BlendEquationMode)rgbBlend, (OpenTK.Graphics.OpenGL.BlendEquationMode)alphaBlend);
         }
 
+        public override void BlitFramebuffer(int sleft, int stop, int swidth, int sheight, int tleft, int ttop, int twidth, int theight, int bit, int filter)
+        {
+            GL.BlitFramebuffer(sleft, stop, swidth, sheight, tleft, ttop, twidth, theight, (OpenTK.Graphics.OpenGL.ClearBufferMask)bit, (OpenTK.Graphics.OpenGL.BlitFramebufferFilter)filter);
+        }
+
         public override void BufferData(int target, int length, IntPtr data, int type)
         {
             GL.BufferData((OpenTK.Graphics.OpenGL.BufferTarget)target, length, data, (OpenTK.Graphics.OpenGL.BufferUsageHint)type);
