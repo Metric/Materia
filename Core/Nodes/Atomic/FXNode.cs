@@ -29,7 +29,8 @@ namespace Materia.Nodes.Atomic
     {
         Blend = 0,
         Add = 1,
-        Max = 2
+        Max = 2,
+        AddSub = 3
     }
 
     public class FXNode : ImageNode
@@ -202,6 +203,8 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        protected GLTextuer2D temp;
+
         public FXNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
             Name = "FX";
@@ -279,6 +282,26 @@ namespace Materia.Nodes.Atomic
         {
             TryAndProcess();
         }
+
+        protected override void CreateBufferIfNeeded()
+        {
+            base.CreateBufferIfNeeded();
+
+            if(temp == null || temp.Id == 0)
+            {
+                temp = new GLTextuer2D((GLInterfaces.PixelInternalFormat)((int)internalPixelType));
+                temp.Bind();
+                temp.SetData(IntPtr.Zero, GLInterfaces.PixelFormat.Rgba, width, height);
+                temp.Linear();
+                temp.Repeat();
+                if (internalPixelType == GraphPixelType.Luminance16F || internalPixelType == GraphPixelType.Luminance32F)
+                {
+                    temp.SetSwizzleLuminance();
+                }
+                GLTextuer2D.Unbind();
+            }
+        }
+
 
         public override void TryAndProcess()
         {
@@ -369,7 +392,8 @@ namespace Materia.Nodes.Atomic
             processor.Pivot = data.pivot;
             processor.Luminosity = data.luminosity;
 
-            processor.Process(data.quadrant, width, height, i1, buffer, quads);
+            processor.Process(data.quadrant, width, height, i1, temp, quads);
+            processor.Blend(temp, buffer);
         }
 
         FXQuadData GetQuad(float i, float x, float y, float imax, int quad)
@@ -623,7 +647,7 @@ namespace Materia.Nodes.Atomic
             //we release the previous buffer if there is one
             //as we have to make sure we have a clean buffer
             //for the iteration cycles
-            //and quadrant transforms
+            //and quadrant transforms 
             if(buffer != null)
             {
                 buffer.Release();
@@ -657,6 +681,12 @@ namespace Materia.Nodes.Atomic
         public override void Dispose()
         {
             base.Dispose();
+
+            if(temp != null)
+            {
+                temp.Release();
+                temp = null;
+            }
 
             if (processor != null)
             {

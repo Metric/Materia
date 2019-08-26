@@ -525,7 +525,7 @@ namespace Materia.Nodes
             TryAndProcess();
         }
 
-        protected void CreateBufferIfNeeded()
+        protected virtual void CreateBufferIfNeeded()
         {
             if (buffer == null || buffer.Id == 0)
             {

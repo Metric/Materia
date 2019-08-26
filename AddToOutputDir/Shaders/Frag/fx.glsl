@@ -3,22 +3,44 @@ out vec4 FragColor;
 in vec2 UV;
 
 uniform sampler2D MainTex;
+uniform sampler2D Background;
+uniform int blendMode;
 
-uniform mat4 model;
-uniform vec2 pivot;
-
-uniform float luminosity = 1;
+float AddSub(float a, float b) {
+    if(a >= 0.5) {
+        return min(1, max(0, a + b));
+    }
+    else {
+        return min(1, max(0, b - a));
+    }
+}
 
 void main() {
-    vec4 rpos = vec4(UV - pivot, 0, 1);
-    rpos = model * rpos; 
-    vec2 pos = rpos.xy + pivot;
+    vec4 f = texture(MainTex, UV);
+    vec4 b = texture(Background, UV);
+    vec3 rgb = vec3(0);
+    float alpha = b.a;
 
-    if(pos.x > 1 || pos.x < 0 || pos.y > 1 || pos.y < 0) {
-        discard;
+    //Alpha blend
+    if(blendMode == 0) {
+        rgb = f.rgb * f.a + b.rgb * (1.0 - f.a);
+        alpha = min(f.a + b.a, 1);
+    }
+    //add
+    else if(blendMode == 1) {
+        rgb = min(vec3(1), f.rgb + b.rgb);
+        alpha = min(f.a + b.a, 1);
+    }
+    //max
+    else if(blendMode == 2) {
+        rgb = vec3(max(f.r,b.r), max(f.g, b.g), max(f.b, b.b));
+        alpha = max(f.a, b.a);
+    }
+    //add sub
+    else if(blendMode == 3) {
+        rgb = vec3(AddSub(f.r, b.r), AddSub(f.g, b.g), AddSub(f.b, b.b));
+        alpha = min(f.a + b.a, 1);
     }
 
-    vec4 c = texture(MainTex, pos);
-    c.rgb *= luminosity;
-    FragColor = c;
+    FragColor = vec4(rgb, alpha);    
 }

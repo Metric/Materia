@@ -20,144 +20,148 @@ namespace Materia.Imaging.GLProcessing
         public float Angle { get; set; }
         public FXBlend Blending { get; set; }
 
+        IGLProgram shader;
+
         public FXProcessor() : base()
         {
             Blending = FXBlend.Blend;
+            shader = GetShader("image.glsl", "fx.glsl");
         }
 
         public void Prepare(int width, int height, GLTextuer2D tex, GLTextuer2D output)
         {
             base.Process(width, height, tex, output);
-
-            //renable blending!
-            IGL.Primary.Enable((int)EnableCap.Blend);
         }
 
-        public override void Complete()
+        public void Blend(GLTextuer2D piece, GLTextuer2D whole)
         {
-            base.Complete();
+            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit);
 
-            IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.FuncAdd, (int)BlendEquationMode.FuncAdd);
-            IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
+            if (shader != null)
+            {
+                shader.Use();
+                shader.SetUniform("blendMode", (int)Blending);
+                shader.SetUniform("MainTex", 0);
+                IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
+                piece.Bind();
+                shader.SetUniform("Background", 1);
+                IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
+                whole.Bind();
+
+                if(renderQuad != null)
+                {
+                    renderQuad.Draw();
+                }
+
+                GLTextuer2D.Unbind();
+
+                Blit(whole, whole.Width, whole.Height);
+            }
         }
 
         public void Process(int quadrant, int width, int height, GLTextuer2D tex, GLTextuer2D output, int quads)
         {
-                if (Blending == FXBlend.Blend)
-                {
-                    IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.FuncAdd, (int)BlendEquationMode.FuncAdd);
-                    IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
-                }
-                else if (Blending == FXBlend.Add)
-                {
-                    IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.FuncAdd, (int)BlendEquationMode.FuncAdd);
-                    IGL.Primary.BlendFunc((int)BlendingFactor.One, (int)BlendingFactor.One);
-                }
-                else if (Blending == FXBlend.Max)
-                {
-                    IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.Max, (int)BlendEquationMode.Max);
-                    IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
-                }
+            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit);
 
-                float mw = width * 0.5f;
-                float mh = height * 0.5f;
+            float mw = width * 0.5f;
+            float mh = height * 0.5f;
 
-                if(quads <= 1)
-                {
-                    mw = width;
-                    mh = height;
-                }
-                else if(quads == 2)
-                {
-                    mh = height;
-                }
+            if(quads <= 1)
+            {
+                mw = width;
+                mh = height;
+            }
+            else if(quads == 2)
+            {
+                mh = height;
+            }
 
-                //apply new quadrant iteration
+            //apply new quadrant iteration
 
-                //calculate new width and height for quad
-                float wp = (float)mw / (float)tex.Width;
-                float hp = (float)mh / (float)tex.Height;
+            //calculate new width and height for quad
+            float wp = (float)mw / (float)tex.Width;
+            float hp = (float)mh / (float)tex.Height;
 
-                float fp = wp < hp ? wp : hp;
+            float fp = wp < hp ? wp : hp;
 
-                MVector pivotPoint = new MVector();
-                MVector quadOffset = new MVector();
+            MVector pivotPoint = new MVector();
+            MVector quadOffset = new MVector();
 
-                float qx = 0.25f;
-                float qy = 0.25f;
+            float qx = 0.25f;
+            float qy = 0.25f;
 
-                if(quads <= 1)
-                {
-                    qx = 0;
-                    qy = 0;
-                }
-                else if(quads <= 2)
-                {
-                    qy = 0;
-                }
+            if(quads <= 1)
+            {
+                qx = 0;
+                qy = 0;
+            }
+            else if(quads <= 2)
+            {
+                qy = 0;
+            }
 
-                if(quadrant == 0)
-                {
-                    quadOffset.X = -qx;
-                    quadOffset.Y = -qy;
-                }
-                else if(quadrant == 1)
+            if(quadrant == 0)
+            {
+                quadOffset.X = -qx;
+                quadOffset.Y = -qy;
+            }
+            else if(quadrant == 1)
+            {
+                quadOffset.X = qx;
+                quadOffset.Y = -qy;
+            }
+            else if(quadrant == 2)
+            {
+                if(quads <= 2)
                 {
                     quadOffset.X = qx;
-                    quadOffset.Y = -qy;
-                }
-                else if(quadrant == 2)
-                {
-                    if(quads <= 2)
-                    {
-                        quadOffset.X = qx;
-                    }
-                    else
-                    {
-                        quadOffset.X = -qx;
-                    }
-
-                    quadOffset.Y = qy;
                 }
                 else
                 {
-                    quadOffset.X = qx;
-                    quadOffset.Y = qy;
+                    quadOffset.X = -qx;
                 }
 
-                switch (Pivot)
-                {
-                    case FXPivot.Center:
-                        pivotPoint.X = 0f;
-                        pivotPoint.Y = 0f;
-                        break;
-                    case FXPivot.Max:
-                        pivotPoint.X = 0.25f;
-                        pivotPoint.Y = 0.25f;
-                        break;
-                    case FXPivot.Min:
-                        pivotPoint.X = -0.25f;
-                        pivotPoint.Y = -0.25f;
-                        break;
-                    case FXPivot.MaxX:
-                        pivotPoint.X = 0.25f;
-                        pivotPoint.Y = 0f;
-                        break;
-                    case FXPivot.MinX:
-                        pivotPoint.X = -0.25f;
-                        pivotPoint.Y = 0f;
-                        break;
-                    case FXPivot.MaxY:
-                        pivotPoint.X = 0f;
-                        pivotPoint.Y = 0.25f;
-                        break;
-                    case FXPivot.MinY:
-                        pivotPoint.Y = -0.25f;
-                        pivotPoint.X = 0f;
-                        break;
-                }
+                quadOffset.Y = qy;
+            }
+            else
+            {
+                quadOffset.X = qx;
+                quadOffset.Y = qy;
+            }
 
-                ApplyTransform(tex, output, width, height, Translation + quadOffset, Scale * fp, Angle, pivotPoint);
+            switch (Pivot)
+            {
+                case FXPivot.Center:
+                    pivotPoint.X = 0f;
+                    pivotPoint.Y = 0f;
+                    break;
+                case FXPivot.Max:
+                    pivotPoint.X = 0.25f;
+                    pivotPoint.Y = 0.25f;
+                    break;
+                case FXPivot.Min:
+                    pivotPoint.X = -0.25f;
+                    pivotPoint.Y = -0.25f;
+                    break;
+                case FXPivot.MaxX:
+                    pivotPoint.X = 0.25f;
+                    pivotPoint.Y = 0f;
+                    break;
+                case FXPivot.MinX:
+                    pivotPoint.X = -0.25f;
+                    pivotPoint.Y = 0f;
+                    break;
+                case FXPivot.MaxY:
+                    pivotPoint.X = 0f;
+                    pivotPoint.Y = 0.25f;
+                    break;
+                case FXPivot.MinY:
+                    pivotPoint.Y = -0.25f;
+                    pivotPoint.X = 0f;
+                    break;
+            }
+
+            ApplyTransform(tex, output, width, height, Translation + quadOffset, Scale * fp, Angle, pivotPoint);
         }
 
         public override void Release()
