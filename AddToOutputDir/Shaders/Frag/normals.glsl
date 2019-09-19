@@ -7,11 +7,12 @@ uniform float height;
 
 uniform float intensity;
 uniform int directx = 0;
+uniform float reduce = 0.004;
 
 uniform sampler2D MainTex;
 
 void main() {
-    float noiseReduction = (intensity * 0.004);
+    float noiseReduction = (intensity * reduce);
     vec2 rpos = vec2(UV.x * width, UV.y * height);
 
     //uses the normal algorithm kernel

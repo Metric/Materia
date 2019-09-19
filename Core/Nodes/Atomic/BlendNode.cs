@@ -48,7 +48,8 @@ namespace Materia.Nodes.Atomic
         Foreground = 1,
         Min = 2,
         Max = 3,
-        Average = 4
+        Average = 4,
+        Add = 5
     }
 
     public class BlendNode : ImageNode

@@ -45,6 +45,7 @@ namespace Materia.Nodes.Atomic
         }
 
         bool directx;
+        [Promote(NodeType.Bool)]
         [Editable(ParameterInputType.Toggle, "DirectX")]
         public bool DirectX
         {
@@ -59,10 +60,29 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        float noiseReduction;
+        [Promote(NodeType.Float)]
+        [Editable(ParameterInputType.FloatInput, "Noise Reduction")]
+        public float NoiseReduction
+        {
+            get
+            {
+                return noiseReduction;
+            }
+            set
+            {
+                noiseReduction = value;
+                TryAndProcess();
+            }
+        }
+
         public NormalNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
             Name = "Normal";
             Id = Guid.NewGuid().ToString();
+
+            directx = false;
+            noiseReduction = 0.004f;
 
             width = w;
             height = h;
@@ -151,14 +171,28 @@ namespace Materia.Nodes.Atomic
         private void GetParams()
         {
             pintensity = intensity;
+            pnoiseReduction = noiseReduction;
+            pdirectx = directx;
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
             {
                 pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
             }
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "DirectX"))
+            {
+                pdirectx = Convert.ToBoolean(ParentGraph.GetParameterValue(Id, "DirectX"));
+            }
+
+            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "NoiseReduction"))
+            {
+                pnoiseReduction = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "NoiseReduction"));
+            }
         }
 
         float pintensity;
+        float pnoiseReduction;
+        bool pdirectx;
         void Process() 
         {
             GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
@@ -170,7 +204,8 @@ namespace Materia.Nodes.Atomic
 
             processor.TileX = tileX;
             processor.TileY = tileY;
-            processor.DirectX = directx;
+            processor.DirectX = pdirectx;
+            processor.NoiseReduction = pnoiseReduction;
             processor.Intensity = pintensity;
             processor.Process(width, height, i1, buffer);
             processor.Complete();
@@ -184,6 +219,7 @@ namespace Materia.Nodes.Atomic
         {
             public float intensity;
             public bool directx;
+            public float noiseReduction = 0.004f;
         }
 
         public override string GetJson()
@@ -192,6 +228,7 @@ namespace Materia.Nodes.Atomic
             FillBaseNodeData(d);
             d.intensity = intensity;
             d.directx = directx;
+            d.noiseReduction = noiseReduction;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -202,6 +239,7 @@ namespace Materia.Nodes.Atomic
             SetBaseNodeDate(d);
             intensity = d.intensity;
             directx = d.directx;
+            noiseReduction = d.noiseReduction;
         }
 
         public override void Dispose()

@@ -14,6 +14,7 @@ namespace Materia.Imaging.GLProcessing
     {
         public float Intensity { get; set; }
         public bool DirectX { get; set; }
+        public float NoiseReduction { get; set; }
 
         IGLProgram shader;
 
@@ -41,6 +42,7 @@ namespace Materia.Imaging.GLProcessing
                 shader.SetUniform("intensity", Intensity);
                 shader.SetUniform("width", (float)width);
                 shader.SetUniform("height", (float)height);
+                shader.SetUniform("reduce", NoiseReduction);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
                 tex.Bind();
 

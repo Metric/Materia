@@ -56,6 +56,9 @@ namespace Materia
 
         protected TKGL tk;
 
+        protected bool preview3DWasVisibleOnLoad;
+        protected bool preview2DWasVisibleOnLoad;
+
         public MateriaMainWindow()
         {
             //initialize OpenTK GL Abstraction Layer first
@@ -63,11 +66,21 @@ namespace Materia
 
             InitializeComponent();
             Instance = this;
+
+            Docker.Loaded += Docker_Loaded;
+
             recent = new RecentSettings();
             recent.Load();
             graphs = new List<UIGraph>();
             documents = new List<LayoutDocument>();
+
+            //set default
+            preview3DWasVisibleOnLoad = true;
+            preview2DWasVisibleOnLoad = true;
+
+            //will handle changing the above
             LoadLayout();
+
             mnuGraphSettings.IsEnabled = false;
             GraphDocuments.PropertyChanged += GraphDocuments_PropertyChanged;
 
@@ -79,8 +92,41 @@ namespace Materia
             mnuRedo.IsEnabled = false;
             mnuUndo.IsEnabled = false;
 
+            WindowsMenu.Visibility = Visibility.Collapsed;
+            EditMenu.Visibility = Visibility.Collapsed;
+
+            SaveMenuItem.IsEnabled = false;
+            SaveAsMenuItem.IsEnabled = false;
+
+            ExportMenuItem.IsEnabled = false;
+
             //set node context
             Materia.Nodes.Node.Context = TaskScheduler.FromCurrentSynchronizationContext();
+        }
+
+        private void BuildRecentShortcuts()
+        {
+            RecentList.Children.Clear();
+
+            foreach(RecentSettings.RecentPath p in recent.Paths)
+            {
+                RecentShortcutItem shortcut = new RecentShortcutItem(p.path);
+                shortcut.OnOpen += Shortcut_OnOpen;
+                RecentList.Children.Add(shortcut);
+            }
+
+            if (recent.Paths.Count == 0)
+            {
+                RecentShortcuts.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void Shortcut_OnOpen(string path)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                HandleOpen(path);
+            }
         }
 
         private void BuildRecentSubMenu()
@@ -375,17 +421,7 @@ namespace Materia
             }
             else if(item.Header.ToString().ToLower().Contains("new"))
             {
-                UINewGraph ngraphDialog = new UINewGraph();
-
-                ngraphDialog.Owner = this;
-
-                if(ngraphDialog.ShowDialog() == false)
-                {
-                    return;
-                }
-
-                NewGraph(ngraphDialog.Result);
-                Log.Info("New Graph Created");
+                HandleCreate();
             }
             else if(item.Header.ToString().ToLower().Contains("export output"))
             {
@@ -398,8 +434,26 @@ namespace Materia
             }
         }
 
+        void HandleCreate()
+        {
+            UINewGraph ngraphDialog = new UINewGraph();
+
+            ngraphDialog.Owner = this;
+
+            if (ngraphDialog.ShowDialog() == false)
+            {
+                return;
+            }
+
+            HideStartup();
+            NewGraph(ngraphDialog.Result);
+            Log.Info("New Graph Created");
+        }
+
         void HandleOpen(string path)
         {
+            HideStartup();
+
             if (File.Exists(path))
             {
                 string originalPath = path;
@@ -439,7 +493,7 @@ namespace Materia
 
                     Log.Info("Opened Graph {0}", g.GraphName);
 
-                    recent.Add(originalPath);
+                    recent.Add(originalPath);    
 
                     BuildRecentSubMenu();
                 }
@@ -480,6 +534,24 @@ namespace Materia
             Log.Info("Saved Graph {0}", g.GraphName);
         }
 
+        void HideStartup()
+        {
+            StartupShortcuts.Visibility = Visibility.Collapsed;
+
+            WindowsMenu.Visibility = Visibility.Visible;
+            EditMenu.Visibility = Visibility.Visible;
+
+            if (preview3DWasVisibleOnLoad && Preview3DPane != null)
+            {
+                Preview3DPane.Show();
+            }
+
+            if (preview2DWasVisibleOnLoad && Preview2DPane != null)
+            {
+                Preview2DPane.Show();
+            }
+        }
+
         UIGraph NewGraph(Graph template = null)
         {
             UIGraph g = new UIGraph(template);
@@ -498,6 +570,9 @@ namespace Materia
             GraphDocuments.SelectedContentIndex = documents.Count - 1;
 
             mnuGraphSettings.IsEnabled = true;
+            SaveAsMenuItem.IsEnabled = true;
+            SaveMenuItem.IsEnabled = true;
+            ExportMenuItem.IsEnabled = true;
 
             return g;
         }
@@ -538,6 +613,9 @@ namespace Materia
             if(graphs.Count == 0)
             {
                 mnuGraphSettings.IsEnabled = false;
+                ExportMenuItem.IsEnabled = false;
+                SaveMenuItem.IsEnabled = false;
+                SaveAsMenuItem.IsEnabled = false;
             }
         }
 
@@ -548,6 +626,24 @@ namespace Materia
             if(e.Cancel)
             {
                 return;
+            }
+
+            //Handle the case where
+            //the preview panes are shown
+            //according to settings
+            //but hidden during startup shortcuts
+            //if they were visible on startup
+            //then reshow them before saving layout
+            if(Preview2DPane != null && preview2DWasVisibleOnLoad 
+                && StartupShortcuts.Visibility == Visibility.Visible)
+            {
+                Preview2DPane.Show();
+            }
+
+            if(Preview3DPane != null && preview3DWasVisibleOnLoad 
+                && StartupShortcuts.Visibility == Visibility.Visible)
+            {
+                Preview3DPane.Show();
             }
 
             //save layout
@@ -665,6 +761,16 @@ namespace Materia
                 ShelfPane = anchorables.FirstOrDefault(m => m.ContentId.Equals("shelf"));
                 ParametersPane = anchorables.FirstOrDefault(m => m.ContentId.Equals("parameters"));
 
+                if (Preview2DPane != null)
+                {
+                    preview2DWasVisibleOnLoad = Preview2DPane.IsVisible;
+                }
+
+                if (Preview3DPane != null)
+                {
+                    preview3DWasVisibleOnLoad = Preview3DPane.IsVisible;
+                }
+
                 //have to do this for saved layouts in case the layout does not have the original
                 var tmpLog = anchorables.FirstOrDefault(m => m.ContentId.Equals("log"));
 
@@ -682,13 +788,14 @@ namespace Materia
                     LogPane = tmpLog;
                 }
 
-                Log.Info("Previouse Layout Loaded");
+                Log.Info("Previous Layout Loaded");
             }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             BuildRecentSubMenu();
+            BuildRecentShortcuts();
             MateriaInputManager.Init();
             RegisterInputActions();
 
@@ -696,21 +803,54 @@ namespace Materia
             popupShelf.Owner = this;
             popupShelf.Hide();
 
-            if (App.Current.Properties.Contains("OpenFile"))
-            {
-                try
-                {
-                    string path = (string)App.Current.Properties["OpenFile"];
-                    if (string.IsNullOrEmpty(path)) return;
-                    HandleOpen(path);
-                }
-                catch
-                {
+            Log.Info("Main Window Loaded");
+        }
 
-                }
+        private void Docker_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (Preview3DPane != null)
+            {
+                Preview3DPane.Show();
             }
 
-            Log.Info("Main Window Loaded");
+            if (Preview2DPane != null)
+            {
+                Preview2DPane.Show();
+            }
+
+            if (UI3DPreview.Instance != null)
+            {
+                UI3DPreview.Instance.OnReady += UI3DInstance_OnReady;
+            }
+        }
+
+        private void UI3DInstance_OnReady()
+        {
+            Task.Delay(25).ContinueWith(t =>
+            {
+                if (Preview3DPane != null)
+                {
+                    Preview3DPane.Hide();
+                }
+                if (Preview2DPane != null)
+                {
+                    Preview2DPane.Hide();
+                }
+
+                if (App.Current.Properties.Contains("OpenFile"))
+                {
+                    try
+                    {
+                        string path = (string)App.Current.Properties["OpenFile"];
+                        if (string.IsNullOrEmpty(path)) return;
+                        HandleOpen(path);
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         private void RegisterInputActions()
@@ -895,6 +1035,25 @@ namespace Materia
                     g.NextPin();
                 }
             });
+        }
+
+        private void CreateNew_Click(object sender, RoutedEventArgs e)
+        {
+            HandleCreate();
+        }
+
+        private void OpenPrevious_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Forms.OpenFileDialog ovf = new System.Windows.Forms.OpenFileDialog();
+            ovf.CheckFileExists = true;
+            ovf.CheckPathExists = true;
+            ovf.DefaultExt = ".mtg";
+            ovf.Filter = "Materia Graph (*.mtg;*.mtga)|*.mtg;*.mtga";
+
+            if (ovf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                HandleOpen(ovf.FileName);
+            }
         }
     }
 }

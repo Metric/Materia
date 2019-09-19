@@ -53,7 +53,7 @@ namespace Materia
 
         protected float updateTime = 0;
         protected float lastUpdate = 0;
-        protected const float maxUpdateTime = 1.0f / 20.0f;
+        protected const float maxUpdateTime = 1.0f / 60.0f;
 
         public UIPreviewPane()
         {
@@ -163,7 +163,10 @@ namespace Materia
 
         private void Glview_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (updateTime >= maxUpdateTime)
+            //times 1000 to convert to MS
+            //since updateTime cannot possible be a fraction
+            //as is a solid int/float of MS
+            if (updateTime >= maxUpdateTime * 1000)
             {
                 updateTime = 0;
                 if (e.Button == System.Windows.Forms.MouseButtons.Middle)
@@ -193,7 +196,10 @@ namespace Materia
 
         private void Glview_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            start = e.Location;
+            if (e.Button == System.Windows.Forms.MouseButtons.Middle)
+            {
+                start = e.Location;
+            }
         }
 
         private void Glview_Load(object sender, EventArgs e)

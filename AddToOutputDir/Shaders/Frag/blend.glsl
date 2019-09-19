@@ -46,6 +46,7 @@ uniform int hasMask = 0;
 //Min = 2
 //Max = 3
 //Average = 4
+//Add = 5
 
 uniform int alphaMode = 0;
 
@@ -440,20 +441,29 @@ void main() {
         final.b = Exclusion(a.b * alpha * m, b.b);
     }
 
+    //background
     if(alphaMode == 0) {
         final.a = b.a;
     }
+    //foreground
     else if(alphaMode == 1) {
         final.a = a.a;
     }
+    //minimum of the two
     else if(alphaMode == 2) {
         final.a = min(a.a, b.a);
     }
+    //maximum of the two
     else if(alphaMode == 3) {
         final.a = max(a.a, b.a);
     }
+    //average
     else if(alphaMode == 4) {
         final.a = (a.a + b.a) * 0.5;
+    }
+    //add
+    else if(alphaMode == 5) {
+        final.a = min(a.a + b.a, 1);
     }
     //default to background alpha mode
     else {

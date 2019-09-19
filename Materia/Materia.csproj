@@ -197,6 +197,9 @@
     <Compile Include="UI\Components\RangeSlider.xaml.cs">
       <DependentUpon>RangeSlider.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Components\RecentShortcutItem.xaml.cs">
+      <DependentUpon>RecentShortcutItem.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\Components\ShelfItem.xaml.cs">
       <DependentUpon>ShelfItem.xaml</DependentUpon>
     </Compile>
@@ -397,6 +400,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\Components\RangeSlider.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\RecentShortcutItem.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

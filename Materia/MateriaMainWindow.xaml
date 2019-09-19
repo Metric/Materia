@@ -15,20 +15,20 @@
                     <MenuItem Foreground="Black" Header="_New" Click="MenuItem_Click" />
                     <MenuItem Foreground="Black" Header="_Open" Click="MenuItem_Click" />
                     <Separator />
-                    <MenuItem Foreground="Black" Header="_Save" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="_Save As" Click="MenuItem_Click" />
+                    <MenuItem Name="SaveMenuItem" Foreground="Black" Header="_Save" Click="MenuItem_Click" />
+                    <MenuItem Name="SaveAsMenuItem" Foreground="Black" Header="_Save As" Click="MenuItem_Click" />
                     <Separator />
                     <MenuItem Name="RecentMenu" Foreground="Black" Header="_Recent" />
                     <Separator />
-                    <MenuItem Header="_Export Outputs" Foreground="Black" Click="MenuItem_Click" />
+                    <MenuItem Name="ExportMenuItem" Header="_Export Outputs" Foreground="Black" Click="MenuItem_Click" />
                 </MenuItem>
-                <MenuItem Foreground="LightGray" Header="_Edit">
+                <MenuItem Name="EditMenu" Foreground="LightGray" Header="_Edit">
                     <MenuItem Foreground="Black" Header="_Undo" Name="mnuUndo" Click="MenuItem_Click" />
                     <MenuItem Foreground="Black" Header="_Redo" Name="mnuRedo" Click="MenuItem_Click" />
                     <Separator />
                     <MenuItem Name="mnuGraphSettings" Foreground="Black" Header="_Graph Settings" Click="MenuItem_Click" />
                 </MenuItem>
-                <MenuItem Foreground="LightGray" Header="_Windows">
+                <MenuItem Name="WindowsMenu" Foreground="LightGray" Header="_Windows">
                     <MenuItem Foreground="Black" Header="_2D Preview" Click="MenuItem_Click" />
                     <MenuItem Foreground="Black" Header="_3D Preview" Click="MenuItem_Click" />
                     <MenuItem Foreground="Black" Header="_Shelf" Click="MenuItem_Click"/>
@@ -99,6 +99,34 @@
                     </xcad:LayoutPanel>
                 </xcad:LayoutRoot>
             </xcad:DockingManager>
+            <Grid Name="StartupShortcuts" Background="#111">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0">
+                        <Button Name="CreateNew" Click="CreateNew_Click" Height="128" Width="128" HorizontalAlignment="Left" VerticalAlignment="Top" Style="{StaticResource ImageTextButton}">
+                            <Border Width="126" Height="126" BorderBrush="#444" BorderThickness="2">
+                                <Grid>
+                                    <Image Source="Images/add.png" MaxHeight="64" VerticalAlignment="Top" Margin="0,21,0.4,0" />
+                                    <TextBlock Foreground="LightGray" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="24" Text="CREATE" Margin="0,0,0,10.4" />
+                                </Grid>
+                            </Border>
+                        </Button>
+                        <Button Name="OpenPrevious" Click="OpenPrevious_Click" Height="128" Width="128" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,0,0,0" Style="{StaticResource ImageTextButton}">
+                            <Border Width="126" Height="126" BorderBrush="#444" BorderThickness="2">
+                                <Grid>
+                                    <Image Source="Images/align-horiz.png" MaxHeight="64" VerticalAlignment="Top" Margin="0,21,0.4,0" />
+                                    <TextBlock Foreground="LightGray" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="24" Text="OPEN" Margin="0,0,0,10.4" />
+                                </Grid>
+                            </Border>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Name="RecentShortcuts" HorizontalAlignment="Center" VerticalAlignment="Center" Width="512" Margin="0,20,0,0">
+                        <TextBlock Foreground="LightGray" FontSize="24" Text="RECENT" />
+                        <StackPanel Name="RecentList">
+                        
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

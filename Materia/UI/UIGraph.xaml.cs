@@ -55,6 +55,7 @@ namespace Materia
         bool moving;
         Point start;
         Point insertPos;
+        bool mouseDown;
 
         public delegate void GraphUpdate(UIGraph graph);
         public static event GraphUpdate OnGraphNameChanged;
@@ -1748,6 +1749,9 @@ namespace Materia
 
         private void ViewPort_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (mouseDown) return;
+
+            mouseDown = true;
             if (e.MiddleButton == MouseButtonState.Pressed)
             {
                 Grid g = sender as Grid;
@@ -1766,7 +1770,7 @@ namespace Materia
                 //we don't want to start selection
                 //if we are already over a node
                 //except if we are in a comment node
-                foreach(IUIGraphNode n in GraphNodes)
+                foreach (IUIGraphNode n in GraphNodes)
                 {
                     if (!(n is UICommentNode))
                     {
@@ -1791,9 +1795,9 @@ namespace Materia
                 }
 
                 //handle a quick shortcut to load graph settings
-                if(selectedStartedIn.Count == 0 && e.ClickCount > 1)
+                if (selectedStartedIn.Count == 0 && e.ClickCount > 1)
                 {
-                    if(UINodeParameters.Instance != null)
+                    if (UINodeParameters.Instance != null)
                     {
                         UINodeParameters.Instance.SetActive(Graph);
                         return;
@@ -1814,6 +1818,11 @@ namespace Materia
 
         private void ViewPort_MouseUp(object sender, MouseButtonEventArgs e)
         {
+            if(e.MiddleButton == MouseButtonState.Released && e.LeftButton == MouseButtonState.Released && e.RightButton == MouseButtonState.Released)
+            {
+                mouseDown = false;
+            }
+
             if(e.MiddleButton == MouseButtonState.Released)
             {
                 moving = false;

@@ -59,6 +59,9 @@ namespace Materia.UI
     /// </summary>
     public partial class UI3DPreview : UserControl
     {
+        public delegate void Ready();
+        public event Ready OnReady;
+
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
         OpenTK.GLControl glview;
@@ -118,7 +121,9 @@ namespace Materia.UI
 
         protected float updateTime = 0;
         protected float lastUpdate = 0;
-        protected const float maxUpdateTime = 1.0f / 20.0f;
+        protected const float maxUpdateTime = 1.0f / 60.0f;
+        protected bool leftButtonDown;
+        protected bool middleButtonDown;
 
         public UI3DPreview()
         {
@@ -191,6 +196,7 @@ namespace Materia.UI
                 glview.MouseWheel += Glview_MouseWheel;
                 glview.MouseMove += Glview_MouseMove;
                 glview.MouseDown += Glview_MouseDown;
+                glview.MouseUp += Glview_MouseUp;
 
                 FHost.Child = glview;
                 previewObject = new Transform();
@@ -207,14 +213,41 @@ namespace Materia.UI
             }
         }
 
+        private void Glview_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Left)
+            {
+                leftButtonDown = false;
+            }
+            else if(e.Button == System.Windows.Forms.MouseButtons.Middle)
+            {
+                middleButtonDown = false;
+            }
+        }
+
         private void Glview_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            mouseStart = new System.Windows.Point(e.Location.X, e.Location.Y);
+            if (!leftButtonDown && !middleButtonDown)
+            {
+                if(e.Button == System.Windows.Forms.MouseButtons.Left)
+                {
+                    leftButtonDown = true;
+                }
+                else if(e.Button == System.Windows.Forms.MouseButtons.Middle)
+                {
+                    middleButtonDown = true;
+                }
+                
+                mouseStart = new System.Windows.Point(e.Location.X, e.Location.Y);
+            }
         }
 
         private void Glview_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (updateTime >= maxUpdateTime)
+            //times 1000 to convert to MS
+            //since updateTime cannot possible be a fraction
+            //as is a solid int/float of MS
+            if (updateTime >= maxUpdateTime * 1000)
             {
                 updateTime = 0;
                 if (e.Button == System.Windows.Forms.MouseButtons.Left)
@@ -227,8 +260,8 @@ namespace Materia.UI
 
                     Vector3 euler = camera.LocalEulerAngles;
 
-                    euler.X += ((float)p.Y - (float)mouseStart.Y) * 0.25f;
-                    euler.Y += ((float)p.X - (float)mouseStart.X) * 0.25f * Math.Sign(up.Y);
+                    euler.X += ((float)p.Y - (float)mouseStart.Y) * (maxUpdateTime * 16);
+                    euler.Y += ((float)p.X - (float)mouseStart.X) * Math.Sign(up.Y) * (maxUpdateTime * 16);
 
                     euler.X %= 360;
                     euler.Y %= 360;
@@ -246,12 +279,15 @@ namespace Materia.UI
                     Vector3 right = camera.Right;
                     Vector3 up = camera.Up;
 
-                    float dx = ((float)p.X - (float)mouseStart.X) * 0.0005f;
-                    float dy = ((float)p.Y - (float)mouseStart.Y) * -0.0005f;
+                    //divide by 100 to convert to proper GL units
+                    float dx = ((float)p.X - (float)mouseStart.X) / 100 * (maxUpdateTime * 16);
+                    float dy = -((float)p.Y - (float)mouseStart.Y) / 100 * (maxUpdateTime * 16);
 
                     Vector3 t = right * dx + up * dy;
 
-                    previewObject.LocalPosition += t;
+                    mouseStart = p;
+
+                    previewObject.LocalPosition = previewObject.LocalPosition + t;
 
                     Invalidate();
                 }
@@ -1129,6 +1165,8 @@ namespace Materia.UI
             renderStack.Add(bloomPass);
 
             LoadMeshes();
+
+            OnReady?.Invoke();
 
             Task.Run(async () =>
             {
