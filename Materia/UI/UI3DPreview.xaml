@@ -13,6 +13,7 @@
             <MenuItem Foreground="LightGray" Header="Scene" Height="25">
                 <MenuItem Header="_Cube" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="True" IsCheckable="True" />
                 <MenuItem Header="_Sphere" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Cube Sphere" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
                 <MenuItem Header="_Rounded Cube" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
                 <MenuItem Header="_Plane" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
                 <MenuItem Header="_Cylinder" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />

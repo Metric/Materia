@@ -64,6 +64,7 @@ namespace Materia
             Type = r.Type;
             Title = r.Title;
             Path = r.Path;
+            ToolTip = r.ToolTip;
         }
 
         public NodeResource Clone()

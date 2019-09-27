@@ -17,6 +17,7 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
     <TargetFrameworkProfile />
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -31,8 +32,7 @@
     <PublisherName>arcanistry</PublisherName>
     <DisallowUrlActivation>true</DisallowUrlActivation>
     <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>0.0.2.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <ApplicationVersion>0.0.3.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -77,6 +77,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Images\Icons\App\icon.ico</ApplicationIcon>
@@ -131,11 +132,13 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Hdri\HdriManager.cs" />
+    <Compile Include="Language\Localization.cs" />
     <Compile Include="Logging\MateriaLogTarget.cs" />
     <Compile Include="Settings\MaterialSettings.cs" />
     <Compile Include="Settings\LightingSettings.cs" />
     <Compile Include="Settings\RecentSettings.cs" />
     <Compile Include="Settings\Settings.cs" />
+    <Compile Include="Shelf\ShelfDescriptions.cs" />
     <Compile Include="TKGL.cs" />
     <Compile Include="UI\Components\BreadCrumb.xaml.cs">
       <DependentUpon>BreadCrumb.xaml</DependentUpon>
@@ -225,7 +228,7 @@
     <Compile Include="UI\Helpers\NodeExtensions.cs" />
     <Compile Include="UI\Helpers\NodePath.cs" />
     <Compile Include="UI\Helpers\RawBitmapExtensions.cs" />
-    <Compile Include="UI\Helpers\ShelfBuilder.cs" />
+    <Compile Include="Shelf\ShelfBuilder.cs" />
     <Compile Include="UI\Helpers\VisualExtensions.cs" />
     <Compile Include="UI\ItemNodes\UIPinNode.xaml.cs">
       <DependentUpon>UIPinNode.xaml</DependentUpon>

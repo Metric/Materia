@@ -14,7 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.IO;
 using Materia.UI.Components;
-using Materia.UI.Helpers;
+using Materia.Shelf;
 
 namespace Materia.UI
 {
@@ -61,6 +61,7 @@ namespace Materia.UI
                     nr.Title = resource.Title;
                     nr.Path = resource.Path;
                     nr.Type = resource.Type;
+                    nr.ToolTip = ShelfDescriptions.Get(nr);
                     c.Add(nr);
                 }
 
@@ -122,6 +123,7 @@ namespace Materia.UI
                         NodeResource nsr = new NodeResource();
                         nsr.Title = fname;
                         nsr.Type = p;
+                        nsr.ToolTip = ShelfDescriptions.Get(nsr);
                         root.Add(nsr);
                     }
                 }

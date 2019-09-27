@@ -83,6 +83,9 @@ namespace Materia.Rendering
             IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
             inputs[1].Bind();
 
+            //ensure polygon is actually rendered instead of wireframe during this step
+            IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
+
             IGL.Primary.Disable((int)EnableCap.CullFace);
 
             quad.Draw();

@@ -25,6 +25,7 @@ namespace Materia.UI
     {
         Cube,
         Sphere,
+        CubeSphere,
         Cylinder,
         RoundedCube,
         Plane,
@@ -77,6 +78,7 @@ namespace Materia.UI
         Material.PBRLight lightMat;
 
         MeshRenderer cube;
+        MeshRenderer cubeSphere;
         MeshRenderer sphere;
         MeshRenderer cylinder;
         MeshRenderer plane;
@@ -89,6 +91,7 @@ namespace Materia.UI
         BloomPass bloomPass;
 
         Mesh cubeMesh;
+        Mesh cubesphereMesh;
         Mesh sphereMesh;
         Mesh cylinderMesh;
         Mesh planeMesh;
@@ -279,9 +282,17 @@ namespace Materia.UI
                     Vector3 right = camera.Right;
                     Vector3 up = camera.Up;
 
-                    //divide by 100 to convert to proper GL units
-                    float dx = ((float)p.X - (float)mouseStart.X) / 100 * (maxUpdateTime * 16);
-                    float dy = -((float)p.Y - (float)mouseStart.Y) / 100 * (maxUpdateTime * 16);
+                    //convert positions to percentages
+                    //otherwise positions are just integers
+                    float x1 = (float)(p.X / ActualWidth);
+                    float x2 = (float)(mouseStart.X / ActualWidth);
+                    float y1 = (float)(p.Y / ActualHeight);
+                    float y2 = (float)(mouseStart.Y / ActualHeight);
+
+                    //this works good enough for now...
+                    float z = camera.LocalPosition.Z;
+                    float dx = (x1 - x2) * z; 
+                    float dy = -(y1 - y2) * z;
 
                     Vector3 t = right * dx + up * dy;
 
@@ -311,6 +322,7 @@ namespace Materia.UI
             Invalidate();
         }
 
+        #region Material Input
         public void TryAndRemovePreviewNode(UINode n)
         {
             if(albedoNode == n)
@@ -670,6 +682,7 @@ namespace Materia.UI
 
             Invalidate();
         }
+        #endregion
 
         void LoadDefaultTextures()
         {
@@ -779,7 +792,7 @@ namespace Materia.UI
                     }
                 }
 
-                string psphere = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Geometry", "sphere.obj");
+                string psphere = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Geometry", "sphere-standard.obj");
                 importer = new RSMI.Importer();
                 meshes = importer.Parse(psphere);
 
@@ -790,6 +803,17 @@ namespace Materia.UI
                     sphere.Mat = mat;
                     lightMesh = new MeshRenderer(meshes[0]);
                     lightMesh.Mat = lightMat;
+                }
+
+                string pcubesphere = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Geometry", "cube-sphere.obj");
+                importer = new RSMI.Importer();
+                meshes = importer.Parse(pcubesphere);
+
+                if (meshes.Count > 0)
+                {
+                    cubesphereMesh = meshes[0];
+                    cubeSphere = new MeshRenderer(meshes[0]);
+                    cubeSphere.Mat = mat;
                 }
 
                 string prounded = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Geometry", "cube-rounded.obj");
@@ -1058,6 +1082,26 @@ namespace Materia.UI
                     sphere.Far = camera.Far;
 
                     return sphere;
+                }
+            }
+            else if (previewType == PreviewGeometryType.CubeSphere)
+            {
+                if (cubeSphere != null)
+                {
+                    cubeSphere.Mat = m;
+                    cubeSphere.CameraPosition = camera.EyePosition;
+                    cubeSphere.IrradianceMap = HdriManager.Irradiance;
+                    cubeSphere.PrefilterMap = HdriManager.Prefiltered;
+                    cubeSphere.Projection = proj;
+                    cubeSphere.Model = previewObject.WorldMatrix;
+                    cubeSphere.View = camera.View;
+                    cubeSphere.LightColor = light.Color;
+                    cubeSphere.LightPosition = light.Position;
+                    cubeSphere.LightPower = light.Power;
+                    cubeSphere.Near = camera.Near;
+                    cubeSphere.Far = camera.Far;
+
+                    return cubeSphere;
                 }
             }
             else if (previewType == PreviewGeometryType.Cylinder)
@@ -1348,6 +1392,9 @@ namespace Materia.UI
                         break;
                     case PreviewGeometryType.Sphere:
                         pane.SetMesh(sphere);
+                        break;
+                    case PreviewGeometryType.CubeSphere:
+                        pane.SetMesh(cubeSphere);
                         break;
                     case PreviewGeometryType.Custom:
                         ShowCustomMeshDialog();

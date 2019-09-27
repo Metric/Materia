@@ -58,12 +58,16 @@ namespace Materia.UI
                 if (Graph != null)
                 {
                     Graph.Insert(src.Type);
-
-                    Keyboard.ClearFocus();
-                    Graph.Focus();
                 }
 
                 Hide();
+
+                Keyboard.ClearFocus();
+                if (MateriaMainWindow.Instance != null)
+                {
+                    Keyboard.Focus(MateriaMainWindow.Instance);
+                    MateriaMainWindow.Instance.Focus();
+                }
             }
         }
 
@@ -138,13 +142,14 @@ namespace Materia.UI
 
         private void Window_Deactivated(object sender, EventArgs e)
         {
-            if(Graph != null)
-            {
-                Keyboard.ClearFocus();
-                Graph.Focus();
-            }
-
             Hide();
+
+            Keyboard.ClearFocus();
+            if (MateriaMainWindow.Instance != null)
+            {
+                Keyboard.Focus(MateriaMainWindow.Instance);
+                MateriaMainWindow.Instance.Focus();
+            }
         }
     }
 }

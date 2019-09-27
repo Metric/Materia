@@ -115,7 +115,7 @@ namespace Materia
                 RecentList.Children.Add(shortcut);
             }
 
-            if (recent.Paths.Count == 0)
+            if (recent.Paths == null || recent.Paths.Count == 0)
             {
                 RecentShortcuts.Visibility = Visibility.Collapsed;
             }
@@ -373,51 +373,25 @@ namespace Materia
             //file menu
             else if (item.Header.ToString().ToLower().Contains("save as"))
             {
-                if (graphs.Count > 0)
+                if (graphs.Count > 0 && GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
-                    System.Windows.Forms.SaveFileDialog svf = new System.Windows.Forms.SaveFileDialog();
-                    svf.CheckPathExists = true;
-                    svf.DefaultExt = ".mtg";
-                    svf.Filter = "Materia Graph (*.mtg)|*.mtg|Materia Graph Archive (*.mtga)|*.mtga";
-
-                    if (svf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                    {
-                        UIGraph g = graphs[GraphDocuments.SelectedContentIndex];
-                        if (g != null)
-                        {
-                            g.Save(svf.FileName, true);
-
-                            var doc = documents[GraphDocuments.SelectedContentIndex];
-                            doc.Title = g.GraphName;
-
-                            recent.Add(svf.FileName);
-                            BuildRecentSubMenu();
-                        }
-                    }
+                    UIGraph graph = graphs[GraphDocuments.SelectedContentIndex];
+                    LayoutDocument doc = documents[GraphDocuments.SelectedContentIndex];
+                    ShowSaveDialog(graph, doc, true);
                 }
             }
             else if (item.Header.ToString().ToLower().Contains("save"))
             {
-                if (graphs.Count > 0)
+                if (graphs.Count > 0 && GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
-                    UIGraph g = graphs[GraphDocuments.SelectedContentIndex];
-                    HandleSave(g);
-                    var doc = documents[GraphDocuments.SelectedContentIndex];
-                    doc.Title = g.GraphName;
+                    UIGraph graph = graphs[GraphDocuments.SelectedContentIndex];
+                    LayoutDocument doc = documents[GraphDocuments.SelectedContentIndex];
+                    HandleSave(graph, doc);
                 }
             }
             else if (item.Header.ToString().ToLower().Contains("open"))
             {
-                System.Windows.Forms.OpenFileDialog ovf = new System.Windows.Forms.OpenFileDialog();
-                ovf.CheckFileExists = true;
-                ovf.CheckPathExists = true;
-                ovf.DefaultExt = ".mtg";
-                ovf.Filter = "Materia Graph (*.mtg;*.mtga)|*.mtg;*.mtga";
-
-                if (ovf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    HandleOpen(ovf.FileName);
-                }
+                ShowOpenDialog();
             }
             else if(item.Header.ToString().ToLower().Contains("new"))
             {
@@ -431,6 +405,54 @@ namespace Materia
                     UIExportOutputs exportdialog = new UIExportOutputs(graphs[GraphDocuments.SelectedContentIndex]);
                     exportdialog.ShowDialog();
                 }
+            }
+        }
+
+        void ShowSaveDialog(UIGraph g, LayoutDocument doc, bool saveAs = false)
+        {
+            try
+            {
+                if (g != null)
+                {
+                    System.Windows.Forms.SaveFileDialog svf = new System.Windows.Forms.SaveFileDialog();
+                    svf.CheckPathExists = true;
+                    svf.DefaultExt = ".mtg";
+                    svf.Filter = "Materia Graph (*.mtg)|*.mtg|Materia Graph Archive (*.mtga)|*.mtga";
+
+                    if (svf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    {
+                        g.Save(svf.FileName, saveAs);
+                        doc.Title = g.GraphName;
+
+                        recent.Add(svf.FileName);
+                        BuildRecentSubMenu();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+            }
+        }
+
+        void ShowOpenDialog()
+        {
+            try
+            {
+                System.Windows.Forms.OpenFileDialog ovf = new System.Windows.Forms.OpenFileDialog();
+                ovf.CheckFileExists = true;
+                ovf.CheckPathExists = true;
+                ovf.DefaultExt = ".mtg";
+                ovf.Filter = "Materia Graph (*.mtg;*.mtga)|*.mtg;*.mtga";
+
+                if (ovf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    HandleOpen(ovf.FileName);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
             }
         }
 
@@ -504,24 +526,11 @@ namespace Materia
             }
         }
 
-        void HandleSave(UIGraph g)
+        void HandleSave(UIGraph g, LayoutDocument doc)
         {
             if (string.IsNullOrEmpty(g.FilePath))
             {
-                System.Windows.Forms.SaveFileDialog svf = new System.Windows.Forms.SaveFileDialog();
-                svf.CheckPathExists = true;
-                svf.DefaultExt = ".mtg";
-                svf.Filter = "Materia Graph (*.mtg)|*.mtg|Materia Graph Archive (*.mtga)|*.mtga";
-
-                if (svf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    if (g != null)
-                    {
-                        g.Save(svf.FileName);
-                        recent.Add(svf.FileName);
-                        BuildRecentSubMenu();
-                    }
-                }
+                ShowSaveDialog(g, doc);
             }
             else
             {
@@ -592,7 +601,7 @@ namespace Materia
                     {
                         if (MessageBox.Show(this, g.GraphName + " has been modified. Do you want to save the changes?", "Save Changes", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
-                            HandleSave(g);
+                            HandleSave(g, doc);
                         }
 
                         graphs.RemoveAt(idx);
@@ -660,12 +669,13 @@ namespace Materia
                 for (int i = 0; i < graphs.Count; i++)
                 {
                     UIGraph g = graphs[i];
+                    LayoutDocument doc = documents[i];
                     if (g.Modified && !g.ReadOnly)
                     {
                         var result = MessageBox.Show(this, g.GraphName + " has been modified. Do you want to save the changes?", "Save Changes", MessageBoxButton.YesNoCancel);
                         if (result == MessageBoxResult.Yes)
                         {
-                            HandleSave(g);
+                            HandleSave(g, doc);
                         }
                         else if (result == MessageBoxResult.Cancel)
                         {
@@ -865,6 +875,12 @@ namespace Materia
             });
             MateriaInputManager.Add(InputManagerCommand.Copy, (e) =>
             {
+                if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
+                  && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                {
+                    return;
+                }
+
                 if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
                     var g = graphs[GraphDocuments.SelectedContentIndex];
@@ -873,6 +889,12 @@ namespace Materia
             });
             MateriaInputManager.Add(InputManagerCommand.Paste, (e) =>
             {
+                if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
+                   && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                {
+                    return;
+                }
+
                 if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
                     var g = graphs[GraphDocuments.SelectedContentIndex];
@@ -884,7 +906,8 @@ namespace Materia
                 if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
                     var g = graphs[GraphDocuments.SelectedContentIndex];
-                    HandleSave(g);
+                    var doc = documents[GraphDocuments.SelectedContentIndex];
+                    HandleSave(g, doc);
                 }
             });
             MateriaInputManager.Add(InputManagerCommand.Delete, (e) =>
@@ -1044,16 +1067,7 @@ namespace Materia
 
         private void OpenPrevious_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.Forms.OpenFileDialog ovf = new System.Windows.Forms.OpenFileDialog();
-            ovf.CheckFileExists = true;
-            ovf.CheckPathExists = true;
-            ovf.DefaultExt = ".mtg";
-            ovf.Filter = "Materia Graph (*.mtg;*.mtga)|*.mtg;*.mtga";
-
-            if (ovf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                HandleOpen(ovf.FileName);
-            }
+            ShowOpenDialog();
         }
     }
 }
