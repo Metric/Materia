@@ -20,6 +20,7 @@ using Materia.Imaging.GLProcessing;
 using OpenTK.Graphics.OpenGL;
 using Materia.Math3D;
 using Materia.Textures;
+using System.Windows.Threading;
 
 namespace Materia
 {
@@ -43,6 +44,7 @@ namespace Materia
         public static UIPreviewPane Instance { get; protected set; }
 
         bool showUV;
+        bool middleMouseDown;
 
         UVRenderer uvs;
 
@@ -51,9 +53,10 @@ namespace Materia
 
         FullScreenQuad quad;
 
-        protected float updateTime = 0;
-        protected float lastUpdate = 0;
         protected const float maxUpdateTime = 1.0f / 60.0f;
+        
+
+        protected DispatcherTimer frameUpdater;
 
         public UIPreviewPane()
         {
@@ -66,6 +69,8 @@ namespace Materia
 
             glview = new OpenTK.GLControl();
 
+            middleMouseDown = false;
+
             glview.Load += Glview_Load;
             glview.MouseDown += Glview_MouseDown;
             glview.MouseMove += Glview_MouseMove;
@@ -73,7 +78,17 @@ namespace Materia
             glview.MouseWheel += Glview_MouseWheel;
             glview.Paint += Glview_Paint;
 
+            frameUpdater = new DispatcherTimer(DispatcherPriority.Normal, Application.Current.Dispatcher);
+            frameUpdater.Interval = new TimeSpan((long)(maxUpdateTime * 1000 * 10000));
+            frameUpdater.IsEnabled = false;
+            frameUpdater.Tick += FrameUpdater_Tick; ;
+
             FHost.Child = glview;
+        }
+
+        private void FrameUpdater_Tick(object sender, EventArgs e)
+        {
+            Invalidate();
         }
 
         private void Glview_Paint(object sender, System.Windows.Forms.PaintEventArgs e)
@@ -158,47 +173,41 @@ namespace Materia
 
         private void Glview_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-           
+            if(middleMouseDown)
+            {
+                frameUpdater.IsEnabled = false;
+                middleMouseDown = false;
+            }
         }
 
         private void Glview_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            //times 1000 to convert to MS
-            //since updateTime cannot possible be a fraction
-            //as is a solid int/float of MS
-            if (updateTime >= maxUpdateTime * 1000)
+            if (e.Button == System.Windows.Forms.MouseButtons.Middle && middleMouseDown)
             {
-                updateTime = 0;
-                if (e.Button == System.Windows.Forms.MouseButtons.Middle)
-                {
-                    glview.Cursor = System.Windows.Forms.Cursors.SizeAll;
+                glview.Cursor = System.Windows.Forms.Cursors.SizeAll;
 
-                    var p = e.Location;
-                    double dx = p.X - start.X;
-                    double dy = p.Y - start.Y;
+                var p = e.Location;
+                double dx = p.X - start.X;
+                double dy = p.Y - start.Y;
 
-                    start = p;
+                start = p;
 
-                    pan.X += dx;
-                    pan.Y += dy;
-
-                    Invalidate();
-                }
-                else
-                {
-                    glview.Cursor = System.Windows.Forms.Cursors.Arrow;
-                }
+                pan.X += dx;
+                pan.Y += dy;
             }
-
-            updateTime += Environment.TickCount - lastUpdate;
-            lastUpdate = Environment.TickCount;
+            else
+            {
+                glview.Cursor = System.Windows.Forms.Cursors.Arrow;
+            }
         }
 
         private void Glview_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (e.Button == System.Windows.Forms.MouseButtons.Middle)
+            if (e.Button == System.Windows.Forms.MouseButtons.Middle && !middleMouseDown)
             {
                 start = e.Location;
+                middleMouseDown = true;
+                frameUpdater.IsEnabled = true;
             }
         }
 

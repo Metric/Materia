@@ -18,6 +18,7 @@ using Materia.Hdri;
 using Materia.Settings;
 using Materia.Rendering;
 using NLog;
+using System.Windows.Threading;
 
 namespace Materia.UI
 {
@@ -122,11 +123,11 @@ namespace Materia.UI
 
         public static UI3DPreview Instance { get; protected set; }
 
-        protected float updateTime = 0;
-        protected float lastUpdate = 0;
         protected const float maxUpdateTime = 1.0f / 60.0f;
         protected bool leftButtonDown;
         protected bool middleButtonDown;
+
+        protected DispatcherTimer frameUpdater;
 
         public UI3DPreview()
         {
@@ -143,8 +144,18 @@ namespace Materia.UI
             lightSettings = new LightingSettings();
             lightSettings.OnLightingUpdated += LightSettings_OnLightingUpdated;
 
+            frameUpdater = new DispatcherTimer(DispatcherPriority.Normal, Application.Current.Dispatcher);
+            frameUpdater.Interval = new TimeSpan((long)(maxUpdateTime * 1000 * 10000));
+            frameUpdater.IsEnabled = false;
+            frameUpdater.Tick += FrameUpdater_Tick;
+
             InitGL();
             Log.Info("3d view inited");
+        }
+
+        private void FrameUpdater_Tick(object sender, EventArgs e)
+        {
+            Invalidate();
         }
 
         private void LightSettings_OnLightingUpdated(LightingSettings sender)
@@ -226,6 +237,11 @@ namespace Materia.UI
             {
                 middleButtonDown = false;
             }
+
+            if (!leftButtonDown && !middleButtonDown)
+            {
+                frameUpdater.IsEnabled = false;
+            }
         }
 
         private void Glview_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -240,6 +256,8 @@ namespace Materia.UI
                 {
                     middleButtonDown = true;
                 }
+
+                frameUpdater.IsEnabled = true;
                 
                 mouseStart = new System.Windows.Point(e.Location.X, e.Location.Y);
             }
@@ -247,65 +265,51 @@ namespace Materia.UI
 
         private void Glview_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            //times 1000 to convert to MS
-            //since updateTime cannot possible be a fraction
-            //as is a solid int/float of MS
-            if (updateTime >= maxUpdateTime * 1000)
+            if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                updateTime = 0;
-                if (e.Button == System.Windows.Forms.MouseButtons.Left)
-                {
-                    System.Windows.Point p = new System.Windows.Point(e.Location.X, e.Location.Y);
+                System.Windows.Point p = new System.Windows.Point(e.Location.X, e.Location.Y);
 
-                    Quaternion n = camera.LocalRotation;
+                Quaternion n = camera.LocalRotation;
 
-                    Vector3 up = n * new Vector3(0, 1, 0);
+                Vector3 up = n * new Vector3(0, 1, 0);
 
-                    Vector3 euler = camera.LocalEulerAngles;
+                Vector3 euler = camera.LocalEulerAngles;
 
-                    euler.X += ((float)p.Y - (float)mouseStart.Y) * (maxUpdateTime * 16);
-                    euler.Y += ((float)p.X - (float)mouseStart.X) * Math.Sign(up.Y) * (maxUpdateTime * 16);
+                euler.X += ((float)p.Y - (float)mouseStart.Y) * (maxUpdateTime * 16);
+                euler.Y += ((float)p.X - (float)mouseStart.X) * Math.Sign(up.Y) * (maxUpdateTime * 16);
 
-                    euler.X %= 360;
-                    euler.Y %= 360;
+                euler.X %= 360;
+                euler.Y %= 360;
 
-                    camera.LocalEulerAngles = euler;
+                camera.LocalEulerAngles = euler;
 
-                    mouseStart = p;
-
-                    Invalidate();
-                }
-                else if (e.Button == System.Windows.Forms.MouseButtons.Middle)
-                {
-                    System.Windows.Point p = new System.Windows.Point(e.Location.X, e.Location.Y);
-
-                    Vector3 right = camera.Right;
-                    Vector3 up = camera.Up;
-
-                    //convert positions to percentages
-                    //otherwise positions are just integers
-                    float x1 = (float)(p.X / ActualWidth);
-                    float x2 = (float)(mouseStart.X / ActualWidth);
-                    float y1 = (float)(p.Y / ActualHeight);
-                    float y2 = (float)(mouseStart.Y / ActualHeight);
-
-                    //this works good enough for now...
-                    float z = camera.LocalPosition.Z;
-                    float dx = (x1 - x2) * z; 
-                    float dy = -(y1 - y2) * z;
-
-                    Vector3 t = right * dx + up * dy;
-
-                    mouseStart = p;
-
-                    previewObject.LocalPosition = previewObject.LocalPosition + t;
-
-                    Invalidate();
-                }
+                mouseStart = p;
             }
+            else if (e.Button == System.Windows.Forms.MouseButtons.Middle)
+            {
+                System.Windows.Point p = new System.Windows.Point(e.Location.X, e.Location.Y);
 
-            updateTime += Environment.TickCount - lastUpdate;
-            lastUpdate = Environment.TickCount;
+                Vector3 right = camera.Right;
+                Vector3 up = camera.Up;
+
+                //convert positions to percentages
+                //otherwise positions are just integers
+                float x1 = (float)(p.X / ActualWidth);
+                float x2 = (float)(mouseStart.X / ActualWidth);
+                float y1 = (float)(p.Y / ActualHeight);
+                float y2 = (float)(mouseStart.Y / ActualHeight);
+
+                //this works good enough for now...
+                float z = camera.LocalPosition.Z;
+                float dx = (x1 - x2) * z; 
+                float dy = -(y1 - y2) * z;
+
+                Vector3 t = right * dx + up * dy;
+
+                mouseStart = p;
+
+                previewObject.LocalPosition = previewObject.LocalPosition + t;
+            }
         }
 
         private void Glview_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -864,6 +868,7 @@ namespace Materia.UI
             }
         }
 
+        #region Verify Material & Textures
         void CheckTessMaterials()
         {
             if (tessMat == null) return;
@@ -931,6 +936,9 @@ namespace Materia.UI
                 mat.Thickness = defaultBlack;
             }
         }
+        #endregion
+
+        #region Rendering
 
         private void Glview_Paint(object sender, System.Windows.Forms.PaintEventArgs e)
         {
@@ -1187,6 +1195,7 @@ namespace Materia.UI
 
             return null;
         }
+        #endregion
 
         private void Glview_Load(object sender, EventArgs e)
         {
