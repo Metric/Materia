@@ -14,10 +14,10 @@ uniform sampler2D MainTex;
 void main() {
     vec2 dir = normalize(vec2(tx,ty));
     vec2 offset = 1.0 / textureSize(MainTex, 0);
-    float half = magnitude * 0.5;
+    float whalf = magnitude * 0.5;
     vec4 result = vec4(0);
 
-    for(float j = -half; j <= half; j++) 
+    for(float j = -whalf; j <= whalf; j++) 
     {
         result += texture(MainTex, UV + (j * offset * dir));
     }

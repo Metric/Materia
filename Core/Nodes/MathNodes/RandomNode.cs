@@ -72,11 +72,11 @@ namespace Materia.Nodes.MathNodes
 
             if (input.Input.Type == NodeType.Float2)
             {
-                return "float " + s + " = rand(" + n1id + " + " + seed + ");\r\n";
+                return "float " + s + " = rand(" + n1id + " + " + seed.ToCodeString() + ");\r\n";
             }
             else
             { 
-                return "float " + s + " = rand(vec2(" + n1id + ", 1.0 - " + n1id + ") + " + seed + ");\r\n";
+                return "float " + s + " = rand(vec2(" + n1id + ", 1.0 - " + n1id + ") + " + seed.ToCodeString() + ");\r\n";
             }
         }
 

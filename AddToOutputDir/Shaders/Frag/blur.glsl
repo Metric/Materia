@@ -9,7 +9,7 @@ uniform int horizontal;
 void main() {
     vec2 offset = 1.0 / textureSize(MainTex, 0);
 
-    float half = intensity * 0.5;
+    float whalf = intensity * 0.5;
     vec4 result = vec4(0);
 
     if(horizontal == 1) {
@@ -19,7 +19,7 @@ void main() {
         offset.x = 0;
     }
 
-    for(float j = -half; j <= half; j++) {
+    for(float j = -whalf; j <= whalf; j++) {
         result += texture(MainTex, UV + (j * offset));
     }
 

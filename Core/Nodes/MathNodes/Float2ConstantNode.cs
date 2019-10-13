@@ -99,7 +99,7 @@ namespace Materia.Nodes.MathNodes
                 py = v.Y;
             }
 
-            return "vec2 " + s + " = vec2(" + px + "," + py + ");\r\n";
+            return "vec2 " + s + " = vec2(" + px.ToCodeString() + "," + py.ToCodeString() + ");\r\n";
         }
 
         void Process()

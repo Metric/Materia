@@ -14,6 +14,7 @@ using Materia.Math3D;
 using Materia.GLInterfaces;
 using NLog;
 using Materia.Archive;
+using Materia.MathHelpers;
 
 namespace Materia.Nodes
 {
@@ -640,14 +641,14 @@ namespace Materia.Nodes
                 int w = n.Width;
                 int h = n.Height;
 
-                sizePart = "vec2 size = vec2(" + w + "," + h + ");\r\n";
+                sizePart = "vec2 size = vec2(" + w.ToCodeString() + "," + h.ToCodeString() + ");\r\n";
             }
             else if(parentGraph != null)
             {
                 int w = parentGraph.Width;
                 int h = parentGraph.Height;
 
-                sizePart = "vec2 size = vec2(" + w + "," + h + ");\r\n";
+                sizePart = "vec2 size = vec2(" + w.ToCodeString() + "," + h.ToCodeString() + ");\r\n";
             }
 
             frag += sizePart
@@ -688,11 +689,11 @@ namespace Materia.Nodes
             if (!asFunc)
             {
                 
-                frag += "FragColor = min(vec4(1), max(vec4(0), vec4(" + last.ShaderId + endIndex.ToString() + ")));\r\n";
+                frag += "FragColor = min(vec4(1), max(vec4(0), vec4(" + last.ShaderId + endIndex.ToCodeString() + ")));\r\n";
             }
             else
             {
-                frag += "return " + last.ShaderId + endIndex.ToString() + ";\r\n";
+                frag += "return " + last.ShaderId + endIndex.ToCodeString() + ";\r\n";
             }
 
             return frag;
@@ -714,7 +715,7 @@ namespace Materia.Nodes
                          + "const float PI = 3.14159265359;\r\n"
                          + "const float Rad2Deg = (180.0 / PI);\r\n"
                          + "const float Deg2Rad = (PI / 180.0);\r\n"
-                         + "const float RandomSeed = " + randomSeed + ";\r\n"
+                         + "const float RandomSeed = " + randomSeed.ToCodeString() + ";\r\n"
                          + "uniform sampler2D Input0;\r\n"
                          + "uniform sampler2D Input1;\r\n"
                          + "uniform sampler2D Input2;\r\n"
@@ -925,11 +926,36 @@ namespace Materia.Nodes
         {
             if (param.Type == NodeType.Bool)
             {
-                builder.Append(Convert.ToBoolean(param.Value).ToString().ToLower() + ";\r\n");
+                try
+                {
+                    builder.Append(Convert.ToBoolean(param.Value).ToString().ToLower() + ";\r\n");
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                    Log.Info("Defaulting to false for parameter " + param.Name);
+                    builder.Append("false;\r\n");
+                }
             }
             else if (param.Type == NodeType.Float)
             {
-                builder.Append(param.FloatValue.ToString() + ";\r\n");
+                try
+                {
+                    if (useMinMaxValue)
+                    {
+                        builder.Append(param.FloatValue.ToCodeString() + ";\r\n");
+                    }
+                    else
+                    {
+                        builder.Append(Convert.ToSingle(param.Value).ToCodeString() + ";\r\n");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                    Log.Info("Defaulting to 0 for parameter " + param.Name);
+                    builder.Append("0;\r\n");
+                }
             }
             else if (param.Type == NodeType.Float4 || param.Type == NodeType.Gray || param.Type == NodeType.Color)
             {
@@ -947,7 +973,7 @@ namespace Materia.Nodes
                     }
                 }
 
-                builder.Append("vec4(" + vec.X + "," + vec.Y + "," + vec.Z + "," + vec.W + ");\r\n");
+                builder.Append("vec4(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + "," + vec.W.ToCodeString() + ");\r\n");
             }
             else if (param.Type == NodeType.Float2)
             {
@@ -965,7 +991,7 @@ namespace Materia.Nodes
                     }
                 }
 
-                builder.Append("vec2(" + vec.X + "," + vec.Y + ");\r\n");
+                builder.Append("vec2(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + ");\r\n");
             }
             else if (param.Type == NodeType.Float3)
             {
@@ -983,16 +1009,16 @@ namespace Materia.Nodes
                     }
                 }
 
-                builder.Append("vec3(" + vec.X + "," + vec.Y + "," + vec.Z + ");\r\n");
+                builder.Append("vec3(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + ");\r\n");
             }
             else if(param.Type == NodeType.Matrix)
             {
                 Matrix4 m4 = param.Matrix4Value;
                 //glsl matrices are column major order
-                builder.Append("mat3(" + m4.Column0.X + ", " + m4.Column0.Y + ", " + m4.Column0.Z + ", " + m4.Column0.W + ", "
-                                        + m4.Column1.X + ", " + m4.Column1.Y + ", " + m4.Column1.Z + ", " + m4.Column1.W + ", "
-                                        + m4.Column2.X + ", " + m4.Column2.Y + ", " + m4.Column2.Z + ", " + m4.Column2.W + "," 
-                                        + m4.Column3.X + ", " + m4.Column3.Y + ", " + m4.Column3.Z + ", " + m4.Column3.W + ");\r\n");
+                builder.Append("mat3(" + m4.Column0.X.ToCodeString() + ", " + m4.Column0.Y.ToCodeString() + ", " + m4.Column0.Z.ToCodeString() + ", " + m4.Column0.W.ToCodeString() + ", "
+                                        + m4.Column1.X.ToCodeString() + ", " + m4.Column1.Y.ToCodeString() + ", " + m4.Column1.Z.ToCodeString() + ", " + m4.Column1.W.ToCodeString() + ", "
+                                        + m4.Column2.X.ToCodeString() + ", " + m4.Column2.Y.ToCodeString() + ", " + m4.Column2.Z.ToCodeString() + ", " + m4.Column2.W.ToCodeString() + "," 
+                                        + m4.Column3.X.ToCodeString() + ", " + m4.Column3.Y.ToCodeString() + ", " + m4.Column3.Z.ToCodeString() + ", " + m4.Column3.W.ToCodeString() + ");\r\n");
             }
         }
 
@@ -1004,11 +1030,29 @@ namespace Materia.Nodes
 
             if (param.Type == NodeType.Bool)
             {
-                builder.Append(Convert.ToBoolean(param.Value).ToString().ToLower() + ";\r\n");
+                try
+                {
+                    builder.Append(Convert.ToBoolean(value).ToString().ToLower() + ";\r\n");
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                    Log.Info("Defaulting to false for value of parameter " + param.Name);
+                    builder.Append("false;\r\n");
+                }
             }
             else if (param.Type == NodeType.Float)
             {
-                builder.Append(Convert.ToSingle(value).ToString() + ";\r\n");
+                try
+                {
+                    builder.Append(Convert.ToSingle(value).ToCodeString() + ";\r\n");
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                    Log.Info("Defaulting to 0 for value of parameter " + param.Name);
+                    builder.Append("0;\r\n");
+                }
             }
             else if (param.Type == NodeType.Float4 || param.Type == NodeType.Gray || param.Type == NodeType.Color)
             {
@@ -1019,7 +1063,7 @@ namespace Materia.Nodes
                     vec = (MVector)value;
                 }
 
-                builder.Append("vec4(" + vec.X + "," + vec.Y + "," + vec.Z + "," + vec.W + ");\r\n");
+                builder.Append("vec4(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + "," + vec.W.ToCodeString() + ");\r\n");
             }
             else if (param.Type == NodeType.Float2)
             {
@@ -1030,7 +1074,7 @@ namespace Materia.Nodes
                     vec = (MVector)value;
                 }
 
-                builder.Append("vec2(" + vec.X + "," + vec.Y + ");\r\n");
+                builder.Append("vec2(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + ");\r\n");
             }
             else if (param.Type == NodeType.Float3)
             {
@@ -1041,16 +1085,16 @@ namespace Materia.Nodes
                     vec = (MVector)value;
                 }
 
-                builder.Append("vec3(" + vec.X + "," + vec.Y + "," + vec.Z + ");\r\n");
+                builder.Append("vec3(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + ");\r\n");
             }
             else if (param.Type == NodeType.Matrix && value is Matrix4)
             {
                 Matrix4 m4 = (Matrix4)value;
                 //glsl matrices are column major order
-                builder.Append("mat3(" + m4.Column0.X + ", " + m4.Column0.Y + ", " + m4.Column0.Z + ", " + m4.Column0.W + ", "
-                                        + m4.Column1.X + ", " + m4.Column1.Y + ", " + m4.Column1.Z + ", " + m4.Column1.W + ", "
-                                        + m4.Column2.X + ", " + m4.Column2.Y + ", " + m4.Column2.Z + ", " + m4.Column2.W + ","
-                                        + m4.Column3.X + ", " + m4.Column3.Y + ", " + m4.Column3.Z + ", " + m4.Column3.W + ");\r\n");
+                builder.Append("mat3(" + m4.Column0.X.ToCodeString() + ", " + m4.Column0.Y.ToCodeString() + ", " + m4.Column0.Z.ToCodeString() + ", " + m4.Column0.W.ToCodeString() + ", "
+                                        + m4.Column1.X.ToCodeString() + ", " + m4.Column1.Y.ToCodeString() + ", " + m4.Column1.Z.ToCodeString() + ", " + m4.Column1.W.ToCodeString() + ", "
+                                        + m4.Column2.X.ToCodeString() + ", " + m4.Column2.Y.ToCodeString() + ", " + m4.Column2.Z.ToCodeString() + ", " + m4.Column2.W.ToCodeString() + ","
+                                        + m4.Column3.X.ToCodeString() + ", " + m4.Column3.Y.ToCodeString() + ", " + m4.Column3.Z.ToCodeString() + ", " + m4.Column3.W.ToCodeString() + ");\r\n");
             }
         }
 

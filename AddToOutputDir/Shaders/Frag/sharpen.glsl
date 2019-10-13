@@ -4,11 +4,19 @@ in vec2 UV;
 
 uniform sampler2D MainTex;
 uniform float intensity;
-float kernel[9] = float[9](
-                    0.077847,0.123317,0.077847,
-                    0.123317,0.195346,0.123317,
-                    0.077847,0.123317,0.077847
-                  );
+float kernel[9];
+
+void initKernel() {
+    kernel[0] = 0.077847;
+    kernel[1] = 0.123317;
+    kernel[2] = 0.077847;
+    kernel[3] = 0.123317;
+    kernel[4] = 0.195346;
+    kernel[5] = 0.123317;
+    kernel[6] = 0.077847;
+    kernel[7] = 0.123317;
+    kernel[8] = 0.077847;
+}
 
 //this is an unsharp mask sharpen 
 //it uses a 3x3 gaussian blur kernel
@@ -17,6 +25,7 @@ float kernel[9] = float[9](
 //then added back to the original pixel
 
 void main() {
+    initKernel();
     vec2 offset = 1.0 / textureSize(MainTex, 0);
     
     vec4 sum = vec4(0);

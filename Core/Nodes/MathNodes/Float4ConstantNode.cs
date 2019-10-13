@@ -110,7 +110,7 @@ namespace Materia.Nodes.MathNodes
             }
 
 
-            return "vec4 " + s + " = vec4(" + px + "," + py + "," + pz + "," + pw + ");\r\n";
+            return "vec4 " + s + " = vec4(" + px.ToCodeString() + "," + py.ToCodeString() + "," + pz.ToCodeString() + "," + pw.ToCodeString() + ");\r\n";
         }
 
         void Process()

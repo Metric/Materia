@@ -125,6 +125,7 @@
     <Compile Include="MathHelpers\Camera.cs" />
     <Compile Include="MathHelpers\Light.cs" />
     <Compile Include="MathHelpers\MVector.cs" />
+    <Compile Include="MathHelpers\NumberCodeConverter.cs" />
     <Compile Include="MathHelpers\Point.cs" />
     <Compile Include="MathHelpers\Transform.cs" />
     <Compile Include="MatrixExtensions.cs" />

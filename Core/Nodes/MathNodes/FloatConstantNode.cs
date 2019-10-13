@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
+using Materia.MathHelpers;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -92,7 +93,7 @@ namespace Materia.Nodes.MathNodes
                 v = Convert.ToSingle(p.GetParameterValue(Id, "Value"));
             }
 
-            return "float " + s + " = " + v + ";\r\n";
+            return "float " + s + " = " + v.ToCodeString() + ";\r\n";
         }
 
         void Process()
