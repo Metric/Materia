@@ -38,6 +38,10 @@ Major TODO
   * More Undo and Redo tracking operations.
   * Thorough testing of function graphs for both CPU and GPU.
 
+Intel Processor Warning
+========================
+If you are using a laptop with both an Intel processor and a discrete GPU. Please make sure in your discrete GPU control panel, Materia is set to use the discete GPU, rather than Intel processor. Intel processor GPU is not supported in some cases, or may produce incorrect results, compared to a proper NVIDIA or Radeon discete GPU.
+
 Known Bugs
 ====================
 * Color selector magnifier window fails to update on multiple displays when they are different scaling and resolution on Windows 10. This is an internal bug of the .Net framework. Already reported to the .Net developer forum. However, the actual color being selected is the correct color, even if the magnifier window fails to update.

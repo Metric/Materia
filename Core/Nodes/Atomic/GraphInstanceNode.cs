@@ -79,20 +79,17 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        [Editable(ParameterInputType.IntInput, "Random Seed", "Instance Parameters")]
         public int RandomSeed
         {
             get
             {
-                if(GraphInst != null)
-                {
-                    return GraphInst.RandomSeed;
-                }
-
-                return 0;
+                return randomSeed;
             }
             set
             {
-                GraphInst.RandomSeed = value;
+                AssignSeed(value);
+                TryAndProcess();
             }
         }
 
@@ -169,7 +166,6 @@ namespace Materia.Nodes.Atomic
                 {
                     GraphInst.TryAndProcess();
                 }
-                TryAndReleaseBuffers();
                 return;
             }
 
@@ -184,7 +180,7 @@ namespace Materia.Nodes.Atomic
             if (GraphInst != null)
             {
                 //handle assignment of upper parameter reassignment
-                Graph p = ParentGraph;
+                Graph p = ParentGraph;        
                 updatingParams = true;
                 if (p != null)
                 {
@@ -213,6 +209,12 @@ namespace Materia.Nodes.Atomic
                 }
                 updatingParams = false;
             }
+        }
+
+        public void AssignSeed(int seed)
+        {
+            randomSeed = seed;
+            GraphInst?.AssignSeed(seed);
         }
 
         public override Task GetTask()
@@ -458,14 +460,6 @@ namespace Materia.Nodes.Atomic
         private void N_OnUpdate(Node n)
         {
             Updated();
-        }
-
-        void TryAndReleaseBuffers()
-        {
-            if (GraphInst != null)
-            {
-                GraphInst.ReleaseIntermediateBuffers();
-            }
         }
 
         public override byte[] GetPreview(int width, int height)

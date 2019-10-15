@@ -35,6 +35,8 @@ namespace Materia.Material
             {
                 frag.Release();
                 Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile);
                 return null;
             }
 
@@ -43,6 +45,8 @@ namespace Materia.Material
             {
                 vert.Release();
                 Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile);
                 return null;
             }
 
@@ -54,6 +58,8 @@ namespace Materia.Material
             {
                 shader.Release();
                 Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile);
                 return null;
             }
 
@@ -91,6 +97,8 @@ namespace Materia.Material
             {
                 frag.Release();
                 Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + tcsFile + " | " + tesFile + " | " + fragFile);
                 return null;
             }
 
@@ -99,6 +107,8 @@ namespace Materia.Material
             {
                 vert.Release();
                 Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + tcsFile + " | " + tesFile + " | " + fragFile);
                 return null;
             }
 
@@ -107,6 +117,8 @@ namespace Materia.Material
             {
                 tcs.Release();
                 Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + tcsFile + " | " + tesFile + " | " + fragFile);
                 return null;
             }
 
@@ -115,6 +127,8 @@ namespace Materia.Material
             {
                 tes.Release();
                 Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + tcsFile + " | " + tesFile + " | " + fragFile);
                 return null;
             }
 
@@ -158,6 +172,8 @@ namespace Materia.Material
             {
                 frag.Release();
                 Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + fragFile);
                 return null;
             }
 
@@ -166,6 +182,8 @@ namespace Materia.Material
             {
                 vert.Release();
                 Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + fragFile);
                 return null;
             }
 
@@ -177,6 +195,8 @@ namespace Materia.Material
             {
                 shader.Release();
                 Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + fragFile);
                 return null;
             }
 

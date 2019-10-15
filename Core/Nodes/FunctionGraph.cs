@@ -98,11 +98,6 @@ namespace Materia.Nodes
             }
             set
             {
-                if(parentGraph != null)
-                {
-                    parentGraph.OnGraphUpdated -= G_OnGraphUpdated;
-                }
-
                 parentGraph = value;
 
                 if(OnParentGraphSet != null)
@@ -112,7 +107,9 @@ namespace Materia.Nodes
                 
                 if(parentGraph != null)
                 {
-                    parentGraph.OnGraphUpdated += G_OnGraphUpdated;
+                    //update randomSeed
+                    randomSeed = parentGraph.RandomSeed;
+                    SetVar("RandomSeed", randomSeed, NodeType.Float);
                 }
             }
         }
@@ -127,14 +124,9 @@ namespace Materia.Nodes
             {
                 Graph g = TopGraph();
 
-                if(g != null)
-                {
-                    g.OnGraphUpdated -= G_OnGraphUpdated;
-                }
-
                 parentNode = value;
 
-                if(OnParentGraphSet != null)
+                if(OnParentNodeSet != null)
                 {
                     OnParentNodeSet.Invoke(this);
                 }
@@ -142,15 +134,23 @@ namespace Materia.Nodes
                 g = TopGraph();
                 if(g != null)
                 {
-                    g.OnGraphUpdated += G_OnGraphUpdated;
+                    //update randomSeed
+                    randomSeed = g.RandomSeed;
+                    SetVar("RandomSeed", randomSeed, NodeType.Float);
                 }
             }
         }
 
-        private void G_OnGraphUpdated(Graph g)
+        /// <summary>
+        /// Need to assign to SetVar as well here
+        /// on FunctionGraphs that do not use shader code
+        /// </summary>
+        /// <param name="seed"></param>
+        public override void AssignSeed(int seed)
         {
-            randomSeed = g.RandomSeed;
-            SetVar("RandomSeed", randomSeed, NodeType.Float);
+            base.AssignSeed(seed);
+
+            SetVar("RandomSeed", seed, NodeType.Float);
         }
 
         public new int Width

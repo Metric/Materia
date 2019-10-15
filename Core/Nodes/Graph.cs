@@ -193,11 +193,15 @@ namespace Materia.Nodes
             }
             set
             {
-                randomSeed = value;
-				
-				if(this is FunctionGraph)
+                AssignSeed(value);
+
+                //no need to try and process
+                //on a function graph
+                //as the parent image graph
+                //should be one to trigger
+                //the function graph
+                if (this is FunctionGraph)
                 {
-                    Updated();
                     return;
                 }
 
@@ -364,6 +368,7 @@ namespace Materia.Nodes
                         if (TaskQueue.Count > 0)
                         {
                             IsProcessing = true;
+
                             Node n = TaskQueue.Dequeue();
                             n.IsScheduled = false;
                             await n.GetTask();
@@ -573,6 +578,13 @@ namespace Materia.Nodes
         {
             defaultTextureType = pixel;
 
+            //no need to loop through nodes
+            //on a function graph
+            if (this is FunctionGraph)
+            {
+                return;
+            }
+
             int c = Nodes.Count;
             for(int i = 0; i < c; i++)
             {
@@ -602,6 +614,45 @@ namespace Materia.Nodes
         public virtual void AssignSeed(int seed)
         {
             randomSeed = seed;
+
+            //no need to loop through nodes
+            //on a function graph
+            //when we assign seed
+            if (this is FunctionGraph)
+            {
+                return;
+            }
+
+            //need to assign to function graphs
+            //and graph instances + pixel procs
+            int c = Nodes.Count;
+            for(int i = 0; i < c; i++)
+            {
+                Node n = Nodes[i];
+                if (n is PixelProcessorNode)
+                {
+                    PixelProcessorNode proc = n as PixelProcessorNode;
+                    proc.Function?.AssignSeed(seed);
+                }
+                else if(n is GraphInstanceNode)
+                {
+                    GraphInstanceNode inst = n as GraphInstanceNode;
+                    inst.AssignSeed(seed);
+                }
+            }
+
+            c = CustomFunctions.Count;
+            for (int i = 0; i < c; i++)
+            {
+                FunctionGraph g = CustomFunctions[i];
+                g.AssignSeed(seed);
+            }
+
+            foreach (FunctionGraph g in ParameterFunctions.Values)
+            {
+                g.AssignSeed(seed);
+            }
+
         }
 
         public virtual void AssignParentNode(Node n)
@@ -620,7 +671,8 @@ namespace Materia.Nodes
             int c = Nodes.Count;
 
             //do not resize if the graph is not relative
-            if (AbsoluteSize) return;
+            //or if the graph is a function graph
+            if (AbsoluteSize || this is FunctionGraph) return;
 
             float wp = (float)width / (float)this.width;
             float hp = (float)height / (float)this.height;
@@ -972,33 +1024,6 @@ namespace Materia.Nodes
         private void N_OnUpdate(Node n)
         {
             Updated();
-        }
-
-        /// <summary>
-        /// This is used in GraphInstanceNodes
-        /// We only save the final buffers connected to the outputs,
-        /// and release all other buffers to save video card memory
-        /// since it is all in video memory and shader based
-        /// we do not have to transfer data to the video card
-        /// so it will be relatively fast still to update
-        /// when we have to recreate the textures
-        /// </summary>
-        public virtual void ReleaseIntermediateBuffers()
-        {
-            int count = Nodes.Count;
-            for(int i = 0; i < count; i++)
-            {
-                Node n = Nodes[i];
-                if (n is OutputNode)
-                {
-                    continue;
-                }
-
-                if (n.Buffer != null)
-                {
-                    n.Buffer.Release();
-                }
-            }
         }
 
         public virtual void Remove(Node n)
