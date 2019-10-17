@@ -180,10 +180,17 @@ namespace Materia.Nodes.MathNodes
         {
             List<NodeOutput> previousOutputs = new List<NodeOutput>();
             List<int> indices = new List<int>();
+            List<NodeInput> previous = new List<NodeInput>();
 
             foreach (var i in Inputs)
             {
-                RemovedInput(i);
+                //isntead of directly
+                //removing from UI at this point
+                //we simply store them
+                //for later when
+                //we either replace them
+                //or completely remove them
+                previous.Add(i);
 
                 int index = -1;
 
@@ -219,8 +226,15 @@ namespace Materia.Nodes.MathNodes
             }
 
             Inputs.Add(executeInput);
-            AddedInput(executeInput);
-                    
+
+            if (previous.Count > 0)
+            {
+                AddedInput(executeInput, previous[0]);
+            }
+            else
+            {
+                AddedInput(executeInput);
+            }
 
             if(selectedFunction != null)
             {
@@ -237,7 +251,9 @@ namespace Materia.Nodes.MathNodes
                         var prev = previousOutputs[i];
                         var idx = indices[i];
 
-                        if (prev != null)
+                        //whoops forgot to verify that the output
+                        //parent could indeed accept the new input arg type
+                        if (prev != null && (prev.Type & input.Type) != 0)
                         {
                             if (idx < 0)
                             {
@@ -255,7 +271,31 @@ namespace Materia.Nodes.MathNodes
                     input.OnInputAdded += Input_OnInputAdded;
                     input.OnInputChanged += Input_OnInputChanged;
 
-                    AddedInput(input);
+                    //if we still have previous nodes
+                    //then we simply want to try and
+                    //replace them on add
+                    //so the UI will update the graphical connections 
+                    //otherwise we just add a new input node
+                    if (i < previous.Count)
+                    {
+                        AddedInput(input, previous[i]);
+                    }
+                    else
+                    {
+                        AddedInput(input);
+                    }
+
+                    i++;
+                }
+
+                //remove any left over nodes from ui
+                //if they were not replaced
+                //this happens in cases where
+                //the new function set has less args
+                //then the previous function set
+                while (i < previous.Count)
+                {
+                    RemovedInput(previous[i]);
                     i++;
                 }
 

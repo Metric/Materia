@@ -25,8 +25,8 @@ namespace Materia.Nodes
         public bool IsScheduled { get; set; }
 
         public delegate void UpdateEvent(Node n);
-        public delegate void InputChanged(Node n, NodeInput inp);
-        public delegate void OutputChanged(Node n, NodeOutput inp);
+        public delegate void InputChanged(Node n, NodeInput inp, NodeInput previous = null);
+        public delegate void OutputChanged(Node n, NodeOutput inp, NodeOutput previosu = null);
         public delegate void DescriptionChange(Node n, string desc);
 
         protected delegate void GraphParentSet();
@@ -490,11 +490,11 @@ namespace Materia.Nodes
             }
         }
 
-        protected void AddedInput(NodeInput inp)
+        protected void AddedInput(NodeInput inp, NodeInput previous = null)
         {
             if(OnInputAddedToNode != null)
             {
-                OnInputAddedToNode.Invoke(this, inp);
+                OnInputAddedToNode.Invoke(this, inp, previous);
             }
         }
 
@@ -506,11 +506,11 @@ namespace Materia.Nodes
             }
         }
 
-        protected void AddedOutput(NodeOutput inp)
+        protected void AddedOutput(NodeOutput inp, NodeOutput previous = null)
         {
             if (OnOutputAddedToNode != null)
             {
-                OnOutputAddedToNode.Invoke(this, inp);
+                OnOutputAddedToNode.Invoke(this, inp, previous);
             }
         }
 

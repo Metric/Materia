@@ -868,11 +868,6 @@ namespace Materia.Nodes
             //do nothing in this graph
         }
 
-        public override void ReleaseIntermediateBuffers()
-        {
-            //do nothing in this graph
-        }
-
         protected void BuildShaderParam(GraphParameterValue param, StringBuilder builder, bool useMinMaxValue = false)
         {
             string type = "";

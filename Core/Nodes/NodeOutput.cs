@@ -108,7 +108,14 @@ namespace Materia.Nodes
                 }
 
                 inp.Input = this;
-                To.Insert(index,inp);
+                if (index >= To.Count)
+                {
+                    To.Add(inp);
+                }
+                else
+                {
+                    To.Insert(index, inp);
+                }
 
                 if (triggerAddEvent)
                 {

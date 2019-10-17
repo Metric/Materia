@@ -235,12 +235,16 @@ namespace Materia
             Desc.Text = desc;
         }
 
-        private void N_OnOutputRemovedFromNode(Node n, NodeOutput inp)
+        private void N_OnOutputRemovedFromNode(Node n, NodeOutput inp, NodeOutput previous = null)
         {
             var uinp = OutputNodes.Find(m => m.Output == inp);
 
-            if(uinp != null)
+            if (uinp != null)
             {
+                //whoops forgot to dispose
+                //on the uinodepoint to remove previous connects
+                //etc
+                uinp.Dispose();
                 OutputStack.Children.Remove(uinp);
                 OutputNodes.Remove(uinp);
             }
@@ -248,7 +252,7 @@ namespace Materia
             ResizeHeight();
         }
 
-        private void N_OnOutputAddedToNode(Node n, NodeOutput inp)
+        private void N_OnOutputAddedToNode(Node n, NodeOutput inp, NodeOutput previous = null)
         {
             UINodePoint outpoint = new UINodePoint(this, Graph);
             outpoint.Output = inp;
@@ -260,12 +264,16 @@ namespace Materia
             ResizeHeight();
         }
 
-        private void N_OnInputRemovedFromNode(Node n, NodeInput inp)
+        private void N_OnInputRemovedFromNode(Node n, NodeInput inp, NodeInput previous = null)
         {
             var uinp = InputNodes.Find(m => m.Input == inp);
 
-            if(uinp != null)
+            if (uinp != null)
             {
+                //whoops forgot to dispose
+                //on the uinodepoint to remove previous connects
+                //etc
+                uinp.Dispose();
                 InputStack.Children.Remove(uinp);
                 InputNodes.Remove(uinp);
             }
@@ -273,8 +281,23 @@ namespace Materia
             ResizeHeight();
         }
 
-        private void N_OnInputAddedToNode(Node n, NodeInput inp)
+        private void N_OnInputAddedToNode(Node n, NodeInput inp, NodeInput previous = null)
         {
+            //need to take into account previous
+            //aka we are just replacing the previous one
+            UINodePoint previousNodePoint = null;
+            UINodePoint previousNodePointParent = null;
+
+            if (previous != null)
+            {
+                previousNodePoint = InputNodes.Find(m => m.Input == previous);
+            }
+
+            if(previousNodePoint != null)
+            {
+                previousNodePointParent = previousNodePoint.ParentNode;
+            }
+
             UINodePoint inputpoint = new UINodePoint(this, Graph);
             inputpoint.Input = inp;
             inputpoint.VerticalAlignment = VerticalAlignment.Center;
@@ -282,6 +305,17 @@ namespace Materia
             InputNodes.Add(inputpoint);
             inputpoint.UpdateColor();
 
+            //try and reconnect previous parent node to it graphically
+            if (previousNodePointParent != null)
+            {
+                previousNodePointParent.ConnectToNode(inputpoint, true);
+            }
+
+            if (previous != null)
+            {
+                N_OnInputRemovedFromNode(n, previous);
+            }
+           
             ResizeHeight();
         }
 
