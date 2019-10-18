@@ -16,6 +16,19 @@ using Materia.Archive;
 
 namespace Materia.Nodes
 {
+    public enum NodeType
+    {
+        Color = 2,
+        Gray = 4,
+        Float = 8,
+        Float2 = 16,
+        Float3 = 32,
+        Float4 = 64,
+        Bool = 128,
+        Execute = 256,
+        Matrix = 512,
+    }
+
     public abstract class Node : IDisposable
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();

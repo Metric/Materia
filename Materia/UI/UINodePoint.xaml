@@ -9,24 +9,22 @@
 
     <UserControl.Resources>
         <SolidColorBrush x:Key="ColorInputOutput" Color="#FFa200ee" />
-        <SolidColorBrush x:Key="GrayInputOutput" Color="LightGray" />
-        <SolidColorBrush x:Key="FloatInputOutput" Color="#FF00ee97" />
-        <SolidColorBrush x:Key="Float2InputOutput" Color="#FF00ee32" />
-        <SolidColorBrush x:Key="Float3InputOutput" Color="#FF8cee00" />
-        <SolidColorBrush x:Key="Float4InputOutput" Color="#FFdaee00" />
-        <SolidColorBrush x:Key="Matrix2InputOutput" Color="#FF00ffff" />
-        <SolidColorBrush x:Key="Matrix3InputOutput" Color="#FFffff00" />
-        <SolidColorBrush x:Key="Matrix4InputOutput" Color="#FF00ee00" />
-        <SolidColorBrush x:Key="BoolInputOutput" Color="#FFee8600" />
+        <SolidColorBrush x:Key="GrayInputOutput" Color="Gray" />
+        <SolidColorBrush x:Key="FloatInputOutput" Color="#FF00ffa2" />
+        <SolidColorBrush x:Key="Float2InputOutput" Color="#FF00c67e" />
+        <SolidColorBrush x:Key="Float3InputOutput" Color="#FF006e46" />
+        <SolidColorBrush x:Key="Float4InputOutput" Color="#FF00432a" />
+        <SolidColorBrush x:Key="MatrixInputOutput" Color="#FFd76f00" />
+        <SolidColorBrush x:Key="BoolInputOutput" Color="#FF374999" />
         <LinearGradientBrush x:Key="GrayColorInputOutput" StartPoint="0,0" EndPoint="0,1">
             <GradientStopCollection>
                 <GradientStop Color="#FFa200ee" Offset="0.0" />
                 <GradientStop Color="#FFa200ee" Offset="0.5" />
-                <GradientStop Color="LightGray" Offset="0.51" />
-                <GradientStop Color="LightGray" Offset="1" />
+                <GradientStop Color="Gray" Offset="0.51" />
+                <GradientStop Color="Gray" Offset="1" />
             </GradientStopCollection>
         </LinearGradientBrush>
-        <SolidColorBrush x:Key="AnyFloatInputOutput" Color="#FF00caee" />
+        <SolidColorBrush x:Key="AnyFloatInputOutput" Color="#FF50947b" />
     </UserControl.Resources>
     <Canvas Width="16" Height="16" ClipToBounds="False">
         <Border Width="16" Height="16" Name="node" MouseEnter="Node_MouseEnter" MouseLeave="Node_MouseLeave"  Background="LightGray" CornerRadius="{Binding Path=ActualHeight, ElementName=node}" ClipToBounds="False">
