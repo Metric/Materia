@@ -19,6 +19,7 @@ using Materia.Nodes.Atomic;
 using OpenTK;
 using Materia.MathHelpers;
 using NLog;
+using System.Resources;
 
 namespace Materia.UI.Components
 {
@@ -143,7 +144,26 @@ namespace Materia.UI.Components
 
                     if (string.IsNullOrEmpty(sect))
                     {
-                        sect = "Default";
+                        sect = Properties.Resources.GRAPH_Default;
+                    }
+                    else
+                    {
+                        //convert the section name to localized string
+                        var rm = Properties.Resources.ResourceManager;
+                        string key = "GRAPH_" + sect.Replace(" ", "_");
+
+                        try
+                        {
+                            string loc = rm.GetString(key);
+                            if (!string.IsNullOrEmpty(loc))
+                            {
+                                sect = loc;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+
+                        }
                     }
 
                     if (sorter.TryGetValue(sect, out items))
@@ -182,6 +202,24 @@ namespace Materia.UI.Components
                         if (string.IsNullOrEmpty(name))
                         {
                             name = t.Item1.Name;
+                        }
+
+                        //try and convert name to localized string
+                        //convert the section name to localized string
+                        var rm = Properties.Resources.ResourceManager;
+                        string key = "GRAPH_" + name.Replace(" ", "_");
+
+                        try
+                        {
+                            string loc = rm.GetString(key);
+                            if (!string.IsNullOrEmpty(loc))
+                            {
+                                name = loc;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+
                         }
 
                         UIElement ele = BuildParamater(n, t.Item2, t.Item1);
@@ -246,6 +284,24 @@ namespace Materia.UI.Components
                         if (string.IsNullOrEmpty(name))
                         {
                             name = t.Item1.Name;
+                        }
+
+                        //try and convert name to localized string
+                        //convert the section name to localized string
+                        var rm = Properties.Resources.ResourceManager;
+                        string key = "GRAPH_" + name.Replace(" ", "_");
+
+                        try
+                        {
+                            string loc = rm.GetString(key);
+                            if (!string.IsNullOrEmpty(loc))
+                            {
+                                name = loc;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+
                         }
 
                         UIElement ele = BuildParamater(n, t.Item2, t.Item1);
@@ -317,8 +373,27 @@ namespace Materia.UI.Components
                 string sec = p.Section;
                 if (string.IsNullOrEmpty(sec))
                 {
-                    sec = "Default";
+                    sec = Properties.Resources.GRAPH_Default;
                 }
+
+                //try and convert name to localized string
+                //convert the section name to localized string
+                var rm = Properties.Resources.ResourceManager;
+                string key = "GRAPH_" + sec.Replace(" ", "_");
+
+                try
+                {
+                    string loc = rm.GetString(key);
+                    if (!string.IsNullOrEmpty(loc))
+                    {
+                        sec = loc;
+                    }
+                }
+                catch (Exception e)
+                {
+
+                }
+
                 List<GraphParameterValue> items = null;
                 if (sorter.TryGetValue(sec, out items))
                 {
@@ -355,7 +430,27 @@ namespace Materia.UI.Components
 
                         if (ele != null)
                         {
-                            PropertyLabel lbl = new PropertyLabel(v.Name, n, "$Custom." + v.Name);
+                            string name = v.Name;
+                            //try and convert name to localized string
+                            //convert the section name to localized string
+                            var rm = Properties.Resources.ResourceManager;
+                            string key = "GRAPH_" + name.Replace(" ", "_");
+
+                            try
+                            {
+                                string loc = rm.GetString(key);
+                                if (!string.IsNullOrEmpty(loc))
+                                {
+                                    name = loc;
+                                }
+                            }
+                            catch (Exception e)
+                            {
+
+                            }
+
+
+                            PropertyLabel lbl = new PropertyLabel(name, n, "$Custom." + v.Name);
 
                             if (!inlinePropertyLabels)
                             {
@@ -383,7 +478,27 @@ namespace Materia.UI.Components
 
                         if (ele != null)
                         {
-                            PropertyLabel lbl = new PropertyLabel(v.Name, n, "$Custom." + v.Name);
+                            string name = v.Name;
+
+                            //try and convert name to localized string
+                            //convert the section name to localized string
+                            var rm = Properties.Resources.ResourceManager;
+                            string key = "GRAPH_" + name.Replace(" ", "_");
+
+                            try
+                            {
+                                string loc = rm.GetString(key);
+                                if (!string.IsNullOrEmpty(loc))
+                                {
+                                    name = loc;
+                                }
+                            }
+                            catch (Exception e)
+                            {
+
+                            }
+
+                            PropertyLabel lbl = new PropertyLabel(name, n, "$Custom." + v.Name);
 
                             if (!inlinePropertyLabels)
                             {
@@ -451,7 +566,26 @@ namespace Materia.UI.Components
                     }
                 }
 
-                PropertyLabel lbl = new PropertyLabel(v.Name, n, customHeader + split[1]);
+                //try and convert name to localized string
+                //convert the section name to localized string
+                string vname = v.Name;
+                var rm = Properties.Resources.ResourceManager;
+                string key = "GRAPH_" + vname.Replace(" ", "_");
+
+                try
+                {
+                    string loc = rm.GetString(key);
+                    if (!string.IsNullOrEmpty(loc))
+                    {
+                        vname = loc;
+                    }
+                }
+                catch (Exception e)
+                {
+
+                }
+
+                PropertyLabel lbl = new PropertyLabel(vname, n, customHeader + split[1]);
                 EditableAttribute ed = null;
                 if(nodeInfo != null)
                 {
@@ -469,13 +603,29 @@ namespace Materia.UI.Components
                     string inherit = "";
                     if(g != null && g.ParentNode is GraphInstanceNode)
                     {
-                        inherit = "Inherited ";
+                        inherit = Properties.Resources.GRAPH_Inherited + " ";
                     }
 
-                    string sect = inherit + v.Section;
+                    string sec = v.Section;
+                    key = "GRAPH_" + sec.Replace(" ", "_");
+
+                    try
+                    {
+                        string loc = rm.GetString(key);
+                        if (!string.IsNullOrEmpty(loc))
+                        {
+                            sec = loc;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+
+                    string sect = inherit + sec;
                     if (string.IsNullOrEmpty(v.Section))
                     {
-                        sect = inherit + "Default";
+                        sect = inherit + Properties.Resources.GRAPH_Default;
                     }
 
                     List<Tuple<PropertyLabel, UIElement>> items = null;

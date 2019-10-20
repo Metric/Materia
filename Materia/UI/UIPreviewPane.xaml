@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:p="clr-namespace:Materia.Properties"
              xmlns:local="clr-namespace:Materia"
              xmlns:components="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
@@ -18,20 +19,20 @@
 
         <Grid Grid.Row="1">
             <StackPanel Orientation="Horizontal" Width="233" HorizontalAlignment="Left" >
-                <ToggleButton Width="32" Name="ToggleUV" BorderThickness="0" Background="#333" IsChecked="False" Foreground="LightGray" Click="ToggleUV_Click" Content="UV" ToolTip="Toggle UV view" Style="{StaticResource ToggleTextButton}"></ToggleButton>
+                <ToggleButton Width="32" Name="ToggleUV" BorderThickness="0" Background="#333" IsChecked="False" Foreground="LightGray" Click="ToggleUV_Click" Content="UV" ToolTip="{x:Static p:Resources.TIP_TOGGLE_UV}" Style="{StaticResource ToggleTextButton}"></ToggleButton>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Width="223" HorizontalAlignment="Right" FlowDirection="RightToLeft">
-                <Button Name="ZoomIn" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomIn_Click" ToolTip="Zoom in" Style="{DynamicResource ImageTextButton}">
+                <Button Name="ZoomIn" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomIn_Click" ToolTip="{x:Static p:Resources.TIP_ZOOM_IN}" Style="{DynamicResource ImageTextButton}">
                     <Image Source="/Materia;component/Images/add.png" />
                 </Button>
                 <TextBlock Name="ZoomLevel" Width="54" VerticalAlignment="Center" FlowDirection="LeftToRight" Text="50%" TextAlignment="Center" Foreground="LightGray" />
-                <Button Name="ZoomOut" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomOut_Click" ToolTip="Zoom out" Style="{DynamicResource ImageTextButton}">
+                <Button Name="ZoomOut" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomOut_Click" ToolTip="{x:Static p:Resources.TIP_ZOOM_OUT}" Style="{DynamicResource ImageTextButton}">
                     <Image Source="/Materia;component/Images/minus.png" />
                 </Button>
-                <Button Name="Ratio1" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="Ratio1_Click" ToolTip="Reset zoom to 100%" Style="{DynamicResource ImageTextButton}">
+                <Button Name="Ratio1" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="Ratio1_Click" ToolTip="{x:Static p:Resources.TIP_RESET_ZOOM}" Style="{DynamicResource ImageTextButton}">
                     <Image Source="/Materia;component/Images/1x1.png" />
                 </Button>
-                <Button Name="FitIntoView" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="FitIntoView_Click" ToolTip="Fit image into view" Style="{DynamicResource ImageTextButton}">
+                <Button Name="FitIntoView" Width="32" Background="Transparent" Margin="5" BorderThickness="0" Click="FitIntoView_Click" ToolTip="{x:Static p:Resources.TIP_IMAGE_FIT_VIEW}" Style="{DynamicResource ImageTextButton}">
                     <Image Source="/Materia;component/Images/aspect.png" />
                 </Button>
             </StackPanel>

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:p="clr-namespace:Materia.Properties"
              xmlns:local="clr-namespace:Materia"
              xmlns:components="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
@@ -18,15 +19,15 @@
         <ComboBox Style="{StaticResource ComboBoxFlatStyle}" Foreground="LightGray" HorizontalAlignment="Left" SelectionChanged="Channels_SelectionChanged" SelectedValue="RGB" Text="RGB" Width="64" Margin="5" Name="Channels">
             <ComboBox.Items>
                 <ComboBoxItem Content="RGB" />
-                <ComboBoxItem Content="Red" />
-                <ComboBoxItem Content="Green" />
-                <ComboBoxItem Content="Blue" />
+                <ComboBoxItem Content="{x:Static p:Resources.GRAPH_Red}" />
+                <ComboBoxItem Content="{x:Static p:Resources.GRAPH_Green}" />
+                <ComboBoxItem Content="{x:Static p:Resources.GRAPH_Blue}" />
             </ComboBox.Items>
         </ComboBox>
         <Border Grid.Row="2" Name="HistoContainer" Background="#222">
             <components:Histogram x:Name="Histogram" />
         </Border>
         <components:RangeSlider x:Name="ValueRange" OnValueChanged="Range_OnValueChanged" Grid.Row="3" Margin="5" />
-        <Button x:Name="ResetButton" Click="ResetButton_Click"  Background="#444" Foreground="LightGray" Content="RESET" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="42" Height="20" Margin="0,5,5,0" BorderThickness="0" Style="{StaticResource ImageTextButton}" />
+        <Button x:Name="ResetButton" Click="ResetButton_Click"  Background="#444" Foreground="LightGray" Content="{x:Static p:Resources.BUTTON_RESET}" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="42" Height="20" Margin="0,5,5,0" BorderThickness="0" Style="{StaticResource ImageTextButton}" />
     </Grid>
 </UserControl>

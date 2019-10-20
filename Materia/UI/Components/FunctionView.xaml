@@ -4,17 +4,18 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
+             xmlns:p="clr-namespace:Materia.Properties"
              mc:Ignorable="d" 
              d:DesignHeight="50" d:DesignWidth="800" HorizontalAlignment="Stretch">
     <StackPanel Orientation="Vertical" Background="#111" Margin="5,0,0,1">
         <Grid HorizontalAlignment="Stretch">
-            <Button Name="RemoveFunction" Width="80" Background="Transparent" HorizontalAlignment="Right" Margin="5" BorderThickness="0" Click="RemoveFunction_Click"  ToolTip="Remove Custom Function" Style="{DynamicResource ImageTextButton}">
+            <Button Name="RemoveFunction" Width="80" Background="Transparent" HorizontalAlignment="Right" Margin="5" BorderThickness="0" Click="RemoveFunction_Click"  ToolTip="{x:Static p:Resources.TIP_REMOVE_CUSTOM_FUNCTION}" Style="{DynamicResource ImageTextButton}">
                 <StackPanel Height="24" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Foreground="LightGray" Text="Remove" Margin="5" VerticalAlignment="Center" />
+                    <TextBlock MaxWidth="46" Foreground="LightGray" Text="{x:Static p:Resources.BUTTON_REMOVE}" Margin="5" VerticalAlignment="Center" />
                     <Image Source="/Materia;component/Images/minus.png" />
                 </StackPanel>
             </Button>
-            <Button Name="EditFunc" Click="EditFunc_Click" BorderThickness="0" Foreground="LightGray" HorizontalAlignment="Left" ToolTip="Edit Function" Width="32" Height="32" Margin="5" Style="{StaticResource ImageTextButton}">
+            <Button Name="EditFunc" Click="EditFunc_Click" BorderThickness="0" Foreground="LightGray" HorizontalAlignment="Left" ToolTip="{x:Static p:Resources.TIP_EDIT_FUNCTION}" Width="32" Height="32" Margin="5" Style="{StaticResource ImageTextButton}">
                 <Image Source="/Materia;component/Images/functionedit.png" />
             </Button>
             <local:PropertyInput x:Name="FuncName" Margin="42,0,100,0" />

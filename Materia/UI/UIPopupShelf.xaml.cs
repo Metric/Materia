@@ -116,7 +116,7 @@ namespace Materia.UI
         {
             string s = SearchBox.Text;
 
-            if (s.Equals("Search..."))
+            if (s.Equals(Properties.Resources.TITLE_SEARCH))
             {
                 SearchBox.Text = "";
             }
@@ -128,13 +128,13 @@ namespace Materia.UI
 
             if (string.IsNullOrWhiteSpace(s) || string.IsNullOrWhiteSpace(s))
             {
-                SearchBox.Text = "Search...";
+                SearchBox.Text = Properties.Resources.TITLE_SEARCH;
             }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            if (clones.Count == 0 && SearchBox.Text.Equals("Search..."))
+            if (clones.Count == 0 && SearchBox.Text.Equals(Properties.Resources.TITLE_SEARCH))
             {
                 PopulateView("Categories");
             }

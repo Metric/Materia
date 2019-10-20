@@ -61,13 +61,21 @@ namespace Materia.UI
                 // Remove fake filename from resulting path
                 path = path.Replace("\\Select.Folder", "");
                 path = path.Replace(".Folder", "");
-                // If user has changed the filename, create the new directory
-                if (!System.IO.Directory.Exists(path))
+
+                try
                 {
-                    System.IO.Directory.CreateDirectory(path);
+                    // If user has changed the filename, create the new directory
+                    if (!System.IO.Directory.Exists(path))
+                    {
+                        System.IO.Directory.CreateDirectory(path);
+                    }
+                    // Our final value is in path
                 }
-                // Our final value is in path
-                
+                catch (Exception ex)
+                {
+                    //we failed to create the directory so we bail now
+                    return;
+                }
             }
             else
             {
@@ -77,6 +85,14 @@ namespace Materia.UI
             foreach (ListBoxItem lb in ExportType.SelectedItems)
             {
                 var s = lb.Content.ToString().Replace(" ", "");
+
+                //handle the specific case where separate files is handled via
+                //resource language in use
+                if (lb.Content.ToString().Equals(Properties.Resources.TITLE_SEPARATE_FILES))
+                {
+                    s = "SeparateFiles";
+                }
+
                 ExportTypes et = (ExportTypes)Enum.Parse(typeof(ExportTypes), s);
                 ExportTextures(path, et);
             }

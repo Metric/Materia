@@ -5,37 +5,38 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Materia"
         xmlns:localui = "clr-namespace:Materia.UI"
+        xmlns:p="clr-namespace:Materia.Properties"
         mc:Ignorable="d"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         Title="Materia" Height="720" Width="1280" Focusable="True" Closing="Window_Closing" Loaded="Window_Loaded" WindowState="Maximized" Icon="Images/Icons/App/icon.ico">
     <Grid Background="#FF202020">
         <DockPanel Height="20" VerticalAlignment="Top" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
             <Menu Background="#FF333333" DockPanel.Dock="Top" >
-                <MenuItem Foreground="LightGray" Header="_File">
-                    <MenuItem Foreground="Black" Header="_New" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="_Open" Click="MenuItem_Click" />
+                <MenuItem Foreground="LightGray" Header="{x:Static p:Resources.MENU_FILE}">
+                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_NEW}" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_OPEN}" Click="MenuItem_Click" />
                     <Separator />
-                    <MenuItem Name="SaveMenuItem" Foreground="Black" Header="_Save" Click="MenuItem_Click" />
-                    <MenuItem Name="SaveAsMenuItem" Foreground="Black" Header="_Save As" Click="MenuItem_Click" />
+                    <MenuItem Name="SaveMenuItem" Foreground="Black" Header="{x:Static p:Resources.MENU_SAVE}" Click="MenuItem_Click" />
+                    <MenuItem Name="SaveAsMenuItem" Foreground="Black" Header="{x:Static p:Resources.MENU_SAVE_AS}" Click="MenuItem_Click" />
                     <Separator />
-                    <MenuItem Name="RecentMenu" Foreground="Black" Header="_Recent" />
+                    <MenuItem Name="RecentMenu" Foreground="Black" Header="{x:Static p:Resources.MENU_RECENT}" />
                     <Separator />
-                    <MenuItem Name="ExportMenuItem" Header="_Export Outputs" Foreground="Black" Click="MenuItem_Click" />
+                    <MenuItem Name="ExportMenuItem" Header="{x:Static p:Resources.MENU_EXPORT_OUTPUTS}" Foreground="Black" Click="MenuItem_Click" />
                 </MenuItem>
-                <MenuItem Name="EditMenu" Foreground="LightGray" Header="_Edit">
-                    <MenuItem Foreground="Black" Header="_Undo" Name="mnuUndo" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="_Redo" Name="mnuRedo" Click="MenuItem_Click" />
+                <MenuItem Name="EditMenu" Foreground="LightGray" Header="{x:Static p:Resources.MENU_EDIT}">
+                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_UNDO}" Name="mnuUndo" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_REDO}" Name="mnuRedo" Click="MenuItem_Click" />
                     <Separator />
-                    <MenuItem Name="mnuGraphSettings" Foreground="Black" Header="_Graph Settings" Click="MenuItem_Click" />
+                    <MenuItem Name="mnuGraphSettings" Foreground="Black" Header="{x:Static p:Resources.MENU_GRAPH_SETTINGS}" Click="MenuItem_Click" />
                 </MenuItem>
                 <MenuItem Name="WindowsMenu" Foreground="LightGray" Header="_Windows">
-                    <MenuItem Foreground="Black" Header="_2D Preview" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="_3D Preview" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="_Shelf" Click="MenuItem_Click"/>
-                    <MenuItem Foreground="Black" Header="_Parameters" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="_Log" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_2D_PREVIEW}" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_3D_PREVIEW}" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_SHELF}" Click="MenuItem_Click"/>
+                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_PARAMETERS}" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_LOG}" Click="MenuItem_Click" />
                     <Separator />
-                    <MenuItem Foreground="Black" Header="_Close All Graphs" Click="MenuItem_Click" />
+                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_CLOSE_ALL}" Click="MenuItem_Click" />
                 </MenuItem>
             </Menu>
         </DockPanel>
@@ -69,30 +70,30 @@
                                 </xcad:LayoutDocumentPane>
                             </xcad:LayoutDocumentPaneGroup>
                             <xcad:LayoutAnchorablePane DockMinWidth="280">
-                                <xcad:LayoutAnchorable ContentId="parameters" x:Name="ParametersPane" Title="Parameters" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                                <xcad:LayoutAnchorable ContentId="parameters" x:Name="ParametersPane" Title="{x:Static p:Resources.TITLE_PARAMETERS}" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
                                     <local:UINodeParameters />
                                 </xcad:LayoutAnchorable>
                             </xcad:LayoutAnchorablePane>
                         </xcad:LayoutPanel>
                         <xcad:LayoutPanel Orientation="Horizontal" DockHeight="0.5*" DockMinHeight="256">
                             <xcad:LayoutAnchorablePane DockWidth="0.33*">
-                                <xcad:LayoutAnchorable ContentId="shelf" x:Name="ShelfPane" Title="Shelf" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                                <xcad:LayoutAnchorable ContentId="shelf" x:Name="ShelfPane" Title="{x:Static p:Resources.TITLE_SHELF}" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
                                     <localui:UIShelf />
                                 </xcad:LayoutAnchorable>
                             </xcad:LayoutAnchorablePane>
                             <xcad:LayoutAnchorablePane DockWidth="0.33*">
-                                <xcad:LayoutAnchorable ContentId="3dpreview" x:Name="Preview3DPane" Title="3D Preview" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                                <xcad:LayoutAnchorable ContentId="3dpreview" x:Name="Preview3DPane" Title="{x:Static p:Resources.TITLE_3D_PREVIEW}" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
                                     <localui:UI3DPreview />
                                 </xcad:LayoutAnchorable>
                             </xcad:LayoutAnchorablePane>
                             <xcad:LayoutAnchorablePane DockWidth="0.33*">
-                                <xcad:LayoutAnchorable ContentId="2dpreview" x:Name="Preview2DPane" Title="2D Preview" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                                <xcad:LayoutAnchorable ContentId="2dpreview" x:Name="Preview2DPane" Title="{x:Static p:Resources.TITLE_2D_PREVIEW}" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
                                     <local:UIPreviewPane />
                                 </xcad:LayoutAnchorable>
                             </xcad:LayoutAnchorablePane>
                         </xcad:LayoutPanel>
                         <xcad:LayoutAnchorablePane DockHeight="0.25*" DockMinHeight="128" x:Name="LogAnchor">
-                            <xcad:LayoutAnchorable ContentId="log" x:Name="LogPane" Title="Log" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                            <xcad:LayoutAnchorable ContentId="log" x:Name="LogPane" Title="{x:Static p:Resources.TITLE_LOG}" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
                                 <localui:UILog />
                             </xcad:LayoutAnchorable>
                         </xcad:LayoutAnchorablePane>
@@ -106,7 +107,7 @@
                             <Border Width="126" Height="126" BorderBrush="#444" BorderThickness="2">
                                 <Grid>
                                     <Image Source="Images/add.png" MaxHeight="64" VerticalAlignment="Top" Margin="0,21,0.4,0" />
-                                    <TextBlock Foreground="LightGray" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="24" Text="CREATE" Margin="0,0,0,10.4" />
+                                    <TextBlock Foreground="LightGray" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="24" Text="{x:Static p:Resources.BUTTON_CREATE}" Margin="0,0,0,10.4" />
                                 </Grid>
                             </Border>
                         </Button>
@@ -114,13 +115,13 @@
                             <Border Width="126" Height="126" BorderBrush="#444" BorderThickness="2">
                                 <Grid>
                                     <Image Source="Images/align-horiz.png" MaxHeight="64" VerticalAlignment="Top" Margin="0,21,0.4,0" />
-                                    <TextBlock Foreground="LightGray" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="24" Text="OPEN" Margin="0,0,0,10.4" />
+                                    <TextBlock Foreground="LightGray" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="24" Text="{x:Static p:Resources.BUTTON_OPEN}" Margin="0,0,0,10.4" />
                                 </Grid>
                             </Border>
                         </Button>
                     </StackPanel>
                     <StackPanel Name="RecentShortcuts" HorizontalAlignment="Center" VerticalAlignment="Center" Width="512" Margin="0,20,0,0">
-                        <TextBlock Foreground="LightGray" FontSize="24" Text="RECENT" />
+                        <TextBlock Foreground="LightGray" FontSize="24" Text="{x:Static p:Resources.TITLE_RECENT}" />
                         <StackPanel Name="RecentList">
                         
                         </StackPanel>

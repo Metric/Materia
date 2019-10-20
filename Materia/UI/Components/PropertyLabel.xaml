@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
              xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
+             xmlns:p="clr-namespace:Materia.Properties"
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="256" Height="32" Margin="0" HorizontalAlignment="Stretch">
     <Grid Margin="0">
@@ -20,9 +21,9 @@
                             <VirtualizingStackPanel Orientation="Vertical" />
                         </ItemsPanelTemplate>
                     </Menu.ItemsPanel>
-                    <MenuItem Name="ConstantVar" Header="Promote to Constant" Click="ConstantVar_Click" />
-                    <MenuItem Name="FunctionVar" Header="Promote to Function" Click="FunctionVar_Click" />
-                    <MenuItem Name="DefaultVar" Header="Reset to Default" Click="DefaultVar_Click" />
+                    <MenuItem Name="ConstantVar" Header="{x:Static p:Resources.MENU_PROMOTE_TO_CONSTANT}" Click="ConstantVar_Click" />
+                    <MenuItem Name="FunctionVar" Header="{x:Static p:Resources.MENU_PROMOTE_TO_FUNCTION}" Click="FunctionVar_Click" />
+                    <MenuItem Name="DefaultVar" Header="{x:Static p:Resources.MENU_RESET_TO_DEFAULT}" Click="DefaultVar_Click" />
                 </Menu>
             </xctk:SplitButton.DropDownContent>
         </xctk:SplitButton>

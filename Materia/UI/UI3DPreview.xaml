@@ -4,13 +4,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI"
+             xmlns:p="clr-namespace:Materia.Properties"
              xmlns:h="clr-namespace:Materia.UI.Helpers"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" SizeChanged="UserControl_SizeChanged" Unloaded="UserControl_Unloaded" Loaded="UserControl_Loaded">
     <Grid>
         <WindowsFormsHost Name="FHost" Margin="0,24,0,0" />
         <Menu VerticalAlignment="Top" Margin="0,0,0,0" Background="#333" BorderThickness="0">
-            <MenuItem Foreground="LightGray" Header="Scene" Height="25">
+            <MenuItem Foreground="LightGray" Header="{x:Static p:Resources.MENU_SCENE}" Height="25">
                 <MenuItem Header="_Cube" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="True" IsCheckable="True" />
                 <MenuItem Header="_Sphere" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
                 <MenuItem Header="_Cube Sphere" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
@@ -21,7 +22,7 @@
                 <Separator />
                 <MenuItem Header="_Reset" Foreground="#555" Click="ResetScene_Click" />
             </MenuItem>
-            <MenuItem Foreground="LightGray" Header="Camera" Height="25">
+            <MenuItem Foreground="LightGray" Header="{x:Static p:Resources.MENU_CAMERA}" Height="25">
                 <MenuItem Header="_Top" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
                 <MenuItem Header="_Bottom" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
                 <MenuItem Header="_Left" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
@@ -35,14 +36,14 @@
                 <Separator />
                 <MenuItem Header="_Settings" Foreground="#555" Click="CameraSettings_Click" />
             </MenuItem>
-            <MenuItem Height="25" Foreground="LightGray" Header="Light">
+            <MenuItem Height="25" Foreground="LightGray" Header="{x:Static p:Resources.MENU_LIGHT}">
                 <MenuItem Header="_Default Position" Click="MenuItem_Click" Foreground="#555" />
                 <MenuItem Header="_Set to Origin" Click="MenuItem_Click" Foreground="#555" />
                 <MenuItem Header="_Reset Light" Click="MenuItem_Click" Foreground="#555" />
                 <Separator></Separator>
                 <MenuItem Header="_Light Settings" Click="MenuItem_Click" Foreground="#555" />
             </MenuItem>
-            <MenuItem Height="25" Foreground="LightGray" Header="Material">
+            <MenuItem Height="25" Foreground="LightGray" Header="{x:Static p:Resources.MENU_MATERIAL}">
                 <MenuItem Header="_Material Settings" Click="MenuItem_Click" Foreground="#555" />
                 <MenuItem Header="_Wireframe Shading" Click="RenderMode_Click" Foreground="#555" h:MenuItemExtensions.GroupName="renderMode" IsCheckable="True" IsChecked="False"/>
                 <MenuItem Header="_Full Shading" Click="RenderMode_Click" Foreground="#555" h:MenuItemExtensions.GroupName="renderMode" IsCheckable="True" IsChecked="True" />

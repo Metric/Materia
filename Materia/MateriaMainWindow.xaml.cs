@@ -276,7 +276,7 @@ namespace Materia
         {
             MenuItem item = sender as MenuItem;
             ///edit
-            if(item.Header.ToString().ToLower().Contains("graph setting"))
+            if(item.Header.ToString().Equals(Properties.Resources.MENU_GRAPH_SETTINGS))
             {
                 if(UINodeParameters.Instance != null && graphs.Count > 0)
                 {
@@ -290,7 +290,7 @@ namespace Materia
                     }
                 }
             }
-            else if(item.Header.ToString().ToLower().Contains("redo"))
+            else if(item.Header.ToString().Equals(Properties.Resources.MENU_REDO))
             {
                 if (GraphDocuments.SelectedContentIndex > -1)
                 {
@@ -298,7 +298,7 @@ namespace Materia
                     graph.TryAndRedo();
                 }
             }
-            else if(item.Header.ToString().ToLower().Contains("undo"))
+            else if(item.Header.ToString().Equals(Properties.Resources.MENU_UNDO))
             {
                 if (GraphDocuments.SelectedContentIndex > -1)
                 {
@@ -307,7 +307,7 @@ namespace Materia
                 }
             }
             ///windows
-            else if(item.Header.ToString().ToLower().Contains("3d"))
+            else if(item.Header.ToString().Equals(Properties.Resources.MENU_3D_PREVIEW))
             {
                 if (Preview3DPane.IsVisible)
                 {
@@ -318,7 +318,7 @@ namespace Materia
                     Preview3DPane.Show();
                 }
             }
-            else if(item.Header.ToString().ToLower().Contains("2d"))
+            else if(item.Header.ToString().Equals(Properties.Resources.MENU_2D_PREVIEW))
             {
                 if(Preview2DPane.IsVisible)
                 {
@@ -329,7 +329,7 @@ namespace Materia
                     Preview2DPane.Show();
                 }
             }
-            else if(item.Header.ToString().ToLower().Contains("parameters"))
+            else if(item.Header.ToString().Equals(Properties.Resources.MENU_PARAMETERS))
             {
                 if(ParametersPane.IsVisible)
                 {
@@ -340,7 +340,7 @@ namespace Materia
                     ParametersPane.Show();
                 }
             }
-            else if(item.Header.ToString().ToLower().Contains("shelf"))
+            else if(item.Header.ToString().Equals(Properties.Resources.MENU_SHELF))
             {
                 if(ShelfPane.IsVisible)
                 {
@@ -351,7 +351,7 @@ namespace Materia
                     ShelfPane.Show();
                 }
             }
-            else if(item.Header.ToString().ToLower().Contains("log"))
+            else if(item.Header.ToString().Equals(Properties.Resources.MENU_LOG))
             {
                 if(LogPane.IsVisible)
                 {
@@ -362,7 +362,7 @@ namespace Materia
                     LogPane.Show();
                 }
             }
-            else if (item.Header.ToString().ToLower().Contains("close all graph"))
+            else if (item.Header.ToString().Equals(Properties.Resources.MENU_CLOSE_ALL))
             {
                 for (int i = 0; i < documents.Count; i++)
                 {
@@ -371,7 +371,7 @@ namespace Materia
                 }
             }
             //file menu
-            else if (item.Header.ToString().ToLower().Contains("save as"))
+            else if (item.Header.ToString().Equals(Properties.Resources.MENU_SAVE_AS))
             {
                 if (graphs.Count > 0 && GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
@@ -380,7 +380,7 @@ namespace Materia
                     ShowSaveDialog(graph, doc, true);
                 }
             }
-            else if (item.Header.ToString().ToLower().Contains("save"))
+            else if (item.Header.ToString().Equals(Properties.Resources.MENU_SAVE))
             {
                 if (graphs.Count > 0 && GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
@@ -389,15 +389,15 @@ namespace Materia
                     HandleSave(graph, doc);
                 }
             }
-            else if (item.Header.ToString().ToLower().Contains("open"))
+            else if (item.Header.ToString().Equals(Properties.Resources.MENU_OPEN))
             {
                 ShowOpenDialog();
             }
-            else if(item.Header.ToString().ToLower().Contains("new"))
+            else if(item.Header.ToString().Equals(Properties.Resources.MENU_NEW))
             {
                 HandleCreate();
             }
-            else if(item.Header.ToString().ToLower().Contains("export output"))
+            else if(item.Header.ToString().Equals(Properties.Resources.MENU_EXPORT_OUTPUTS))
             {
                 if(graphs.Count > 0 && GraphDocuments.SelectedContentIndex > -1 
                     && GraphDocuments.SelectedContentIndex < graphs.Count)
@@ -599,7 +599,7 @@ namespace Materia
                     var g = graphs[idx];
                     if (g.Modified && !g.ReadOnly)
                     {
-                        if (MessageBox.Show(this, g.GraphName + " has been modified. Do you want to save the changes?", "Save Changes", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        if (MessageBox.Show(this, g.GraphName + " " + Properties.Resources.TITLE_HAS_BEEN_MODIFIED, Properties.Resources.TITLE_SAVE_CHANGES, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
                             HandleSave(g, doc);
                         }
@@ -672,7 +672,7 @@ namespace Materia
                     LayoutDocument doc = documents[i];
                     if (g.Modified && !g.ReadOnly)
                     {
-                        var result = MessageBox.Show(this, g.GraphName + " has been modified. Do you want to save the changes?", "Save Changes", MessageBoxButton.YesNoCancel);
+                        var result = MessageBox.Show(this, g.GraphName + " " + Properties.Resources.TITLE_HAS_BEEN_MODIFIED, Properties.Resources.TITLE_SAVE_CHANGES, MessageBoxButton.YesNoCancel);
                         if (result == MessageBoxResult.Yes)
                         {
                             HandleSave(g, doc);

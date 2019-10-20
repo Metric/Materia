@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
              xmlns:local2="clr-namespace:Materia"
+             xmlns:p="clr-namespace:Materia.Properties"
              mc:Ignorable="d" 
              Height="375" Width="525" Loaded="UserControl_Loaded" MouseUp="Window_MouseUp" MouseMove="Window_MouseMove" MouseLeave="Window_MouseLeave" Unloaded="UserControl_Unloaded" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" Icon="/Materia;component/Images/Icons/App/icon.ico">
     <Grid MinHeight="345" MinWidth="512" Margin="0,0,0,0" Background="#111">
@@ -48,41 +49,41 @@
                 <Grid Height="32">
                     <Slider Foreground="#666" Name="HSlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" Minimum="0" Maximum="1" ValueChanged="HSlideInput_ValueChanged"  VerticalAlignment="Bottom" Margin="10,0,56,6" />
                     <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="HInput" TextChanged="HInput_TextChanged"  PreviewTextInput="HInput_PreviewTextInput"  Grid.Column="1" HorizontalAlignment="Right" Width="46" Margin="0,5,5,5"></TextBox>
-                    <TextBlock VerticalAlignment="Top" Text="Hue" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
+                    <TextBlock VerticalAlignment="Top" Text="{x:Static p:Resources.GRAPH_Hue}" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
                 </Grid>
                 <Grid Height="32">
                     <Slider Foreground="#666" Name="SSlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" Minimum="0" Maximum="1" ValueChanged="SSlideInput_ValueChanged" VerticalAlignment="Bottom" Margin="10,0,56,6" />
                     <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="SInput" TextChanged="SInput_TextChanged"  PreviewTextInput="SInput_PreviewTextInput"  Grid.Column="1" HorizontalAlignment="Right" Width="46" Margin="0,5,5,5"></TextBox>
-                    <TextBlock VerticalAlignment="Top" Text="Saturation" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
+                    <TextBlock VerticalAlignment="Top" Text="{x:Static p:Resources.GRAPH_Saturation}" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
                 </Grid>
                 <Grid Height="32">
                     <Slider Foreground="#666" Name="VSlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" Minimum="0" Maximum="1" ValueChanged="VSlideInput_ValueChanged" VerticalAlignment="Bottom" Margin="10,0,56,6" />
                     <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="VInput" TextChanged="VInput_TextChanged"  PreviewTextInput="VInput_PreviewTextInput"  Grid.Column="1" HorizontalAlignment="Right" Width="46" Margin="0,5,5,5"></TextBox>
-                    <TextBlock VerticalAlignment="Top" Text="Value" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
+                    <TextBlock VerticalAlignment="Top" Text="{x:Static p:Resources.GRAPH_Value}" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
                 </Grid>
                 <Grid Height="32" Margin="0,10,0,0">
                     <Slider Foreground="#666" Name="RSlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" Minimum="0" Maximum="1" ValueChanged="RSlideInput_ValueChanged" VerticalAlignment="Bottom" Margin="10,0,56,6" />
                     <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="RInput" TextChanged="RInput_TextChanged"  PreviewTextInput="RInput_PreviewTextInput"  Grid.Column="1" HorizontalAlignment="Right" Width="46" Margin="0,5,5,5"></TextBox>
-                    <TextBlock VerticalAlignment="Top" Text="Red" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
+                    <TextBlock VerticalAlignment="Top" Text="{x:Static p:Resources.GRAPH_Red}" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
                 </Grid>
                 <Grid Height="32">
                     <Slider Foreground="#666" Name="GSlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" Minimum="0" Maximum="1" ValueChanged="GSlideInput_ValueChanged" VerticalAlignment="Bottom" Margin="10,0,56,6" />
                     <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="GInput" TextChanged="GInput_TextChanged"  PreviewTextInput="GInput_PreviewTextInput"  Grid.Column="1" HorizontalAlignment="Right" Width="46" Margin="0,5,5,5"></TextBox>
-                    <TextBlock VerticalAlignment="Top" Text="Green" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
+                    <TextBlock VerticalAlignment="Top" Text="{x:Static p:Resources.GRAPH_Green}" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
                 </Grid>
                 <Grid Height="32">
                     <Slider Foreground="#666" Name="BSlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" Minimum="0" Maximum="1" ValueChanged="BSlideInput_ValueChanged" VerticalAlignment="Bottom" Margin="10,0,56,6" />
                     <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="BInput" TextChanged="BInput_TextChanged"  PreviewTextInput="BInput_PreviewTextInput"  Grid.Column="1" HorizontalAlignment="Right" Width="46" Margin="0,5,5,5"></TextBox>
-                    <TextBlock VerticalAlignment="Top" Text="Blue" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
+                    <TextBlock VerticalAlignment="Top" Text="{x:Static p:Resources.GRAPH_Blue}" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
                 </Grid>
                 <Grid Height="32" Margin="0,10,0,0">
                     <Slider Foreground="#666" Name="ASlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" Minimum="0" Maximum="1" ValueChanged="ASlideInput_ValueChanged" VerticalAlignment="Bottom" Margin="10,0,56,6" />
                     <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="AInput" TextChanged="AInput_TextChanged"  PreviewTextInput="AInput_PreviewTextInput"  Grid.Column="1" HorizontalAlignment="Right" Width="46" Margin="0,5,5,5"></TextBox>
-                    <TextBlock VerticalAlignment="Top" Text="Alpha" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
+                    <TextBlock VerticalAlignment="Top" Text="{x:Static p:Resources.GRAPH_Alpha}" FontSize="10" Foreground="Gray" Margin="10,0,0,0" />
                 </Grid>
             </StackPanel>
         </Grid>
-        <Button x:Name="SelectButton" IsDefault="True" Click="SelectButton_Click"  Background="#444" Foreground="LightGray" Content="SELECT" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="57" Height="24" Margin="0,0,20,20" BorderThickness="0" Style="{DynamicResource ImageTextButton}" />
-        <Button x:Name="CancelButton" Click="CancelButton_Click"  Background="#444" Foreground="LightGray" Content="CANCEL" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="57" Height="24" Margin="0,0,126,20" BorderThickness="0" Style="{DynamicResource ImageTextButton}" />
+        <Button x:Name="SelectButton" IsDefault="True" Click="SelectButton_Click"  Background="#444" Foreground="LightGray" Content="{x:Static p:Resources.BUTTON_SELECT}" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="57" Height="24" Margin="0,0,20,20" BorderThickness="0" Style="{DynamicResource ImageTextButton}" />
+        <Button x:Name="CancelButton" Click="CancelButton_Click"  Background="#444" Foreground="LightGray" Content="{x:Static p:Resources.BUTTON_CANCEL}" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="57" Height="24" Margin="0,0,126,20" BorderThickness="0" Style="{DynamicResource ImageTextButton}" />
     </Grid>
 </Window>

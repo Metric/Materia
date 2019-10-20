@@ -134,6 +134,11 @@
     <Compile Include="Hdri\HdriManager.cs" />
     <Compile Include="Language\Localization.cs" />
     <Compile Include="Logging\MateriaLogTarget.cs" />
+    <Compile Include="Properties\Resources.en.Designer.cs">
+      <DependentUpon>Resources.en.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
     <Compile Include="Settings\MaterialSettings.cs" />
     <Compile Include="Settings\LightingSettings.cs" />
     <Compile Include="Settings\RecentSettings.cs" />
@@ -510,8 +515,12 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <SplashScreen Include="splash.png" />
+    <EmbeddedResource Include="Properties\Resources.en.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.en.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <Resource Include="Images\drag.png" />

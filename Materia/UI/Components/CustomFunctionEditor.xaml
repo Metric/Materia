@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia.UI.Components"
+             xmlns:p="clr-namespace:Materia.Properties"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <StackPanel Orientation="Vertical">
@@ -11,9 +12,9 @@
 
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,5,0">
-            <Button Name="AddFunc" Width="115" Background="Transparent" Margin="5" BorderThickness="0" Click="AddFunc_Click"  ToolTip="Add Parameter" Style="{DynamicResource ImageTextButton}">
+            <Button Name="AddFunc" Background="Transparent" Margin="5" BorderThickness="0" Click="AddFunc_Click" ToolTip="{x:Static p:Resources.BUTTON_ADD_FUNCTION}" Style="{DynamicResource ImageTextButton}">
                 <StackPanel Height="24" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Foreground="LightGray" Text="Add Function" Margin="5" VerticalAlignment="Center" />
+                    <TextBlock Foreground="LightGray" Text="{x:Static p:Resources.BUTTON_ADD_FUNCTION}" Margin="5" VerticalAlignment="Center" />
                     <Image Source="/Materia;component/Images/add.png" />
                 </StackPanel>
             </Button>

@@ -4,12 +4,13 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Materia.UI"
+        xmlns:p="clr-namespace:Materia.Properties"
         mc:Ignorable="d"
         Title="Export Outputs" Height="200" Width="256" Background="#222" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
     <Grid>
         <ListBox SelectionMode="Extended" Name="ExportType" Background="Transparent" BorderBrush="#333" Margin="10,10,10,42">
             <ListBox.Items>
-                <ListBoxItem Foreground="LightGray">Separate Files</ListBoxItem>
+                <ListBoxItem Foreground="LightGray" Content="{x:Static p:Resources.TITLE_SEPARATE_FILES}"></ListBoxItem>
                 <ListBoxItem Foreground="LightGray">Unreal Engine 4</ListBoxItem>
                 <ListBoxItem Foreground="LightGray">Unity 5</ListBoxItem>
             </ListBox.Items>

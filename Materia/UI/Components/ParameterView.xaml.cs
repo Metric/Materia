@@ -55,7 +55,7 @@ namespace Materia.UI.Components
             IsReadOnly = true;
             Params.Set(v, ignore, false, true);
             Id = id;
-            ParamName.Placeholder = "Parameter Name";
+            ParamName.Placeholder = Properties.Resources.TITLE_PARAMETER_NAME;
             ParamName.Set(title);
             DisplayDefaultParam();
             Collapse();
@@ -96,7 +96,7 @@ namespace Materia.UI.Components
             var prop = Param.GetType().GetProperty("Name");
             if (prop == null) return;
 
-            ParamName.Placeholder = "Parameter Name";
+            ParamName.Placeholder = Properties.Resources.TITLE_PARAMETER_NAME;
             ParamName.Set(prop, Param, IsReadOnly);
         }
 
@@ -109,7 +109,7 @@ namespace Materia.UI.Components
 
         private void RemoveParam_Click(object sender, RoutedEventArgs e)
         {
-            if(MessageBox.Show("Remove Paramater: " + Param.Name,"",MessageBoxButton.OKCancel) == MessageBoxResult.OK)
+            if(MessageBox.Show(Properties.Resources.TITLE_REMOVE_PARAMETER + ": " + Param.Name,"",MessageBoxButton.OKCancel) == MessageBoxResult.OK)
             {
                 if(OnRemove != null)
                 {

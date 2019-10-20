@@ -136,7 +136,7 @@ namespace Materia.UI
 
             if (!IsLoaded) return;
 
-            if (string.IsNullOrEmpty(s) || string.IsNullOrWhiteSpace(s) || s.Equals("Search..."))
+            if (string.IsNullOrEmpty(s) || string.IsNullOrWhiteSpace(s) || s.Equals(Properties.Resources.TITLE_SEARCH))
             {
                 ClearFilters();
                 return;
@@ -182,7 +182,7 @@ namespace Materia.UI
         {
             string s = SearchBox.Text;
 
-            if(s.Equals("Search..."))
+            if(s.Equals(Properties.Resources.TITLE_SEARCH))
             {
                 SearchBox.Text = "";
             }
@@ -194,7 +194,7 @@ namespace Materia.UI
 
             if(string.IsNullOrWhiteSpace(s) || string.IsNullOrWhiteSpace(s))
             {
-                SearchBox.Text = "Search...";
+                SearchBox.Text = Properties.Resources.TITLE_SEARCH;
             }
         }
 
