@@ -609,6 +609,9 @@
   <data name="TITLE_COMMENT" xml:space="preserve">
     <value>Comment...</value>
   </data>
+  <data name="TITLE_HAS_BEEN_MODIFIED" xml:space="preserve">
+    <value>has been modified. Do you want to save the changes?</value>
+  </data>
   <data name="TITLE_NEW" xml:space="preserve">
     <value>New</value>
   </data>
@@ -617,6 +620,9 @@
   </data>
   <data name="TITLE_REMOVE_PARAMETER" xml:space="preserve">
     <value>Remove Parameter</value>
+  </data>
+  <data name="TITLE_SAVE_CHANGES" xml:space="preserve">
+    <value>Save Changes</value>
   </data>
   <data name="TITLE_SEARCH" xml:space="preserve">
     <value>Search...</value>
