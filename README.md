@@ -39,7 +39,7 @@ The modifed resource file should be saved as follows: Resources.<Language Tag>.r
 
 For Language Tag to use refer to: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/a9eac961-e77d-41a6-90a5-ce1a8b0cdb9c?redirectedfrom=MSDN
 
-If don't want to do a pull request with the resource file change. Please post the file in Discord chat.
+If you don't want to do a pull request with the resource file change. Please post the file in Discord chat.
 
 Major TODO
 ============== 
