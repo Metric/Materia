@@ -35,7 +35,7 @@ If you are able to, please help localize the UI to your native language. The bas
 
 I could totally push this through google translate, but it is just horrible results sometimes. I would prefer an actual person to do the localization that knows the language they are translating to.
 
-The modifed resource file should be saved as follows: Resources.<Language Tag>.resx. For example Spanish Brazil would be Resources.es-BR.resx or for general Spanish would be Resources.es.resx.
+The modifed resource file should be saved as follows: Resources.Language Tag.resx. For example Spanish Brazil would be Resources.es-BR.resx or for general Spanish would be Resources.es.resx.
 
 For Language Tag to use refer to: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/a9eac961-e77d-41a6-90a5-ce1a8b0cdb9c?redirectedfrom=MSDN
 
@@ -52,7 +52,7 @@ Major TODO
 
 Intel Processor Warning
 ========================
-If you are using a laptop with both an Intel processor and a discrete GPU. Please make sure in your discrete GPU control panel, Materia is set to use the discete GPU, rather than Intel processor. Intel processor GPU is not supported in some cases, or may produce incorrect results, compared to a proper NVIDIA or Radeon discete GPU.
+If you are using a laptop with both an Intel processor and a discrete GPU. Please make sure in your discrete GPU control panel, Materia is set to use the discete GPU, rather than Intel processor. Intel processor GPU is not supported in some cases, or may produce incorrect results, compared to a proper NVIDIA or Radeon discrete GPU.
 
 Known Bugs
 ====================
@@ -95,7 +95,7 @@ Editor Build Instructions
 
 Command Line MTG Renderer Build Instructions
 =========================
-* Note: The command line MTG Renderer does not suppor the new .mtga format yet.
+* Note: The command line MTG Renderer does not support the new .mtga format yet.
 * Load up the main solution
 * Make sure OpenTK, OpenTK Control, Newtonsoft JSON, DDSReader Project, RSMI Project, Core Project, Math3D Project, Interfaces Project, Exporters Project, System.Drawing, and System.Windows.Forms is properly referenced in the MTG Renderer project
 * Right click MTG Renderer Project -> Build
