@@ -36,12 +36,6 @@ namespace Materia.Nodes
 
     public class NodeOutput
     {
-        public delegate void OutputChanged(NodeOutput inp);
-        public event OutputChanged OnInputAdded;
-        public event OutputChanged OnInputRemoved;
-
-        public event OutputChanged OnTypeChanged;
-
         public List<NodeInput> To { get; protected set; }
 
         protected NodeType type;
@@ -54,12 +48,10 @@ namespace Materia.Nodes
             set
             {
                 type = value;
-                if(OnTypeChanged != null)
-                {
-                    OnTypeChanged.Invoke(this);
-                }
             }
         }
+
+        public Node ParentNode { get; protected set; }
 
         public Node Node { get; protected set; }
 
@@ -78,101 +70,74 @@ namespace Materia.Nodes
             }
         }
 
-        public void Changed()
-        {
-            if (To != null && To.Count > 0)
-            {
-                int c = To.Count;
-                for(int i = 0; i < c; i++)
-                {
-                    To[i].InputDataChanged();
-                }
-            }
-        }
-
         public NodeOutput(NodeType t, Node n, string name = "")
         {
             type = t;
             Node = n;
+            ParentNode = n;
             Name = name;
             To = new List<NodeInput>();
         }
 
-        public bool InsertAt(int index, NodeInput inp, bool triggerAddEvent = true)
+        public NodeOutput(NodeType t, Node n, Node parent, string name = "")
         {
-            if ((inp.Type & Type) != 0)
-            {
-                if (inp.Input != null)
-                {
-                    inp.Input.Remove(inp);
-                }
-
-                inp.Input = this;
-                if (index >= To.Count)
-                {
-                    To.Add(inp);
-                }
-                else
-                {
-                    To.Insert(index, inp);
-                }
-
-                if (triggerAddEvent)
-                {
-                    if (OnInputAdded != null)
-                    {
-                        OnInputAdded(this);
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
+            type = t;
+            Node = n;
+            ParentNode = parent;
+            Name = name;
+            To = new List<NodeInput>();
         }
 
-        public bool Add(NodeInput inp, bool triggerAddEvent = true)
+        public void InsertAt(int index, NodeInput inp, bool assign = false)
         {
-            if((inp.Type & Type) != 0)
+            if (inp.Reference != null)
             {
-                if(inp.Input != null)
-                {
-                    inp.Input.Remove(inp);
-                }
-
-                if (triggerAddEvent)
-                {
-                    inp.Input = this;
-                }
-                else
-                {
-                    inp.AssignInput(this);
-                }
-
-                To.Add(inp);
-
-                if (triggerAddEvent)
-                {
-                    if (OnInputAdded != null)
-                    {
-                        OnInputAdded(this);
-                    }
-                }
-
-                return true;
+                inp.Reference.Remove(inp);
             }
 
-            return false;
+            if (assign)
+            {
+                inp.AssignReference(this);
+            }
+            else
+            {
+                inp.Reference = this;
+            }
+
+            if (index >= To.Count)
+            {
+                To.Add(inp);
+            }
+            else
+            {
+                To.Insert(index, inp);
+            }
+        }
+
+        public void Add(NodeInput inp, bool assign = false)
+        {
+            if(inp.Reference != null)
+            {
+                inp.Reference.Remove(inp);
+            }
+
+            if (assign)
+            {
+                inp.AssignReference(this);
+            }
+            else
+            {
+                inp.Reference = this;
+            }
+
+            To.Add(inp);
         } 
 
         public void Remove(NodeInput inp)
         {
-            To.Remove(inp);
-            inp.Input = null;
-
-            if (OnInputRemoved != null)
+            if (To.Remove(inp))
             {
-                OnInputRemoved(this);
+                inp.Reference = null;
             }
         }
     }

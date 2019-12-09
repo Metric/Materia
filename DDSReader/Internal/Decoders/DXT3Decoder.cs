@@ -54,9 +54,9 @@ namespace DDSReader.Internal.Decoders
                     colors[3].r = (byte)((colors[0].r + 2 * colors[1].r + 1) / 3);
 
                     var k = 0;
-                    for (var j = 0; j < 4; j++)
+                    for (var j = 0; j < 4; ++j)
                     {
-                        for (var i = 0; i < 4; i++, k++)
+                        for (var i = 0; i < 4; ++i, ++k)
                         {
                             var select = (bitmask & (0x03 << k * 2)) >> k * 2;
                             var current = colors[select];
@@ -73,10 +73,10 @@ namespace DDSReader.Internal.Decoders
                         }
                     }
 
-                    for (var j = 0; j < 4; j++)
+                    for (var j = 0; j < 4; ++j)
                     {
                         var word = compressedData[offset + 2 * j] + 256 * compressedData[offset + 2 * j + 1];
-                        for (var i = 0; i < 4; i++)
+                        for (var i = 0; i < 4; ++i)
                         {
                             if (((x + i) < width) && ((y + j) < height))
                             {
@@ -134,9 +134,9 @@ namespace DDSReader.Internal.Decoders
                     colors[3].r = (byte)((colors[0].r + 2 * colors[1].r + 1) / 3);
 
                     var k = 0;
-                    for (var j = 0; j < 4; j++)
+                    for (var j = 0; j < 4; ++j)
                     {
-                        for (var i = 0; i < 4; i++, k++)
+                        for (var i = 0; i < 4; ++i, ++k)
                         {
                             var select = (bitmask & (0x03 << k * 2)) >> k * 2;
                             var current = colors[select];
@@ -153,10 +153,10 @@ namespace DDSReader.Internal.Decoders
                         }
                     }
 
-                    for (var j = 0; j < 4; j++)
+                    for (var j = 0; j < 4; ++j)
                     {
                         var word = compressedData[offset + 2 * j] + 256 * compressedData[offset + 2 * j + 1];
-                        for (var i = 0; i < 4; i++)
+                        for (var i = 0; i < 4; ++i)
                         {
                             if (((x + i) < width) && ((y + j) <height))
                             {

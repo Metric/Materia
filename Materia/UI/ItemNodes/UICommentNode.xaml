@@ -8,11 +8,11 @@
              mc:Ignorable="d" 
              d:DesignHeight="256" d:DesignWidth="256" Focusable="True" MouseMove="UserControl_MouseMove" MouseLeave="UserControl_MouseLeave" MouseUp="UserControl_MouseUp" Loaded="UserControl_Loaded">
     <Grid>
-        <Border Name="BorderArea" BorderThickness="1" Background="#22445566" BorderBrush="#22ffffff" IsHitTestVisible="False">
+        <Border Name="BorderArea" BorderThickness="1" Background="{StaticResource Overlay5}" BorderBrush="#22ffffff" IsHitTestVisible="False">
            
         </Border>
-        <TextBox LostFocus="CommentText_LostFocus" CaretBrush="White" Name="CommentText" TextChanged="CommentText_TextChanged" PreviewKeyDown="CommentText_KeyDown" Text="{x:Static p:Resources.TITLE_COMMENT}" VerticalAlignment="Top" Height="32" FontSize="16" Padding="4" Background="#22000000" BorderThickness="1" BorderBrush="#22ffffff" Margin="5,5,5,0" Foreground="LightGray" />
-        <Border Name="Holder" Background="#22000000" Height="42" VerticalAlignment="Top" MouseDown="UserControl_MouseDown">
+        <TextBox LostFocus="CommentText_LostFocus" CaretBrush="{StaticResource Primary}" Name="CommentText" TextChanged="CommentText_TextChanged" PreviewKeyDown="CommentText_KeyDown" Text="{x:Static p:Resources.TITLE_COMMENT}" VerticalAlignment="Top" Height="32" FontSize="16" Padding="4" Background="{StaticResource Overlay5}" BorderThickness="0" BorderBrush="#22ffffff" Margin="5,5,5,0" Foreground="{StaticResource TextLightMedium}" />
+        <Border Name="Holder" Background="{StaticResource Overlay5}" Height="42" VerticalAlignment="Top" MouseDown="UserControl_MouseDown">
 
         </Border>
         <Thumb VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="16" Height="16" DragDelta="Corner_DragDelta">

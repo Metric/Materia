@@ -100,6 +100,7 @@ namespace Materia
 
             ExportMenuItem.IsEnabled = false;
 
+            Materia.Nodes.Node.SyncContext = DispatcherSynchronizationContext.Current;
             //set node context
             Materia.Nodes.Node.Context = TaskScheduler.FromCurrentSynchronizationContext();
         }
@@ -364,7 +365,7 @@ namespace Materia
             }
             else if (item.Header.ToString().Equals(Properties.Resources.MENU_CLOSE_ALL))
             {
-                for (int i = 0; i < documents.Count; i++)
+                for (int i = 0; i < documents.Count; ++i)
                 {
                     var doc = documents[i];
                     doc.Close();
@@ -658,7 +659,7 @@ namespace Materia
             //save layout
             SaveLayout();
 
-            popupShelf.Close();
+            popupShelf?.Close();
             popupShelf = null;
         }
 
@@ -666,7 +667,7 @@ namespace Materia
         {
             if (!crash)
             {
-                for (int i = 0; i < graphs.Count; i++)
+                for (int i = 0; i < graphs.Count; ++i)
                 {
                     UIGraph g = graphs[i];
                     LayoutDocument doc = documents[i];
@@ -724,6 +725,7 @@ namespace Materia
 
             FontManager.Release();
 
+            FunctionGraph.ReleaseShaderBuffer();
             //clear material and shader caches
             PBRMaterial.ReleaseBRDF();
             ImageProcessor.ReleaseAll();
@@ -770,6 +772,7 @@ namespace Materia
                 Preview2DPane = anchorables.FirstOrDefault(m => m.ContentId.Equals("2dpreview"));
                 ShelfPane = anchorables.FirstOrDefault(m => m.ContentId.Equals("shelf"));
                 ParametersPane = anchorables.FirstOrDefault(m => m.ContentId.Equals("parameters"));
+                var tmpLayers = anchorables.FirstOrDefault(m => m.ContentId.Equals("layers"));
 
                 if (Preview2DPane != null)
                 {
@@ -798,6 +801,32 @@ namespace Materia
                     LogPane = tmpLog;
                 }
 
+                if (tmpLayers == null)
+                {
+                    var firstLayout = Docker.Layout.Descendents().OfType<LayoutPanel>().FirstOrDefault();
+                    
+                    if (firstLayout != null)
+                    {
+                        var secondLayout = firstLayout.Descendents().OfType<LayoutPanel>().FirstOrDefault();
+
+                        if(secondLayout != null)
+                        {
+                            if (secondLayout.Children.Count > 1)
+                            {
+                                secondLayout.Children.Insert(1, LayersPane.Parent as ILayoutPanelElement);
+                            }
+                            else
+                            {
+                                secondLayout.Children.Add(LayersPane.Parent as ILayoutPanelElement);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    LayersPane = tmpLayers;
+                }
+
                 Log.Info("Previous Layout Loaded");
             }
         }
@@ -808,10 +837,6 @@ namespace Materia
             BuildRecentShortcuts();
             MateriaInputManager.Init();
             RegisterInputActions();
-
-            popupShelf = new UIPopupShelf();
-            popupShelf.Owner = this;
-            popupShelf.Hide();
 
             Log.Info("Main Window Loaded");
         }
@@ -868,15 +893,14 @@ namespace Materia
             MateriaInputManager.Add(InputManagerCommand.Clear, (e) =>
             {
                 UINodePoint.SelectOrigin = null;
-                if(popupShelf != null)
-                {
-                    popupShelf.Hide();
-                }
+                popupShelf?.Close();
+                popupShelf = null;
             });
             MateriaInputManager.Add(InputManagerCommand.Copy, (e) =>
             {
                 if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
-                  && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                  && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument) && !(Keyboard.FocusedElement is LayerItem)
+                  && !(Keyboard.FocusedElement is UILayers))
                 {
                     return;
                 }
@@ -890,7 +914,8 @@ namespace Materia
             MateriaInputManager.Add(InputManagerCommand.Paste, (e) =>
             {
                 if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
-                   && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                  && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument) && !(Keyboard.FocusedElement is LayerItem)
+                  && !(Keyboard.FocusedElement is UILayers))
                 {
                     return;
                 }
@@ -913,7 +938,8 @@ namespace Materia
             MateriaInputManager.Add(InputManagerCommand.Delete, (e) =>
             {
                 if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
-                   && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                 && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument) && !(Keyboard.FocusedElement is LayerItem)
+                 && !(Keyboard.FocusedElement is UILayers))
                 {
                     return;
                 }
@@ -927,7 +953,8 @@ namespace Materia
             MateriaInputManager.Add(InputManagerCommand.Undo, (e) =>
             {
                 if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
-                    && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                  && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument) && !(Keyboard.FocusedElement is LayerItem)
+                  && !(Keyboard.FocusedElement is UILayers))
                 {
                     return;
                 }
@@ -949,7 +976,8 @@ namespace Materia
             MateriaInputManager.Add(InputManagerCommand.Redo, (e) =>
             {
                 if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
-                    && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                  && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument) && !(Keyboard.FocusedElement is LayerItem)
+                  && !(Keyboard.FocusedElement is UILayers))
                 {
                     return;
                 }
@@ -970,39 +998,40 @@ namespace Materia
             });
             MateriaInputManager.Add(InputManagerCommand.PopupShelf, (e) =>
             {
-                if (popupShelf == null || popupShelf.Visibility == Visibility.Visible) return;
+                if (popupShelf != null && popupShelf.IsActive) return;
 
-                if(!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph) 
-                    && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
+                 && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument) && !(Keyboard.FocusedElement is LayerItem)
+                 && !(Keyboard.FocusedElement is UILayers))
                 {
                     return;
                 }
 
-                if(GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
                     var g = graphs[GraphDocuments.SelectedContentIndex];
-                    g.PrepareInsert();
-                    var pop = popupShelf;
-                    pop.Graph = g;
                     Point m = Mouse.GetPosition(this);
                     Point m2 = Mouse.GetPosition(g.ViewPort);
 
-                    if(m2.X < 0 || m2.Y < 0 || m2.X > g.ViewPort.ActualWidth || m2.Y > g.ViewPort.ActualHeight)
+                    if (m2.X < 0 || m2.Y < 0 || m2.X > g.ViewPort.ActualWidth || m2.Y > g.ViewPort.ActualHeight)
                     {
                         return;
                     }
-
-                    pop.Left = m.X;
-                    pop.Top = m.Y;
-                    pop.Show();
-                    pop.Focus();
+                    g.PrepareInsert();
+                    popupShelf?.Close();
+                    popupShelf = new UIPopupShelf();
+                    popupShelf.Closed += PopupShelf_Closed;
+                    popupShelf.Hide();
+                    popupShelf.Graph = g;
+                    popupShelf.Open(m.X, m.Y);
                 }
             });
             MateriaInputManager.Add(InputManagerCommand.Comment, (e) =>
             {
 
                 if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
-                    && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                 && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument) && !(Keyboard.FocusedElement is LayerItem)
+                 && !(Keyboard.FocusedElement is UILayers))
                 {
                     return;
                 }
@@ -1024,7 +1053,8 @@ namespace Materia
             MateriaInputManager.Add(InputManagerCommand.Pin, (e) =>
             {
                 if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
-                   && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                 && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument) && !(Keyboard.FocusedElement is LayerItem)
+                 && !(Keyboard.FocusedElement is UILayers))
                 {
                     return;
                 }
@@ -1046,7 +1076,8 @@ namespace Materia
             MateriaInputManager.Add(InputManagerCommand.NextPin, (e) =>
             {
                 if (!(Keyboard.FocusedElement is IUIGraphNode) && !(Keyboard.FocusedElement is UIGraph)
-                   && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument))
+                 && Keyboard.FocusedElement != this && !(Keyboard.FocusedElement is LayoutDocument) && !(Keyboard.FocusedElement is LayerItem)
+                 && !(Keyboard.FocusedElement is UILayers))
                 {
                     return;
                 }
@@ -1058,6 +1089,25 @@ namespace Materia
                     g.NextPin();
                 }
             });
+        }
+
+        private void PopupShelf_Closed(object sender, EventArgs e)
+        {
+            popupShelf.Closed -= PopupShelf_Closed;
+            popupShelf = null;
+
+            Task.Delay(25).ContinueWith(t =>
+            {
+                Activate();
+                BringIntoView();
+                Focus();
+
+                if (GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
+                {
+                    var g = graphs[GraphDocuments.SelectedContentIndex];
+                    g.Focus();
+                }
+            }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         private void CreateNew_Click(object sender, RoutedEventArgs e)

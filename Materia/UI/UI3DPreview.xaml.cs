@@ -331,151 +331,47 @@ namespace Materia.UI
         {
             if(albedoNode == n)
             {
-                albedoNode.Node.OnUpdate -= Node_OnUpdate;
                 albedoNode = null;
                 SetAlbedo(null);
             }
             else if(normalNode == n)
             {
-                normalNode.Node.OnUpdate -= Node_OnUpdate;
                 normalNode = null;
                 SetNormal(null);
             }
             else if(metallicNode == n)
             {
-                metallicNode.Node.OnUpdate -= Node_OnUpdate;
                 metallicNode = null;
                 SetMetallic(null);
             }
             else if(roughnessNode == n)
             {
-                roughnessNode.Node.OnUpdate -= Node_OnUpdate;
                 roughnessNode = null;
                 SetRoughness(null);
             }
             else if(heightNode == n)
             {
-                heightNode.Node.OnUpdate -= Node_OnUpdate;
                 heightNode = null;
                 SetHeight(null);
             }
             else if(occlusionNode == n)
             {
-                occlusionNode.Node.OnUpdate -= Node_OnUpdate;
                 occlusionNode = null;
                 SetOcclusion(null);
             }
             else if(thicknessNode == n)
             {
-                thicknessNode.Node.OnUpdate -= Node_OnUpdate;
                 thicknessNode = null;
                 SetThickness(null);
             }
             else if(emissionNode == n)
             {
-                emissionNode.Node.OnUpdate -= Node_OnUpdate;
                 emissionNode = null;
                 SetEmission(null);
             }
         }
 
-        public void SetAlbedoNode(UINode n)
-        {
-            if(albedoNode != null)
-            {
-                albedoNode.Node.OnUpdate -= Node_OnUpdate;
-            }
-
-            albedoNode = n;
-            albedoNode.Node.OnUpdate += Node_OnUpdate;
-            SetAlbedo(albedoNode.Node.GetActiveBuffer());
-        }
-
-        public void SetNormalNode(UINode n)
-        {
-            if (normalNode != null)
-            {
-                normalNode.Node.OnUpdate -= Node_OnUpdate;
-            }
-
-            normalNode = n;
-            normalNode.Node.OnUpdate += Node_OnUpdate;
-            SetNormal(normalNode.Node.GetActiveBuffer());
-        }
-
-        public void SetMetallicNode(UINode n)
-        {
-            if (metallicNode != null)
-            {
-                metallicNode.Node.OnUpdate -= Node_OnUpdate;
-            }
-
-            metallicNode = n;
-            metallicNode.Node.OnUpdate += Node_OnUpdate;
-            SetMetallic(metallicNode.Node.GetActiveBuffer());
-        }
-
-        public void SetOcclusionNode(UINode n)
-        {
-            if (occlusionNode != null)
-            {
-                occlusionNode.Node.OnUpdate -= Node_OnUpdate;
-            }
-
-            occlusionNode = n;
-            occlusionNode.Node.OnUpdate += Node_OnUpdate;
-            SetOcclusion(occlusionNode.Node.GetActiveBuffer());
-        }
-
-        public void SetHeightNode(UINode n)
-        {
-            if (heightNode != null)
-            {
-                heightNode.Node.OnUpdate -= Node_OnUpdate;
-            }
-
-            heightNode = n;
-            heightNode.Node.OnUpdate += Node_OnUpdate;
-            SetHeight(heightNode.Node.GetActiveBuffer());
-        }
-
-        public void SetRoughnessNode(UINode n)
-        {
-            if (roughnessNode != null)
-            {
-                roughnessNode.Node.OnUpdate -= Node_OnUpdate;
-            }
-
-            roughnessNode = n;
-            roughnessNode.Node.OnUpdate += Node_OnUpdate;
-            SetRoughness(roughnessNode.Node.GetActiveBuffer());
-        }
-
-        public void SetThicknessNode(UINode n)
-        {
-            if(thicknessNode != null)
-            {
-                thicknessNode.Node.OnUpdate -= Node_OnUpdate;
-            }
-
-            thicknessNode = n;
-            thicknessNode.Node.OnUpdate += Node_OnUpdate;
-            SetThickness(thicknessNode.Node.GetActiveBuffer());
-        }
-
-        public void SetEmissionNode(UINode n)
-        {
-            if(emissionNode != null)
-            {
-                emissionNode.Node.OnUpdate -= Node_OnUpdate;
-            }
-
-            emissionNode = n;
-            emissionNode.Node.OnUpdate += Node_OnUpdate;
-            SetEmission(emissionNode.Node.GetActiveBuffer());
-        }
-
-        private void Node_OnUpdate(Nodes.Node n)
+        private void Node_OnTextureRebuilt(Nodes.Node n)
         {
             if(albedoNode != null && albedoNode.Node == n)
             {
@@ -493,22 +389,177 @@ namespace Materia.UI
             {
                 SetNormal(n.GetActiveBuffer());
             }
-            else if(heightNode != null && heightNode.Node == n)
+            else if(thicknessNode != null && thicknessNode.Node == n)
             {
-                SetHeight(n.GetActiveBuffer());
+                SetThickness(n.GetActiveBuffer());
             }
             else if(occlusionNode != null && occlusionNode.Node == n)
             {
                 SetOcclusion(n.GetActiveBuffer());
             }
-            else if(thicknessNode != null && thicknessNode.Node == n)
+            else if(heightNode != null && heightNode.Node == n)
             {
-                SetThickness(n.GetActiveBuffer());
+                SetHeight(n.GetActiveBuffer());
             }
             else if(emissionNode != null && emissionNode.Node == n)
             {
                 SetEmission(n.GetActiveBuffer());
             }
+        }
+
+        public void SetAlbedoNode(UINode n)
+        {
+            Nodes.Node node = null;
+            
+            if(albedoNode != null)
+            {
+                node = albedoNode.Node;
+                node.OnTextureChanged -= Node_OnTextureChanged;
+                node.OnTextureRebuilt -= Node_OnTextureRebuilt;
+            }
+            
+            node = n.Node;
+            node.OnTextureRebuilt += Node_OnTextureRebuilt;
+            node.OnTextureChanged += Node_OnTextureChanged;
+            albedoNode = n;
+            SetAlbedo(albedoNode.Node.GetActiveBuffer());
+        }
+
+        public void SetNormalNode(UINode n)
+        {
+            Nodes.Node node = null;
+
+            if (normalNode != null)
+            {
+                node = normalNode.Node;
+                node.OnTextureChanged -= Node_OnTextureChanged;
+                node.OnTextureRebuilt -= Node_OnTextureRebuilt;
+            }
+
+            node = n.Node;
+            node.OnTextureRebuilt += Node_OnTextureRebuilt;
+            node.OnTextureChanged += Node_OnTextureChanged;
+            normalNode = n;
+            SetNormal(normalNode.Node.GetActiveBuffer());
+        }
+
+        public void SetMetallicNode(UINode n)
+        {
+            Nodes.Node node = null;
+
+            if (metallicNode != null)
+            {
+                node = metallicNode.Node;
+                node.OnTextureChanged -= Node_OnTextureChanged;
+                node.OnTextureChanged += Node_OnTextureChanged;
+                node.OnTextureRebuilt -= Node_OnTextureRebuilt;
+            }
+
+
+            node = n.Node;
+            node.OnTextureRebuilt += Node_OnTextureRebuilt;
+            node.OnTextureChanged += Node_OnTextureChanged;
+            metallicNode = n;
+            SetMetallic(metallicNode.Node.GetActiveBuffer());
+        }
+
+        public void SetOcclusionNode(UINode n)
+        {
+            Nodes.Node node = null;
+
+            if (occlusionNode != null)
+            {
+                node = occlusionNode.Node;
+                node.OnTextureChanged -= Node_OnTextureChanged;
+                node.OnTextureRebuilt -= Node_OnTextureRebuilt;
+            }
+
+
+            node = n.Node;
+            node.OnTextureRebuilt += Node_OnTextureRebuilt;
+            node.OnTextureChanged += Node_OnTextureChanged;
+            occlusionNode = n;
+            SetOcclusion(occlusionNode.Node.GetActiveBuffer());
+        }
+
+        public void SetHeightNode(UINode n)
+        {
+            Nodes.Node node = null;
+
+            if (heightNode != null)
+            {
+                node = heightNode.Node;
+                node.OnTextureChanged -= Node_OnTextureChanged;
+                node.OnTextureRebuilt -= Node_OnTextureRebuilt;
+            }
+
+
+            node = n.Node;
+            node.OnTextureRebuilt += Node_OnTextureRebuilt;
+            node.OnTextureChanged += Node_OnTextureChanged;
+            heightNode = n;
+            SetHeight(heightNode.Node.GetActiveBuffer());
+        }
+
+        public void SetRoughnessNode(UINode n)
+        {
+            Nodes.Node node = null;
+
+            if (roughnessNode != null)
+            {
+                node = roughnessNode.Node;
+                node.OnTextureChanged -= Node_OnTextureChanged;
+                node.OnTextureRebuilt -= Node_OnTextureRebuilt;
+            }
+
+
+            node = n.Node;
+            node.OnTextureRebuilt += Node_OnTextureRebuilt;
+            node.OnTextureChanged += Node_OnTextureChanged;
+            roughnessNode = n;
+            SetRoughness(roughnessNode.Node.GetActiveBuffer());
+        }
+
+        public void SetThicknessNode(UINode n)
+        {
+            Nodes.Node node = null;
+
+            if (thicknessNode != null)
+            {
+                node = thicknessNode.Node;
+                node.OnTextureChanged -= Node_OnTextureChanged;
+                node.OnTextureRebuilt -= Node_OnTextureRebuilt;
+            }
+
+
+            node = n.Node;
+            node.OnTextureRebuilt += Node_OnTextureRebuilt;
+            node.OnTextureChanged += Node_OnTextureChanged;
+            thicknessNode = n;
+            SetThickness(thicknessNode.Node.GetActiveBuffer());
+        }
+
+        public void SetEmissionNode(UINode n)
+        {
+            Nodes.Node node = null;
+
+            if (emissionNode != null)
+            {
+                node = emissionNode.Node;
+                node.OnTextureChanged -= Node_OnTextureChanged;
+                node.OnTextureRebuilt -= Node_OnTextureRebuilt;
+            }
+
+            node = n.Node;
+            node.OnTextureRebuilt += Node_OnTextureRebuilt;
+            node.OnTextureChanged += Node_OnTextureChanged;
+            emissionNode = n;
+            SetEmission(emissionNode.Node.GetActiveBuffer());
+        }
+
+        private void Node_OnTextureChanged(Nodes.Node n)
+        {
+            Invalidate();
         }
 
         void SetAlbedo(GLTextuer2D t)
@@ -1199,8 +1250,12 @@ namespace Materia.UI
 
         private void Glview_Load(object sender, EventArgs e)
         {
+            glview.MakeCurrent();
+            glview.VSync = false;
+
             ViewContext.VerifyContext(glview);
             ViewContext.Context.MakeCurrent(glview.WindowInfo);
+            ViewContext.Context.SwapInterval = 1;
 
             Log.Info("GL Version: " + OpenTK.Graphics.OpenGL.GL.GetString(OpenTK.Graphics.OpenGL.StringName.Version));
             IGL.Primary.PatchParameter((int)PatchParameterInt.PatchVertices, 3);

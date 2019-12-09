@@ -251,14 +251,14 @@ namespace Materia.UI.Components
 
         void RedrawHue()
         {
-            for(int y = 0; y < hueBitmap.Height; y++)
+            for(int y = 0; y < hueBitmap.Height; ++y)
             {
                 float f = y / (float)hueBitmap.Height;
                 float h = f * 359;
                 HsvColor v = new HsvColor(h, 1, 1);
                 D.Color c = v.ToColor();
 
-                for (int x = 0; x < hueBitmap.Width; x++)
+                for (int x = 0; x < hueBitmap.Width; ++x)
                 {
                     hueBitmap.SetPixel(x, y, c.R, c.G, c.B, 255);
                 }
@@ -269,9 +269,9 @@ namespace Materia.UI.Components
 
         void RedrawSatVal()
         {
-            for(int y = 0; y < svBitmap.Height; y++)
+            for(int y = 0; y < svBitmap.Height; ++y)
             {
-                for(int x = 0; x < svBitmap.Width; x++)
+                for(int x = 0; x < svBitmap.Width; ++x)
                 {
                     float sf = x / (float)svBitmap.Width;
                     float sv = 1.0f - y / (float)svBitmap.Height;

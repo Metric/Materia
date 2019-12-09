@@ -27,44 +27,16 @@ namespace Materia.Nodes.MathNodes
             output = new NodeOutput(NodeType.Matrix, this);
 
             Inputs.Add(input);
-
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            UpdateOutputType();
-            Updated();
-        }
-
-        public override void UpdateOutputType()
-        {
-
-        }
-
-        public override void TryAndProcess()
-        {
-            if (input.HasInput)
-            {
-                Process();
-            }
         }
 
         public override string GetShaderPart(string currentFrag)
         {
-            if (input == null || !input.HasInput) return "";
+            if (!input.HasInput) return "";
             var s = shaderId + "1";
-            var n1id = (input.Input.Node as MathNode).ShaderId;
+            var n1id = (input.Reference.Node as MathNode).ShaderId;
 
-            var index = input.Input.Node.Outputs.IndexOf(input.Input);
+            var index = input.Reference.Node.Outputs.IndexOf(input.Reference);
 
             n1id += index;
 
@@ -81,30 +53,12 @@ namespace Materia.Nodes.MathNodes
             
         }
 
-        protected virtual void Process()
+        public override void TryAndProcess()
         {
-            if (input.Input.Data == null) return;
-
-            object o = input.Input.Data;
-
-            CalculateMatrix(o);
-
+            if (!input.IsValid) return;
+            CalculateMatrix(input.Data);
             output.Data = matrix;
-
-            if (output.Data != null)
-            {
-                result = output.Data.ToString();
-            }
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
+            result = output.Data?.ToString();
         }
     }
 }

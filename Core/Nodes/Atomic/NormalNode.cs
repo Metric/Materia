@@ -40,7 +40,7 @@ namespace Materia.Nodes.Atomic
                     intensity = 0.001f;
                 }
 
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -56,7 +56,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 directx = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -72,11 +72,11 @@ namespace Materia.Nodes.Atomic
             set
             {
                 noiseReduction = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
-        public NormalNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public NormalNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Normal";
             Id = Guid.NewGuid().ToString();
@@ -99,95 +99,38 @@ namespace Materia.Nodes.Atomic
             input = new NodeInput(NodeType.Gray, this, "Gray Input");
             Output = new NodeOutput(NodeType.Color, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputRemoved += Input_OnInputRemoved;
-            input.OnInputChanged += Input_OnInputChanged;
-
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            Output.Data = null;
-            Output.Changed();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                if (input.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                if(input.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
         }
 
         private void GetParams()
         {
+            if (!input.HasInput) return;
+
             pintensity = intensity;
             pnoiseReduction = noiseReduction;
             pdirectx = directx;
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
             {
-                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
+                pintensity = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Intensity"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "DirectX"))
             {
-                pdirectx = Convert.ToBoolean(ParentGraph.GetParameterValue(Id, "DirectX"));
+                pdirectx = Utils.ConvertToBool(ParentGraph.GetParameterValue(Id, "DirectX"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "NoiseReduction"))
             {
-                pnoiseReduction = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "NoiseReduction"));
+                pnoiseReduction = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "NoiseReduction"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         float pintensity;
@@ -195,7 +138,9 @@ namespace Materia.Nodes.Atomic
         bool pdirectx;
         void Process() 
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+            if (!input.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
@@ -210,9 +155,8 @@ namespace Materia.Nodes.Atomic
             processor.Process(width, height, i1, buffer);
             processor.Complete();
 
-            Updated();
             Output.Data = buffer;
-            Output.Changed();
+            TriggerTextureChange();
         }
 
         public class NormalData : NodeData

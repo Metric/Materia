@@ -132,11 +132,12 @@ namespace Materia.Nodes
 
         public Graph TopGraph()
         {
-            var p = ParentGraph;
+            var p = parentGraph;
 
             if(p is FunctionGraph)
             {
-                p = (p as FunctionGraph).TopGraph();
+                FunctionGraph g = p as FunctionGraph;
+                return g.ParentNode != null ? g.ParentNode.ParentGraph : g.ParentGraph;
             }
 
             return p;
@@ -161,19 +162,9 @@ namespace Materia.Nodes
             return JsonConvert.SerializeObject(d);
         }
 
-        protected override void OnWidthHeightSet()
-        {
-            
-        }
-
         public virtual void UpdateOutputType()
         {
 
-        }
-
-        public override Task GetTask()
-        {
-            return null;
         }
 
         public override bool IsRoot()

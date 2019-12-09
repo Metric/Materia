@@ -29,9 +29,6 @@ namespace Materia.UI.Components
 
         CancellationTokenSource ctk;
 
-        private static SolidColorBrush GrayColor = new SolidColorBrush(Colors.Gray);
-        private static SolidColorBrush LightGrayColor = new SolidColorBrush(Colors.LightGray);
-
         public static readonly DependencyProperty PlaceholderProperty = DependencyProperty.Register("Placeholder", typeof(string), typeof(PropertyInput));
 
         public string Placeholder
@@ -49,7 +46,6 @@ namespace Materia.UI.Components
         public PropertyInput()
         {
             InitializeComponent();
-            IField.Foreground = GrayColor;
         }
 
         public PropertyInput(PropertyInfo p, object owner, bool readOnly = false, bool multi = false)
@@ -168,8 +164,6 @@ namespace Materia.UI.Components
             {
                 IField.Text = "";
             }
-
-            IField.Foreground = LightGrayColor;
         }
 
         private void IField_LostFocus(object sender, RoutedEventArgs e)
@@ -178,8 +172,6 @@ namespace Materia.UI.Components
             {
                 IField.Text = Placeholder;
             }
-
-            IField.Foreground = GrayColor;
         }
     }
 }

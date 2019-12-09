@@ -3,11 +3,57 @@
                     xmlns:local="clr-namespace:Materia"
                     xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
                     xmlns:etk="http://schemas.xceed.com/wpf/xaml/toolkit">
+
+    <!-- Color Theme Base -->
+    <SolidColorBrush x:Key="Primary" Color="#1976d2" />
+    <SolidColorBrush x:Key="Primary80" Color="#CC1976d2" />
+    <SolidColorBrush x:Key="PrimarDisabled" Color="#1E1976d2" />
+    <SolidColorBrush x:Key="TextDark" Color="#000" />
+    <SolidColorBrush x:Key="TextLight" Color="#DDFFFFFF" />
+    <SolidColorBrush x:Key="TextLightMedium" Color="#99FFFFFF" />
+    <SolidColorBrush x:Key="TextDisabled" Color="#60FFFFFF" />
+
+    <!-- Color Theme Windows -->
+    <SolidColorBrush x:Key="Surface" Color="#121212" />
+
+    <SolidColorBrush x:Key="Overlay5" Color="#0CFFFFFF" /> <!-- 5% -->
+    <SolidColorBrush x:Key="Overlay7" Color="#11FFFFFF" /> <!-- 7% -->
+    <SolidColorBrush x:Key="Overlay8" Color="#14FFFFFF"/> <!-- 8% -->
+    <SolidColorBrush x:Key="Overlay9" Color="#16FFFFFF" /> <!-- 9% -->
+    <SolidColorBrush x:Key="Overlay11" Color="#1CFFFFFF" /> <!-- 11% -->
+    <SolidColorBrush x:Key="Overlay16" Color="#28FFFFFF" />
+    <SolidColorBrush x:Key="Overlay24" Color="#3DFFFFFF" />
+    <SolidColorBrush x:Key="Solid20" Color="#414141" />
+    <SolidColorBrush x:Key="Solid16" Color="#383838" />
+
+    <!-- Just the Colors -->
+    <Color x:Key="ColorPrimary" R="41" G="182" B="246" A="255" />
+    <Color x:Key="ColorPrimary80" R="41" G="182" B="246" A="204" />
+    <Color x:Key="ColorPrimaryDisabled" R="41" G="182" B="246" A="30" />
+
+    <Color x:Key="ColorTextDark" R="0" G="0" B="0" A="255" />
+    <Color x:Key="ColorTextLight" R="255" G="255" B="255" A="222" />
+    <Color x:Key="ColorTextLightMedium" R="255" G="255" B="255" A="153" />
+    <Color x:Key="ColorTextDisabled" R="255" G="255" B="255" A="97" />
+
+    <Color x:Key="ColorSurface" R="18" G="18" B="18" A="255" />
+    <Color x:Key="ColorOverlay5" R="255" G="255" B="255" A="13" />
+    <Color x:Key="ColorOverlay7" R="255" G="255" B="255" A="18" />
+    <Color x:Key="ColorOverlay8" R="255" G="255" B="255" A="20" />
+    <Color x:Key="ColorOverlay9" R="255" G="255" B="255" A="23" />
+    <Color x:Key="ColorOverlay11" R="255" G="255" B="255" A="28" />
+    <Color x:Key="ColorOverlay16" R="255" G="255" B="255" A="40" />
+    <Color x:Key="ColorOverlay24" R="255" G="255" B="255" A="61" />
+
+    <Color x:Key="ColorSolid20" R="65" G="65" B="65" A="255" />  <!-- solid color roughly equates to 8% like transparency on our surface color -->
+    <Color x:Key="ColorSolid16" R="56" G="56" B="56" A="255" /> <!-- solid color roughly equates to 16% like transparency on our surface color -->
+
     <Style TargetType="{x:Type GridSplitter}">
-        <Setter Property="Background" Value="#444" />
+        <Setter Property="Background" Value="{StaticResource Overlay11}" />
         <Setter Property="BorderThickness" Value="0" />
     </Style>
-    
+   
+
     <!-- Scrollbar / Scrollview -->
     <Style x:Key="ScrollBarTrackThumb"
         TargetType="{x:Type Thumb}">
@@ -48,7 +94,7 @@
         <Setter Property="Stylus.IsFlicksEnabled"
             Value="false" />
         <Setter Property="Foreground"
-            Value="#ADABAB" />
+            Value="{StaticResource Primary}" />
         <Setter Property="Background"
             Value="Transparent" />
         <Setter Property="Width"
@@ -89,14 +135,14 @@
                         <Trigger SourceName="Thumb"
                                 Property="IsMouseOver"
                                 Value="true">
-                            <Setter Value="{DynamicResource ButtonSelectBrush}"
+                            <Setter Value="{StaticResource Primary80}"
                                 TargetName="Thumb"
                                 Property="Background" />
                         </Trigger>
                         <Trigger SourceName="Thumb"
                                 Property="IsDragging"
                                 Value="true">
-                            <Setter Value="{DynamicResource DarkBrush}"
+                            <Setter Value="{StaticResource Primary}"
                                 TargetName="Thumb"
                                 Property="Background" />
                         </Trigger>
@@ -142,12 +188,6 @@
     </Style>
 
     <!-- Flat ComboBox -->
-    <SolidColorBrush x:Key="ComboBoxNormalBorderBrush" Color="#666" />
-    <SolidColorBrush x:Key="ComboBoxNormalBackgroundBrush" Color="#222" />
-    <SolidColorBrush x:Key="ComboBoxDisabledForegroundBrush" Color="#888" />
-    <SolidColorBrush x:Key="ComboBoxDisabledBackgroundBrush" Color="#eee" />
-    <SolidColorBrush x:Key="ComboBoxDisabledBorderBrush" Color="#888" />
-
     <ControlTemplate TargetType="ToggleButton" x:Key="ComboBoxToggleButtonTemplate">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -155,31 +195,31 @@
                 <ColumnDefinition Width="20" />
             </Grid.ColumnDefinitions>
             <Border Grid.ColumnSpan="2" Name="Border"
-              BorderBrush="{StaticResource ComboBoxNormalBorderBrush}" 
+              BorderBrush="Transparent" 
               CornerRadius="0" BorderThickness="1, 1, 1, 1" 
-              Background="{StaticResource ComboBoxNormalBackgroundBrush}" />
-            <Border Grid.Column="1" Margin="1, 1, 1, 1" BorderBrush="#444" Name="ButtonBorder"
+              Background="{StaticResource Overlay5}" />
+            <Border Grid.Column="1" Margin="1, 1, 1, 1" BorderBrush="Transparent" Name="ButtonBorder"
               CornerRadius="0, 0, 0, 0" BorderThickness="0, 0, 0, 0" 
-              Background="{StaticResource ComboBoxNormalBackgroundBrush}" />
+              Background="{StaticResource Overlay5}" />
 
             <Path Name="Arrow" Grid.Column="1" 
             Data="M0,0 L0,2 L4,6 L8,2 L8,0 L4,4 z"
-            HorizontalAlignment="Center" Fill="#444"
+            HorizontalAlignment="Center" Fill="{StaticResource TextLight}"
             VerticalAlignment="Center" />
         </Grid>
         <ControlTemplate.Triggers>
             <Trigger Property="UIElement.IsMouseOver" Value="True">
-                <Setter Property="Panel.Background" TargetName="ButtonBorder" Value="WhiteSmoke"/>
+                <Setter Property="Panel.Background" TargetName="ButtonBorder" Value="{StaticResource Overlay7}"/>
             </Trigger>
             <Trigger Property="ToggleButton.IsChecked" Value="True">
-                <Setter Property="Panel.Background" TargetName="ButtonBorder" Value="WhiteSmoke"/>
+                <Setter Property="Panel.Background" TargetName="ButtonBorder" Value="{StaticResource Overlay7}"/>
                 <Setter Property="Shape.Fill" TargetName="Arrow" Value="#FF8D979E"/>
             </Trigger>
             <Trigger Property="UIElement.IsEnabled" Value="False">
-                <Setter Property="Panel.Background" TargetName="Border" Value="{StaticResource ComboBoxDisabledBackgroundBrush}"/>
-                <Setter Property="Panel.Background" TargetName="ButtonBorder" Value="{StaticResource ComboBoxDisabledBackgroundBrush}"/>
-                <Setter Property="Border.BorderBrush" TargetName="ButtonBorder" Value="{StaticResource ComboBoxDisabledBorderBrush}"/>
-                <Setter Property="TextElement.Foreground" Value="{StaticResource ComboBoxDisabledForegroundBrush}"/>
+                <Setter Property="Panel.Background" TargetName="Border" Value="{StaticResource Overlay11}"/>
+                <Setter Property="Panel.Background" TargetName="ButtonBorder" Value="{StaticResource Overlay11}"/>
+                <Setter Property="Border.BorderBrush" TargetName="ButtonBorder" Value="Transparent"/>
+                <Setter Property="TextElement.Foreground" Value="{StaticResource TextDisabled}"/>
                 <Setter Property="Shape.Fill" TargetName="Arrow" Value="#999"/>
             </Trigger>
         </ControlTemplate.Triggers>
@@ -226,9 +266,9 @@
                             <Grid Name="DropDown" SnapsToDevicePixels="True"
                     MinWidth="{TemplateBinding FrameworkElement.ActualWidth}"
                     MaxHeight="{TemplateBinding ComboBox.MaxDropDownHeight}">
-                                <Border Name="DropDownBorder" Background="{StaticResource ComboBoxNormalBackgroundBrush}" Margin="0, 1, 0, 0"
+                                <Border Name="DropDownBorder" Background="{StaticResource Surface}" Margin="0, 1, 0, 0"
                         CornerRadius="0" BorderThickness="1,1,1,1" 
-                        BorderBrush="{StaticResource ComboBoxNormalBorderBrush}"/>
+                        BorderBrush="{StaticResource Overlay24}"/>
                                 <ScrollViewer Margin="4" SnapsToDevicePixels="True">
                                     <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
                                 </ScrollViewer>
@@ -240,7 +280,7 @@
                             <Setter Property="FrameworkElement.MinHeight" TargetName="DropDownBorder" Value="95"/>
                         </Trigger>
                         <Trigger Property="UIElement.IsEnabled" Value="False">
-                            <Setter Property="TextElement.Foreground" Value="{StaticResource ComboBoxDisabledForegroundBrush}"/>
+                            <Setter Property="TextElement.Foreground" Value="{StaticResource TextDisabled}"/>
                         </Trigger>
                         <Trigger Property="ItemsControl.IsGrouping" Value="True">
                             <Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
@@ -291,12 +331,9 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Thumb}">
                     <Ellipse x:Name="Ellipse"
-                 StrokeThickness="1">
-                        <Ellipse.Stroke>
-                            <SolidColorBrush Color="LightGray" />
-                        </Ellipse.Stroke>
+                 StrokeThickness="0">
                         <Ellipse.Fill>
-                            <SolidColorBrush Color="LightGray" />
+                            <SolidColorBrush Color="{StaticResource ColorPrimary}" />
                         </Ellipse.Fill>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
@@ -307,7 +344,7 @@
                     (SolidColorBrush.Color)"
                                                 Storyboard.TargetName="Ellipse">
                                             <EasingColorKeyFrame KeyTime="0"
-                                         Value="White" />
+                                         Value="{StaticResource ColorPrimary80}" />
                                         </ColorAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </VisualState>
@@ -317,7 +354,7 @@
                     (SolidColorBrush.Color)"
                                                 Storyboard.TargetName="Ellipse">
                                             <EasingColorKeyFrame KeyTime="0"
-                                         Value="LightGray" />
+                                         Value="{StaticResource ColorPrimary}" />
                                         </ColorAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </VisualState>
@@ -327,7 +364,7 @@
                     (SolidColorBrush.Color)"
                                                 Storyboard.TargetName="Ellipse">
                                             <EasingColorKeyFrame KeyTime="0"
-                                         Value="#444" />
+                                         Value="{StaticResource ColorPrimaryDisabled}" />
                                         </ColorAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </VisualState>
@@ -355,7 +392,7 @@
              Height="4"
              Visibility="Collapsed">
                 <TickBar.Fill>
-                    <SolidColorBrush Color="LightGray" />
+                    <SolidColorBrush Color="{StaticResource ColorPrimary}" />
                 </TickBar.Fill>
             </TickBar>
             <Border x:Name="TrackBackground"
@@ -363,12 +400,9 @@
             CornerRadius="2"
             Height="4"
             Grid.Row="1"
-            BorderThickness="1">
-                <Border.BorderBrush>
-                    <SolidColorBrush Color="#222" />
-                </Border.BorderBrush>
+            BorderThickness="0">
                 <Border.Background>
-                    <SolidColorBrush Color="#222" />
+                    <SolidColorBrush Color="{StaticResource ColorOverlay5}" />
                 </Border.Background>
             </Border>
             <Track Grid.Row="1"
@@ -388,7 +422,7 @@
             <TickBar x:Name="BottomTick"
              SnapsToDevicePixels="True"
              Grid.Row="2"
-             Fill="{TemplateBinding Foreground}"
+             Fill="{StaticResource Primary}"
              Placement="Bottom"
              Height="4"
              Visibility="Collapsed" />
@@ -438,11 +472,12 @@
     <SolidColorBrush x:Key="Button.Disabled.Border" Color="Transparent"/>
     <SolidColorBrush x:Key="Button.Disabled.Foreground" Color="#FF838383"/>
     <SolidColorBrush x:Key="ToggleButton.Checked.Background" Color="#222" />
+    
     <Style x:Key="ImageTextButton" TargetType="{x:Type Button}">
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
-        <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource Button.Static.Border}"/>
-        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+        <Setter Property="Background" Value="{StaticResource Overlay7}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource TextLight}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -450,7 +485,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
-                    <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="true">
+                    <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="true">
                         <ContentPresenter x:Name="contentPresenter" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -458,17 +493,17 @@
                             <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="true">
-                            <Setter Property="Background" TargetName="border" Value="{StaticResource Button.MouseOver.Background}"/>
-                            <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.MouseOver.Border}"/>
+                            <Setter Property="Background" TargetName="border" Value="{StaticResource Overlay8}"/>
+                            <Setter Property="BorderBrush" TargetName="border" Value="Transparent"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="true">
-                            <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Pressed.Background}"/>
-                            <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Pressed.Border}"/>
+                            <Setter Property="Background" TargetName="border" Value="{StaticResource Overlay5}"/>
+                            <Setter Property="BorderBrush" TargetName="border" Value="Transparent"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="false">
-                            <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Disabled.Background}"/>
-                            <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Disabled.Border}"/>
-                            <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource Button.Disabled.Foreground}"/>
+                            <Setter Property="Background" TargetName="border" Value="{StaticResource Overlay11}"/>
+                            <Setter Property="BorderBrush" TargetName="border" Value="Transparent"/>
+                            <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource TextDisabled}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -478,9 +513,9 @@
 
     <Style x:Key="ToggleTextButton" TargetType="{x:Type ToggleButton}">
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
-        <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource Button.Static.Border}"/>
-        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+        <Setter Property="Background" Value="{StaticResource Overlay7}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Primary}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextLight}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -488,26 +523,24 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ToggleButton}">
-                    <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
+                    <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5"
                                     Background="{TemplateBinding Background}">
                         <ContentPresenter x:Name="contentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter Property="Background" TargetName="border" Value="{StaticResource ToggleButton.Checked.Background}" />
+                            <Setter Property="BorderThickness" TargetName="border" Value="10,0,0,0" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="true">
-                            <Setter Property="Background" TargetName="border" Value="{StaticResource Button.MouseOver.Background}"/>
-                            <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.MouseOver.Border}"/>
+                            <Setter Property="Background" TargetName="border" Value="{StaticResource Overlay8}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="true">
-                            <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Pressed.Background}"/>
-                            <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Pressed.Border}"/>
+                            <Setter Property="Background" TargetName="border" Value="{StaticResource Overlay5}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="false">
-                            <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Disabled.Background}"/>
-                            <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Disabled.Border}"/>
-                            <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource Button.Disabled.Foreground}"/>
+                            <Setter Property="Background" TargetName="border" Value="{StaticResource Overlay11}"/>
+                            <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Primary80}"/>
+                            <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource TextDisabled}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -594,7 +627,7 @@
                               Width="9"
                               Height="5"
                               Data="M0,0 L3,0 4.5,1.5 6,0 9,0 4.5,4.5 z"
-                              Fill="#FFF"
+                              Fill="{StaticResource TextLight}"
                               Margin="0,1,0,0" />
                                             </Grid>
                                         </etk:ButtonChrome>
@@ -630,7 +663,7 @@
                      Value="False">
                             <Setter Property="Fill"
                       TargetName="Arrow"
-                      Value="#AFAFAF" />
+                      Value="{StaticResource TextLightMedium}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

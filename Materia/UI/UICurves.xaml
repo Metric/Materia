@@ -8,23 +8,23 @@
              xmlns:comp="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
              d:DesignHeight="256" d:DesignWidth="256" Loaded="UserControl_Loaded" SizeChanged="UserControl_SizeChanged">
-    <Grid MinWidth="256">
+    <Grid MinWidth="256" Background="Transparent">
         <Grid.RowDefinitions>
             <RowDefinition Height="200" />
             <RowDefinition Height="24" />
         </Grid.RowDefinitions>
-        <ComboBox Foreground="LightGray" SelectedValue="RGB" Text="RGB" Margin="5" Style="{StaticResource ComboBoxFlatStyle}" VerticalAlignment="Top" HorizontalAlignment="Left" Width="64" Name="Channels" SelectionChanged="ComboBox_SelectionChanged">
+        <ComboBox SelectedValue="RGB" Foreground="{StaticResource TextLight}" Text="RGB" Margin="5" Style="{StaticResource ComboBoxFlatStyle}" VerticalAlignment="Top" HorizontalAlignment="Left" Width="64" Name="Channels" SelectionChanged="ComboBox_SelectionChanged">
             <ComboBox.Items>
-                <ComboBoxItem Content="RGB" />
-                <ComboBoxItem Content="{x:Static p:Resources.GRAPH_Red}" />
-                <ComboBoxItem Content="{x:Static p:Resources.GRAPH_Green}" />
-                <ComboBoxItem Content="{x:Static p:Resources.GRAPH_Blue}" />
+                <ComboBoxItem Foreground="{StaticResource TextLight}" Content="RGB" />
+                <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{x:Static p:Resources.GRAPH_Red}" />
+                <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{x:Static p:Resources.GRAPH_Green}" />
+                <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{x:Static p:Resources.GRAPH_Blue}" />
             </ComboBox.Items>
         </ComboBox>
-        <Button Name="ResetButton" Click="ResetButton_Click" Background="#444" Foreground="LightGray" Content="{x:Static p:Resources.BUTTON_RESET}" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="42" Height="20" Margin="5" BorderThickness="0" Style="{StaticResource ImageTextButton}" />
+        <Button Name="ResetButton" Click="ResetButton_Click" Content="{x:Static p:Resources.BUTTON_RESET}" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="42" Height="20" Margin="5" BorderThickness="0" Style="{StaticResource ImageTextButton}" />
 
-        <ToggleButton Name="ToggleAll" Width="42" BorderThickness="0" Background="#444" Foreground="LightGray" Content="{x:Static p:Resources.BUTTON_ALL}" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Top" Height="20" Margin="5,5,50,5" Click="ToggleAll_Click" Style="{StaticResource ToggleTextButton}"></ToggleButton>
-        <Grid ClipToBounds="True" Background="#222" Name="CurveView" Margin="0,32,0,0" MouseLeave="CurveView_MouseLeave" MouseDown="CurveView_MouseDown" MouseMove="CurveView_MouseMove"  MouseUp="CurveView_MouseUp">
+        <ToggleButton Name="ToggleAll" Width="42" BorderThickness="0" Content="{x:Static p:Resources.BUTTON_ALL}" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Top" Height="20" Margin="5,5,50,5" Click="ToggleAll_Click" Style="{StaticResource ToggleTextButton}"></ToggleButton>
+        <Grid ClipToBounds="True" Background="{StaticResource Surface}" Name="CurveView" Margin="0,32,0,0" MouseLeave="CurveView_MouseLeave" MouseDown="CurveView_MouseDown" MouseMove="CurveView_MouseMove"  MouseUp="CurveView_MouseUp">
             <Image Name="CurvePixels" />
         </Grid>
         <comp:RangeSlider x:Name="ValueRange" Grid.Row="1" OnValueChanged="RangeSlider_OnValueChanged" />

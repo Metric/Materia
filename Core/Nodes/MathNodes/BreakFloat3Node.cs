@@ -31,30 +31,9 @@ namespace Materia.Nodes.MathNodes
 
             Inputs.Add(input);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
             Outputs.Add(output);
             Outputs.Add(output2);
             Outputs.Add(output3);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            Updated();
-        }
-
-        public override void TryAndProcess()
-        {
-            if (input.HasInput)
-            {
-                Process();
-            }
         }
 
         public override string GetShaderPart(string currentFrag)
@@ -64,9 +43,9 @@ namespace Materia.Nodes.MathNodes
             var s2 = shaderId + "2";
             var s3 = shaderId + "3";
 
-            var n1id = (Inputs[1].Input.Node as MathNode).ShaderId;
+            var n1id = (Inputs[1].Reference.Node as MathNode).ShaderId;
 
-            var index = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
+            var index = Inputs[1].Reference.Node.Outputs.IndexOf(Inputs[1].Reference);
 
             n1id += index;
 
@@ -78,15 +57,24 @@ namespace Materia.Nodes.MathNodes
             return compute;
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            if (input.Input.Data == null) return;
+            NodeInput input = Inputs[1];
 
-            MVector v = (MVector)input.Input.Data;
+            if (!input.IsValid) return;
 
-            output.Data = v.X;
-            output2.Data = v.Y;
-            output3.Data = v.Z;
+            try
+            {
+                MVector v = (MVector)input.Data;
+                output.Data = v.X;
+                output2.Data = v.Y;
+                output3.Data = v.Z;
+                result = v.X + "," + v.Y + "," + v.Z;
+            }
+            catch (Exception e)
+            {
+
+            }
         }
     }
 }

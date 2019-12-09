@@ -32,7 +32,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 radius = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -49,11 +49,11 @@ namespace Materia.Nodes.Atomic
             set
             {
                 outline = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
-        public CircleNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public CircleNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Circle";
 
@@ -80,40 +80,6 @@ namespace Materia.Nodes.Atomic
 
             Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-
-            Process();
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                GetParams();
-                Process();
-                return;
-            }
-
-            if (ParentGraph != null)
-            {
-                ParentGraph.Schedule(this);
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                Process();
-            }, Context);
         }
 
         private void GetParams()
@@ -123,12 +89,18 @@ namespace Materia.Nodes.Atomic
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Radius"))
             {
-                pradius = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Radius"));
+                pradius = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Radius"));
             }
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Outline"))
             {
-                poutline = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Outline"));
+                poutline = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Outline"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         float pradius;
@@ -155,9 +127,8 @@ namespace Materia.Nodes.Atomic
             previewProcessor.TileX = 1;
             previewProcessor.TileY = 1;
 
-            Updated();
             Output.Data = buffer;
-            Output.Changed();
+            TriggerTextureChange();
         }
 
         public override void Dispose()

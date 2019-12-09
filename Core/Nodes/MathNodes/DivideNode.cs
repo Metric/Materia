@@ -4,12 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Materia.MathHelpers;
+using Materia.Nodes.Helpers;
+using NLog;
 
 namespace Materia.Nodes.MathNodes
 {
     public class DivideNode : MathNode
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
         NodeOutput output;
+       
 
         public DivideNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
@@ -24,37 +28,22 @@ namespace Materia.Nodes.MathNodes
             output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
 
 
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 2; ++i)
             {
                 var input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Float Input " + i);
                 Inputs.Add(input);
-
-                input.OnInputAdded += Input_OnInputAdded;
-                input.OnInputChanged += Input_OnInputChanged;
             }
 
             Outputs.Add(output);
         }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            UpdateOutputType();
-            Updated();
-        }
-
 
         public override void UpdateOutputType()
         {
             if (Inputs.Count == 0) return;
             if (Inputs[1].HasInput && Inputs[2].HasInput)
             {
-                NodeType t1 = Inputs[1].Input.Type;
-                NodeType t2 = Inputs[2].Input.Type;
+                NodeType t1 = Inputs[1].Reference.Type;
+                NodeType t2 = Inputs[2].Reference.Type;
 
                 if (t1 == NodeType.Float && t2 == NodeType.Float)
                 {
@@ -87,57 +76,24 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        protected override void AddPlaceholderInput()
-        {
-            var input = new NodeInput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Float Input " + Inputs.Count);
-
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
-            Inputs.Add(input);
-            AddedInput(input);
-        }
-
-        public override void TryAndProcess()
-        {
-            bool hasInput = false;
-
-            foreach (NodeInput inp in Inputs)
-            {
-                if (inp != executeInput)
-                {
-                    if (inp.HasInput)
-                    {
-                        hasInput = true;
-                        break;
-                    }
-                }
-            }
-
-            if (hasInput)
-            {
-                Process();
-            }
-        }
-
         public override string GetShaderPart(string currentFrag)
         {
             if (!Inputs[1].HasInput || !Inputs[2].HasInput) return "";
 
             var s = shaderId + "1";
-            var n1id = (Inputs[1].Input.Node as MathNode).ShaderId;
-            var n2id = (Inputs[2].Input.Node as MathNode).ShaderId;
+            var n1id = (Inputs[1].Reference.Node as MathNode).ShaderId;
+            var n2id = (Inputs[2].Reference.Node as MathNode).ShaderId;
 
-            var index = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
+            var index = Inputs[1].Reference.Node.Outputs.IndexOf(Inputs[1].Reference);
 
             n1id += index;
 
-            var index2 = Inputs[2].Input.Node.Outputs.IndexOf(Inputs[2].Input);
+            var index2 = Inputs[2].Reference.Node.Outputs.IndexOf(Inputs[2].Reference);
 
             n2id += index2;
 
-            var t1 = Inputs[1].Input.Type;
-            var t2 = Inputs[2].Input.Type;
+            var t1 = Inputs[1].Reference.Type;
+            var t2 = Inputs[2].Reference.Type;
 
             if (t1 == NodeType.Float && t2 == NodeType.Float)
             {
@@ -171,122 +127,54 @@ namespace Materia.Nodes.MathNodes
             return "";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            bool hasVector = false;
+            NodeInput input = Inputs[1];
+            NodeInput input2 = Inputs[2];
 
-            foreach (NodeInput inp in Inputs)
+            if (!input.IsValid || !input2.IsValid) return;
+
+            NodeType t1 = input.Reference.Type;
+            NodeType t2 = input2.Reference.Type;
+
+            try
             {
-                if (inp != executeInput)
+                if ((t1 == NodeType.Float2 || t1 == NodeType.Float3 || t1 == NodeType.Float4) && (t2 == NodeType.Float2 || t2 == NodeType.Float3 || t2 == NodeType.Float4))
                 {
-                    if (inp.HasInput)
-                    {
-                        if (inp.Input.Data is MVector)
-                        {
-                            hasVector = true;
-                            break;
-                        }
-                    }
+                    MVector v1 = (MVector)input.Data;
+                    MVector v2 = (MVector)input2.Data;
+
+                    output.Data = v1 / v2;
                 }
+                else if((t1 == NodeType.Float2 || t1 == NodeType.Float3 || t1 == NodeType.Float4) && t2 == NodeType.Float)
+                {
+                    MVector v1 = (MVector)input.Data;
+                    float v2 = input2.Data.ToFloat();
+
+                    output.Data = v1 / v2;
+                }
+                else if(t1 == NodeType.Float && (t2 == NodeType.Float2 || t2 == NodeType.Float3 || t2 == NodeType.Float4))
+                {
+                    float v1 = input.Data.ToFloat();
+                    MVector v2 = (MVector)input2.Data;
+
+                    output.Data = v1 / v2;
+                }
+                else if(t1 == NodeType.Float && t2 == NodeType.Float)
+                {
+                    float v1 = input.Data.ToFloat();
+                    float v2 = input2.Data.ToFloat();
+
+                    output.Data = v1 / (v2 + float.Epsilon);
+                }
+
+                result = output.Data?.ToString();
+
+                UpdateOutputType();
             }
-
-            if (hasVector)
+            catch (Exception e)
             {
-                MVector v = new MVector();
-
-                int i = 0;
-                foreach (NodeInput inp in Inputs)
-                {
-                    if (inp != executeInput)
-                    {
-                        if (inp.HasInput)
-                        {
-                            object o = inp.Input.Data;
-                            if (o == null) continue;
-
-                            if (o is float || o is int || o is double || o is long)
-                            {
-                                if (i == 0)
-                                {
-                                    float f = Convert.ToSingle(o);
-                                    v.X = v.Y = v.Z = v.W = f;
-                                }
-                                else
-                                {
-                                    float f = Convert.ToSingle(o);
-                                    if (f == 0) v.X = v.Y = v.Z = v.W = 0;
-                                    else v /= f;
-                                }
-                            }
-                            else if (o is MVector)
-                            {
-                                if (i == 0)
-                                {
-
-                                    var d = (MVector)o;
-                                    v.X = d.X;
-                                    v.Y = d.Y;
-                                    v.Z = d.Z;
-                                    v.W = d.W;
-                                }
-                                else
-                                {
-                                    MVector f = (MVector)o;
-                                    v /= f;
-                                }
-                            }
-
-                            i++;
-                        }
-                    }
-                }
-
-                output.Data = v;
-            }
-            else
-            {
-                float v = 0;
-                int i = 0;
-                foreach (NodeInput inp in Inputs)
-                {
-                    if (inp != executeInput)
-                    {
-                        if (inp.HasInput)
-                        {
-                            object o = inp.Input.Data;
-                            if (o == null) continue;
-
-                            if (o is float || o is int || o is double || o is long)
-                            {
-                                if (i == 0)
-                                {
-                                    v = Convert.ToSingle(o);
-                                }
-                                else
-                                {
-                                    float f = Convert.ToSingle(o);
-                                    if (f == 0) v = 0;
-                                    else v /= f;
-                                }
-                            }
-                            i++;
-                        }
-                    }
-                }
-
-                output.Data = v;
-            }
-
-            result = output.Data.ToString();
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
+                Log.Error(e);
             }
         }
     }

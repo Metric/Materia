@@ -62,17 +62,17 @@ vec3 ToHSL(vec3 c) {
 
     float h = 0;
     float s = 0;
-    float l = (maxa + mina) * 0.5f;
+    float l = (maxa + mina) * 0.5;
 
     if (delta > 0.0001)
     {
-        if (l < 0.5f)
+        if (l < 0.5)
         {
             s = (delta / (maxa + mina));
         }
         else
         {
-            s = (delta / (2.0f - maxa - mina));
+            s = (delta / (2.0 - maxa - mina));
         }
 
         if (r == maxa)
@@ -81,11 +81,11 @@ vec3 ToHSL(vec3 c) {
         }
         else if (g == maxa)
         {
-            h = 2f + (b - r) / delta;
+            h = 2.0 + (b - r) / delta;
         }
         else if (b == maxa)
         {
-            h = 4f + (r - g) / delta;
+            h = 4.0 + (r - g) / delta;
         }
     }
 
@@ -117,23 +117,23 @@ vec3 FromHSL(vec3 c) {
     else
     {
         float t1, t2;
-        float th = H / 6.0f;
+        float th = H / 6.0;
 
-        if (L < 0.5f)
+        if (L < 0.5)
         {
-            t2 = L * (1f + S);
+            t2 = L * (1.0 + S);
         }
         else
         {
             t2 = (L + S) - (L * S);
         }
 
-        t1 = 2f * L - t2;
+        t1 = 2.0 * L - t2;
 
         float tr, tg, tb;
-        tr = th + (1f / 3f);
+        tr = th + (1.0 / 3.0);
         tg = th;
-        tb = th - (1f / 3f);
+        tb = th - (1.0 / 3.0);
 
         tr = ColorCalc(tr, t1, t2);
         tg = ColorCalc(tg, t1, t2);

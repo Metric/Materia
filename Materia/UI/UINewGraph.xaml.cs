@@ -89,21 +89,21 @@ namespace Materia.UI
         {
             OutputNode baseColor = new OutputNode(Result.DefaultTextureType);
             baseColor.Name = "Base Color";
-            baseColor.ViewOriginY = -(UINode.defaultSize + 5) * 3;
+            baseColor.ViewOriginY = -(UINode.defaultHeight + 5) * 3;
 
             Result.Add(baseColor);
 
             OutputNode metallic = new OutputNode(Result.DefaultTextureType);
             metallic.Name = "Metallic";
             metallic.OutType = OutputType.metallic;
-            metallic.ViewOriginY = -(UINode.defaultSize + 5) * 2;
+            metallic.ViewOriginY = -(UINode.defaultHeight + 5) * 2;
 
             Result.Add(metallic);
 
             OutputNode roughness = new OutputNode(Result.DefaultTextureType);
             roughness.Name = "Roughness";
             roughness.OutType = OutputType.roughness;
-            roughness.ViewOriginY = -(UINode.defaultSize + 5);
+            roughness.ViewOriginY = -(UINode.defaultHeight + 5);
 
             Result.Add(roughness);
 
@@ -117,28 +117,28 @@ namespace Materia.UI
             OutputNode ao = new OutputNode(Result.DefaultTextureType);
             ao.Name = "Occlusion";
             ao.OutType = OutputType.occlusion;
-            ao.ViewOriginY = (UINode.defaultSize + 5);
+            ao.ViewOriginY = (UINode.defaultHeight + 5);
 
             Result.Add(ao);
 
             OutputNode height = new OutputNode(Result.DefaultTextureType);
             height.Name = "Height";
             height.OutType = OutputType.height;
-            height.ViewOriginY = (UINode.defaultSize + 5) * 2;
+            height.ViewOriginY = (UINode.defaultHeight + 5) * 2;
 
             Result.Add(height);
 
             OutputNode emission = new OutputNode(Result.DefaultTextureType);
             emission.Name = "Emission";
             emission.OutType = OutputType.emission;
-            emission.ViewOriginY = (UINode.defaultSize + 5) * 3;
+            emission.ViewOriginY = (UINode.defaultHeight + 5) * 3;
 
             Result.Add(emission);
 
             OutputNode thickness = new OutputNode(Result.DefaultTextureType);
             thickness.Name = "Thickness";
             thickness.OutType = OutputType.thickness;
-            thickness.ViewOriginY = (UINode.defaultSize + 5) * 4;
+            thickness.ViewOriginY = (UINode.defaultHeight + 5) * 4;
 
             Result.Add(thickness);
         }
@@ -147,21 +147,21 @@ namespace Materia.UI
         {
             OutputNode baseColor = new OutputNode(Result.DefaultTextureType);
             baseColor.Name = "Base Color";
-            baseColor.ViewOriginY = -(UINode.defaultSize + 5) * 3;
+            baseColor.ViewOriginY = -(UINode.defaultHeight + 5) * 3;
 
             Result.Add(baseColor);
 
             OutputNode metallic = new OutputNode(Result.DefaultTextureType);
             metallic.Name = "Metallic";
             metallic.OutType = OutputType.metallic;
-            metallic.ViewOriginY = -(UINode.defaultSize + 5) * 2;
+            metallic.ViewOriginY = -(UINode.defaultHeight + 5) * 2;
 
             Result.Add(metallic);
 
             OutputNode roughness = new OutputNode(Result.DefaultTextureType);
             roughness.Name = "Roughness";
             roughness.OutType = OutputType.roughness;
-            roughness.ViewOriginY = -(UINode.defaultSize + 5);
+            roughness.ViewOriginY = -(UINode.defaultHeight + 5);
 
             Result.Add(roughness);
 
@@ -175,21 +175,21 @@ namespace Materia.UI
             OutputNode ao = new OutputNode(Result.DefaultTextureType);
             ao.Name = "Occlusion";
             ao.OutType = OutputType.occlusion;
-            ao.ViewOriginY = (UINode.defaultSize + 5);
+            ao.ViewOriginY = (UINode.defaultHeight + 5);
 
             Result.Add(ao);
 
             OutputNode emission = new OutputNode(Result.DefaultTextureType);
             emission.Name = "Emission";
             emission.OutType = OutputType.emission;
-            emission.ViewOriginY = (UINode.defaultSize + 5) * 2;
+            emission.ViewOriginY = (UINode.defaultHeight + 5) * 2;
 
             Result.Add(emission);
 
             OutputNode thickness = new OutputNode(Result.DefaultTextureType);
             thickness.Name = "Thickness";
             thickness.OutType = OutputType.thickness;
-            thickness.ViewOriginY = (UINode.defaultSize + 5) * 3;
+            thickness.ViewOriginY = (UINode.defaultHeight + 5) * 3;
 
             Result.Add(thickness);
         }
@@ -198,14 +198,14 @@ namespace Materia.UI
         {
             OutputNode baseColor = new OutputNode(Result.DefaultTextureType);
             baseColor.Name = "Base Color";
-            baseColor.ViewOriginY = -(UINode.defaultSize + 5) * 2;
+            baseColor.ViewOriginY = -(UINode.defaultHeight + 5) * 2;
 
             Result.Add(baseColor);
 
             OutputNode metallic = new OutputNode(Result.DefaultTextureType);
             metallic.Name = "Metallic";
             metallic.OutType = OutputType.metallic;
-            metallic.ViewOriginY = -(UINode.defaultSize + 5);
+            metallic.ViewOriginY = -(UINode.defaultHeight + 5);
 
             Result.Add(metallic);
 
@@ -219,7 +219,7 @@ namespace Materia.UI
             OutputNode normal = new OutputNode(Result.DefaultTextureType);
             normal.Name = "Normal";
             normal.OutType = OutputType.normal;
-            normal.ViewOriginY = (UINode.defaultSize + 5) * 2;
+            normal.ViewOriginY = (UINode.defaultHeight + 5) * 2;
 
             Result.Add(normal);
         }
@@ -229,7 +229,7 @@ namespace Materia.UI
         {
             OutputNode baseColor = new OutputNode(Result.DefaultTextureType);
             baseColor.Name = "Base Color";
-            baseColor.ViewOriginY = -(UINode.defaultSize + 5);
+            baseColor.ViewOriginY = -(UINode.defaultHeight + 5);
 
             Result.Add(baseColor);
 
@@ -243,7 +243,7 @@ namespace Materia.UI
             OutputNode roughness = new OutputNode(Result.DefaultTextureType);
             roughness.Name = "Roughness";
             roughness.OutType = OutputType.roughness;
-            roughness.ViewOriginY = (UINode.defaultSize + 5);
+            roughness.ViewOriginY = (UINode.defaultHeight + 5);
 
             Result.Add(roughness);
         }

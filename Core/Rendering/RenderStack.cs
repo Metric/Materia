@@ -29,7 +29,7 @@ namespace Materia.Rendering
         public void Process()
         {
             GLTextuer2D[] lastOuputs = null;
-            for(int i = 0; i < renderers.Count; i++)
+            for(int i = 0; i < renderers.Count; ++i)
             {
                 renderers[i].Render(lastOuputs, out lastOuputs);
             }
@@ -37,7 +37,7 @@ namespace Materia.Rendering
 
         public void Release()
         {
-            for(int i = 0; i < renderers.Count; i++)
+            for(int i = 0; i < renderers.Count; ++i)
             {
                 renderers[i].Release();
             }

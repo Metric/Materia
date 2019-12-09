@@ -15,9 +15,12 @@ using Materia.Nodes.Items;
 using NLog;
 using Materia.Nodes.MathNodes;
 using Materia.Archive;
+using Materia.Layering;
+using Materia.Textures;
+using System.Timers;
 
 namespace Materia.Nodes
-{
+{ 
     public enum NodePathType
     {
         Line = 0,
@@ -48,14 +51,22 @@ namespace Materia.Nodes
         }
     }
 
+    public enum GraphState
+    {
+        Loading,
+        Ready
+    }
+
     public class Graph : IDisposable
     {
+        public static bool ShaderLogging { get; set; }
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
         public static int[] GRAPH_SIZES = new int[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
         public const int DEFAULT_SIZE = 256;
 
         public delegate void GraphUpdate(Graph g);
+        public delegate void ParameterUpdate(GraphParameterValue p);
         public event GraphUpdate OnGraphUpdated;
         public event GraphUpdate OnGraphNameChanged;
         public event GraphParameterValue.GraphParameterUpdate OnGraphParameterUpdate;
@@ -64,15 +75,11 @@ namespace Materia.Nodes
         public event GraphUpdate OnGraphLoaded;
         public event GraphUpdate OnGraphLinesChanged;
 
+        public GraphState State { get; protected set; }
+
         public bool ReadOnly { get; set; }
 
-        public bool Synchronized { get; set; }
-        public bool IsProcessing { get; protected set; }
-
-        protected Queue<Node> TaskQueue { get; set; }
-        protected CancellationTokenSource QueueCanceller;
-        protected Task Scheduler { get; set; }
-        protected bool IsActive { get; set; }
+        public bool Modified { get; set; }
 
         public string CWD { get; set; }
         public List<Node> Nodes { get; protected set; }
@@ -107,6 +114,52 @@ namespace Materia.Nodes
         //by the user
         [Editable(ParameterInputType.MapEdit, "Promoted Functions", "Promoted Functions")]
         public Dictionary<string, FunctionGraph> ParameterFunctions { get; protected set; }
+
+        /// <summary>
+        /// this allows for a quick reference look up
+        /// of layers
+        /// </summary>
+        public Dictionary<string, Layer> LayerLookup { get; protected set; }
+
+        /// <summary>
+        /// These layers are layers that are not children
+        /// and are root layers
+        /// </summary>
+        public List<Layer> Layers { get; protected set; }
+
+        /// <summary>
+        /// This takes into account all possible
+        /// render outputs for layered rendering
+        /// </summary>
+        public Dictionary<OutputType, Node> Render { get; protected set; }
+
+        
+        /// <summary>
+        /// Helper array
+        /// to quickly go through graph instance nodes
+        /// </summary>
+        public List<GraphInstanceNode> InstanceNodes { get; set; }
+
+        /// <summary>
+        /// Helper to go through pixel processor nodes
+        /// </summary>
+        protected List<PixelProcessorNode> PixelNodes { get; set; }
+
+        public List<Node> RootNodes
+        {
+            get
+            {
+                return Nodes.FindAll(m => m.IsRoot());
+            }
+        }
+
+        public List<Node> EndNodes
+        {
+            get
+            {
+                return Nodes.FindAll(m => m.IsEnd());
+            }
+        }
 
         protected string name;
         [Editable(ParameterInputType.Text, "Name")]
@@ -164,6 +217,7 @@ namespace Materia.Nodes
                 {
                     OnHdriChanged.Invoke(this);
                 }
+                Modified = true;
             }
         }
 
@@ -205,8 +259,11 @@ namespace Materia.Nodes
                     return;
                 }
 
-                Updated();
-                TryAndProcess();
+                if (parentNode == null)
+                {
+                    Updated();
+                    TryAndProcess();
+                }
             }
         }
 
@@ -300,6 +357,14 @@ namespace Materia.Nodes
             }
         }
 
+        /// <summary>
+        /// Note this is used in function graphs
+        /// and not for image graphs
+        /// as a function graph if it does not
+        /// have a parent node
+        /// then it references the parent graph
+        /// as a custom function
+        /// </summary>
         protected Graph parentGraph;
         public Graph ParentGraph
         {
@@ -316,6 +381,34 @@ namespace Materia.Nodes
         [Editable(ParameterInputType.Toggle, "Absolute Size", "Basic")]
         public bool AbsoluteSize { get; set; }
 
+        public class GraphData
+        {
+            public string name;
+            public List<string> nodes;
+            public List<string> outputs;
+            public List<string> inputs;
+            public GraphPixelType defaultTextureType;
+            public NodePathType graphLinesDisplay;
+
+            public double shiftX;
+            public double shiftY;
+            public float zoom;
+
+            public int width;
+            public int height;
+            public bool absoluteSize;
+
+            public string hdriIndex;
+
+            public Dictionary<string, string> parameters;
+            public List<string> customParameters;
+            public List<string> customFunctions;
+            public List<string> layers;
+        }
+
+        protected List<Node> scheduledNodes;
+        public bool IsProcessing { get; protected set; }
+
         /// <summary>
         /// A graph must be instantiated on the UI / Main Thread
         /// So it can acquire the proper TaskScheduler for nodes
@@ -324,19 +417,14 @@ namespace Materia.Nodes
         /// <param name="w"></param>
         /// <param name="h"></param>
         /// <param name="async"></param>
-        public Graph(string name, int w = DEFAULT_SIZE, int h = DEFAULT_SIZE, bool async = true, Graph parent = null)
+        public Graph(string name, int w = DEFAULT_SIZE, int h = DEFAULT_SIZE)
         {
             if (Node.Context == null)
             {
                 Node.Context = TaskScheduler.FromCurrentSynchronizationContext();
             }
 
-            parentGraph = parent;
-
-            TaskQueue = new Queue<Node>();
-            QueueCanceller = new CancellationTokenSource();
-
-            Synchronized = !async;
+            State = GraphState.Ready;
 
             tempData = new Dictionary<string, Node.NodeData>();
 
@@ -346,6 +434,14 @@ namespace Materia.Nodes
             width = w;
             height = h;
 
+            scheduledNodes = new List<Node>();
+
+            PixelNodes = new List<PixelProcessorNode>();
+            InstanceNodes = new List<GraphInstanceNode>();
+
+            Layers = new List<Layer>();
+            LayerLookup = new Dictionary<string, Layer>();
+            Render = new Dictionary<OutputType, Node>();
             Variables = new Dictionary<string, VariableDefinition>();
             defaultTextureType = GraphPixelType.RGBA;
             Nodes = new List<Node>();
@@ -357,31 +453,354 @@ namespace Materia.Nodes
             CustomParameters = new List<GraphParameterValue>();
             CustomFunctions = new List<FunctionGraph>();
             ParameterFunctions = new Dictionary<string, FunctionGraph>();
+        }
 
-            if (async && parentGraph == null)
+        public void PollScheduled()
+        {
+            if (scheduledNodes.Count > 0)
             {
-                IsActive = true;
-                Scheduler = Task.Run(async () =>
+                IsProcessing = true;
+                Node n = scheduledNodes[0];
+                scheduledNodes.RemoveAt(0);
+
+                if (n == null) return;
+
+                if (!(n is GraphInstanceNode))
                 {
-                    while (IsActive)
-                    {
-                        if (TaskQueue.Count > 0)
-                        {
-                            IsProcessing = true;
+                    n.TryAndProcess();
+                }
+                else
+                {
+                    (n as GraphInstanceNode).GraphInst?.CombineLayers();
+                    n.TriggerTextureChange();
+                }
 
-                            Node n = TaskQueue.Dequeue();
-                            n.IsScheduled = false;
-                            await n.GetTask();
-                        }
-                        else
-                        {
-                            IsProcessing = false;
-                        }
-
-                        Thread.Sleep(1);
-                    }
-                }, QueueCanceller.Token);
+                n.IsScheduled = false;
             }
+            else if (IsProcessing)
+            {
+                IsProcessing = false;
+                CombineLayers();
+            }
+        }
+
+        public virtual void Schedule(Node n)
+        {
+            if (n.IsScheduled) return;
+            if (n.ParentGraph == null) return;
+            if (IsProcessing) return;
+            IsProcessing = true;
+            Task.Run(() =>
+            {
+                Node realNode = n; 
+                Queue<Node> queue = new Queue<Node>();
+                List<Node> starting = realNode.ParentGraph.EndNodes;
+
+                Node endNode = realNode;
+
+                if(starting.Contains(realNode))
+                {
+                    //if this node is an end node itself
+                    //we can ignore all other end nodes
+                    //as a point of rebuilding
+                    starting.Clear();
+                    starting.Add(realNode);
+                }
+
+                if (realNode is GraphInstanceNode)
+                {
+                    GraphInstanceNode gn = realNode as GraphInstanceNode;
+                    NodeInput inp = gn.Inputs.Find(m => m.HasInput);
+
+                    if (inp != null)
+                    {
+                        endNode = inp.ParentNode;
+                    }
+                    else
+                    {
+                        endNode = null;
+                    }
+                }
+                else
+                {
+                    endNode = realNode;
+                }
+
+                if (starting.Count > 1 || (starting.Count == 1 && starting[0] != endNode))
+                {
+                    GatherNodes(starting, queue, endNode);
+                }
+                else
+                {
+                    queue.Enqueue(endNode);
+                }
+
+                List<Node> nodesToSchedule = new List<Node>(queue.ToArray());
+                scheduledNodes?.AddRange(nodesToSchedule);
+            });
+        }
+
+        protected static List<Node> Backtrack(NodeInput n, Node endNode, HashSet<Node> inStack = null)
+        {
+            List<Node> items = new List<Node>();
+            Queue<Node> stack = new Queue<Node>();
+
+            if (inStack == null) {
+                inStack = new HashSet<Node>();
+            }
+
+            if (n.HasInput)
+            {
+                if (inStack.Contains(n.Reference.Node))
+                {
+                    return items;
+                }
+
+                if(n.Reference.ParentNode is GraphInstanceNode)
+                {
+                    GraphInstanceNode gn = n.Reference.ParentNode as GraphInstanceNode;
+                    if (!inStack.Contains(gn))
+                    { 
+                        items.Add(gn);
+                    }
+                }
+
+                inStack.Add(n.Reference.Node);
+                stack.Enqueue(n.Reference.Node);
+
+                while (stack.Count > 0)
+                {
+                    Node previous = stack.Dequeue();
+
+                    items.Add(previous);
+
+                    if (previous == endNode) break;
+
+                    if (previous.Inputs.Count > 1)
+                    {
+                        List<List<Node>> backtracks = new List<List<Node>>();
+                        for (int i = 0; i < previous.Inputs.Count; ++i)
+                        {
+                            NodeInput inp = previous.Inputs[i];
+                            List<Node> back = Backtrack(inp, endNode, inStack);
+                            if (back.Count > 0)
+                            { 
+                                backtracks.Add(back);
+                            }
+                        }
+
+                        //this handles a case where input may come
+                        //after another node in length
+                        //but inputs needs to be last
+                        if (backtracks.Count > 0)
+                        {
+                            if (backtracks[0][0] is InputNode)
+                            {
+                                backtracks.Reverse();
+                            }
+                        }
+
+                        //this handles a case where
+                        //a shorter path is actually the last path
+                        //in some cases
+                        //and in others it is the first path
+                        if (backtracks.Count >= 2)
+                        {
+                            if(backtracks[0].Count > backtracks[1].Count)
+                            {
+                                backtracks.Sort((a, b) =>
+                                {
+                                    return a.Count - b.Count;
+                                });
+                            }
+                            else
+                            {
+                                backtracks.Sort((a, b) =>
+                                {
+                                    return b.Count - a.Count;
+                                });
+                            }
+                        }
+
+                        for(int i = 0; i < backtracks.Count; ++i)
+                        {
+                            items.AddRange(backtracks[i]);
+                        }
+                    }
+                    else if(previous.Inputs.Count == 1)
+                    {
+                        NodeInput inp = previous.Inputs[0];
+
+                        if(inp.HasInput)
+                        {
+                            if (inStack.Contains(inp.Reference.Node) && inp.Reference.Node != endNode) continue;
+                            else if(inStack.Contains(inp.Reference.Node) && inp.Reference.Node == endNode)
+                            {
+                                items.Add(inp.Reference.Node);
+                                continue;
+                            }
+
+                            if (inp.Reference.ParentNode is GraphInstanceNode)
+                            {
+                                GraphInstanceNode gr = inp.Reference.ParentNode as GraphInstanceNode;
+                                if (!inStack.Contains(gr))
+                                {
+                                    items.Add(gr);
+                                }
+                            }
+
+                            inStack.Add(inp.Reference.Node);
+                            stack.Enqueue(inp.Reference.Node);
+                        }
+                    }
+                }
+            }
+
+            return items;
+        }
+
+        public static void GatherNodes(List<Node> startingNodes, Queue<Node> queue, Node endNode)
+        {
+            HashSet<Node> inStack = new HashSet<Node>();
+            Queue<Node> stack = new Queue<Node>();
+
+            for(int i = 0; i < startingNodes.Count; ++i)
+            {
+                if (startingNodes[i] is GraphInstanceNode)
+                {
+                    if (startingNodes[i].Outputs.Count > 0)
+                    {
+                        stack.Enqueue(startingNodes[i].Outputs[0].Node);
+                        inStack.Add(startingNodes[i].Outputs[0].Node);
+                    }
+                }
+                else
+                {
+                    stack.Enqueue(startingNodes[i]);
+                    inStack.Add(startingNodes[i]);
+                }
+            }
+
+            while(stack.Count > 0)
+            {
+                bool didAdd = false;
+                Node n = stack.Dequeue();
+
+                if (n.IsScheduled)
+                {
+                    continue;
+                }
+
+                List<List<Node>> backtracks = new List<List<Node>>();
+                for(int i = 0; i < n.Inputs.Count; ++i)
+                {
+                    List<Node> backs = Backtrack(n.Inputs[i], endNode, inStack);
+
+                    if(endNode != null)
+                    {
+                        if (!backs.Contains(endNode)) continue;
+                    }
+
+                    if(backs.Count > 0)
+                    {
+                        backtracks.Add(backs);
+                        didAdd = true;
+                    }
+                }
+
+                for(int i = 0; i < backtracks.Count; ++i)
+                {
+                    List<Node> backs = backtracks[i];
+                    for(int j = backs.Count - 1; j >= 0; --j)
+                    {
+                        Node next = backs[j];
+
+                        if (next.IsScheduled) continue;
+                        next.IsScheduled = true;
+
+                        //go ahead and populate params if needed
+                        if (next is GraphInstanceNode)
+                        {
+                            GraphInstanceNode gn = next as GraphInstanceNode;
+                            gn.PopulateGraphParams();
+                        }
+
+                        queue.Enqueue(next);
+                    }
+                }
+
+                if (didAdd)
+                {
+                    n.IsScheduled = true;
+                    
+                    //go ahead and populate params if needed
+                    if (n is GraphInstanceNode)
+                    {
+                        GraphInstanceNode gn = n as GraphInstanceNode;
+                        gn.PopulateGraphParams();
+                    }
+
+                    queue.Enqueue(n);
+                }
+
+                if(n is OutputNode)
+                {
+                    OutputNode op = n as OutputNode;
+                    if (op.Outputs.Count > 0)
+                    {
+                        if (op.Outputs[0].ParentNode is GraphInstanceNode)
+                        {
+                            GraphInstanceNode gn = op.Outputs[0].ParentNode as GraphInstanceNode;
+                            gn.IsScheduled = true;
+                            gn.PopulateGraphParams();
+                            queue.Enqueue(gn);
+                        }
+                    }
+                }
+            }
+        }
+
+        public virtual void CombineLayers()
+        {
+            //make sure render textures are available
+            InitializeRenderTextures();
+
+            int count = Layers.Count;
+            for(int i = count - 1; i >= 0; --i)
+            {
+                Layer l = Layers[i];
+                l.Combine(Render);
+            }
+
+            foreach(OutputNode n in Render.Values)
+            {
+                n.TriggerTextureChange();
+            }
+        }
+
+        public virtual void InitializeRenderTextures()
+        {
+            foreach(string id in OutputNodes)
+            {
+                Node n = null;
+                if (NodeLookup.TryGetValue(id, out n))
+                {
+                    OutputNode output = n as OutputNode;
+
+                    if (output == null) continue;
+
+                    //we reprocess output node here
+                    //to enusre we have latest 
+                    //data from prior node
+                    output.TryAndProcess();
+                    Render[output.OutType] = output;
+                }
+            }
+        }
+
+        public virtual bool HasVar(string k)
+        {
+            return Variables.ContainsKey(k);
         }
 
         public virtual object GetVar(string k)
@@ -394,36 +813,6 @@ namespace Materia.Nodes
             }
 
             return null;
-        }
-
-        public virtual Graph TopGraph()
-        {
-            Graph p = null;
-
-            if(parentGraph != null)
-            {
-                return parentGraph.TopGraph();
-            }
-
-            if (ParentNode != null)
-            {
-                p = ParentNode.ParentGraph;
-
-                while (p != null)
-                {
-                    var np = p.parentNode;
-                    if (np != null)
-                    {
-                        p = np.ParentGraph;
-                    }
-                    else
-                    {
-                        return p;
-                    }
-                }
-            }
-
-            return this;
         }
 
         public virtual string[] GetAvailableVariables(NodeType type)
@@ -456,10 +845,10 @@ namespace Materia.Nodes
                 return n;
             }
 
-            var graphinsts = Nodes.FindAll(m => m is GraphInstanceNode);
+            var graphinsts = InstanceNodes;
 
             //try and retrieve from graph inst
-            for(int i = 0; i < graphinsts.Count; i++)
+            for(int i = 0; i < graphinsts.Count; ++i)
             {
                 var proc = graphinsts[i] as GraphInstanceNode;
 
@@ -474,10 +863,19 @@ namespace Materia.Nodes
                 }
             }
 
-            var procnodes = Nodes.FindAll(m => m is PixelProcessorNode);
+            ////
+            ///These are no longer needed
+            ///since we no longer support
+            ///promotion of function graph constant nodes
+            ////
+            ///
+
+            /*
+
+            var procnodes = PixelNodes;
 
             //try and find in pixel processors
-            for (int i = 0; i < procnodes.Count; i++)
+            for (int i = 0; i < procnodes.Count; ++i)
             {
                 var proc = procnodes[i] as PixelProcessorNode;
 
@@ -506,14 +904,14 @@ namespace Materia.Nodes
             }
 
             //try and find in custom functions
-            for(int i = 0; i < CustomFunctions.Count; i++)
+            for(int i = 0; i < CustomFunctions.Count; ++i)
             {
                 FunctionGraph g = CustomFunctions[i];
                 if (g.NodeLookup.TryGetValue(id, out n))
                 {
                     return n;
                 }
-            }
+            }*/
 
             return null;
         }
@@ -529,49 +927,40 @@ namespace Materia.Nodes
             Variables[k] = new VariableDefinition(v, type);
         }
 
-        public class GraphData
+        public virtual Graph Top()
         {
-            public string name;
-            public List<string> nodes;
-            public List<string> outputs;
-            public List<string> inputs;
-            public GraphPixelType defaultTextureType;
-            public NodePathType graphLinesDisplay;
+            Graph g = this;
 
-            public double shiftX;
-            public double shiftY;
-            public float zoom;
+            if(g.parentGraph != null)
+            {
+                g = g.parentGraph;
+            }
 
-            public int width;
-            public int height;
-            public bool absoluteSize;
+            while(g.parentNode != null)
+            {
+                g = g.parentNode.ParentGraph;
+            }
 
-            public string hdriIndex;
-
-            public Dictionary<string, string> parameters;
-            public List<string> customParameters;
-            public List<string> customFunctions;
+            return g;
         }
 
         public virtual void TryAndProcess()
         {    
-            int c = Nodes.Count;
-            for(int i = 0; i < c; i++)
+            int c = Layers.Count;
+            for(int i = 0; i < c; ++i)
             {
-                Node n = Nodes[i];
+                Layers[i].TryAndProcess();
+            }
 
-                if(!n.IsRoot())
-                {
-                    continue;
-                }
-
-                //do not process
-                //comments / pins
-                if (n is ImageNode)
-                {
-                    n.TryAndProcess();
-                }
-            } 
+            Task.Run(() =>
+            {
+                List<Node> root = EndNodes;
+                Queue<Node> nodes = new Queue<Node>();
+                GatherNodes(root, nodes, null);
+                List<Node> nodesToSchedule = new List<Node>(nodes.ToArray());
+                Graph g = Top();
+                g.scheduledNodes.AddRange(nodesToSchedule);
+            });
         }
 
         public virtual void AssignPixelType(GraphPixelType pixel)
@@ -586,28 +975,10 @@ namespace Materia.Nodes
             }
 
             int c = Nodes.Count;
-            for(int i = 0; i < c; i++)
+            for(int i = 0; i < c; ++i)
             {
                 Node n = Nodes[i];
                 n.AssignPixelType(pixel);
-            }
-        }
-
-        public virtual void Schedule(Node n)
-        {
-            if (Synchronized) return;
-
-            if (parentGraph == null)
-            {
-                if (n != null && !n.IsScheduled)
-                {
-                    n.IsScheduled = true;
-                    TaskQueue.Enqueue(n);
-                }
-            }
-            else
-            {
-                parentGraph.Schedule(n);
             }
         }
 
@@ -625,24 +996,22 @@ namespace Materia.Nodes
 
             //need to assign to function graphs
             //and graph instances + pixel procs
-            int c = Nodes.Count;
-            for(int i = 0; i < c; i++)
+            int c = PixelNodes.Count;
+            for(int i = 0; i < c; ++i)
             {
-                Node n = Nodes[i];
-                if (n is PixelProcessorNode)
-                {
-                    PixelProcessorNode proc = n as PixelProcessorNode;
-                    proc.Function?.AssignSeed(seed);
-                }
-                else if(n is GraphInstanceNode)
-                {
-                    GraphInstanceNode inst = n as GraphInstanceNode;
-                    inst.AssignSeed(seed);
-                }
+                PixelProcessorNode proc = PixelNodes[i];
+                proc.Function?.AssignSeed(seed);
+            }
+
+            c = InstanceNodes.Count;
+            for (int i = 0; i < c; ++i)
+            {
+                GraphInstanceNode inst = InstanceNodes[i];
+                inst.AssignSeed(seed);
             }
 
             c = CustomFunctions.Count;
-            for (int i = 0; i < c; i++)
+            for (int i = 0; i < c; ++i)
             {
                 FunctionGraph g = CustomFunctions[i];
                 g.AssignSeed(seed);
@@ -677,7 +1046,7 @@ namespace Materia.Nodes
             float wp = (float)width / (float)this.width;
             float hp = (float)height / (float)this.height;
 
-            for (int i = 0; i < c; i++)
+            for (int i = 0; i < c; ++i)
             {
                 Node n = Nodes[i];
 
@@ -693,21 +1062,21 @@ namespace Materia.Nodes
                         //if not relative skip
                         if (n.AbsoluteSize) continue;
 
-                        if (n is GraphInstanceNode)
-                        {
-                            //we need to do a ResizeWith on the internal graph
-                            //of the graph instance
-                            GraphInstanceNode ginst = n as GraphInstanceNode;
-                            ginst.GraphInst.ResizeWith(fwidth, fheight);
-                        }
-
-                        //we use assign in order to avoid
-                        //triggering update event
-                        n.AssignWidth(fwidth);
-                        n.AssignHeight(fheight);
+                        n.SetSize(fwidth, fheight);
                     }
                 }
             }
+
+            //resize graph layers as well
+            c = Layers.Count;
+            for (int i = 0; i < c; ++i)
+            {
+                Layer l = Layers[i];
+
+                l.Core?.ResizeWith(width, height);
+            }
+
+            Modified = true;
         }
 
         public virtual string GetJson()
@@ -717,10 +1086,18 @@ namespace Materia.Nodes
             List<string> data = new List<string>();
 
             int count = Nodes.Count;
-            for(int i = 0; i < count; i++)
+            for(int i = 0; i < count; ++i)
             {
                 Node n = Nodes[i];
                 data.Add(n.GetJson());
+            }
+
+            List<string> layerData = new List<string>();
+            count = Layers.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                Layer l = Layers[i];
+                layerData.Add(l.GetJson());
             }
 
             d.name = Name;
@@ -739,6 +1116,7 @@ namespace Materia.Nodes
             d.customParameters = GetJsonReadyCustomParameters();
             d.customFunctions = GetJsonReadyCustomFunctions();
             d.graphLinesDisplay = graphLinesDisplay;
+            d.layers = layerData;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -748,7 +1126,7 @@ namespace Materia.Nodes
             List<string> funcs = new List<string>();
 
             int count = CustomFunctions.Count;
-            for(int i = 0; i < count; i++)
+            for(int i = 0; i < count; ++i)
             {
                 FunctionGraph f = CustomFunctions[i];
                 funcs.Add(f.GetJson());
@@ -789,7 +1167,7 @@ namespace Materia.Nodes
         {
             List<string> parameters = new List<string>();
             int count = CustomParameters.Count;
-            for(int i = 0; i < count; i++)
+            for(int i = 0; i < count; ++i)
             {
                 GraphParameterValue g = CustomParameters[i];
                 parameters.Add(g.GetJson());
@@ -802,7 +1180,7 @@ namespace Materia.Nodes
             Dictionary<string, object> parameters = new Dictionary<string, object>();
 
             int count = CustomParameters.Count;
-            for(int i = 0; i < count; i++)
+            for(int i = 0; i < count; ++i)
             {
                 var param = CustomParameters[i];
                 parameters[param.Id] = param.Value;
@@ -818,7 +1196,7 @@ namespace Materia.Nodes
                 CustomFunctions = new List<FunctionGraph>();
 
                 int fcount = functions.Count;
-                for(int i = 0; i < fcount; i++)
+                for(int i = 0; i < fcount; ++i)
                 {
                     string k = functions[i];
                     FunctionGraph g = new FunctionGraph("temp");
@@ -827,7 +1205,7 @@ namespace Materia.Nodes
                     g.FromJson(k);
                 }
 
-                for(int i = 0; i < fcount; i++)
+                for(int i = 0; i < fcount; ++i)
                 {
                     FunctionGraph g = CustomFunctions[i];
                     //set parent graph via this
@@ -889,21 +1267,7 @@ namespace Materia.Nodes
         protected virtual void SetJsonReadyParameters(Dictionary<string, string> parameters)
         { 
             if (parameters != null)
-            {
-                //remove previous listeners
-                //for function graphs
-                if (Parameters != null && Parameters.Count > 0)
-                {
-                    foreach (var param in Parameters.Values)
-                    {
-                        if(param.IsFunction())
-                        {
-                            var f = param.Value as FunctionGraph;
-                            f.OnGraphUpdated -= Graph_OnGraphUpdated;
-                        }
-                    }
-                }
-
+            { 
                 ParameterFunctions = new Dictionary<string, FunctionGraph>();
                 Parameters = new Dictionary<string, GraphParameterValue>();
 
@@ -915,6 +1279,7 @@ namespace Materia.Nodes
                     NodeLookup.TryGetValue(split[0], out n);
 
                     var param  = GraphParameterValue.FromJson(parameters[k], n);
+                    param.Key = k;
                     Parameters[k] = param;
 
                     param.ParentGraph = this;
@@ -924,7 +1289,7 @@ namespace Materia.Nodes
                     if (param.IsFunction())
                     { 
                         var f = Parameters[k].Value as FunctionGraph;
-                        f.OnGraphUpdated += Graph_OnGraphUpdated;
+                        f.AssignParentGraph(this);
                         ParameterFunctions[k] = f;
                     }
                 }
@@ -938,6 +1303,7 @@ namespace Materia.Nodes
                 p.ParentGraph = null;
                 p.OnGraphParameterUpdate -= Graph_OnGraphParameterUpdate;
                 p.OnGraphParameterTypeChanged -= Graph_OnGraphParameterTypeChanged;
+                Modified = true;
                 return true;
             }
 
@@ -955,14 +1321,15 @@ namespace Materia.Nodes
             p.ParentGraph = this;
             p.OnGraphParameterTypeChanged += Graph_OnGraphParameterTypeChanged;
             p.OnGraphParameterUpdate += Graph_OnGraphParameterUpdate;
+            Modified = true;
         } 
 
         public bool RemoveCustomFunction(FunctionGraph g)
         {
             if(CustomFunctions.Remove(g))
             {
-                g.ParentGraph = null;
-                g.OnGraphUpdated -= Graph_OnGraphUpdated;
+                g.AssignParentGraph(null);
+                Modified = true;
                 return true;
             }
 
@@ -977,8 +1344,8 @@ namespace Materia.Nodes
                 g.ParentGraph.RemoveCustomFunction(g);
             }
             CustomFunctions.Add(g);
-            g.ParentGraph = this;
-            g.OnGraphUpdated += Graph_OnGraphUpdated;
+            g.AssignParentGraph(this);
+            Modified = true;
         }
 
         protected virtual void SetJsonReadyCustomParameters(List<string> parameters)
@@ -988,7 +1355,7 @@ namespace Materia.Nodes
                 CustomParameters.Clear();
 
                 int count = parameters.Count;
-                for(int i = 0; i < count; i++)
+                for(int i = 0; i < count; ++i)
                 {
                     string k = parameters[i];
                     var param = GraphParameterValue.FromJson(k, null);
@@ -1004,6 +1371,13 @@ namespace Materia.Nodes
         {
             if (NodeLookup.ContainsKey(n.Id)) return false;
 
+            if (n.ParentGraph != null && n.ParentGraph != this)
+            {
+                n.ParentGraph.Remove(n);
+            }
+
+            n.AssignParentGraph(this);
+
             if(n is OutputNode)
             {
                 OutputNodes.Add(n.Id);
@@ -1013,17 +1387,21 @@ namespace Materia.Nodes
                 InputNodes.Add(n.Id);
             }
 
+            if(n is GraphInstanceNode)
+            {
+                InstanceNodes.Add(n as GraphInstanceNode);
+            }
+            else if(n is PixelProcessorNode)
+            {
+                PixelNodes.Add(n as PixelProcessorNode);
+            }
+
             NodeLookup[n.Id] = n;
             Nodes.Add(n);
 
-            n.OnUpdate += N_OnUpdate;
+            Modified = true;
 
             return true;
-        }
-
-        private void N_OnUpdate(Node n)
-        {
-            Updated();
         }
 
         public virtual void Remove(Node n)
@@ -1037,12 +1415,20 @@ namespace Materia.Nodes
                 InputNodes.Remove(n.Id);
             }
 
-            NodeLookup.Remove(n.Id);
-            if(Nodes.Remove(n))
+            if (n is GraphInstanceNode)
             {
-                n.OnUpdate -= N_OnUpdate;
+                InstanceNodes.Remove(n as GraphInstanceNode);
             }
+            else if(n is PixelProcessorNode)
+            {
+                PixelNodes.Remove(n as PixelProcessorNode);
+            }
+
+            n.AssignParentGraph(null);
+            NodeLookup.Remove(n.Id);
+            Nodes.Remove(n);
             n.Dispose();
+            Modified = true;
         }
 
         public virtual Node CreateNode(string type)
@@ -1052,11 +1438,10 @@ namespace Materia.Nodes
                 return null;
             }
 
-            if(type.Contains("/") || type.Contains("\\"))
+            if(type.Contains("/") || type.Contains("\\") || type.Contains("Materia::Layer::"))
             {
                 var n = new GraphInstanceNode(width, height);
-                n.ParentGraph = this;
-                n.Async = !Synchronized;
+                n.AssignParentGraph(this);
                 return n;
             }
 
@@ -1069,28 +1454,24 @@ namespace Materia.Nodes
                     {
                         var n  = new OutputNode(defaultTextureType);
                         n.AssignParentGraph(this);
-                        n.Async = !Synchronized;
                         return n;
                     }
                     else if(t.Equals(typeof(InputNode)))
                     {
                         var n = new InputNode(defaultTextureType);
                         n.AssignParentGraph(this);
-                        n.Async = !Synchronized;
                         return n;
                     }
                     else if(t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
                     {
                         Node n = (Node)Activator.CreateInstance(t);
                         n.AssignParentGraph(this);
-                        n.Async = !Synchronized;
                         return n;
                     }
                     else
                     {
                         Node n = (Node)Activator.CreateInstance(t, width, height, defaultTextureType);
                         n.AssignParentGraph(this);
-                        n.Async = !Synchronized;
                         return n;
                     }
                 }
@@ -1098,7 +1479,6 @@ namespace Materia.Nodes
                 {
                     var n = new GraphInstanceNode(width, height);
                     n.AssignParentGraph(this);
-                    n.Async = !Synchronized;
                     return n;
                 }
             }
@@ -1109,12 +1489,42 @@ namespace Materia.Nodes
             }
         }
 
+        protected virtual void LayersFromJson(GraphData d, MTGArchive archive = null)
+        {
+            if (d == null) return;
+            LayerLookup = new Dictionary<string, Layer>();
+            Layers = new List<Layer>();
+
+            if (d.layers != null)
+            {
+                foreach(string l in d.layers)
+                {
+                    Layer layer = new Layer(width, height, this);
+                    layer.FromJson(l, this, archive);
+
+                    //we do not assign layerlookup
+                    //here because layer.FromJson
+                    //handles that part
+                    //we simply need to add these
+                    //root layers to the layers array
+                    Layers.Add(layer);
+                }
+            }
+        }
+
         public virtual void FromJson(GraphData d, MTGArchive archive = null)
         {
             if (d == null) return;
 
+            Modified = true;
+
             tempData = new Dictionary<string, Node.NodeData>();
             Dictionary<string, Node> lookup = new Dictionary<string, Node>();
+
+            State = GraphState.Loading;
+
+            PixelNodes.Clear();
+            InstanceNodes.Clear();
 
             graphLinesDisplay = d.graphLinesDisplay;
             hdriIndex = d.hdriIndex;
@@ -1135,10 +1545,16 @@ namespace Materia.Nodes
             SetJsonReadyCustomParameters(d.customParameters);
             SetJsonReadyCustomFunctions(d.customFunctions);
 
+            //we load layers first
+            //since the graph may
+            //have graph instances
+            //that rely on a layer
+            LayersFromJson(d, archive);
+
             int count = d.nodes.Count;
             //parse node data
             //setup initial object instances
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; ++i)
             {
                 string s = d.nodes[i];
                 Node.NodeData nd = JsonConvert.DeserializeObject<Node.NodeData>(s);
@@ -1157,7 +1573,6 @@ namespace Materia.Nodes
                                 if (t.Equals(typeof(OutputNode)))
                                 {
                                     OutputNode n = new OutputNode(defaultTextureType);
-                                    n.Async = !Synchronized;
                                     n.AssignParentGraph(this);
                                     n.Id = nd.id;
                                     lookup[nd.id] = n;
@@ -1168,7 +1583,6 @@ namespace Materia.Nodes
                                 else if (t.Equals(typeof(InputNode)))
                                 {
                                     InputNode n = new InputNode(defaultTextureType);
-                                    n.Async = !Synchronized;
                                     n.AssignParentGraph(this);
                                     n.Id = nd.id;
                                     lookup[nd.id] = n;
@@ -1181,7 +1595,6 @@ namespace Materia.Nodes
                                     Node n = (Node)Activator.CreateInstance(t);
                                     if (n != null)
                                     {
-                                        n.Async = !Synchronized;
                                         n.AssignParentGraph(this);
                                         n.Id = nd.id;
                                         lookup[nd.id] = n;
@@ -1195,13 +1608,21 @@ namespace Materia.Nodes
                                     Node n = (Node)Activator.CreateInstance(t, nd.width, nd.height, defaultTextureType);
                                     if (n != null)
                                     {
-                                        n.Async = !Synchronized;
                                         n.AssignParentGraph(this);
                                         n.Id = nd.id;
                                         lookup[nd.id] = n;
                                         Nodes.Add(n);
                                         tempData[nd.id] = nd;
                                         LoadNode(n, s, archive);
+
+                                        if (n is GraphInstanceNode)
+                                        {
+                                            InstanceNodes.Add(n as GraphInstanceNode);
+                                        }
+                                        else if(n is PixelProcessorNode)
+                                        {
+                                            PixelNodes.Add(n as PixelProcessorNode);
+                                        }
                                     }
                                 }
                             }
@@ -1225,6 +1646,8 @@ namespace Materia.Nodes
             {
                 SetConnections();
             }
+
+            State = GraphState.Ready;
         }
 
         public void PasteParameters(Dictionary<string, string> cparams, Node.NodeData from, Node to)
@@ -1241,13 +1664,6 @@ namespace Materia.Nodes
                 {
                     GraphParameterValue gv = GraphParameterValue.FromJson(pdata, to);
                     Parameters[nid] = gv;
-
-                    //setup event handlers
-                    if(gv.IsFunction())
-                    {
-                        FunctionGraph func = gv.Value as FunctionGraph;
-                        func.OnGraphUpdated += Graph_OnGraphUpdated;
-                    }
                 }
             }
         }
@@ -1320,6 +1736,14 @@ namespace Materia.Nodes
                 {
                     fg.Calls.Add(n as CallNode);
                 }
+                else if (n is SamplerNode)
+                {
+                    fg.Samplers.Add(n as SamplerNode);
+                }
+                else if (n is ForLoopNode)
+                {
+                    fg.ForLoops.Add(n as ForLoopNode);
+                }
             }
 
             n.FromJson(data, archive);
@@ -1335,25 +1759,19 @@ namespace Materia.Nodes
             //finally after every node is populated
             //try and connect them all!
             int count = Nodes.Count;
-            for(int i = 0; i < count; i++) 
+            for(int i = 0; i < count; ++i) 
             {
                 Node n = Nodes[i];
                 Node.NodeData nd = null;
                 //we prevent the input on change event from happening
                 if (tempData.TryGetValue(n.Id, out nd))
                 {
-                    n.SetConnections(NodeLookup, nd.outputs, false);
-                    n.OnUpdate += N_OnUpdate;
+                    n.SetConnections(NodeLookup, nd.outputs, true);
                 }
             }
 
             //release temp data
             tempData.Clear();
-
-            if (this is FunctionGraph)
-            {
-                (this as FunctionGraph).UpdateOutputTypes();
-            }
 
             if (OnGraphLoaded != null)
             {
@@ -1364,7 +1782,7 @@ namespace Materia.Nodes
         public void CopyResources(string cwd, bool setCWD = false)
         {
             int count = Nodes.Count;
-            for(int i = 0; i < count; i++)
+            for(int i = 0; i < count; ++i)
             {
                 var n = Nodes[i];
                 n.CopyResources(cwd);
@@ -1383,13 +1801,12 @@ namespace Materia.Nodes
             {
                 //just a quick sanity check
                 int count = CustomParameters.Count;
-                for(int i = 0; i < count; i++) 
+                for(int i = 0; i < count; ++i) 
                 {
                     var param = CustomParameters[i];
                     if (param.IsFunction())
                     {
                         FunctionGraph fn = param.Value as FunctionGraph;
-                        fn.OnGraphUpdated -= Graph_OnGraphUpdated;
                         fn.Dispose();
                     }
                 }
@@ -1400,7 +1817,7 @@ namespace Materia.Nodes
             if(CustomFunctions != null)
             {
                 int count = CustomFunctions.Count;
-                for(int i = 0; i < count; i++)
+                for(int i = 0; i < count; ++i)
                 {
                     var f = CustomFunctions[i];
                     f.Dispose();
@@ -1416,7 +1833,6 @@ namespace Materia.Nodes
                     if(param.IsFunction())
                     {
                         FunctionGraph fn = param.Value as FunctionGraph;
-                        fn.OnGraphUpdated -= Graph_OnGraphUpdated;
                         fn.Dispose();
                     }
                 }
@@ -1425,25 +1841,22 @@ namespace Materia.Nodes
             }
         }
 
+        protected void DisposeLayers()
+        {
+            foreach(Layer l in Layers)
+            {
+                l.Dispose();
+            }
+
+            Layers.Clear();
+        }
+
         public virtual void Dispose()
         {
-            if(TaskQueue != null)
-            {
-                TaskQueue.Clear();
-            }
-
-            IsActive = false;
-
-            if(QueueCanceller != null)
-            {
-                QueueCanceller.Cancel();
-                QueueCanceller = null;
-            }
-
             if (Nodes != null)
             {
                 int count = Nodes.Count;
-                for(int i = 0; i < count; i++)
+                for(int i = 0; i < count; ++i)
                 {
                     var n = Nodes[i];
                     n.Dispose();
@@ -1451,6 +1864,8 @@ namespace Materia.Nodes
 
                 Nodes.Clear();
             }
+
+            DisposeLayers();
 
             if (NodeLookup != null)
             {
@@ -1466,6 +1881,9 @@ namespace Materia.Nodes
             {
                 InputNodes.Clear();
             }
+
+            PixelNodes.Clear();
+            InstanceNodes.Clear();
 
             ClearParameters();
         }
@@ -1522,7 +1940,14 @@ namespace Materia.Nodes
                 {
                     FunctionGraph g = p.Value as FunctionGraph;
 
-                    g.TryAndProcess();
+                    if(g.BuildAsShader)
+                    {
+                        g.ComputeResult();
+                    }
+                    else
+                    {
+                        g.TryAndProcess();
+                    }
 
                     return g.Result;
                 }
@@ -1547,9 +1972,18 @@ namespace Materia.Nodes
                 {
                     FunctionGraph g = p.Value as FunctionGraph;
 
-                    g.TryAndProcess();
+                    g.PrepareUniforms();
 
-                    if(g.Result == null)
+                    if (g.BuildAsShader)
+                    {
+                        g.ComputeResult();
+                    }
+                    else
+                    {
+                        g.TryAndProcess();
+                    }
+
+                    if (g.Result == null)
                     {
                         return default(T);
                     }
@@ -1563,6 +1997,26 @@ namespace Materia.Nodes
             }
 
             return default(T);
+        }
+
+        public void RemoveParameterValueNoDispose(string key)
+        {
+            GraphParameterValue p = null;
+            if (Parameters.TryGetValue(key, out p))
+            {
+                p.OnGraphParameterUpdate -= Graph_OnGraphParameterUpdate;
+                p.OnGraphParameterTypeChanged -= Graph_OnGraphParameterTypeChanged;
+                if (p.IsFunction())
+                {
+                    ParameterFunctions.Remove(key);
+                }
+            }
+
+            Parameters.Remove(key);
+
+            Modified = true;
+
+            Updated();
         }
 
         public void RemoveParameterValue(string id, string parameter)
@@ -1579,7 +2033,8 @@ namespace Materia.Nodes
                 if (p.IsFunction())
                 {
                     FunctionGraph g = p.Value as FunctionGraph;
-                    g.OnGraphUpdated -= Graph_OnGraphUpdated;
+                    g.AssignParentGraph(null);
+                    g.AssignParentNode(null);
                     g.Dispose();
 
                     ParameterFunctions.Remove(cid);
@@ -1587,6 +2042,8 @@ namespace Materia.Nodes
             }
 
             Parameters.Remove(cid);
+
+            Modified = true;
 
             Updated();
         }
@@ -1602,7 +2059,8 @@ namespace Materia.Nodes
                 if (p.IsFunction())
                 {
                     FunctionGraph g = p.Value as FunctionGraph;
-                    g.OnGraphUpdated -= Graph_OnGraphUpdated;
+                    g.AssignParentGraph(null);
+                    g.AssignParentNode(null);
                     g.Dispose();
                     ParameterFunctions.Remove(cid);
                 }
@@ -1657,6 +2115,7 @@ namespace Materia.Nodes
                 }
 
                 p = Parameters[cid] = new GraphParameterValue(parameter, v, "", t);
+                p.Key = cid;
                 p.ParentGraph = this;
                 p.OnGraphParameterUpdate += Graph_OnGraphParameterUpdate;
                 p.OnGraphParameterTypeChanged += Graph_OnGraphParameterTypeChanged;
@@ -1665,9 +2124,11 @@ namespace Materia.Nodes
             if (v is FunctionGraph)
             {
                 FunctionGraph vg = v as FunctionGraph;
-                vg.OnGraphUpdated += Graph_OnGraphUpdated;
+                vg.AssignParentGraph(this);
                 ParameterFunctions[cid] = vg;
             }
+
+            Modified = true;
 
             Updated();
         }
@@ -1685,19 +2146,6 @@ namespace Materia.Nodes
             if(OnGraphParameterTypeUpdate != null)
             {
                 OnGraphParameterTypeUpdate.Invoke(param);
-            }
-        }
-
-        private void Graph_OnGraphUpdated(Graph g)
-        {
-            if(g is FunctionGraph)
-            {
-                FunctionGraph fg = g as FunctionGraph;
-
-                if (fg.ParentNode != null)
-                {
-                    fg.ParentNode.TryAndProcess();
-                }
             }
         }
     }

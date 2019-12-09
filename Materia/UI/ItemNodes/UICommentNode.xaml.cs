@@ -22,8 +22,8 @@ namespace Materia.UI.ItemNodes
     /// </summary>
     public partial class UICommentNode : UserControl, IUIGraphNode
     {
-        static SolidColorBrush HighlightBrush = (SolidColorBrush) new BrushConverter().ConvertFrom("#0087e5");
-        static SolidColorBrush DefaultBrush = (SolidColorBrush)new BrushConverter().ConvertFrom("#22ffffff");
+        static SolidColorBrush HighlightBrush = (SolidColorBrush)Application.Current.Resources["Primary"];
+        static SolidColorBrush DefaultBrush = (SolidColorBrush)Application.Current.Resources["Overlay5"];
 
         const double MIN_HEIGHT = 38;
         const double MIN_WIDTH = 64;

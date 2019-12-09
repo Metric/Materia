@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Materia.Nodes.Attributes;
+using Materia.Nodes.Helpers;
 using Newtonsoft.Json;
 
 namespace Materia.Nodes.MathNodes
@@ -13,8 +14,6 @@ namespace Materia.Nodes.MathNodes
         NodeOutput output;
 
         protected bool val;
-
-        [Promote(NodeType.Bool)]
         [Editable(ParameterInputType.Toggle, "True")]
         public bool True
         {
@@ -25,8 +24,7 @@ namespace Materia.Nodes.MathNodes
             set
             {
                 val = value;
-                OnDescription(val.ToString());
-                Updated();
+                TriggerValueChange();
             }
         }
 
@@ -53,11 +51,6 @@ namespace Materia.Nodes.MathNodes
         public override string GetDescription()
         {
             return val.ToString();
-        }
-
-        public override void TryAndProcess()
-        {
-            Process();
         }
 
         public class BoolConstantData : NodeData
@@ -87,36 +80,12 @@ namespace Materia.Nodes.MathNodes
 
             bool t = val;
 
-            var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "True"))
-            {
-                t = Convert.ToBoolean(p.GetParameterValue(Id, "True"));
-            }
-
-            return "bool " + s + " = " + t.ToString().ToLower() + ";\r\n";
+            return "float " + s + " = " + (t ? 1 : 0 ) + ";\r\n";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            bool t = val;
-
-            var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "True"))
-            {
-                t = Convert.ToBoolean(p.GetParameterValue(Id, "True"));
-            }
-
-            output.Data = t;
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
+            output.Data = val ? 1 : 0;
         }
     }
 }

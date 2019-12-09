@@ -80,6 +80,7 @@
     <Compile Include="Buffers\GLElementBuffer.cs" />
     <Compile Include="Buffers\GLFrameBuffer.cs" />
     <Compile Include="Buffers\GLRenderBuffer.cs" />
+    <Compile Include="Buffers\GLShaderBuffer.cs" />
     <Compile Include="Buffers\GLUniformBuffer.cs" />
     <Compile Include="Buffers\GLVertexArray.cs" />
     <Compile Include="Geometry\FullScreenQuad.cs" />
@@ -94,6 +95,7 @@
     <Compile Include="Imaging\GLProcessing\ChannelSwitchProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\CircleProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\CurvesProcessor.cs" />
+    <Compile Include="Imaging\GLProcessing\DirectionalWarpProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\DistanceProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\EmbossProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\FXProcessor.cs" />
@@ -117,6 +119,7 @@
     <Compile Include="Imaging\GLProcessing\UniformColorProcessor.cs" />
     <Compile Include="Imaging\GLProcessing\WarpProcessor.cs" />
     <Compile Include="Imaging\RawBitmap.cs" />
+    <Compile Include="Layering\Layer.cs" />
     <Compile Include="Material\Material.cs" />
     <Compile Include="Material\PBRDepth.cs" />
     <Compile Include="Material\PBRLight.cs" />
@@ -136,6 +139,7 @@
     <Compile Include="Nodes\Atomic\ChannelSwitchNode.cs" />
     <Compile Include="Nodes\Atomic\CircleNode.cs" />
     <Compile Include="Nodes\Atomic\CurvesNode.cs" />
+    <Compile Include="Nodes\Atomic\DirectionalWarpNode.cs" />
     <Compile Include="Nodes\Atomic\DistanceNode.cs" />
     <Compile Include="Nodes\Atomic\EmbossNode.cs" />
     <Compile Include="Nodes\Atomic\FXNode.cs" />
@@ -176,6 +180,7 @@
     <Compile Include="Nodes\Helpers\Utils.cs" />
     <Compile Include="Nodes\ImageGraph.cs" />
     <Compile Include="Nodes\ImageNode.cs" />
+    <Compile Include="Nodes\ISchedulable.cs" />
     <Compile Include="Nodes\ItemNode.cs" />
     <Compile Include="Nodes\Items\CommentNode.cs" />
     <Compile Include="Nodes\Items\PinNode.cs" />
@@ -259,6 +264,7 @@
     <Compile Include="Rendering\BloomPass.cs" />
     <Compile Include="Rendering\RenderStack.cs" />
     <Compile Include="Rendering\RenderStackItem.cs" />
+    <Compile Include="Shaders\GLComputeShader.cs" />
     <Compile Include="Shaders\GLFragmentShader.cs" />
     <Compile Include="Shaders\GLGeometryShader.cs" />
     <Compile Include="Shaders\GLShaderProgram.cs" />

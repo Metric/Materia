@@ -44,8 +44,7 @@ namespace Materia.Nodes.Atomic
                 {
                     relativePath = System.IO.Path.Combine("resources", System.IO.Path.GetFileName(path));
                 }
-
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -104,7 +103,7 @@ namespace Materia.Nodes.Atomic
         private MTGArchive archive;
         private new RawBitmap brush;
 
-        public BitmapNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public BitmapNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Bitmap";
 
@@ -122,25 +121,7 @@ namespace Materia.Nodes.Atomic
             height = h;
 
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
-            Inputs = new List<NodeInput>();
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                LoadBitmap();
-                Process();
-                return;
-            }
-
-            if (ParentGraph != null)
-            {
-                ParentGraph.Schedule(this);
-            }
         }
 
         private void LoadBitmap()
@@ -204,20 +185,12 @@ namespace Materia.Nodes.Atomic
             {
                 Log.Error(e);
             }
-
-            System.GC.Collect();
         }
 
-        public override Task GetTask()
+        public override void TryAndProcess()
         {
-            return Task.Factory.StartNew(() =>
-            {
-                LoadBitmap();
-
-            }).ContinueWith(t =>
-            {
-                Process();
-            }, Context);
+            LoadBitmap();
+            Process();
         }
 
         void Process()
@@ -246,10 +219,8 @@ namespace Materia.Nodes.Atomic
             GLTextuer2D.Unbind();
 
             brush = null;
-
-            Updated();
             Output.Data = buffer;
-            Output.Changed();
+            TriggerTextureChange();
         }
 
         public class BitmapNodeData : NodeData
@@ -290,11 +261,6 @@ namespace Materia.Nodes.Atomic
             if (!Resource) return;
 
             CopyResourceTo(CWD, relativePath, path);
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            //we don't do anything here in this one
         }
 
         public override void Dispose()

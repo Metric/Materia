@@ -41,9 +41,7 @@ namespace Materia.Nodes.MathNodes
                 }
 
                 varName = value;
-                OnDescription(varName);
-                TryAndProcess();
-                Updated();
+                TriggerValueChange();
             }
         }
 
@@ -57,50 +55,18 @@ namespace Materia.Nodes.MathNodes
             Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
-            input = new NodeInput(NodeType.Bool | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any");
-            output = new NodeOutput(NodeType.Bool | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
+            input = new NodeInput(NodeType.Bool | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Matrix, this, "Any");
+            output = new NodeOutput(NodeType.Bool | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Matrix, this);
 
             Inputs.Add(input);
-
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
-
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            if(ParentGraph != null && !string.IsNullOrEmpty(varName))
-            {
-                ParentGraph.SetVar(varName, null, output.Type);
-            }
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            UpdateOutputType();
-
-            //just set the var here in case 
-            //try and process is not triggered by update
-            if (ParentGraph != null && !string.IsNullOrEmpty(varName))
-            {
-                ParentGraph.SetVar(varName, input.Input.Data, output.Type);
-            }
-
-            Updated();
         }
 
         public override void UpdateOutputType()
         {
             if(input.HasInput)
             {
-                output.Type = input.Input.Type;
+                output.Type = input.Reference.Type;
             }
         }
 
@@ -109,48 +75,14 @@ namespace Materia.Nodes.MathNodes
             return varName;
         }
 
-        public override void TryAndProcess()
-        {
-            if (input.HasInput)
-            {
-                Process();
-            }
-        }
-
-        void Process()
-        {
-            if (string.IsNullOrEmpty(varName)) return;
-
-            if(ParentGraph != null)
-            {
-                ParentGraph.SetVar(varName, input.Input.Data, output.Type);
-            }
-
-            output.Data = input.Input.Data;
-            if (output.Data != null)
-            {
-                result = output.Data.ToString();
-            }
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
-        }
-
         public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput) return "";
             if (string.IsNullOrEmpty(varName)) return "";
             var s = shaderId + "1";
-            var n1id = (input.Input.Node as MathNode).ShaderId;
-            var t = input.Input.Type;
-            var index = input.Input.Node.Outputs.IndexOf(input.Input);
+            var n1id = (input.Reference.Node as MathNode).ShaderId;
+            var t = input.Reference.Type;
+            var index = input.Reference.Node.Outputs.IndexOf(input.Reference);
 
             n1id += index;
 
@@ -166,11 +98,11 @@ namespace Materia.Nodes.MathNodes
             }
             else if(t == NodeType.Bool)
             {
-                string op = "bool " + varName + " = " + n1id + ";\r\n bool " + s + " = " + n1id + ";\r\n";
-                Regex ftest = new Regex(string.Format(FunctionArgTest, "bool " + varName), RegexOptions.Multiline);
-                if (currentFrag.IndexOf("bool " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
+                string op = "float " + varName + " = " + n1id + ";\r\n float " + s + " = " + n1id + ";\r\n";
+                Regex ftest = new Regex(string.Format(FunctionArgTest, "float " + varName), RegexOptions.Multiline);
+                if (currentFrag.IndexOf("float " + VarName + " = ") > -1 || ftest.Match(currentFrag).Success)
                 {
-                    op = varName + " = " + n1id + ";\r\n bool " + s + " = " + n1id + ";\r\n";
+                    op = varName + " = " + n1id + ";\r\n float " + s + " = " + n1id + ";\r\n";
                 }
                 return op;
             }
@@ -218,9 +150,19 @@ namespace Materia.Nodes.MathNodes
             return "";
         }
 
+        public override void TryAndProcess()
+        {
+            if (!input.IsValid) return;
+
+            UpdateOutputType();
+            output.Data = input.Data;
+            parentGraph.SetVar(varName, output.Data, output.Type);
+            result = output.Data?.ToString();
+        }
+
         public override void Dispose()
         {
-            if (ParentGraph != null)
+            if (ParentGraph != null && !string.IsNullOrEmpty(varName))
             {
                 parentGraph.RemoveVar(varName);
             }

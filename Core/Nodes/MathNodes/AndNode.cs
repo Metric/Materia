@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Materia.MathHelpers;
+using Materia.Nodes.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,84 +24,18 @@ namespace Materia.Nodes.MathNodes
 
             output = new NodeOutput(NodeType.Bool, this);
 
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 2; ++i)
             {
                 var input = new NodeInput(NodeType.Bool, this, "Bool Input " + i);
                 Inputs.Add(input);
-
-                input.OnInputAdded += Input_OnInputAdded;
-                input.OnInputChanged += Input_OnInputChanged;
-                input.OnInputRemoved += Input_OnInputRemoved;
             }
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            var noinputs = Inputs.FindAll(m => !m.HasInput);
-
-            if (noinputs != null && noinputs.Count >= 3 && Inputs.Count > 3)
-            {
-                var inp = noinputs[noinputs.Count - 1];
-
-                inp.OnInputChanged -= Input_OnInputChanged;
-                inp.OnInputRemoved -= Input_OnInputRemoved;
-                inp.OnInputAdded -= Input_OnInputAdded;
-
-                Inputs.Remove(inp);
-                RemovedInput(inp);
-            }
-
-            Updated();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            Updated();
-
-            if (!HasEmptyInput)
-            {
-                AddPlaceholderInput();
-            }
         }
 
         protected override void AddPlaceholderInput()
         {
             var input = new NodeInput(NodeType.Bool, this, "Bool Input " + Inputs.Count);
-
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
-
             Inputs.Add(input);
-            AddedInput(input);
-        }
-
-        public override void TryAndProcess()
-        {
-            bool hasInput = false;
-
-            foreach (NodeInput inp in Inputs)
-            {
-                if (inp != executeInput)
-                {
-                    if (inp.HasInput)
-                    {
-                        hasInput = true;
-                        break;
-                    }
-                }
-            }
-
-            if (hasInput)
-            {
-                Process();
-            }
         }
 
         public override string GetShaderPart(string currentFrag)
@@ -115,12 +51,12 @@ namespace Materia.Nodes.MathNodes
                 {
                     if (inp.HasInput)
                     {
-                        var index = inp.Input.Node.Outputs.IndexOf(inp.Input);
-                        var n1id = (inp.Input.Node as MathNode).ShaderId;
+                        var index = inp.Reference.Node.Outputs.IndexOf(inp.Reference);
+                        var n1id = (inp.Reference.Node as MathNode).ShaderId;
 
                         n1id += index;
 
-                        compute += sep + n1id;
+                        compute += sep + n1id + " > 0";
                         sep = " && ";
                     }
                 }
@@ -128,46 +64,30 @@ namespace Materia.Nodes.MathNodes
 
             if (string.IsNullOrEmpty(compute)) return "";
 
-            return "bool " + s + " = " + compute + ";\r\n";
+            return "float " + s + " = (" + compute + ") ? 1 : 0;\r\n";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            bool v = true;
-            foreach (NodeInput inp in Inputs)
+            bool result = true;
+            foreach(var inp in Inputs)
             {
                 if (inp != executeInput)
                 {
-                    if (inp.HasInput)
+                    if(inp.IsValid)
                     {
-                        object o = inp.Input.Data;
-                        if (o == null) continue;
-
-                        if (o is bool)
+                        float f = inp.Data.ToFloat();
+                        if (f <= 0)
                         {
-                            bool f = Convert.ToBoolean(o);
-                            if (!f)
-                            {
-                                v = false;
-                                break;
-                            }
+                            result = false;
+                            break;
                         }
                     }
                 }
             }
 
-            output.Data = v;
-            result = output.Data.ToString();
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
+            output.Data = result ? 1 : 0;
+            this.result = output.Data?.ToString();
         }
     }
 }

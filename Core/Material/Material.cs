@@ -18,6 +18,32 @@ namespace Materia.Material
         public string Name { get; set; }
         public IGLProgram Shader { get; protected set; }
 
+        public static IGLProgram CompileCompute(string shader)
+        {
+            GLComputeShader cmp = new GLComputeShader(shader);
+            string log = null;
+            if (!cmp.Compile(out log))
+            {
+                cmp.Release();
+                Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                return null;
+            }
+
+            IGLProgram program = new GLShaderProgram(true);
+            program.AttachShader(cmp);
+
+            if(!program.Link(out log))
+            {
+                program.Release();
+                Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                return null;
+            }
+
+            return program;
+        }
+
         public static IGLProgram CompileFragWithVert(string vertFile, string fragData)
         {
             string path = AppDomain.CurrentDomain.BaseDirectory;
@@ -147,6 +173,17 @@ namespace Materia.Material
             Shaders[vertexPath + tcsPath + tesPath + fragPath] = shader;
             return shader;
         }
+
+        public static string GetRawFrag(string fragFile)
+        {
+            string path = AppDomain.CurrentDomain.BaseDirectory;
+            string fragPath = Path.Combine(path, "Shaders", "Frag", fragFile);
+
+            if (!File.Exists(fragPath)) return null;
+
+            return File.ReadAllText(fragPath);
+        }
+
 
         public static IGLProgram GetShader(string vertFile, string fragFile)
         {

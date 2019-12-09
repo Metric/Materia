@@ -41,7 +41,7 @@ namespace Materia.UI.Components
 
             bool isHorizontal = Direction == Orientation.Horizontal;
 
-            for(int i = 0; i < children.Count; i++)
+            for(int i = 0; i < children.Count; ++i)
             {
                 UIElement child = children[i];
                 if (child == null) continue;

@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="42" d:DesignWidth="256" HorizontalAlignment="Stretch">
     <Grid Height="42">
-        <Grid Height="32" Margin="5,5,5,5">
+        <Grid Margin="0">
             <Grid.Background>
                 <VisualBrush TileMode="Tile" 
                              Viewport="0,0,8,8" ViewportUnits="Absolute" 
@@ -22,7 +22,7 @@
                     </VisualBrush.Visual>
                 </VisualBrush>
             </Grid.Background>
-            <Button Name="SelectColor" Click="SelectColor_Click" BorderThickness="0" Margin="0" Background="Black" Style="{StaticResource ImageTextButton}"/>
+            <Grid Name="SelectColor" Margin="0" Background="Black" MouseUp="SelectColor_MouseUp" />
         </Grid>
     </Grid>
 </UserControl>

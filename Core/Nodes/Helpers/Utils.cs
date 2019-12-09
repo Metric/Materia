@@ -48,7 +48,7 @@ namespace Materia.Nodes.Helpers
         {
             Parallel.For(yOffset, dst.Height, y =>
             {
-                for (int x = xOffset; x < dst.Width; x++)
+                for (int x = xOffset; x < dst.Width; ++x)
                 {
                     dst.SetPixel(x, y, r, g, b, a);
                 }
@@ -209,7 +209,7 @@ namespace Materia.Nodes.Helpers
                 cols.Add(c);
             }
 
-            for (int i = 0; i < pos.Count - 1; i++)
+            for (int i = 0; i < pos.Count - 1; ++i)
             {
                 float p1 = pos[i];
                 float p2 = pos[i + 1];
@@ -223,7 +223,7 @@ namespace Materia.Nodes.Helpers
                 int imin = (int)(p1 * dst.Width);
                 int imax = (int)(p2 * dst.Width);
 
-                for (int x = imin; x < imax; x++)
+                for (int x = imin; x < imax; ++x)
                 {
                     //minus 1 on imax otherwise we won't reach 1 for t
                     float t = (float)(x - imin) / (float)(imax - 1 - imin);
@@ -232,7 +232,7 @@ namespace Materia.Nodes.Helpers
                     
                     ConvertLABToRGB(ref n);
 
-                    for (int y = 0; y < dst.Height; y++)
+                    for (int y = 0; y < dst.Height; ++y)
                     {
                         dst.SetPixel(x, y, n.X, n.Y, n.Z, n.W);
                     }
@@ -282,6 +282,94 @@ namespace Materia.Nodes.Helpers
             }
 
             return false;
+        }
+
+        public static int ConvertToInt(object o)
+        {
+            if (o is int)
+            {
+                return (int)o;
+            }
+            else if(o is float)
+            {
+                float f = (float)o;
+                return (int)f;
+            }
+            else if(o is long)
+            {
+                long l = (long)o;
+                return (int)l;
+            }
+            else if(o is double)
+            {
+                double d = (double)o;
+                return (int)d;
+            }
+
+            return 0;
+        }
+
+        //these are few ms faster than Convert.To
+        //and you do not have to worry about getting a NaN
+        //may still be infinity though!
+        public static bool ConvertToBool(object o)
+        {                
+            if (o is bool)
+            {
+                return (bool)o;
+            }
+            else if(o is float)
+            {
+                float f = (float)o;
+                return f > 0;
+            }
+            else if(o is double)
+            {
+                double d = (double)o;
+                return d > 0;
+            }
+            else if(o is long)
+            {
+                long l = (long)o;
+                return l > 0;
+            }
+            else if(o is int)
+            {
+                int i = (int)o;
+                return i > 0;
+            }
+
+            return false;
+        }
+
+        public static float ConvertToFloat(object o)
+        {
+            if (o is float)
+            {
+                return (float)o;
+            }
+            else if (o is bool)
+            {
+                bool b = (bool)o;
+                return b ? 1 : 0;
+            }
+            else if (o is double)
+            {
+                double d = (double)o;
+                return (float)d;
+            }
+            else if(o is long)
+            {
+                long l = (long)o;
+                return l;
+            }
+            else if(o is int)
+            {
+                int i = (int)o;
+                return i;
+            }
+
+            return 0;
         }
     }
 }

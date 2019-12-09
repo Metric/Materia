@@ -201,7 +201,7 @@ namespace Materia.Math3D
 
                 r.X += temp * pt.X;
                 r.Y += temp * pt.Y;
-                i++;
+                ++i;
             }
 
             if (parallel == 0.0f)
@@ -243,7 +243,7 @@ namespace Materia.Math3D
 
                 r.X += temp * pt.X;
                 r.Y += temp * pt.Y;
-                i++;
+                ++i;
             }
 
             return r;

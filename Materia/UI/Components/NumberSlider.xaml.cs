@@ -42,19 +42,13 @@ namespace Materia
                 ticks = value;
                 if(ticks != null)
                 {
-                    double[] d = new double[ticks.Length];
-                    for(int i = 0; i < ticks.Length; i++)
-                    {
-                        d[i] = ticks[i];
-                    }
-
-                    SlideInput.Ticks = new DoubleCollection(d);
-                    SlideInput.IsSnapToTickEnabled = true;
+                    SlideInputM.Ticks = ticks;
+                    SlideInputM.SnapToTicks = true;
                 }
                 else
                 {
-                    SlideInput.Ticks = null;
-                    SlideInput.IsSnapToTickEnabled = false;
+                    SlideInputM.Ticks = null;
+                    SlideInputM.SnapToTicks = false;
                 }
             }
         }
@@ -71,11 +65,10 @@ namespace Materia
 
             initValue = true;
 
-            SlideInput.Minimum = min;
-
             initValue = true;
 
-            SlideInput.Maximum = max;
+            SlideInputM.MaxValue = max;
+            SlideInputM.MinValue = min;
 
             initValue = true;
 
@@ -86,7 +79,7 @@ namespace Materia
                 f = 0;
             }
 
-            SlideInput.Value = f;
+            SlideInputM.Value = f;
 
             if (IsInt)
             {
@@ -98,14 +91,15 @@ namespace Materia
             }
         }
 
-        private void SlideInput_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void SlideInputM_OnValueChanged(UI.Components.MSlider slider)
         {
+            if (!IsEnabled) return;
 
             if (!initValue)
             {
                 if (IsInt)
                 {
-                    int v = (int)SlideInput.Value;
+                    int v = (int)SlideInputM.Value;
 
                     Input.UpdateValue(NumberInputType.Int, v);
 
@@ -125,11 +119,11 @@ namespace Materia
                             property.SetValue(propertyOwner, v);
                         });
                     });
-                    
+
                 }
                 else
                 {
-                    float v = (float)SlideInput.Value;
+                    float v = (float)SlideInputM.Value;
                     Input.UpdateValue(NumberInputType.Float, v);
 
                     if (ctk != null)
@@ -151,6 +145,20 @@ namespace Materia
                 }
             }
             initValue = false;
+        }
+
+        private void Input_OnValueChanged(NumberInput input, float value)
+        {
+            if (value > SlideInputM.MaxValue)
+            {
+                SlideInputM.MaxValue = value * 2;
+            }
+            else if(value < SlideInputM.MinValue)
+            {
+                SlideInputM.MinValue = value * 2;
+            }
+
+            SlideInputM.Value = value;
         }
     }
 }

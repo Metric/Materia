@@ -739,10 +739,10 @@ namespace Materia.Math3D
 
             int icol = 0;
             int irow = 0;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 3; ++i)
             {
                 double maxPivot = 0.0;
-                for (int j = 0; j < 3; j++)
+                for (int j = 0; j < 3; ++j)
                 {
                     if (pivotIdx[j] != 0)
                     {

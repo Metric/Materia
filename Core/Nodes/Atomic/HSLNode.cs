@@ -11,6 +11,7 @@ using Materia.Nodes.Attributes;
 using Materia.GLInterfaces;
 using Materia.Textures;
 using Newtonsoft.Json;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.Atomic
 {
@@ -33,7 +34,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 hue = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -49,7 +50,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 saturation = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -65,11 +66,11 @@ namespace Materia.Nodes.Atomic
             set
             {
                 lightness = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
-        public HSLNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public HSLNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "HSL";
             Id = Guid.NewGuid().ToString();
@@ -90,46 +91,8 @@ namespace Materia.Nodes.Atomic
             input = new NodeInput(NodeType.Gray | NodeType.Color, this, "Image");
             Output = new NodeOutput(NodeType.Color, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if (!Async)
-            {
-                if (input.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
         }
 
         public override void Dispose()
@@ -143,39 +106,33 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                if (input.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
-        }
 
         private void GetParams()
         {
+            if (!input.HasInput) return;
+
             h = hue;
             s = saturation;
             l = lightness;
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Hue"))
             {
-                h = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Hue"));
+                h = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Hue"));
             }
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Saturation"))
             {
-                s = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Saturation"));
+                s = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Saturation"));
             }
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Lightness"))
             {
-                l = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Lightness"));
+                l = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Lightness"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         float h;
@@ -183,7 +140,9 @@ namespace Materia.Nodes.Atomic
         float l;
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+            if (!input.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
@@ -203,8 +162,7 @@ namespace Materia.Nodes.Atomic
             processor.Complete();
 
             Output.Data = buffer;
-            Output.Changed();
-            Updated();
+            TriggerTextureChange();
         }
 
         public class HSLData : NodeData
@@ -232,11 +190,6 @@ namespace Materia.Nodes.Atomic
             d.lightness = lightness;
 
             return JsonConvert.SerializeObject(d);
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
         }
     }
 }

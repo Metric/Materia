@@ -79,10 +79,10 @@ namespace Materia.Nodes.Helpers
             {
                 using (Font f = new Font(fontFamily, fontSize, style, GraphicsUnit.Pixel))
                 {
-                    for (int i = 0; i < lines.Length; i++)
+                    for (int i = 0; i < lines.Length; ++i)
                     {
                         string line = lines[i];
-                        for (int j = 0; j < line.Length; j++)
+                        for (int j = 0; j < line.Length; ++j)
                         {
                             string ch = line.Substring(j, 1);
                             CharData chData = null;

@@ -160,7 +160,7 @@ namespace Materia.Imaging.GLProcessing
 
             resizeProcessor.Unbind();
 
-            Blit(o, owidth, oheight);
+            Blit(o, nwidth, nheight);
         }
 
         protected void CreateBuffersIfNeeded()
@@ -182,8 +182,8 @@ namespace Materia.Imaging.GLProcessing
                 //that could be rendered into it
                 colorBuff = new GLTextuer2D(PixelInternalFormat.Rgba32f);
                 colorBuff.Bind();
-                colorBuff.SetData(new float[0], PixelFormat.Rgba, 4096, 4096);
-                colorBuff.SetFilter((int)TextureMinFilter.Nearest, (int)TextureMagFilter.Nearest);
+                colorBuff.SetData(IntPtr.Zero, PixelFormat.Rgba, 4096, 4096);
+                colorBuff.Nearest();
                 colorBuff.Repeat();
                 GLTextuer2D.Unbind();
             }
@@ -193,7 +193,7 @@ namespace Materia.Imaging.GLProcessing
                 frameBuff.Bind();
                 frameBuff.AttachColor(colorBuff);
                 frameBuff.AttachDepth(renderBuff);
-                IGL.Primary.DrawBuffer((int)DrawBufferMode.ColorAttachment0);
+                IGL.Primary.DrawBuffers(new int[] { (int)DrawBufferMode.ColorAttachment0 });
                 IGL.Primary.ReadBuffer((int)ReadBufferMode.ColorAttachment0);
 
                 if (!frameBuff.IsValid)
@@ -244,7 +244,7 @@ namespace Materia.Imaging.GLProcessing
             temp.AttachColor(colorBuff, 0);
             IGL.Primary.ReadBuffer((int)ReadBufferMode.ColorAttachment0);
             temp.AttachColor(output, 1);
-            IGL.Primary.DrawBuffer((int)DrawBufferMode.ColorAttachment1);
+            IGL.Primary.DrawBuffers(new int[] { (int)DrawBufferMode.ColorAttachment1 });
 
             if (!temp.IsValid)
             {

@@ -129,7 +129,7 @@ namespace Materia.UI.Components
             PropertyInfo[] infos = n.GetType().GetProperties();
 
             Dictionary<string, List<Tuple<PropertyInfo, EditableAttribute>>> sorter = new Dictionary<string, List<Tuple<PropertyInfo, EditableAttribute>>>();
-            for (int i = 0; i < infos.Length; i++)
+            for (int i = 0; i < infos.Length; ++i)
             {
                 EditableAttribute ed = infos[i].GetCustomAttribute<EditableAttribute>();
                 if (ed != null)

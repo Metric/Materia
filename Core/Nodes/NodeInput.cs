@@ -8,42 +8,49 @@ namespace Materia.Nodes
 {
     public class NodeInput
     {
-        public delegate void InputRemovedEvent(NodeInput n);
-        public delegate void InputAddedEvent(NodeInput n);
-        public delegate void InputChangedEvent(NodeInput n);
-
-        public event InputRemovedEvent OnInputRemoved;
-        public event InputAddedEvent OnInputAdded;
-        public event InputChangedEvent OnInputChanged;
-
+        public delegate void InputChanged(NodeInput n);
+        public event InputChanged OnInputChanged;
+        public Node ParentNode { get; protected set; }
         public Node Node { get; protected set; }
 
         public string Name { get; set; }
 
-        NodeOutput input;
-        public NodeOutput Input
+        NodeOutput reference;
+        public NodeOutput Reference
         {
             get
             {
-                return input;
+                return reference;
             }
             set
             {
-                if(value == null && input != null)
+                reference = value;
+                OnInputChanged?.Invoke(this);
+                if (Node != null)
                 {
-                    input = value;
-                    if (OnInputRemoved != null) OnInputRemoved.Invoke(this);
+                    if (Node is MathNode)
+                    {
+                        MathNode n = Node as MathNode;
+                        n.UpdateOutputType();
+                    }
+                    else
+                    {
+                        Node.TriggerValueChange();
+                    }
                 }
-                else if(value != null && input == null)
+            }
+        }
+
+        public object Data
+        {
+            get
+            {
+                if (HasInput)
                 {
-                    input = value;
-                    if (OnInputAdded != null) OnInputAdded.Invoke(this);
+                    return Reference.Data;
                 }
-                else
-                {
-                    input = value;
-                    if (OnInputAdded != null) OnInputAdded.Invoke(this);
-                }
+
+                return null;
             }
         }
 
@@ -51,30 +58,39 @@ namespace Materia.Nodes
         {
             get
             {
-                return input != null;
+                return reference != null;
+            }
+        }
+
+        public bool IsValid
+        {
+            get
+            {
+                return HasInput && Reference.Data != null;
             }
         }
 
         public NodeType Type { get; set; }
         
+        public void AssignReference(NodeOutput output)
+        {
+            reference = output;
+        }
+
         public NodeInput(NodeType t, Node n, string name = "")
         {
             Type = t;
             Name = name;
             Node = n;
+            ParentNode = n;
         }
 
-        public void AssignInput(NodeOutput oinp)
+        public NodeInput(NodeType t, Node n, Node parent, string name = "")
         {
-            input = oinp;
-        }
-
-        public void InputDataChanged()
-        {
-            if(OnInputChanged != null)
-            {
-                OnInputChanged.Invoke(this);
-            }
+            Type = t;
+            Name = name;
+            Node = n;
+            ParentNode = parent;
         }
     }
 }

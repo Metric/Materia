@@ -6,15 +6,14 @@
              xmlns:local="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Loaded="UserControl_Loaded" Unloaded="UserControl_Unloaded">
-    <StackPanel Orientation="Vertical" Background="#111" Margin="5,0,0,1">
+    <StackPanel Orientation="Vertical" Background="Transparent" Margin="5,2,5,1">
         <Grid>
-            <Button Name="RemoveParam" Width="80" Background="Transparent" HorizontalAlignment="Right" Margin="5" BorderThickness="0" Click="RemoveParam_Click" ToolTip="Remove Custom Parameter" Style="{DynamicResource ImageTextButton}">
-                <StackPanel Height="24" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Foreground="LightGray" Text="Remove" Margin="5" VerticalAlignment="Center" />
-                    <Image Source="/Materia;component/Images/minus.png" />
+            <Button Name="RemoveParam" Width="80" HorizontalAlignment="Right" Margin="0" BorderThickness="0" Height="32" Click="RemoveParam_Click" ToolTip="Remove Custom Parameter" Style="{DynamicResource ImageTextButton}">
+                <StackPanel Height="32" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Foreground="LightGray" Text="REMOVE" Margin="4" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
-            <Button x:Name="CollapsedButton" Click="CollapsedButton_Click"  Background="Transparent" BorderBrush="Transparent" Width="32" Height="32" HorizontalAlignment="Left" Style="{StaticResource ImageTextButton}">
+            <Button x:Name="CollapsedButton" Click="CollapsedButton_Click" Width="32" Height="32" HorizontalAlignment="Left" Style="{StaticResource ImageTextButton}">
                 <Image HorizontalAlignment="Left" Width="32" Height="32" Source="/Materia;component/Images/chevron_right.png" />
                 <Button.RenderTransformOrigin>
                     <Point X="0.5" Y="0.5" />
@@ -23,7 +22,7 @@
                     <RotateTransform x:Name="CollapseButtonRotation" Angle="90" />
                 </Button.RenderTransform>
             </Button>
-            <local:PropertyInput x:Name="ParamName" Margin="37,0,100,0" />
+            <local:PropertyInput VerticalAlignment="Center" Height="32" x:Name="ParamName" Margin="34,1,82,0" />
         </Grid>
         <local:ParameterMap x:Name="Params" />
         <StackPanel Orientation="Vertical">

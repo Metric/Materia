@@ -1292,11 +1292,11 @@ namespace Materia.Math3D
                                 {mat.Row3.X, mat.Row3.Y, mat.Row3.Z, mat.Row3.W} };
             int icol = 0;
             int irow = 0;
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; ++i)
             {
                 // Find the largest pivot value
                 double maxPivot = 0.0;
-                for (int j = 0; j < 4; j++)
+                for (int j = 0; j < 4; ++j)
                 {
                     if (pivotIdx[j] != 0)
                     {

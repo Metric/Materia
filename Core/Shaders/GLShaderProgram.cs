@@ -14,11 +14,14 @@ namespace Materia.Shaders
         private static ILogger Log = LogManager.GetCurrentClassLogger();
         public int Id { get; protected set; }
 
+        protected Dictionary<string, int> locations;
+
         List<IGLShader> shaders;
         bool autoReleaseShaders;
 
         public GLShaderProgram(bool autoReleaseShaders = true)
         {
+            locations = new Dictionary<string, int>();
             this.autoReleaseShaders = autoReleaseShaders;
             shaders = new List<IGLShader>();
             Id = IGL.Primary.CreateProgram();
@@ -66,63 +69,130 @@ namespace Materia.Shaders
             IGL.Primary.UseProgram(Id);
         }
 
+        public void Unbind()
+        {
+            IGL.Primary.UseProgram(0);
+        }
+
         public void SetUniformMatrix4(string name, ref Matrix4 m)
         {
-            int location = IGL.Primary.GetUniformLocation(Id, name);
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
+
             IGL.Primary.UniformMatrix4(location, ref m);
         }
 
         public void SetUniformMatrix3(string name, ref Matrix3 m)
         {
-            int location = IGL.Primary.GetUniformLocation(Id, name);
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
             IGL.Primary.UniformMatrix3(location, ref m);
         }
 
         public void UniformBlockBinding(string name, int pos)
         {
-            int index = IGL.Primary.GetUniformBlockIndex(Id, name);
-            IGL.Primary.UniformBlockBinding(Id, index, pos);
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformBlockIndex(Id, name);
+                locations[name] = location;
+            }
+
+            IGL.Primary.UniformBlockBinding(Id, location, pos);
         }
 
         public void SetUniform(string name, int i)
         {
-            int location = IGL.Primary.GetUniformLocation(Id, name);
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
             IGL.Primary.Uniform1(location, i);
         }
 
         public void SetUniform(string name, bool b)
         {
-            int location = IGL.Primary.GetUniformLocation(Id, name);
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
             IGL.Primary.Uniform1(location, b ? (int)1 : (int)0);
         }
 
         public void SetUniform(string name, uint i)
         {
-            int location = IGL.Primary.GetUniformLocation(Id, name);
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
             IGL.Primary.Uniform1(location, i);
         }
 
         public void SetUniform(string name, float f)
         {
-            int location = IGL.Primary.GetUniformLocation(Id, name);
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
             IGL.Primary.Uniform1(location, f);
         }
 
         public void SetUniform3(string name, ref Vector3 v)
         {
-            int location = IGL.Primary.GetUniformLocation(Id, name);
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
             IGL.Primary.Uniform3(location, v.X, v.Y, v.Z);
         }
 
         public void SetUniform2(string name, ref Vector2 v)
         {
-            int location = IGL.Primary.GetUniformLocation(Id, name);
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
             IGL.Primary.Uniform2(location, v.X, v.Y);
         }
 
         public void SetUniform4F(string name, ref Vector4 v)
         {
-            int location = IGL.Primary.GetUniformLocation(Id, name);
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
             IGL.Primary.Uniform4(location, v.X, v.Y, v.Z, v.W);
         }
 
@@ -132,6 +202,7 @@ namespace Materia.Shaders
             {
                 IGL.Primary.DeleteProgram(Id);
                 Id = 0;
+                locations.Clear();
             }
         }
     }

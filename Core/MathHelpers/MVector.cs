@@ -72,6 +72,76 @@ namespace Materia.MathHelpers
             this.W = w;
         }
 
+        public MVector Abs()
+        {
+            return new MVector(Math.Abs(X), Math.Abs(Y), Math.Abs(Z), Math.Abs(W));
+        }
+
+        public MVector Ceil()
+        {
+            return new MVector((float)Math.Ceiling(X), (float)Math.Ceiling(Y), (float)Math.Ceiling(Z), (float)Math.Ceiling(W));
+        }
+
+        public MVector Floor()
+        {
+            return new MVector((float)Math.Floor(X), (float)Math.Floor(Y), (float)Math.Floor(Z), (float)Math.Floor(W));
+        }
+
+        public MVector Clamp(MVector min, MVector max)
+        {
+            return new MVector(Math.Min(max.X, Math.Max(min.X, X)), Math.Min(max.Y, Math.Max(min.Y, Y)), Math.Min(max.Z, Math.Max(min.Z, Z)), Math.Min(max.W, Math.Max(min.W, W)));
+        }
+
+        public MVector Cos()
+        {
+            return new MVector((float)Math.Cos(X), (float)Math.Cos(Y), (float)Math.Cos(Z), (float)Math.Cos(W));
+        }
+
+        public MVector Sin()
+        {
+            return new MVector((float)Math.Sin(X), (float)Math.Sin(Y), (float)Math.Sin(Z), (float)Math.Sin(W));
+        }
+
+        public MVector Exp()
+        {
+            return new MVector((float)Math.Exp(X), (float)Math.Exp(Y), (float)Math.Exp(Z), (float)Math.Exp(W));
+        }
+
+        public MVector Fract()
+        {
+            return new MVector(X - (float)Math.Floor(X), Y - (float)Math.Floor(Y), Z - (float)Math.Floor(Z), W - (float)Math.Floor(W));
+        }
+
+        public MVector Mod(float m)
+        {
+            return new MVector(X % m, Y % m, Z % m, W % m);
+        }
+
+        public MVector Negate()
+        {
+            return new MVector(-X, -Y, -Z, -W);
+        }
+
+        public MVector Round()
+        {
+            return new MVector((float)Math.Round(X), (float)Math.Round(Y), (float)Math.Round(Z), (float)Math.Round(W));
+        }
+
+        public MVector Sqrt()
+        {
+            return new MVector((float)Math.Sqrt(X), (float)Math.Sqrt(Y), (float)Math.Sqrt(Z), (float)Math.Sqrt(W));
+        }
+
+        public float Distance(MVector v)
+        {
+            float dx = X - v.X;
+            float dy = Y - v.Y;
+            float dz = Z - v.Z;
+            float dw = W - v.W;
+
+            return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz + dw * dw);
+        }
+
         public void Normalize()
         {
             if (LengthSqr == 0) return;

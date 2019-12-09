@@ -50,11 +50,6 @@ namespace Materia.Nodes
             public string content;
         }
 
-        public override Task GetTask()
-        {
-            return null;
-        }
-
         /// <summary>
         /// Use this to set content
         /// and not trigger the OnItemContentChanged event
@@ -83,11 +78,6 @@ namespace Materia.Nodes
             FillBaseNodeData(d);
             d.content = content;
             return JsonConvert.SerializeObject(d);
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            //do nothing here
         }
     }
 }

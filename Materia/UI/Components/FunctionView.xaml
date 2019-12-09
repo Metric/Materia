@@ -6,19 +6,18 @@
              xmlns:local="clr-namespace:Materia.UI.Components"
              xmlns:p="clr-namespace:Materia.Properties"
              mc:Ignorable="d" 
-             d:DesignHeight="50" d:DesignWidth="800" HorizontalAlignment="Stretch">
-    <StackPanel Orientation="Vertical" Background="#111" Margin="5,0,0,1">
+             d:DesignHeight="32" Height="34" d:DesignWidth="800" HorizontalAlignment="Stretch">
+    <Grid Background="Transparent" Margin="5,2,5,1">
         <Grid HorizontalAlignment="Stretch">
-            <Button Name="RemoveFunction" Width="80" Background="Transparent" HorizontalAlignment="Right" Margin="5" BorderThickness="0" Click="RemoveFunction_Click"  ToolTip="{x:Static p:Resources.TIP_REMOVE_CUSTOM_FUNCTION}" Style="{DynamicResource ImageTextButton}">
-                <StackPanel Height="24" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock MaxWidth="46" Foreground="LightGray" Text="{x:Static p:Resources.BUTTON_REMOVE}" Margin="5" VerticalAlignment="Center" />
-                    <Image Source="/Materia;component/Images/minus.png" />
+            <Button Name="RemoveFunction" Width="80" HorizontalAlignment="Right" BorderThickness="0" Click="RemoveFunction_Click" Height="32"  ToolTip="{x:Static p:Resources.TIP_REMOVE_CUSTOM_FUNCTION}" Style="{DynamicResource ImageTextButton}">
+                <StackPanel Height="32" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock MaxWidth="46" Foreground="{StaticResource TextLight}" Text="{x:Static p:Resources.BUTTON_REMOVE}" Margin="4" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
-            <Button Name="EditFunc" Click="EditFunc_Click" BorderThickness="0" Foreground="LightGray" HorizontalAlignment="Left" ToolTip="{x:Static p:Resources.TIP_EDIT_FUNCTION}" Width="32" Height="32" Margin="5" Style="{StaticResource ImageTextButton}">
-                <Image Source="/Materia;component/Images/functionedit.png" />
+            <Button Name="EditFunc" Click="EditFunc_Click" BorderThickness="0" HorizontalAlignment="Left" ToolTip="{x:Static p:Resources.TIP_EDIT_FUNCTION}" Width="32" Height="32" Style="{StaticResource ImageTextButton}">
+                <Image Source="/Materia;component/Images/functionedit.png" Margin="4" />
             </Button>
-            <local:PropertyInput x:Name="FuncName" Margin="42,0,100,0" />
+            <local:PropertyInput x:Name="FuncName" Height="32" Margin="34,0,82,0" />
         </Grid>
-    </StackPanel>
+    </Grid>
 </UserControl>

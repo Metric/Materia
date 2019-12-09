@@ -1370,7 +1370,7 @@ namespace Materia.Math3D
                     {
                         det = 1.0f / det;
 
-                        for (int i = 0; i < 16; i++)
+                        for (int i = 0; i < 16; ++i)
                             invOut[i] = inv[i] * det;
                     }
                 }

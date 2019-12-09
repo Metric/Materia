@@ -47,6 +47,10 @@ namespace Materia.Imaging.GLProcessing
                 {
                     tempColor.SetSwizzleLuminance();
                 }
+                else if(tex.IsRGBBased)
+                {
+                    tempColor.SetSwizzleRGB();
+                }
                 tempColor.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
                 GLTextuer2D.Unbind();
                 tempColor2.Bind();
@@ -54,6 +58,10 @@ namespace Materia.Imaging.GLProcessing
                 if (tex2.InternalFormat == PixelInternalFormat.R16f || tex2.InternalFormat == PixelInternalFormat.R32f)
                 {
                     tempColor2.SetSwizzleLuminance();
+                }
+                else if (tex.IsRGBBased)
+                {
+                    tempColor.SetSwizzleRGB();
                 }
                 tempColor2.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
                 GLTextuer2D.Unbind();

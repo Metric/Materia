@@ -40,7 +40,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 points = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -56,8 +56,9 @@ namespace Materia.Nodes.Atomic
                 if (minValue != value)
                 {
                     minValue = Math.Min(1, Math.Max(0, value));
-                    TryAndProcess();
                 }
+
+                TriggerValueChange();
             }
         }
 
@@ -73,12 +74,12 @@ namespace Materia.Nodes.Atomic
                 if (maxValue != value)
                 {
                     maxValue = Math.Min(1, Math.Max(0, value));
-                    TryAndProcess();
                 }
+                TriggerValueChange();
             }
         }
 
-        public CurvesNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public CurvesNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Curves";
             Id = Guid.NewGuid().ToString();
@@ -120,53 +121,8 @@ namespace Materia.Nodes.Atomic
             input = new NodeInput(NodeType.Color | NodeType.Gray, this, "Image Input");
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
-
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            Output.Data = null;
-            Output.Changed();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                if(input.HasInput)
-                {
-                    FillLUT();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
         }
 
         List<Point> GetNormalizedCurve(List<Point> pts)
@@ -177,7 +133,7 @@ namespace Materia.Nodes.Atomic
             int w = 255;
             int h = 255;
 
-            for(int i = 0; i < pts.Count; i++)
+            for(int i = 0; i < pts.Count; ++i)
             {
                 Point p = pts[i];
                 points.Add(new Point(p.X * w, p.Y * h));
@@ -210,12 +166,12 @@ namespace Materia.Nodes.Atomic
 
             double[] sd = Curves.SecondDerivative(points.ToArray());
 
-            for (int i = 0; i < points.Count - 1; i++)
+            for (int i = 0; i < points.Count - 1; ++i)
             {
                 Point cur = points[i];
                 Point next = points[i + 1];
 
-                for (double x = cur.X; x < next.X; x++)
+                for (double x = cur.X; x < next.X; ++x)
                 {
                     double t = (double)(x - cur.X) / (next.X - cur.X);
 
@@ -242,24 +198,26 @@ namespace Materia.Nodes.Atomic
 
         private void FillLUT()
         {
+            if (!input.HasInput) return;
+
             try
             {
                 List<Point> mids = GetNormalizedCurve(points[0]);
                 List<Point> reds = GetNormalizedCurve(points[1]);
                 List<Point> greens = GetNormalizedCurve(points[2]);
                 List<Point> blues = GetNormalizedCurve(points[3]);
-                for (int j = 0; j < reds.Count; j++)
+                for (int j = 0; j < reds.Count; ++j)
                 {
                     Point p = reds[j];
                     int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
-                    for (int i = 0; i < 2; i++)
+                    for (int i = 0; i < 2; ++i)
                     {
                         int idx2 = (x + i * 256) * 4;
                         lutBrush.Image[idx2] = Math.Min(1, Math.Max(0, (float)p.Y * (maxValue - minValue) + minValue));
                     }
                 }
 
-                for (int j = 0; j < greens.Count; j++)
+                for (int j = 0; j < greens.Count; ++j)
                 {
                     Point p = greens[j];
                     int x = 255 -(int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
@@ -270,7 +228,7 @@ namespace Materia.Nodes.Atomic
                     }
                 }
 
-                for (int j = 0; j < blues.Count; j++)
+                for (int j = 0; j < blues.Count; ++j)
                 {
                     Point p = blues[j];
                     int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
@@ -281,7 +239,7 @@ namespace Materia.Nodes.Atomic
                     }
                 }
 
-                for (int j = 0; j < mids.Count; j++)
+                for (int j = 0; j < mids.Count; ++j)
                 {
                     Point p = mids[j];
                     int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.X * 255)));
@@ -298,24 +256,17 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        public override Task GetTask()
+        public override void TryAndProcess()
         {
-            return Task.Factory.StartNew(() =>
-            {
-                FillLUT();
-            })
-            .ContinueWith(t =>
-            {
-                if(input.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
+            FillLUT();
+            Process();
         }
 
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+            if (!input.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
@@ -331,9 +282,8 @@ namespace Materia.Nodes.Atomic
             processor.Process(width, height, i1, buffer);
             processor.Complete();
 
-            Updated();
             Output.Data = buffer;
-            Output.Changed();
+            TriggerTextureChange();
         }
 
         public override void Dispose()
@@ -405,11 +355,6 @@ namespace Materia.Nodes.Atomic
             } 
 
             return JsonConvert.SerializeObject(d);
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
         }
     }
 }

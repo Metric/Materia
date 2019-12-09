@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Materia.MathHelpers;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -27,37 +28,14 @@ namespace Materia.Nodes.MathNodes
 
             Inputs.Add(input);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
             Outputs.Add(output);
-        }
-
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            UpdateOutputType();
-            Updated();
         }
 
         public override void UpdateOutputType()
         {
             if(input.HasInput)
             {
-                output.Type = input.Input.Type;
-            }
-        }
-
-        public override void TryAndProcess()
-        {
-            if (input.HasInput)
-            {
-                Process();
+                output.Type = input.Reference.Type;
             }
         }
 
@@ -65,25 +43,25 @@ namespace Materia.Nodes.MathNodes
         {
             if (!input.HasInput) return "";
             var s = shaderId + "1";
-            var n1id = (input.Input.Node as MathNode).ShaderId;
+            var n1id = (input.Reference.Node as MathNode).ShaderId;
 
-            var index = input.Input.Node.Outputs.IndexOf(input.Input);
+            var index = input.Reference.Node.Outputs.IndexOf(input.Reference);
 
             n1id += index;
 
-            if (input.Input.Type == NodeType.Float4)
+            if (input.Reference.Type == NodeType.Float4)
             {
                 return "vec4 " + s + " = fract(" + n1id + ");\r\n";
             }
-            else if (input.Input.Type == NodeType.Float3)
+            else if (input.Reference.Type == NodeType.Float3)
             {
                 return "vec3 " + s + " = fract(" + n1id + ");\r\n";
             }
-            else if (input.Input.Type == NodeType.Float2)
+            else if (input.Reference.Type == NodeType.Float2)
             {
                 return "vec2 " + s + " = fract(" + n1id + ");\r\n";
             }
-            else if (input.Input.Type == NodeType.Float)
+            else if (input.Reference.Type == NodeType.Float)
             {
                 return "float " + s + " = fract(" + n1id + ");\r\n";
             }
@@ -91,45 +69,33 @@ namespace Materia.Nodes.MathNodes
             return "";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            if (input.Input.Data == null) return;
+            if (!input.IsValid) return;
 
-            object o = input.Input.Data;
+            NodeType t = input.Reference.Type;
 
-            if (o is float || o is int || o is double || o is long)
+            try
             {
-                float v = Convert.ToSingle(o);
-
-                output.Data = v - (float)Math.Floor(v);
-            }
-            else if (o is MVector)
-            {
-                MVector v = (MVector)o;
-                MVector d = new MVector();
-                d.X = v.X - (float)Math.Floor(v.X);
-                d.Y = v.Y - (float)Math.Floor(v.Y);
-                d.Z = v.Z - (float)Math.Floor(v.Z);
-                d.W = v.W - (float)Math.Floor(v.W);
-
-                output.Data = d;
-            }
-            else
-            {
-                output.Data = 0;
-            }
-
-            result = output.Data.ToString();
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
+                if (t == NodeType.Float2 || t == NodeType.Float3 || t == NodeType.Float4)
                 {
-                    g.Result = output.Data;
+                    MVector v = (MVector)input.Data;
+                    output.Data = v.Fract();
                 }
+                else if (t == NodeType.Float)
+                {
+                    float f = input.Data.ToFloat();
+                    output.Data = f - (float)Math.Floor(f);
+                }
+
+                result = output.Data?.ToString();
             }
+            catch (Exception e)
+            {
+
+            }
+
+            UpdateOutputType();
         }
     }
 }

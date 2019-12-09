@@ -491,9 +491,9 @@ namespace Materia.Imaging
 
         public void CopyFromBitmap(Bitmap src)
         {
-            for(int y = 0; y < Height; y++)
+            for(int y = 0; y < Height; ++y)
             {
-                for(int x = 0; x < Width; x++)
+                for(int x = 0; x < Width; ++x)
                 {
                     Color c = src.GetPixel(x, y);
                     IntColor ic = IntColor.FromArgb(c.A, c.R, c.G, c.B);

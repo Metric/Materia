@@ -86,9 +86,9 @@ namespace DDSReader.Internal.Decoders
                     }
 
                     var k = 0;
-                    for (var j = 0; j < 4; j++)
+                    for (var j = 0; j < 4; ++j)
                     {
-                        for (var i = 0; i < 4; i++, k++)
+                        for (var i = 0; i < 4; ++i, ++k)
                         {
                             // Complicated way of saying get the two bits at index k * 2 in bitmask
                             var select = (uint)((bitmask & (0x03 << k * 2)) >> k * 2);
@@ -181,9 +181,9 @@ namespace DDSReader.Internal.Decoders
                     }
 
                     var k = 0;
-                    for (var j = 0; j < 4; j++)
+                    for (var j = 0; j < 4; ++j)
                     {
-                        for (var i = 0; i < 4; i++, k++)
+                        for (var i = 0; i < 4; ++i, ++k)
                         {
                             // Complicated way of saying get the two bits at index k * 2 in bitmask
                             var select = (uint) ((bitmask & (0x03 << k * 2)) >> k * 2);

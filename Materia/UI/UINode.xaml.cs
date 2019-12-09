@@ -29,9 +29,6 @@ namespace Materia
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
-        static SolidColorBrush HighlightBrush = (SolidColorBrush)new BrushConverter().ConvertFrom("#0087e5");
-        static SolidColorBrush DefaultBrush = new SolidColorBrush(Colors.Black);
-
         double xShift;
         double yShift;
 
@@ -39,7 +36,6 @@ namespace Materia
         double originY;
 
         double scale;
-
         public double Scale
         {
             get
@@ -64,7 +60,8 @@ namespace Materia
         public List<UINodePoint> InputNodes { get; set; }
         public List<UINodePoint> OutputNodes { get; set; }
 
-        public const double defaultSize = 100;
+        public const double defaultHeight = 50;
+        public const double defaultWidth = 120;
 
         public Rect UnscaledBounds
         {
@@ -135,7 +132,7 @@ namespace Materia
 
             NodeName.Text = n.Name;
 
-            for(int i = 0; i < n.Outputs.Count; i++)
+            for(int i = 0; i < n.Outputs.Count; ++i)
             {
                 NodeOutput op = n.Outputs[i];
                 UINodePoint outpoint = new UINodePoint(this, graph);
@@ -145,7 +142,7 @@ namespace Materia
                 OutputStack.Children.Add(outpoint);
             }
 
-            for(int i = 0; i < n.Inputs.Count; i++)
+            for(int i = 0; i < n.Inputs.Count; ++i)
             {
                 NodeInput inp = n.Inputs[i];
                 UINodePoint inputpoint = new UINodePoint(this, graph);
@@ -155,18 +152,26 @@ namespace Materia
                 InputNodes.Add(inputpoint);
             }
 
-            n.OnNameUpdate += N_OnNameUpdate;
             n.OnInputAddedToNode += N_OnInputAddedToNode;
             n.OnInputRemovedFromNode += N_OnInputRemovedFromNode;
             n.OnOutputAddedToNode += N_OnOutputAddedToNode;
             n.OnOutputRemovedFromNode += N_OnOutputRemovedFromNode;
-            n.OnDescriptionChanged += N_OnDescriptionChanged;
+            n.OnTextureChanged += N_OnTextureChanged;
+            n.OnValueUpdated += N_OnValueUpdated;
 
             if(n is MathNode)
             {
-                DescPreview.Visibility = Visibility.Visible;
+                Desc.Visibility = Visibility.Visible;
                 Desc.Text = n.GetDescription();
-                LoadIcon();
+
+                if(string.IsNullOrEmpty(Desc.Text))
+                {
+                    Desc.Visibility = Visibility.Collapsed;
+                }
+            }
+            else
+            {
+                Desc.Visibility = Visibility.Collapsed;
             }
 
             if(graph.Graph is FunctionGraph)
@@ -177,11 +182,9 @@ namespace Materia
                 if(n == f.OutputNode)
                 {
                     OutputIcon.Visibility = Visibility.Visible;
-                    DescPreview.Background = HighlightBrush;
                 }
                 else
                 {
-                    DescPreview.Background = DefaultBrush;
                     OutputIcon.Visibility = Visibility.Collapsed;
                 }
 
@@ -216,23 +219,33 @@ namespace Materia
             }
         }
 
+        private void N_OnValueUpdated(Node n)
+        {
+            if (n is MathNode)
+            {
+                Desc.Text = n.GetDescription();
+
+                if (string.IsNullOrEmpty(Desc.Text))
+                {
+                    Desc.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    Desc.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
         private void F_OnOutputSet(Node n)
         {
             if(n == Node)
             {
                 OutputIcon.Visibility = Visibility.Visible;
-                DescPreview.Background = HighlightBrush;
             }
             else
             {
                 OutputIcon.Visibility = Visibility.Collapsed;
-                DescPreview.Background = DefaultBrush;
             }
-        }
-
-        private void N_OnDescriptionChanged(Node n, string desc)
-        {
-            Desc.Text = desc;
         }
 
         private void N_OnOutputRemovedFromNode(Node n, NodeOutput inp, NodeOutput previous = null)
@@ -248,8 +261,6 @@ namespace Materia
                 OutputStack.Children.Remove(uinp);
                 OutputNodes.Remove(uinp);
             }
-
-            ResizeHeight();
         }
 
         private void N_OnOutputAddedToNode(Node n, NodeOutput inp, NodeOutput previous = null)
@@ -261,7 +272,13 @@ namespace Materia
             OutputStack.Children.Add(outpoint);
             outpoint.UpdateColor();
 
-            ResizeHeight();
+            if(previous != null)
+            {
+                foreach(var cinp in inp.To)
+                {
+                    LoadConnection(cinp.Node.Id);
+                }
+            }
         }
 
         private void N_OnInputRemovedFromNode(Node n, NodeInput inp, NodeInput previous = null)
@@ -277,8 +294,6 @@ namespace Materia
                 InputStack.Children.Remove(uinp);
                 InputNodes.Remove(uinp);
             }
-
-            ResizeHeight();
         }
 
         private void N_OnInputAddedToNode(Node n, NodeInput inp, NodeInput previous = null)
@@ -315,13 +330,6 @@ namespace Materia
             {
                 N_OnInputRemovedFromNode(n, previous);
             }
-           
-            ResizeHeight();
-        }
-
-        private void N_OnNameUpdate(Node n)
-        {
-            NodeName.Text = n.Name;
         }
 
         void UpdateViewArea()
@@ -332,15 +340,6 @@ namespace Materia
             g.Children.Add(new TranslateTransform(t.Left, t.Top));
 
             RenderTransform = g;
-        }
-
-        private void LoadIcon()
-        {
-            string path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Icons", "Nodes", Node.Name + ".png");
-            if(System.IO.File.Exists(path))
-            {
-                Preview.Source = new BitmapImage(new Uri(path));
-            }
         }
 
         public void LoadConnection(string id)
@@ -424,11 +423,12 @@ namespace Materia
             }
         }
 
-        private void N_OnUpdate(Node n)
+        private void N_OnTextureChanged(Node n)
         {
             try
             {
                 if (!IsLoaded) return;
+                if (PreviewWrapper.Visibility == Visibility.Collapsed) return;
                 if (PreviewWrapper.ActualHeight == 0 || PreviewWrapper.ActualWidth == 0) return;
                 if (!n.CanPreview) return;
 
@@ -451,6 +451,7 @@ namespace Materia
                 ph = Math.Max(ph, 100);
                 pw = Math.Max(pw, 100);
 
+                //this is pretty expensive
                 byte[] small = n.GetPreview(pw, ph);
 
                 if (small != null && pw > 0 && ph > 0 && small.Length > 0) {
@@ -568,7 +569,7 @@ namespace Materia
 
         public void HideBorder()
         {
-            BorderGrid.Background = DefaultBrush;
+            BorderGrid.Background = (SolidColorBrush)Application.Current.Resources["Solid16"];
 
             foreach(UINodePoint n in InputStack.Children)
             {
@@ -588,7 +589,7 @@ namespace Materia
 
         public void ShowBorder()
         {
-            BorderGrid.Background = HighlightBrush;
+            BorderGrid.Background = (SolidColorBrush)Application.Current.Resources["Solid20"];
 
             Focus();
 
@@ -608,19 +609,6 @@ namespace Materia
             }
         }
 
-        private void ResizeHeight()
-        {
-            double newHeight = Math.Max(Node.Outputs.Count, Node.Inputs.Count) * 20 + 20;
-
-            if (newHeight > defaultSize)
-            {
-                Height = newHeight;
-            }
-            else
-            {
-                Height = defaultSize;
-            }
-        }
 
         private void Preview_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -680,6 +668,13 @@ namespace Materia
                     ContextMenu.PlacementTarget = this;
                     ContextMenu.IsOpen = true;
                 }
+                else if (Node is GraphInstanceNode)
+                {
+                    ContextMenu ctx = (ContextMenu)Resources["ImageInstContext"];
+                    ContextMenu = ctx;
+                    ContextMenu.PlacementTarget = this;
+                    ContextMenu.IsOpen = true;
+                }
                 else if(Node is ImageNode)
                 {
                     ContextMenu ctx = (ContextMenu)Resources["ImageContext"];
@@ -714,6 +709,12 @@ namespace Materia
 
         public void DisposeNoRemove()
         {
+            Node.OnInputAddedToNode -= N_OnInputAddedToNode;
+            Node.OnInputRemovedFromNode -= N_OnInputRemovedFromNode;
+            Node.OnOutputAddedToNode -= N_OnOutputAddedToNode;
+            Node.OnOutputRemovedFromNode -= N_OnOutputRemovedFromNode;
+            Node.OnTextureChanged -= N_OnTextureChanged;
+
             if (Graph.Graph is FunctionGraph)
             {
                 FunctionGraph f = Graph.Graph as FunctionGraph;
@@ -743,7 +744,13 @@ namespace Materia
 
         public void Dispose()
         {
-            if(Graph.Graph is FunctionGraph)
+            Node.OnInputAddedToNode -= N_OnInputAddedToNode;
+            Node.OnInputRemovedFromNode -= N_OnInputRemovedFromNode;
+            Node.OnOutputAddedToNode -= N_OnOutputAddedToNode;
+            Node.OnOutputRemovedFromNode -= N_OnOutputRemovedFromNode;
+            Node.OnTextureChanged -= N_OnTextureChanged;
+
+            if (Graph.Graph is FunctionGraph)
             {
                 FunctionGraph f = Graph.Graph as FunctionGraph;
                 f.OnOutputSet -= F_OnOutputSet;
@@ -868,6 +875,24 @@ namespace Materia
             {
                 ExportAsPng();
             }
+            else if(item.Header.ToString().ToLower().Contains("refresh"))
+            {
+                PreviewWrapper.Visibility = Visibility.Visible;
+                //we delay to make sure the previewwrapper is fully
+                //loaded and has its width and height set
+                Task.Delay(25).ContinueWith(t =>
+                {
+                    N_OnTextureChanged(Node);
+                }, TaskScheduler.FromCurrentSynchronizationContext());
+            }
+            else if(item.Header.ToString().ToLower().Contains("reload inst"))
+            {
+                if (Node is GraphInstanceNode)
+                {
+                    (Node as GraphInstanceNode).Reload();
+                    Graph?.Graph?.TryAndProcess();
+                }
+            }
         }
 
         private void ExportAsPng()
@@ -916,28 +941,8 @@ namespace Materia
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            Width = defaultSize - 17;
-            Height = defaultSize;
-
-            ResizeHeight();
-
+            Width = defaultWidth;
             UpdateViewArea();
-
-            if (Node != null)
-            {
-                //we are actually going to delay this by 25ms
-                //in order to speed up UI load time
-                Task.Delay(25).ContinueWith(t =>
-                {
-                    if (t.IsCanceled) return;
-
-                    App.Current.Dispatcher.Invoke(() =>
-                    { 
-                        Node.OnUpdate += N_OnUpdate;
-                        N_OnUpdate(Node);
-                    });
-                });
-            }
         }
     }
 }

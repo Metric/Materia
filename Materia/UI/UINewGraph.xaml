@@ -7,45 +7,51 @@
         xmlns:local="clr-namespace:Materia.UI"
         xmlns:components="clr-namespace:Materia.UI.Components"
         mc:Ignorable="d" 
-        Title="{x:Static p:Resources.TITLE_NEW}" Height="256" Width="480" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" Icon="/Materia;component/Images/Icons/App/icon.ico">
-    <Grid Background="#333">
-        <Border Width="175" HorizontalAlignment="Left" Background="#111">
-            <Image Source="/Materia;component/Images/Icons/App/icon.ico" Margin="10" />
-        </Border>
-        <StackPanel Orientation="Vertical" Margin="200,0,0,0">
-            <TextBlock Text="{x:Static p:Resources.TITLE_DEFAULT_SIZE}" Foreground="LightGray" Margin="5"/>
-            <ComboBox Foreground="LightGray" SelectedIndex="5" Style="{StaticResource ComboBoxFlatStyle}" HorizontalAlignment="Left" Name="DefaultNodeSize" Width="100"  Margin="4,4,4,4">
-                <ComboBox.Items>
-                    <ComboBoxItem Content="8" />
-                    <ComboBoxItem Content="16" />
-                    <ComboBoxItem Content="32" />
-                    <ComboBoxItem Content="64" />
-                    <ComboBoxItem Content="128" />
-                    <ComboBoxItem Content="256" />
-                    <ComboBoxItem Content="512" />
-                    <ComboBoxItem Content="1024" />
-                    <ComboBoxItem Content="2048" />
-                    <ComboBoxItem Content="4096" />
-                    <!--<ComboBoxItem Content="8192" />-->
-                </ComboBox.Items>
-            </ComboBox>
-            <TextBlock Text="{x:Static p:Resources.TITLE_DEFAULT_FORMAT}" Foreground="LightGray" Margin="5" />
-            <ComboBox Foreground="LightGray" SelectedIndex="0" Style="{StaticResource ComboBoxFlatStyle}" HorizontalAlignment="Left" Name="DefaultFormat" Width="125"  Margin="4,4,4,4">
-            </ComboBox>
-            <TextBlock Text="{x:Static p:Resources.TITLE_TEMPLATE}" Foreground="LightGray" Margin="5" />
-            <ComboBox Foreground="LightGray" SelectedIndex="0" Style="{StaticResource ComboBoxFlatStyle}" HorizontalAlignment="Left" Name="TemplateType" Width="175"  Margin="4,4,4,4">
-                <ComboBox.Items>
-                    <ComboBoxItem Content="{x:Static p:Resources.DROPDOWN_PBR_FULL}" />
-                    <ComboBoxItem Content="{x:Static p:Resources.DROPDOWN_PBR_NO_HEIGHT}" />
-                    <ComboBoxItem Content="{x:Static p:Resources.DROPDOWN_PBR_NO_HEIGHT_AO}" />
-                    <ComboBoxItem Content="{x:Static p:Resources.DROPDOWN_PBR_NO_HEIGHT_AO_NORMAL}" />
-                    <ComboBoxItem Content="{x:Static p:Resources.DROPDOWN_BLANK}" />
-                </ComboBox.Items>
-            </ComboBox>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                <Button x:Name="CancelButton" Click="CancelButton_Click" Background="#444" Foreground="LightGray" Margin="0,0,20,0" Content="{x:Static p:Resources.BUTTON_CANCEL}" FontSize="10" Width="57" Height="24" BorderThickness="0" Style="{DynamicResource ImageTextButton}" />
-                <Button x:Name="CreateButton" IsDefault="True" Click="CreateButton_Click" Background="#444" Foreground="LightGray" Margin="0,0,5,0" Content="{x:Static p:Resources.BUTTON_CREATE}" FontSize="10" Width="57" Height="24" BorderThickness="0" Style="{DynamicResource ImageTextButton}" />
+        Title="{x:Static p:Resources.TITLE_NEW}" Height="200" Width="320" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" Icon="/Materia;component/Images/Icons/App/icon.ico">
+    <Grid Background="{StaticResource Surface}">
+        <Grid Background="{StaticResource Overlay5}"></Grid>
+        <StackPanel Margin="10,10,10,10">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="{x:Static p:Resources.TITLE_DEFAULT_SIZE}" Foreground="{StaticResource TextLight}" Margin="5"/>
+                    <ComboBox Foreground="{StaticResource TextLight}" SelectedIndex="5" Style="{StaticResource ComboBoxFlatStyle}" HorizontalAlignment="Left" Name="DefaultNodeSize" Width="100"  Margin="4,4,4,4">
+                        <ComboBox.Items>
+                            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="8" />
+                            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="16" />
+                            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="32" />
+                            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="64" />
+                            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="128" />
+                            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="256" />
+                            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="512" />
+                            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="1024" />
+                            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="2048" />
+                            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="4096" />
+                            <!--<ComboBoxItem Content="8192" />-->
+                        </ComboBox.Items>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="{x:Static p:Resources.TITLE_DEFAULT_FORMAT}" Foreground="{StaticResource TextLight}" Margin="5" />
+                    <ComboBox Foreground="{StaticResource TextLight}" SelectedIndex="0" Style="{StaticResource ComboBoxFlatStyle}" HorizontalAlignment="Left" Name="DefaultFormat" Width="125"  Margin="4,4,4,4">
+                    </ComboBox>
+                </StackPanel>
             </StackPanel>
+            <StackPanel>
+                <TextBlock Text="{x:Static p:Resources.TITLE_TEMPLATE}" Foreground="{StaticResource TextLight}" Margin="5" />
+                <ComboBox Foreground="{StaticResource TextLight}" SelectedIndex="0" Style="{StaticResource ComboBoxFlatStyle}" HorizontalAlignment="Stretch" Name="TemplateType"  Margin="4,4,4,4">
+                    <ComboBox.Items>
+                        <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{x:Static p:Resources.DROPDOWN_PBR_FULL}" />
+                        <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{x:Static p:Resources.DROPDOWN_PBR_NO_HEIGHT}" />
+                        <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{x:Static p:Resources.DROPDOWN_PBR_NO_HEIGHT_AO}" />
+                        <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{x:Static p:Resources.DROPDOWN_PBR_NO_HEIGHT_AO_NORMAL}" />
+                        <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{x:Static p:Resources.DROPDOWN_BLANK}" />
+                    </ComboBox.Items>
+                </ComboBox>
+            </StackPanel>
+            <Grid HorizontalAlignment="Stretch" Margin="5,10,5,0">
+                <Button x:Name="CancelButton" Click="CancelButton_Click" HorizontalAlignment="Left" Background="{StaticResource Overlay5}" Foreground="{StaticResource TextLight}" Margin="0" Content="{x:Static p:Resources.BUTTON_CANCEL}" FontSize="10" Width="57" Height="24" BorderThickness="0" Style="{DynamicResource ImageTextButton}" />
+                <Button x:Name="CreateButton" IsDefault="True" Click="CreateButton_Click" HorizontalAlignment="Right" Content="{x:Static p:Resources.BUTTON_CREATE}" FontSize="10" Width="57" Height="24" BorderThickness="0" Style="{DynamicResource ImageTextButton}" />
+            </Grid>
         </StackPanel>
     </Grid>
 </Window>

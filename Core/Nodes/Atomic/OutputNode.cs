@@ -102,9 +102,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        NodeOutput Output;
-
-        public OutputNode(GraphPixelType p = GraphPixelType.RGBA)
+        public OutputNode(GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             OutType = OutputType.basecolor;
 
@@ -120,82 +118,21 @@ namespace Materia.Nodes.Atomic
             previewProcessor = new BasicImageRenderer();
 
             input = new NodeInput(NodeType.Color | NodeType.Gray, this);
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
-
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
 
             Outputs = new List<NodeOutput>();
         }
 
-        public void SetOutput(NodeOutput op)
-        {
-            Outputs.Clear();
-            Output = op;
-            Outputs.Add(op);
-            TryAndProcess();
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            if(Output != null)
-            {
-                Output.Data = null;
-                Output.Changed();
-            }
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
         public override void TryAndProcess()
         {
-            if(!Async)
-            {
-                if (input != null && input.HasInput)
-                {
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input != null && input.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-
-            })
-            .ContinueWith(t =>
-            {
-                if(input != null && input.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
+            Process();
         }
 
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+            if (!input.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
@@ -203,37 +140,17 @@ namespace Materia.Nodes.Atomic
             height = i1.Height;
             width = i1.Width;
 
-            if (Output != null)
-            {
-                Output.Data = i1;
-                Output.Changed();
-            }
+            CreateBufferIfNeeded();
 
-            Updated();
-        }
-
-        public override GLTextuer2D GetActiveBuffer()
-        {
-            if(input != null && input.HasInput && input.Input.Data != null)
-            {
-                return input.Input.Node.GetActiveBuffer();
-            }
-
-            return null;
-        }
-
-        public override byte[] GetPreview(int width, int height)
-        {
-            GLTextuer2D active = GetActiveBuffer();
-
-            if (active == null) return null;
-            if (active.Id == 0) return null;
-
-            previewProcessor.Process(width, height, active);
-            byte[] bits = previewProcessor.ReadByte(width, height);
+            previewProcessor.Process(width, height, i1, buffer);
             previewProcessor.Complete();
-            return bits;
+
+            if (Outputs.Count > 0)
+            {
+                Outputs[0].Data = buffer;
+            }
         }
+
 
         public class OutputNodeData : NodeData
         {
@@ -255,11 +172,6 @@ namespace Materia.Nodes.Atomic
             d.outType = OutType;
 
             return JsonConvert.SerializeObject(d);
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            
         }
     }
 }

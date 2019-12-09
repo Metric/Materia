@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia"
+             xmlns:ui="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="256" Height="32" HorizontalAlignment="Stretch">
     <Grid>
@@ -11,7 +12,7 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="62" />
         </Grid.ColumnDefinitions>
-        <Slider Grid.Column="0" Foreground="#666" Name="SlideInput" MinHeight="8" Template="{StaticResource HorizontalSlider}" ValueChanged="SlideInput_ValueChanged" VerticalAlignment="Center" Margin="5,0,5,0" />
-        <local:NumberInput Grid.Column="1" x:Name="Input" HorizontalAlignment="Right" />
+        <ui:MSlider Grid.Column="0" x:Name="SlideInputM" IsEnabled="{Binding IsEnabled}" OnValueChanged="SlideInputM_OnValueChanged" />
+        <local:NumberInput IsEnabled="{Binding IsEnabled}" Grid.Column="1" Margin="2" x:Name="Input" HorizontalAlignment="Stretch" OnValueChanged="Input_OnValueChanged" />
     </Grid>
 </UserControl>

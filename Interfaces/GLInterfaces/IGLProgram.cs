@@ -13,6 +13,7 @@ namespace Materia.GLInterfaces
         void AttachShader(IGLShader shader);
         bool Link(out string log);
         void Use();
+        void Unbind();
         void SetUniformMatrix4(string name, ref Matrix4 m);
         void SetUniformMatrix3(string name, ref Matrix3 m);
         void UniformBlockBinding(string name, int pos);

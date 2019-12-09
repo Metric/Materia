@@ -26,10 +26,24 @@ namespace Materia.UI
 
         List<NodeResource> clones;
 
+        bool scheduledToClose = false;
+
         public UIPopupShelf()
         {
             InitializeComponent();
             clones = new List<NodeResource>();
+            HorizontalAlignment = HorizontalAlignment.Left;
+            VerticalAlignment = VerticalAlignment.Top;
+            Visibility = Visibility.Collapsed;
+            Margin = new Thickness(0);
+        }
+
+        public void Open(double x, double y)
+        {
+            Top = y;
+            Left = x - ActualWidth * 0.5;
+            ClearFilters();
+            Show();
         }
 
         private void PopulateView(string path)
@@ -60,14 +74,7 @@ namespace Materia.UI
                     Graph.Insert(src.Type);
                 }
 
-                Hide();
-
-                Keyboard.ClearFocus();
-                if (MateriaMainWindow.Instance != null)
-                {
-                    Keyboard.Focus(MateriaMainWindow.Instance);
-                    MateriaMainWindow.Instance.Focus();
-                }
+                CloseView();
             }
         }
 
@@ -132,24 +139,23 @@ namespace Materia.UI
             }
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private void Window_Deactivated(object sender, EventArgs e)
         {
-            if (clones.Count == 0 && SearchBox.Text.Equals(Properties.Resources.TITLE_SEARCH))
+            CloseView();
+        }
+
+        private void CloseView()
+        {
+            if (!scheduledToClose)
             {
-                PopulateView("Categories");
+                scheduledToClose = true;
+                Close();
             }
         }
 
-        private void Window_Deactivated(object sender, EventArgs e)
+        private void Window_Activated(object sender, EventArgs e)
         {
-            Hide();
-
-            Keyboard.ClearFocus();
-            if (MateriaMainWindow.Instance != null)
-            {
-                Keyboard.Focus(MateriaMainWindow.Instance);
-                MateriaMainWindow.Instance.Focus();
-            }
+            Focus();
         }
     }
 }

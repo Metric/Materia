@@ -14,6 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Reflection;
 using NLog;
+using Materia.Nodes.Helpers;
 
 namespace Materia
 {
@@ -46,24 +47,40 @@ namespace Materia
 
             Dropdown.IsEditable = isEditable;
 
+            InitData(data, owner, p, outputProperty);
+        }
+
+        public void Set(object[] data, object owner, PropertyInfo p, string outputProperty = null, bool isEditable = false)
+        {
+            property = p;
+            propertyOwner = owner;
+            Dropdown.ItemsSource = data;
+
+            Dropdown.IsEditable = isEditable;
+
+            InitData(data, owner, p, outputProperty);
+        }
+
+        protected void InitData(object[] data, object owner, PropertyInfo p, string outputProperty = null)
+        {
             output = outputProperty;
 
             isIniting = true;
 
-            if(p.PropertyType.IsEnum)
+            if (p.PropertyType.IsEnum)
             {
                 Dropdown.SelectedIndex = Array.IndexOf(data, p.GetValue(owner).ToString());
             }
             else
-            {              
+            {
                 object b = property.GetValue(owner);
 
-                if(data == null && b is object[])
+                if (data == null && b is object[])
                 {
                     data = (object[])b;
                 }
 
-                if(!string.IsNullOrEmpty(output))
+                if (!string.IsNullOrEmpty(output))
                 {
                     try
                     {
@@ -89,22 +106,22 @@ namespace Materia
 
                 int k = Array.IndexOf(data, b);
 
-                if(k > -1)
+                if (k > -1)
                 {
                     Dropdown.SelectedIndex = k;
                 }
                 else
                 {
-                    if(b.GetType().Equals(typeof(int)) || b.GetType().Equals(typeof(float)) || b.GetType().Equals(typeof(double)) || b.GetType().Equals(typeof(long)))
+                    if (b.GetType().Equals(typeof(int)) || b.GetType().Equals(typeof(float)) || b.GetType().Equals(typeof(double)) || b.GetType().Equals(typeof(long)))
                     {
-                        int g = (int)Convert.ToSingle(b);
+                        int g = (int)Utils.ConvertToFloat(b);
 
-                        if(g >= 0 && g < data.Length)
+                        if (g >= 0 && g < data.Length)
                         {
                             Dropdown.SelectedIndex = g;
                         }
                     }
-                    else if(b.GetType().Equals(typeof(string)))
+                    else if (b.GetType().Equals(typeof(string)))
                     {
                         Dropdown.SelectedItem = b;
                     }
@@ -128,6 +145,7 @@ namespace Materia
                 TextBox tb = Dropdown.Template.FindName("PART_EditableTextBox", Dropdown) as TextBox;
                 if (tb != null)
                 {
+                    tb.CaretBrush = (SolidColorBrush)Application.Current.Resources["Primary"];
                     tb.Foreground = Dropdown.Foreground;
                     tb.Background = Dropdown.Background;
                     tb.TextChanged += Tb_TextChanged;
@@ -159,6 +177,8 @@ namespace Materia
 
         private void UpdateProperty(object s)
         {
+            if (!IsEnabled) return;
+
             if (property.PropertyType.IsEnum)
             {
                 try

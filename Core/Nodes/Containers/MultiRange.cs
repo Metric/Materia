@@ -18,7 +18,7 @@ namespace Materia.Nodes.Containers
             max = new float[4];
             mid = new float[4];
 
-            for(int i = 0; i < 4; i++)
+            for(int i = 0; i < 4; ++i)
             {
                 min[i] = 0;
                 mid[i] = 0.5f;
@@ -32,7 +32,7 @@ namespace Materia.Nodes.Containers
             this.max = new float[4];
             this.mid = new float[4];
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; ++i)
             {
                 if (i < min.Length)
                 {

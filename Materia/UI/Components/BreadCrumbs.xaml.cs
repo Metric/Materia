@@ -48,7 +48,7 @@ namespace Materia.UI.Components
         public void RemoveAfter(BreadCrumb c)
         {
             bool foundCrumb = false;
-            for(int i = 0; i < crumbs.Count; i++)
+            for(int i = 0; i < crumbs.Count; ++i)
             {
                 if (!foundCrumb)
                 {
@@ -61,7 +61,7 @@ namespace Materia.UI.Components
                 {
                     CrumbStack.Children.Remove(crumbs[i]);
                     crumbs.RemoveAt(i);
-                    i--;
+                    --i;
                 }
             }
         }

@@ -140,7 +140,7 @@ namespace RSMI.Containers
         {
             List<float> buffer = new List<float>();
 
-            for(int i = 0; i < vertices.Count; i++)
+            for(int i = 0; i < vertices.Count; ++i)
             {
                 Vector3 v = vertices[i];
                 Vector2 u = uv[i];

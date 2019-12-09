@@ -88,16 +88,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.6.4\lib\net45\NLog.dll</HintPath>
+      <HintPath>..\packages\NLog.4.6.8\lib\net45\NLog.dll</HintPath>
     </Reference>
-    <Reference Include="OpenTK, Version=3.0.1.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
-      <HintPath>..\packages\OpenTK.3.0.1\lib\net20\OpenTK.dll</HintPath>
+    <Reference Include="OpenTK, Version=3.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenTK.3.1.0\lib\net20\OpenTK.dll</HintPath>
     </Reference>
-    <Reference Include="OpenTK.GLControl, Version=3.0.1.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
-      <HintPath>..\packages\OpenTK.GLControl.3.0.1\lib\net20\OpenTK.GLControl.dll</HintPath>
+    <Reference Include="OpenTK.GLControl, Version=3.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenTK.GLControl.3.1.0\lib\net20\OpenTK.GLControl.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -162,6 +162,12 @@
     </Compile>
     <Compile Include="UI\Components\CustomFunctionEditor.xaml.cs">
       <DependentUpon>CustomFunctionEditor.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\LayerItem.xaml.cs">
+      <DependentUpon>LayerItem.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Components\MSlider.xaml.cs">
+      <DependentUpon>MSlider.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Components\ParameterView.xaml.cs">
       <DependentUpon>ParameterView.xaml</DependentUpon>
@@ -266,6 +272,9 @@
     <Compile Include="UI\UIGraph.xaml.cs">
       <DependentUpon>UIGraph.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\UILayers.xaml.cs">
+      <DependentUpon>UILayers.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\UILevels.xaml.cs">
       <DependentUpon>UILevels.xaml</DependentUpon>
     </Compile>
@@ -320,6 +329,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\Components\CustomFunctionEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\LayerItem.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Components\MSlider.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -463,6 +480,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="UI\UILayers.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UI\UILevels.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -527,6 +548,9 @@
     <Resource Include="Images\pin.png" />
     <Resource Include="Images\functionedit.png" />
     <Resource Include="Images\output.png" />
+    <Resource Include="Images\delete.png" />
+    <Resource Include="Images\mask.png" />
+    <Resource Include="Images\visible.png" />
     <Content Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

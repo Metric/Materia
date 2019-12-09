@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Materia.MathHelpers;
+using Materia.Nodes.Helpers;
+using NLog;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -11,6 +13,8 @@ namespace Materia.Nodes.MathNodes
     {
         NodeInput input;
         NodeOutput output;
+
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
 
         public ExponentialNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
@@ -27,62 +31,40 @@ namespace Materia.Nodes.MathNodes
 
             Inputs.Add(input);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            UpdateOutputType();
-            Updated();
         }
 
         public override void UpdateOutputType()
         {
             if(input.HasInput)
             {
-                output.Type = input.Input.Type;
-            }
-        }
-
-        public override void TryAndProcess()
-        {
-            if (input.HasInput && executeInput.HasInput)
-            {
-                Process();
+                output.Type = input.Reference.Type;
             }
         }
 
         public override string GetShaderPart(string currentFrag)
         {
-            if (!input.HasInput || !executeInput.HasInput) return "";
+            if (!input.HasInput) return "";
             var s = shaderId + "1";
-            var n1id = (input.Input.Node as MathNode).ShaderId;
+            var n1id = (input.Reference.Node as MathNode).ShaderId;
 
-            var index = input.Input.Node.Outputs.IndexOf(input.Input);
+            var index = input.Reference.Node.Outputs.IndexOf(input.Reference);
 
             n1id += index;
 
-            if (input.Input.Type == NodeType.Float4) 
+            if (input.Reference.Type == NodeType.Float4) 
             {
                 return "vec4 " + s + " = exp(" + n1id + ");\r\n";
             }
-            else if(input.Input.Type == NodeType.Float3)
+            else if(input.Reference.Type == NodeType.Float3)
             {
                 return "vec3 " + s + " = exp(" + n1id + ");\r\n";
             }
-            else if(input.Input.Type == NodeType.Float2)
+            else if(input.Reference.Type == NodeType.Float2)
             {
                 return "vec2 " + s + " = exp(" + n1id + ");\r\n";
             }
-            else if(input.Input.Type == NodeType.Float)
+            else if(input.Reference.Type == NodeType.Float)
             {
                 return "float " + s + " = exp(" + n1id + ");\r\n";
             }
@@ -90,42 +72,33 @@ namespace Materia.Nodes.MathNodes
             return "";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            object o = input.Input.Data;
+            if (!input.IsValid) return;
 
-            if (o is float || o is int || o is double || o is long)
+            NodeType t = input.Reference.Type;
+
+            try
             {
-                float v = Convert.ToSingle(o);
-                output.Data = (float)Math.Exp(v);
-            }
-            else if (o is MVector)
-            {
-                MVector v = (MVector)o;
-                MVector d = new MVector();
-                d.X = (float)Math.Exp(v.X);
-                d.Y = (float)Math.Exp(v.Y);
-                d.Z = (float)Math.Exp(v.Z);
-                d.W = (float)Math.Exp(v.W);
-
-                output.Data = d;
-            }
-            else
-            {
-                output.Data = 0;
-            }
-
-            result = output.Data.ToString();
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
+                if (t == NodeType.Float2 || t == NodeType.Float3 || t == NodeType.Float4)
                 {
-                    g.Result = output.Data;
+                    MVector v = (MVector)input.Data;
+                    output.Data = v.Exp();
                 }
+                else if (t == NodeType.Float)
+                {
+                    float f = input.Data.ToFloat();
+                    output.Data = (float)Math.Exp(f);
+                }
+
+                result = output.Data?.ToString();
             }
+            catch (Exception e)
+            {
+
+            }
+
+            UpdateOutputType();
         }
     }
 }

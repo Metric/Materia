@@ -38,6 +38,10 @@ namespace Materia.Imaging.GLProcessing
                 {
                     tempColor.SetSwizzleLuminance();
                 }
+                else if (tex.IsRGBBased)
+                {
+                    tempColor.SetSwizzleRGB();
+                }
                 tempColor.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
                 GLTextuer2D.Unbind();
 

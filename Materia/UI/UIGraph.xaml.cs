@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -17,7 +18,6 @@ using Materia.Nodes.Items;
 using Materia.Imaging;
 using Materia.Nodes.Atomic;
 using Materia.Nodes.Helpers;
-using System.Threading;
 using Newtonsoft.Json;
 using Materia.Undo;
 using Materia.UI.Components;
@@ -27,6 +27,7 @@ using Materia.UI.ItemNodes;
 using NLog;
 using Materia.UI.Helpers;
 using Materia.Archive;
+using System.Windows.Threading;
 
 namespace Materia
 {
@@ -76,7 +77,26 @@ namespace Materia
 
         public bool ReadOnly { get; protected set; }
 
-        public bool Modified { get; protected set; }
+        public bool Modified
+        {
+            get
+            {
+                if (Original != null)
+                {
+                    return Original.Modified;
+                }
+
+                return false;
+            }
+            protected set
+            {
+                if (Original != null)
+                {
+                    Original.Modified = value;
+                }
+            }
+        }
+
 
         public List<IUIGraphNode> SelectedNodes { get; protected set; }
         public HashSet<string> SelectedIds { get; protected set; }
@@ -175,9 +195,16 @@ namespace Materia
             }
         }
 
+        private DispatcherTimer timer;
+
         public UIGraph(Graph template = null)
         {
             InitializeComponent();
+
+            timer = new DispatcherTimer(DispatcherPriority.Normal);
+            timer.Tick += Timer_Tick;
+            timer.IsEnabled = false;
+            timer.Interval = TimeSpan.FromMilliseconds(1);
 
             isDisposed = false;
 
@@ -216,7 +243,7 @@ namespace Materia
                 StoredGraph = template.GetJson();
             }
 
-            Original = Graph = new ImageGraph("Untitled");
+            Original = Graph = new ImageGraph("Untitled", 256, 256);
 
             UpdateGrid();
 
@@ -242,6 +269,32 @@ namespace Materia
             ConnectionPathPreview.IsHitTestVisible = false;
 
             BreadCrumb cb = new BreadCrumb(Crumbs, "Root", this, null);
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            if(Original != Graph)
+            {
+                Original.PollScheduled();
+            }
+
+            Graph?.PollScheduled();
+        }
+
+        private void UILayers_OnSelected(Layering.Layer layer)
+        {
+            if (layer.ParentGraph == Original)
+            {
+                LoadGraph(layer.Core);
+            }
+        }
+
+        private void UILayers_OnRestoreRootView(Graph g)
+        {
+            if (Original == g)
+            {
+                LoadGraph(Original);
+            }
         }
 
         public void TryAndLoadGraphStack(string[] stack)
@@ -485,7 +538,7 @@ namespace Materia
                 Dictionary<string, Node.NodeData> jsonContent = new Dictionary<string, Node.NodeData>();
                 Dictionary<string, Node> realLookup = new Dictionary<string, Node>();
 
-                for (int i = 0; i < cd.nodes.Count; i++)
+                for (int i = 0; i < cd.nodes.Count; ++i)
                 {
                     string json = cd.nodes[i];
                     Node.NodeData ndata = null;
@@ -523,7 +576,7 @@ namespace Materia
                     Node.NodeData json = null;
                     if (jsonContent.TryGetValue(n.Node.Id, out json))
                     {
-                        n.Node.SetConnections(realLookup, json.outputs);
+                        n.Node.SetConnections(realLookup, json.outputs, true);
                     }
 
                     n.OffsetTo(mp.X + dx, mp.Y + dy);
@@ -543,6 +596,8 @@ namespace Materia
                         {
                             Modified = true;
                         }
+
+                        Graph?.TryAndProcess();
                     });
                 });
 
@@ -569,7 +624,7 @@ namespace Materia
             LoadGraph(data, directory);
         }
 
-        protected void LoadGraph(Graph g, bool loadUI = true)
+        public void LoadGraph(Graph g, bool loadUI = true)
         {
             //no need to reload if it is the same graph already
             if (g == Graph) return;
@@ -640,12 +695,6 @@ namespace Materia
         {
             if(isLoadingGraph)
             {
-                if (Graph is ImageGraph && !Graph.Synchronized)
-                {
-                    if (Graph.IsProcessing) return;
-                    else isLoadingGraph = false;
-                }
-
                 return;
             }
             Modified = true;
@@ -720,7 +769,7 @@ namespace Materia
 
                 var graph = Original;
                 Node n;
-                for(int i = 0; i < StoredGraphStack.Length; i++)
+                for(int i = 0; i < StoredGraphStack.Length; ++i)
                 {
                     GraphStackItem item = GraphStackItem.FromJson(StoredGraphStack[i]);
                     if (graph.NodeLookup.TryGetValue(item.id, out n))
@@ -832,7 +881,7 @@ namespace Materia
             string[] n = new string[GraphStack.Count];
             GraphStackItem[] stack = GraphStack.ToArray();
 
-            for (int i = 0; i < stack.Length; i++)
+            for (int i = 0; i < stack.Length; ++i)
             {
                 n[i] = stack[i].GetJson();
             }
@@ -845,7 +894,7 @@ namespace Materia
             StoredGraphStack = new string[GraphStack.Count];
             GraphStackItem[] stack = GraphStack.ToArray();
 
-            for(int i = 0; i < stack.Length; i++)
+            for(int i = 0; i < stack.Length; ++i)
             {
                 StoredGraphStack[i] = stack[i].GetJson();
             }
@@ -892,7 +941,7 @@ namespace Materia
         {
             Release();
 
-            Graph g  = new ImageGraph("Untitled");
+            Graph g  = new ImageGraph("Untitled", 256, 256);
 
             if (string.IsNullOrEmpty(data))
             {   
@@ -913,6 +962,7 @@ namespace Materia
             Crumbs.Clear();
             BreadCrumb cb = new BreadCrumb(Crumbs, "Root", this, null);
             LoadGraph(g, loadUI);
+            UILayers.Assign(Original);
         }
 
         public string GetGraphData()
@@ -947,6 +997,9 @@ namespace Materia
             {
                 FunctionGraph fg = (FunctionGraph)Graph;
 
+                //refresh available variables
+                fg.SetAllVars();
+
                 if ((fg.ExpectedOutput & NodeType.Float) != 0 && (fg.ExpectedOutput & NodeType.Float4) != 0)
                 {
                     OutputRequirementsLabel.Text = "Required Output Node Type: Float or Float4";
@@ -976,10 +1029,16 @@ namespace Materia
 
                 OutputRequirementsLabel.Text = "";
 
+                if (Graph.ParentGraph == null)
+                {
+                    Graph.InitializeRenderTextures();
+                    UILayers.Assign(Graph);
+                }
+
                 ContextMenu = null;
             }
 
-            for(int i = 0; i < Graph.Nodes.Count; i++)
+            for(int i = 0; i < Graph.Nodes.Count; ++i)
             {
                 Node n = Graph.Nodes[i];
 
@@ -1029,7 +1088,7 @@ namespace Materia
                 App.Current.Dispatcher.Invoke(() =>
                 {
                     //foreach uinode connect up
-                    for(int i = 0; i < GraphNodes.Count; i++)
+                    for(int i = 0; i < GraphNodes.Count; ++i)
                     {
                         IUIGraphNode n = GraphNodes[i];
 
@@ -1040,10 +1099,7 @@ namespace Materia
 
                     isLoadingGraph = true;
                     Graph.TryAndProcess();
-                    if(Graph is FunctionGraph || Graph.Synchronized)
-                    {
-                        isLoadingGraph = false;
-                    }
+                    isLoadingGraph = false;
                 });
             });
         }
@@ -1213,6 +1269,11 @@ namespace Materia
             SelectedNodes.Clear();
             Pins.Clear();
 
+            if (UILayers.Current == Original)
+            {
+                UILayers.Assign(null);
+            }
+
             if (Graph != null)
             {
                 Graph.OnGraphUpdated -= Graph_OnGraphUpdated;
@@ -1229,6 +1290,10 @@ namespace Materia
                 Original.Dispose();
                 Original = null;
             }
+
+            UILayers.OnRestoreRootView -= UILayers_OnRestoreRootView;
+            UILayers.OnSelected -= UILayers_OnSelected;
+
 
             ViewPort.Children.Clear();
         }
@@ -1305,10 +1370,9 @@ namespace Materia
                 if(n != null)
                 {
                     n.Id = nd.id;
-                    n.FromJson(json);
                     if (!Graph.Add(n)) return unode;
-
-                    n.SetConnections(Graph.NodeLookup, nd.outputs);
+                    n.FromJson(json);
+                    n.SetConnections(Graph.NodeLookup, nd.outputs, true);
 
                     if (n is CommentNode)
                     {
@@ -1330,8 +1394,6 @@ namespace Materia
                     ViewPort.Children.Add(unode as UIElement);
                     GraphNodes.Add(unode);
 
-                    n.TryAndProcess();
-
                     Modified = true;
 
                     Task.Delay(25).ContinueWith(t =>
@@ -1339,6 +1401,8 @@ namespace Materia
                         App.Current.Dispatcher.Invoke(() =>
                         {
                             unode.LoadConnections(lookup);
+
+                            Graph?.TryAndProcess();
                         });
                     });
                 }
@@ -1404,8 +1468,6 @@ namespace Materia
                     ViewPort.Children.Add(unode as UIElement);
                     GraphNodes.Add(unode);
 
-                    n.TryAndProcess();
-
                     UndoRedoManager.AddUndo(new CreateNode(Id, unode.Id, this));
 
                     Modified = true;
@@ -1430,6 +1492,8 @@ namespace Materia
 
             if (n != null)
             {
+                if (!Graph.Add(n)) return unode;
+
                 if (n is GraphInstanceNode)
                 {
                     GraphInstanceNode gn = (GraphInstanceNode)n;
@@ -1446,8 +1510,6 @@ namespace Materia
 
                 n.ViewOriginX = p.X;
                 n.ViewOriginY = p.Y;
-
-                if (!Graph.Add(n)) return unode;
 
                 if (n is CommentNode)
                 {
@@ -1469,9 +1531,9 @@ namespace Materia
                 ViewPort.Children.Add(unode as UIElement);
                 GraphNodes.Add(unode);
 
-                n.TryAndProcess();
-
                 UndoRedoManager.AddUndo(new CreateNode(Id, unode.Id, this));
+
+                n.TriggerValueChange();
 
                 return unode;
             }
@@ -1621,6 +1683,17 @@ namespace Materia
                     }
                 }
             }
+            else if(e.Data.GetDataPresent(typeof(string)))
+            {
+                string data = (string)e.Data.GetData(DataFormats.Text);
+
+                if(!string.IsNullOrEmpty(data))
+                {
+                    Point p = e.GetPosition(ViewPort);
+                    ToWorld(ref p);
+                    AddNode(data, p);
+                }
+            }
         }
 
         public void ToLocal(ref Point p)
@@ -1752,6 +1825,8 @@ namespace Materia
             if (mouseDown) return;
 
             mouseDown = true;
+            Focus();
+            Keyboard.Focus(this);
             if (e.MiddleButton == MouseButtonState.Pressed)
             {
                 Grid g = sender as Grid;
@@ -1958,14 +2033,14 @@ namespace Materia
             List<IUIGraphNode> selected = SelectedNodes.FindAll(m => m is UINode || m is UIPinNode);
 
             //find average position
-            for (int i = 0; i < selected.Count; i++)
+            for (int i = 0; i < selected.Count; ++i)
             {
                 midX += selected[i].Origin.X;
             }
 
             midX /= selected.Count;
 
-            for (int i = 0; i < selected.Count; i++)
+            for (int i = 0; i < selected.Count; ++i)
             {
                 Point p = selected[i].Origin;
                 selected[i].OffsetTo(midX, p.Y);
@@ -1981,14 +2056,14 @@ namespace Materia
             List<IUIGraphNode> selected = SelectedNodes.FindAll(m => m is UINode || m is UIPinNode);
 
             //find average position
-            for (int i = 0; i < selected.Count; i++)
+            for (int i = 0; i < selected.Count; ++i)
             {
                 midY += selected[i].Origin.Y;
             }
 
             midY /= selected.Count;
 
-            for(int i = 0; i < selected.Count; i++)
+            for(int i = 0; i < selected.Count; ++i)
             {
                 Point p = selected[i].Origin;
                 selected[i].OffsetTo(p.X, midY);
@@ -2272,16 +2347,18 @@ namespace Materia
 
         void UpdateGrid()
         {
-            DrawingBrush db = new DrawingBrush();
+            /*DrawingBrush db = new DrawingBrush();
             db.TileMode = TileMode.Tile;
             db.Viewbox = new Rect(XShift, YShift, GridSnap * Scale, GridSnap * Scale);
             db.Viewport = new Rect(XShift , YShift, GridSnap * Scale, GridSnap * Scale);
             db.ViewportUnits = BrushMappingMode.Absolute;
             db.ViewboxUnits = BrushMappingMode.Absolute;
 
-            GeometryDrawing geom = new GeometryDrawing(null, new Pen(new SolidColorBrush(Color.FromRgb(22, 22, 22)), 0.5), new RectangleGeometry(new Rect(XShift,  YShift, GridSnap * Scale, GridSnap * Scale)));
+            SolidColorBrush brush = (SolidColorBrush)Application.Current.Resources["Overlay11"];
+
+            GeometryDrawing geom = new GeometryDrawing(null, new Pen(brush, 0.5), new RectangleGeometry(new Rect(XShift,  YShift, GridSnap * Scale, GridSnap * Scale)));
             db.Drawing = geom;
-            ViewPort.Background = db;
+            ViewPort.Background = db;*/
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -2293,6 +2370,10 @@ namespace Materia
 
                 RestoreStack();
             }
+
+            timer.IsEnabled = true;
+            UILayers.OnRestoreRootView += UILayers_OnRestoreRootView;
+            UILayers.OnSelected += UILayers_OnSelected;
         }
 
         private void UserControl_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -2302,9 +2383,20 @@ namespace Materia
 
         private void UserControl_Unloaded(object sender, RoutedEventArgs e)
         {
+            //used for debugging speed
+            timer.IsEnabled = false;
+
+            UILayers.OnRestoreRootView -= UILayers_OnRestoreRootView;
+            UILayers.OnSelected -= UILayers_OnSelected;
+
             if (Original != null)
             {
                 CaptureStack();
+
+                if (UILayers.Current == Original)
+                {
+                    UILayers.Assign(null);
+                }
 
                 StoredGraphName = Original.Name;
                 StoredGraph = Original.GetJson();
@@ -2366,7 +2458,7 @@ namespace Materia
 
         private void ApplySize_Click(object sender, RoutedEventArgs e)
         {
-            for(int i = 0; i < SelectedNodes.Count; i++)
+            for(int i = 0; i < SelectedNodes.Count; ++i)
             {
                 IUIGraphNode n = SelectedNodes[i];
                 if (n is UINode)

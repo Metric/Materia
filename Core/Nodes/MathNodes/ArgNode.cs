@@ -31,8 +31,7 @@ namespace Materia.Nodes.MathNodes
                 }
 
                 inputName = value;
-                OnDescription(inputName);
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -48,7 +47,6 @@ namespace Materia.Nodes.MathNodes
             set
             {
                 inputType = value;
-                TryAndProcess();
             }
         }
 
@@ -70,37 +68,6 @@ namespace Materia.Nodes.MathNodes
             Outputs = new List<NodeOutput>();
         }
 
-        public override void TryAndProcess()
-        {
-            if(!string.IsNullOrEmpty(inputName))
-            {
-                if (ParentGraph != null && ParentGraph is FunctionGraph)
-                {
-                    FunctionGraph g = ParentGraph as FunctionGraph;
-
-                    object temp = 0;
-
-                    if(inputType == NodeType.Float)
-                    {
-                        temp = 0;
-                    }
-                    else if(inputType == NodeType.Bool)
-                    {
-                        temp = false;
-                    }
-                    else if(inputType == NodeType.Matrix)
-                    {
-                        temp = Math3D.Matrix4.Identity;
-                    }
-                    else
-                    {
-                        temp = new MathHelpers.MVector();
-                    }
-
-                    g.SetVar(inputName, temp, inputType);
-                }
-            }
-        }
 
         public override string GetDescription()
         {

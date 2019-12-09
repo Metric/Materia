@@ -34,7 +34,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 offset = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -50,7 +50,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 angle = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -66,14 +66,14 @@ namespace Materia.Nodes.Atomic
             set
             {
                 scale = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
         NodeOutput Output;
         NodeInput input;
 
-        public TransformNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public TransformNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Transform";
 
@@ -94,80 +94,16 @@ namespace Materia.Nodes.Atomic
             internalPixelType = p;
 
             input = new NodeInput(NodeType.Color | NodeType.Gray, this, "Image Input");
-
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
-
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
 
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            Output.Data = null;
-            Output.Changed();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                if (input.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                if(input.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
         }
 
         private void GetParams()
         {
+            if (!input.HasInput) return;
+
             pangle = angle;
 
             pscaleX = this.scale.X;
@@ -178,12 +114,12 @@ namespace Materia.Nodes.Atomic
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "XOffset"))
             {
-                pxoffset = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "XOffset"));
+                pxoffset = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "XOffset"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "YOffset"))
             {
-                pyoffset = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "YOffset"));
+                pyoffset = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "YOffset"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Offset"))
@@ -195,12 +131,12 @@ namespace Materia.Nodes.Atomic
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "ScaleX"))
             {
-                pscaleX = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "ScaleX"));
+                pscaleX = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "ScaleX"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "ScaleY"))
             {
-                pscaleY = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "ScaleY"));
+                pscaleY = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "ScaleY"));
             }
 
             if (parentGraph != null && ParentGraph.HasParameterValue(Id, "Scale"))
@@ -212,8 +148,14 @@ namespace Materia.Nodes.Atomic
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Angle"))
             {
-                pangle = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Angle"));
+                pangle = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Angle"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         float pxoffset;
@@ -223,7 +165,9 @@ namespace Materia.Nodes.Atomic
         float pangle;
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+            if (!input.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
@@ -243,9 +187,8 @@ namespace Materia.Nodes.Atomic
             processor.Process(width, height, i1, buffer);
             processor.Complete();
 
-            Updated();
             Output.Data = buffer;
-            Output.Changed();
+            TriggerTextureChange();
         }
 
         public override void Dispose()

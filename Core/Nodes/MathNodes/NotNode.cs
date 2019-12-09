@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Materia.MathHelpers;
+using Materia.Nodes.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,62 +28,30 @@ namespace Materia.Nodes.MathNodes
 
             Inputs.Add(input);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            Updated();
-        }
-
-        public override void TryAndProcess()
-        {
-            if (input.HasInput)
-            {
-                Process();
-            }
         }
 
         public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput) return "";
             var s = shaderId + "1";
-            var n1id = (input.Input.Node as MathNode).ShaderId;
+            var n1id = (input.Reference.Node as MathNode).ShaderId;
 
-            var index = input.Input.Node.Outputs.IndexOf(input.Input);
+            var index = input.Reference.Node.Outputs.IndexOf(input.Reference);
 
             n1id += index;
 
-            return "bool " + s + " = !" + n1id + ";\r\n";
+            return "float " + s + " = " + n1id + " != 0 ? 0 : 1;\r\n";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            if (input.Input.Data == null) return;
-
-            bool v = Convert.ToBoolean(input.Input.Data);
-
-            output.Data = !v;
-
-            result = output.Data.ToString();
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
+            if (!input.IsValid) return;
+            float f = input.Data.ToFloat();
+            if (f <= 0) f = 1;
+            else if (f > 0) f = 0;
+            output.Data = f;
+            result = output.Data?.ToString();
         }
     }
 }

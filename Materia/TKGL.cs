@@ -15,6 +15,72 @@ namespace Materia
             Primary = this;
         }
 
+        public override void Finish()
+        {
+            GL.Finish();
+        }
+
+        public override void Flush()
+        {
+            GL.Flush();
+        }
+
+        public override void MemoryBarrier(int mask)
+        {
+            GL.MemoryBarrier((OpenTK.Graphics.OpenGL.MemoryBarrierFlags)mask);
+        }
+
+        public override void ClearTexImage(int id, int format, int type)
+        {
+            GL.ClearTexImage(id, 0, (OpenTK.Graphics.OpenGL.PixelFormat)format, (OpenTK.Graphics.OpenGL.PixelType)type, IntPtr.Zero);
+        }
+
+        public override IntPtr MapBufferRange(int target, IntPtr start, int length, int flags)
+        {
+            return GL.MapBufferRange((OpenTK.Graphics.OpenGL.BufferTarget)target, start, length, (OpenTK.Graphics.OpenGL.BufferAccessMask)flags);
+        }
+
+        public override void BufferStorage(int target, int size, IntPtr data, int flags)
+        {
+            GL.BufferStorage((OpenTK.Graphics.OpenGL.BufferTarget)target, size, data, (OpenTK.Graphics.OpenGL.BufferStorageFlags)flags); 
+        }
+
+        public override IntPtr MapBuffer(int target, int access)
+        {
+            return GL.MapBuffer((OpenTK.Graphics.OpenGL.BufferTarget)target, (OpenTK.Graphics.OpenGL.BufferAccess)access);
+        }
+
+        public override bool UnmapBuffer(int target)
+        {
+            return GL.UnmapBuffer((OpenTK.Graphics.OpenGL.BufferTarget)target);
+        }
+
+        public override GLInterfaces.ErrorCode GetError()
+        {
+            return (GLInterfaces.ErrorCode)(int)GL.GetError();
+        }
+
+        public override void ReadTexture(float[] buffer)
+        {
+            GL.GetTexImage(OpenTK.Graphics.OpenGL.TextureTarget.Texture2D, 0, OpenTK.Graphics.OpenGL.PixelFormat.Rgba, OpenTK.Graphics.OpenGL.PixelType.Float, buffer);
+        }
+
+        public override void TexStorage2D(int target, int level, int internalSize, int width, int height)
+        {
+            GL.TexStorage2D((OpenTK.Graphics.OpenGL.TextureTarget2d)target, level, (OpenTK.Graphics.OpenGL.SizedInternalFormat)internalSize, width, height);
+        }
+
+        public override void BindImageTexture(int unit, int id, int level, bool layerd, int layer, int access, int internalSize)
+        {
+            
+            GL.BindImageTexture(unit, id, level, layerd, layer, (OpenTK.Graphics.OpenGL.TextureAccess)access, (OpenTK.Graphics.OpenGL.SizedInternalFormat)internalSize);
+        }
+
+        public override void DispatchCompute(int w, int h, int z)
+        {
+            GL.DispatchCompute(w, h, z);
+            GL.MemoryBarrier(OpenTK.Graphics.OpenGL.MemoryBarrierFlags.TextureFetchBarrierBit | OpenTK.Graphics.OpenGL.MemoryBarrierFlags.TextureUpdateBarrierBit | OpenTK.Graphics.OpenGL.MemoryBarrierFlags.ShaderStorageBarrierBit | OpenTK.Graphics.OpenGL.MemoryBarrierFlags.ShaderImageAccessBarrierBit);
+        }
         public override void ActiveTexture(int index)
         {
             GL.ActiveTexture((OpenTK.Graphics.OpenGL.TextureUnit)index);
@@ -199,7 +265,7 @@ namespace Materia
         {
             OpenTK.Graphics.OpenGL.DrawBuffersEnum[] fmodes = new OpenTK.Graphics.OpenGL.DrawBuffersEnum[modes.Length];
 
-            for(int i = 0; i < modes.Length; i++)
+            for(int i = 0; i < modes.Length; ++i)
             {
                 fmodes[i] = (OpenTK.Graphics.OpenGL.DrawBuffersEnum)modes[i];
             }

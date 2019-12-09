@@ -16,10 +16,10 @@
                     </TransformGroup>
                 </Path.RenderTransform>
                 <Path.Fill>
-                    <SolidColorBrush Color="#888" />
+                    <SolidColorBrush Color="{StaticResource ColorOverlay24}" />
                 </Path.Fill>
             </Path>
         </Border>
-        <Border Name="SelectedColor" BorderBrush="#888" Margin="0,10,0,0" Background="#888" />
+        <Border Name="SelectedColor" BorderBrush="{StaticResource Overlay24}" Margin="0,10,0,0" Background="{StaticResource Overlay11}" />
     </Grid>
 </UserControl>

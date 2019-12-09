@@ -21,7 +21,6 @@ namespace Materia.UI.Components
     public partial class RangeSlider : UserControl
     {
         float minValue;
-        float midValue;
         float maxValue;
 
         public delegate void ValueChangeEvent(object sender, float min, float max);
@@ -29,7 +28,6 @@ namespace Materia.UI.Components
 
         Point start;
 
-        double midx = 0;
         double minx = 0;
         double maxx = 0;
 
@@ -74,7 +72,6 @@ namespace Materia.UI.Components
             InitializeComponent();
             minValue = 0;
             maxValue = 1;
-            midValue = 0.5f;
             SetButtonPositions();
         }
 

@@ -39,11 +39,11 @@ namespace Materia.Nodes.Atomic
             set
             {
                 gradient = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
-        public GradientMapNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public GradientMapNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Gradient Map";
             Id = Guid.NewGuid().ToString();
@@ -63,56 +63,10 @@ namespace Materia.Nodes.Atomic
             input2 = new NodeInput(NodeType.Gray, this, "Mask Input");
             Output = new NodeOutput(NodeType.Color, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
-            input2.OnInputAdded += Input_OnInputAdded;
-            input2.OnInputChanged += Input_OnInputChanged;
-            input2.OnInputRemoved += Input_OnInputRemoved;
-
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
 
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                if (input.HasInput && gradient != null)
-                {
-                    FillLUT();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput && gradient != null)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
         }
 
         public override void Dispose()
@@ -134,23 +88,10 @@ namespace Materia.Nodes.Atomic
             LUT = null;
         }
 
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                FillLUT();
-            })
-            .ContinueWith(t =>
-            {
-                if(input.HasInput && gradient != null)
-                {
-                    Process();
-                }
-            }, Context);
-        }
-
         private void FillLUT()
         {
+            if (!input.HasInput) return;
+
             if (LUT == null)
             {
                 LUT = new FloatBitmap(256, 2);
@@ -160,17 +101,22 @@ namespace Materia.Nodes.Atomic
             Utils.CreateGradient(LUT, gradient.positions, gradient.colors);
         }
 
+        public override void TryAndProcess()
+        {
+            FillLUT();
+            Process();
+        }
+
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+            if (!input.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
             GLTextuer2D i2 = null;
 
             if(input2.HasInput)
             {
-                if(input2.Input.Data != null)
-                {
-                    i2 = (GLTextuer2D)input2.Input.Data;
-                }
+                i2 = (GLTextuer2D)input2.Reference.Data;
             }
 
             if (i1 == null) return;
@@ -199,8 +145,7 @@ namespace Materia.Nodes.Atomic
             processor.Complete();
 
             Output.Data = buffer;
-            Output.Changed();
-            Updated();
+            TriggerTextureChange();
         }
 
         public class GradientMapData : NodeData
@@ -221,7 +166,7 @@ namespace Materia.Nodes.Atomic
                 gradient.colors = new MVector[d.colors.Count];
             }
 
-            for(int i = 0; i < d.colors.Count; i++)
+            for(int i = 0; i < d.colors.Count; ++i)
             {
                 gradient.colors[i] = MVector.FromArray(d.colors[i]);
             }
@@ -240,7 +185,7 @@ namespace Materia.Nodes.Atomic
 
             if (gradient != null)
             {
-                for(int j = 0; j < gradient.colors.Length; j++)
+                for(int j = 0; j < gradient.colors.Length; ++j)
                 {
                     MVector m = gradient.colors[j];
                     d.colors.Add(m.ToArray());
@@ -250,11 +195,6 @@ namespace Materia.Nodes.Atomic
             }
 
             return JsonConvert.SerializeObject(d);
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
         }
     }
 }

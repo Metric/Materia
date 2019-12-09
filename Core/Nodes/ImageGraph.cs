@@ -13,6 +13,11 @@ namespace Materia.Nodes
 
         }
 
+        public ImageGraph(string name, int w = 256, int h = 256, Graph parent = null) : base(name, w, h)
+        {
+            parentGraph = parent;
+        }
+
         public override bool Add(Node n)
         {
             if(n is ImageNode)
@@ -30,7 +35,7 @@ namespace Materia.Nodes
         public override Node CreateNode(string type)
         {
             //math based nodes are not allowed on image graphs
-            if (type.Contains("MathNodes") && !type.Contains(System.IO.Path.DirectorySeparatorChar)) return null;
+            if (type.Contains("MathNodes") && !type.Contains(System.IO.Path.DirectorySeparatorChar) && !type.Contains("Materia::Layer::")) return null;
 
             return base.CreateNode(type);
         }

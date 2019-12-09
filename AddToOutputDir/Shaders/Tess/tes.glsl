@@ -71,7 +71,7 @@ void main()
     if(displace == 1) 
     {
         float disp = texture(heightMap, uv).r;
-        wpos += normalize(n) * disp * heightScale;
+        wpos += o.Normal * disp * heightScale;
     }
 
     o.WorldPos = wpos;

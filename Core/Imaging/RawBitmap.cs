@@ -95,7 +95,7 @@ namespace Materia.Imaging
         {
             Parallel.For(0, Height, y =>
             {
-                for (int x = 0; x < Width; x++)
+                for (int x = 0; x < Width; ++x)
                 {
                     int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * 4;
                     int idx = (x + y * Width) * 4;
@@ -124,7 +124,7 @@ namespace Materia.Imaging
         {
             Parallel.For(0, Height, y =>
             {
-                for (int x = 0; x < Width; x++)
+                for (int x = 0; x < Width; ++x)
                 {
                     int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * (src.BPP / 8);
                     int idx = (x + y * Width) * (BPP / 8);
@@ -153,7 +153,7 @@ namespace Materia.Imaging
         public void CopyRedToRed(RawBitmap src)
         {
             Parallel.For(0, Height, y => { 
-                for (int x = 0; x < Width; x++)
+                for (int x = 0; x < Width; ++x)
                 {
                     int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * (src.BPP / 8);
                     int idx = (x + y * Width) * (BPP / 8);
@@ -184,7 +184,7 @@ namespace Materia.Imaging
 
             Parallel.For(0, Height, y =>
             {
-                for (int x = 0; x < Width; x++)
+                for (int x = 0; x < Width; ++x)
                 {
                     int idxsrc = ((x % src.Width) + (y % src.Height) * src.Width) * (src.BPP / 8);
                     int idx = (x + y * Width) * (BPP / 8);
@@ -309,7 +309,7 @@ namespace Materia.Imaging
 
             if((float)(y2 - y1) / (float)(x2 - x1) < 1)
             {
-                for(int i = 1; i < thickness; i++)
+                for(int i = 1; i < thickness; ++i)
                 {
                     DrawLine(x1, y1 - i, x2, y2 - i, r, g, b, a);
                     DrawLine(x1, y1 + i, x2, y2 + 1, r, g, b, a);
@@ -317,7 +317,7 @@ namespace Materia.Imaging
             }
             else
             {
-                for(int i = 1; i < thickness; i++)
+                for(int i = 1; i < thickness; ++i)
                 {
                     DrawLine(x1 - i, y1, x2 - i, y2, r, g, b, a);
                     DrawLine(x1 + i, y1, x2 + i, y2, r, g, b, a);
@@ -403,9 +403,9 @@ namespace Materia.Imaging
             int wh = Width / 2;
             int hh = Height / 2;
 
-            for (int y = -r; y <= r; y++)
+            for (int y = -r; y <= r; ++y)
             {
-                for (int x = -r; x <= r; x++)
+                for (int x = -r; x <= r; ++x)
                 {
                     if (x * x + y * y <= r * r)
                     {

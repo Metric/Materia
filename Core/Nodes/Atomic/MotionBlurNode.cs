@@ -9,6 +9,7 @@ using Materia.Textures;
 using Materia.Math3D;
 using Newtonsoft.Json;
 using System.Threading;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.Atomic
 {
@@ -28,7 +29,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 magnitude = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -44,14 +45,14 @@ namespace Materia.Nodes.Atomic
             set
             {
                 direction = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
         NodeInput input;
         NodeOutput output;
 
-        public MotionBlurNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public MotionBlurNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Motion Blur";
 
@@ -71,92 +72,42 @@ namespace Materia.Nodes.Atomic
             magnitude = 10;
 
             input = new NodeInput(NodeType.Color | NodeType.Gray, this, "Image Input");
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
-
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
-
             output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            output.Data = null;
-            output.Changed();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                if (input.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                if(input.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
         }
 
         private void GetParams()
         {
+            if (!input.HasInput) return;
+
             pintensity = magnitude;
             pdirection = direction;
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
             {
-                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
+                pintensity = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Intensity"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Direction"))
             {
-                pdirection = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Direction"));
+                pdirection = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Direction"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         float pintensity;
         float pdirection;
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+            if (!input.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
 
             if (i1 == null) return;
 
@@ -176,9 +127,8 @@ namespace Materia.Nodes.Atomic
             previewProcessor.TileX = 1;
             previewProcessor.TileY = 1;
 
-            Updated();
             output.Data = buffer;
-            output.Changed();
+            TriggerTextureChange();
         }
 
         public class MotionBlurData : NodeData
@@ -203,11 +153,6 @@ namespace Materia.Nodes.Atomic
             d.direction = direction;
 
             return JsonConvert.SerializeObject(d);
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
         }
 
         public override void Dispose()

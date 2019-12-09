@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Materia.MathHelpers;
+using Materia.Nodes.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,33 +32,9 @@ namespace Materia.Nodes.MathNodes
 
             Inputs.Add(input);
             Inputs.Add(input2);
-                
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
-            input2.OnInputAdded += Input_OnInputAdded;
-            input2.OnInputChanged += Input_OnInputChanged;
 
             Outputs.Add(output);
             Outputs.Add(output2);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            Updated();
-        }
-
-        public override void TryAndProcess()
-        {
-            if (input.HasInput && input2.HasInput)
-            {
-                Process();
-            }
         }
 
         public override string GetShaderPart(string currentFrag)
@@ -65,14 +43,14 @@ namespace Materia.Nodes.MathNodes
             var s1 = shaderId + "1";
             var s2 = shaderId + "2";
 
-            var n1id = (Inputs[1].Input.Node as MathNode).ShaderId;
-            var n2id = (Inputs[2].Input.Node as MathNode).ShaderId;
+            var n1id = (Inputs[1].Reference.Node as MathNode).ShaderId;
+            var n2id = (Inputs[2].Reference.Node as MathNode).ShaderId;
 
-            var index = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
+            var index = Inputs[1].Reference.Node.Outputs.IndexOf(Inputs[1].Reference);
 
             n1id += index;
 
-            var index2 = Inputs[2].Input.Node.Outputs.IndexOf(Inputs[2].Input);
+            var index2 = Inputs[2].Reference.Node.Outputs.IndexOf(Inputs[2].Reference);
 
             n2id += index2;
 
@@ -83,30 +61,16 @@ namespace Materia.Nodes.MathNodes
             return compute;
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            if (input.Input.Data == null || input2.Input.Data == null) return;
+            if (!input.IsValid || !input2.IsValid) return;
 
-            float theta = Convert.ToSingle(input.Input.Data);
-            float radius = Convert.ToSingle(input2.Input.Data);
+            float angle = input.Data.ToFloat();
+            float radius = input2.Data.ToFloat();
 
-            theta = (float)(Math.PI / 180.0f) * (theta - 90);
-
-
-            output.Data = radius * (float)Math.Cos(theta);
-            output2.Data = radius * (float)Math.Sin(theta);
-
-            result = $"{output.Data.ToString()},{output2.Data.ToString()}";
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
+            output.Data = (float)(radius * Math.Cos(angle));
+            output2.Data = (float)(radius * Math.Sin(angle));
+            result = output.Data?.ToString() + "," + output2.Data?.ToString();
         }
     }
 }

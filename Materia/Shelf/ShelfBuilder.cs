@@ -180,7 +180,7 @@ namespace Materia.Shelf
                 string[] split = path.Split(new string[] { System.IO.Path.DirectorySeparatorChar + "" }, StringSplitOptions.RemoveEmptyEntries);
 
                 int i = 0;
-                for (i = 0; i < split.Length; i++)
+                for (i = 0; i < split.Length; ++i)
                 {
                     var s = split[i];
                     if (i == 0 && s.Equals(BaseName))

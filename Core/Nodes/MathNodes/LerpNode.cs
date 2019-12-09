@@ -35,35 +35,7 @@ namespace Materia.Nodes.MathNodes
             Inputs.Add(input2);
             Inputs.Add(input3);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
-            input2.OnInputAdded += Input_OnInputAdded;
-            input2.OnInputChanged += Input_OnInputChanged;
-
-            input3.OnInputAdded += Input_OnInputAdded;
-            input3.OnInputChanged += Input_OnInputChanged;
-
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            UpdateOutputType();
-            Updated();
-        }
-
-        public override void TryAndProcess()
-        {
-            if (input.HasInput && input2.HasInput && input3.HasInput)
-            {
-                Process();
-            }
         }
 
         public override void UpdateOutputType()
@@ -71,8 +43,8 @@ namespace Materia.Nodes.MathNodes
             if (Inputs.Count == 0) return;
             if (Inputs[1].HasInput && Inputs[2].HasInput)
             {
-                NodeType t1 = Inputs[1].Input.Type;
-                NodeType t2 = Inputs[2].Input.Type;
+                NodeType t1 = Inputs[1].Reference.Type;
+                NodeType t2 = Inputs[2].Reference.Type;
 
                 if (t1 == NodeType.Float && t2 == NodeType.Float)
                 {
@@ -109,35 +81,35 @@ namespace Materia.Nodes.MathNodes
         {
             if (!input.HasInput || !input2.HasInput || !input3.HasInput) return "";
             var s = shaderId + "1";
-            var n1id = (input.Input.Node as MathNode).ShaderId;
-            var n2id = (input2.Input.Node as MathNode).ShaderId;
-            var n3id = (input3.Input.Node as MathNode).ShaderId;
+            var n1id = (input.Reference.Node as MathNode).ShaderId;
+            var n2id = (input2.Reference.Node as MathNode).ShaderId;
+            var n3id = (input3.Reference.Node as MathNode).ShaderId;
 
-            var index = input.Input.Node.Outputs.IndexOf(input.Input);
+            var index = input.Reference.Node.Outputs.IndexOf(input.Reference);
 
             n1id += index;
 
-            var index2 = input2.Input.Node.Outputs.IndexOf(input2.Input);
+            var index2 = input2.Reference.Node.Outputs.IndexOf(input2.Reference);
 
             n2id += index2;
 
-            var index3 = input3.Input.Node.Outputs.IndexOf(input3.Input);
+            var index3 = input3.Reference.Node.Outputs.IndexOf(input3.Reference);
 
             n3id += index3;
 
-            if(input.Input.Type == NodeType.Float && input2.Input.Type == NodeType.Float)
+            if(input.Reference.Type == NodeType.Float && input2.Reference.Type == NodeType.Float)
             {
                 return "float " + s + " = mix(" + n1id + "," + n2id + "," + n3id + ");\r\n"; 
             }
-            else if(input.Input.Type == NodeType.Float2 && input2.Input.Type == NodeType.Float2)
+            else if(input.Reference.Type == NodeType.Float2 && input2.Reference.Type == NodeType.Float2)
             {
                 return "vec2 " + s + " = mix(" + n1id + "," + n2id + "," + n3id + ");\r\n";
             }
-            else if (input.Input.Type == NodeType.Float3 && input2.Input.Type == NodeType.Float3)
+            else if (input.Reference.Type == NodeType.Float3 && input2.Reference.Type == NodeType.Float3)
             {
                 return "vec3 " + s + " = mix(" + n1id + "," + n2id + "," + n3id + ");\r\n";
             }
-            else if (input.Input.Type == NodeType.Float4 && input2.Input.Type == NodeType.Float4)
+            else if (input.Reference.Type == NodeType.Float4 && input2.Reference.Type == NodeType.Float4)
             {
                 return "vec4 " + s + " = mix(" + n1id + "," + n2id + "," + n3id + ");\r\n";
             }
@@ -145,54 +117,55 @@ namespace Materia.Nodes.MathNodes
             return "";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            if (input.Input.Data == null || input2.Input.Data == null || input3.Input.Data == null) return;
+            if (!input.IsValid || !input2.IsValid || !input3.IsValid) return;
 
-            object from = input.Input.Data;
-            object to = input2.Input.Data;
-            float delta = Convert.ToSingle(input3.Input.Data);
+            NodeType t = input.Reference.Type;
+            NodeType t2 = input2.Reference.Type;
 
+            float delta = input3.Data.ToFloat();
 
-            if ((from is float || from is double || from is int || from is long) && to is MVector)
+            try
             {
-                float vt = Convert.ToSingle(from);
-                MVector f = new MVector(vt, vt, vt, vt);
-                MVector r = MVector.Lerp(f, (MVector)to, delta);
-                output.Data = r;
-            }
-            else if ((from is float || from is double || from is int || from is long) && (to is float || to is double || to is int || to is long))
-            {
-                float r = Utils.Lerp(Convert.ToSingle(from), Convert.ToSingle(to), delta);
-                output.Data = r;
-            }
-            else if (from is MVector && (to is float || to is double || to is int || to is long))
-            {
-                float vt = Convert.ToSingle(to);
-                MVector f = new MVector(vt, vt, vt, vt);
-                MVector r = MVector.Lerp((MVector)from, f, delta);
-                output.Data = r;
-            }
-            else if(from is MVector && to is MVector)
-            {
-                output.Data = MVector.Lerp((MVector)from, (MVector)to, delta);
-            }
-            else
-            {
-                output.Data = 0;
-            }
 
-            result = output.Data.ToString();
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
+                if (t == NodeType.Float && t2 == NodeType.Float)
                 {
-                    g.Result = output.Data;
+                    float v1 = input.Data.ToFloat();
+                    float v2 = input2.Data.ToFloat();
+                    output.Data = Utils.Lerp(v1, v2, delta);
                 }
+                else if ((t == NodeType.Float2 || t == NodeType.Float3 || t == NodeType.Float4)
+                    && (t2 == NodeType.Float2 || t2 == NodeType.Float3 || t2 == NodeType.Float4))
+                {
+                    MVector v1 = (MVector)input.Data;
+                    MVector v2 = (MVector)input2.Data;
+
+                    output.Data = MVector.Lerp(v1, v2, delta);
+                }
+                else if (t == NodeType.Float && (t2 == NodeType.Float2 || t2 == NodeType.Float3 || t2 == NodeType.Float4))
+                {
+                    float f = input.Data.ToFloat();
+                    MVector v1 = new MVector(f, f, f, f);
+                    MVector v2 = (MVector)input2.Data;
+                    output.Data = MVector.Lerp(v1, v2, delta);
+                }
+                else if ((t == NodeType.Float2 || t == NodeType.Float3 || t == NodeType.Float4) && t2 == NodeType.Float)
+                {
+                    float f = input2.Data.ToFloat();
+                    MVector v2 = new MVector(f, f, f, f);
+                    MVector v1 = (MVector)input.Data;
+                    output.Data = MVector.Lerp(v1, v2, delta);
+                }
+
+                result = output.Data?.ToString();
             }
+            catch (Exception e)
+            {
+
+            }
+
+            UpdateOutputType();
         }
     }
 }

@@ -103,7 +103,7 @@ namespace Materia.UI.Components
 
                     if (g != null && g.positions != null && g.colors != null && g.positions.Length == g.colors.Length)
                     {
-                        for (int i = 0; i < g.positions.Length; i++)
+                        for (int i = 0; i < g.positions.Length; ++i)
                         {
                             AddHandle(new System.Windows.Point(g.positions[i] * HandleHolder.ActualWidth - HANDLE_HALF_WIDTH, 0), g.colors[i]);
                         }
@@ -193,7 +193,7 @@ namespace Materia.UI.Components
                         float[] pos = new float[handles.Count];
                         MVector[] cols = new MVector[handles.Count];
 
-                        for (int i = 0; i < handles.Count; i++)
+                        for (int i = 0; i < handles.Count; ++i)
                         {
                             pos[i] = handles[i].Position;
                             cols[i] = handles[i].SColor;
@@ -273,7 +273,7 @@ namespace Materia.UI.Components
 
                 GradientHandle handle = null;
                 double min = double.PositiveInfinity;
-                for(int i = 0; i < handles.Count; i++)
+                for(int i = 0; i < handles.Count; ++i)
                 {
                     double x = Canvas.GetLeft(handles[i]);
                     double dist = Math.Abs(p.X - x);

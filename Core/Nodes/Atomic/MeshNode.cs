@@ -71,7 +71,7 @@ namespace Materia.Nodes.Atomic
                 {
                     relativePath = System.IO.Path.Combine("resources", System.IO.Path.GetFileName(path));
                 }
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -92,7 +92,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 position = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -107,7 +107,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 rotation = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -124,7 +124,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 scale = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -138,7 +138,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 cameraZoom = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -155,7 +155,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 meshtileX = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -169,7 +169,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 meshtileY = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -188,7 +188,7 @@ namespace Materia.Nodes.Atomic
         static Matrix4 Proj = Matrix4.CreatePerspectiveFieldOfView(40 * ((float)Math.PI / 180.0f), 1, 0.03f, 1000.0f);
         static PBRMaterial mat = new PBRMaterial();
 
-        public MeshNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public MeshNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Mesh";
 
@@ -211,8 +211,6 @@ namespace Materia.Nodes.Atomic
 
             internalPixelType = p;
 
-            Inputs = new List<NodeInput>();
-
             inputAlbedo = new NodeInput(NodeType.Color, this, "Albedo");
             inputHeight = new NodeInput(NodeType.Gray, this, "Height");
             inputMetallic = new NodeInput(NodeType.Gray, this, "Metallic");
@@ -229,89 +227,8 @@ namespace Materia.Nodes.Atomic
             Inputs.Add(inputOcclusion);
             Inputs.Add(inputThickness);
 
-            inputAlbedo.OnInputAdded += Input_OnInputAdded;
-            inputAlbedo.OnInputChanged += Input_OnInputChanged;
-            inputAlbedo.OnInputRemoved += Input_OnInputRemoved;
-
-            inputNormal.OnInputAdded += Input_OnInputAdded;
-            inputNormal.OnInputChanged += Input_OnInputChanged;
-            inputNormal.OnInputRemoved += Input_OnInputRemoved;
-
-            inputOcclusion.OnInputAdded += Input_OnInputAdded;
-            inputOcclusion.OnInputChanged += Input_OnInputChanged;
-            inputOcclusion.OnInputRemoved += Input_OnInputRemoved;
-
-            inputRoughness.OnInputAdded += Input_OnInputAdded;
-            inputRoughness.OnInputChanged += Input_OnInputChanged;
-            inputRoughness.OnInputRemoved += Input_OnInputRemoved;
-
-            inputMetallic.OnInputAdded += Input_OnInputAdded;
-            inputMetallic.OnInputChanged += Input_OnInputChanged;
-            inputMetallic.OnInputRemoved += Input_OnInputRemoved;
-
-            inputHeight.OnInputAdded += Input_OnInputAdded;
-            inputHeight.OnInputChanged += Input_OnInputChanged;
-            inputHeight.OnInputRemoved += Input_OnInputRemoved;
-
-            inputThickness.OnInputAdded += Input_OnInputAdded;
-            inputThickness.OnInputChanged += Input_OnInputChanged;
-            inputThickness.OnInputRemoved += Input_OnInputRemoved;
-
             Output = new NodeOutput(NodeType.Gray, this);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-
-            OnHdriChanged += MeshNode_OnHdriChanged;
-        }
-
-        private void MeshNode_OnHdriChanged()
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                ReadMeshFile();
-                LoadMesh();
-                Process();
-                return;
-            }
-
-            if (ParentGraph != null)
-            {
-                ParentGraph.Schedule(this);
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                ReadMeshFile();
-            })
-            .ContinueWith(t =>
-            {
-                LoadMesh();
-                Process();
-            }, Context);
         }
 
         private void ReadMeshFile()
@@ -373,6 +290,13 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        public override void TryAndProcess()
+        {
+            ReadMeshFile();
+            LoadMesh();
+            Process();
+        }
+
         List<RSMI.Containers.Mesh> meshes;
         void Process()
         {
@@ -394,13 +318,13 @@ namespace Materia.Nodes.Atomic
             Matrix4 view = rotation * Matrix4.CreateTranslation(0, 0, -cameraZoom);
             Vector3 pos = Vector3.Normalize((view * new Vector4(0, 0, 1, 1)).Xyz) * cameraZoom;
 
-            GLTextuer2D albedo = (inputAlbedo.HasInput) ? (GLTextuer2D)inputAlbedo.Input.Data : null;
-            GLTextuer2D metallic = (inputMetallic.HasInput) ? (GLTextuer2D)inputMetallic.Input.Data : null;
-            GLTextuer2D roughness = (inputRoughness.HasInput) ? (GLTextuer2D)inputRoughness.Input.Data : null;
-            GLTextuer2D normal = (inputNormal.HasInput) ? (GLTextuer2D)inputNormal.Input.Data : null;
-            GLTextuer2D heightm = (inputHeight.HasInput) ? (GLTextuer2D)inputHeight.Input.Data : null;
-            GLTextuer2D occlusion = (inputOcclusion.HasInput) ? (GLTextuer2D)inputOcclusion.Input.Data : null;
-            GLTextuer2D thickness = (inputThickness.HasInput) ? (GLTextuer2D)inputThickness.Input.Data : null;
+            GLTextuer2D albedo = (inputAlbedo.HasInput) ? (GLTextuer2D)inputAlbedo.Reference.Data : null;
+            GLTextuer2D metallic = (inputMetallic.HasInput) ? (GLTextuer2D)inputMetallic.Reference.Data : null;
+            GLTextuer2D roughness = (inputRoughness.HasInput) ? (GLTextuer2D)inputRoughness.Reference.Data : null;
+            GLTextuer2D normal = (inputNormal.HasInput) ? (GLTextuer2D)inputNormal.Reference.Data : null;
+            GLTextuer2D heightm = (inputHeight.HasInput) ? (GLTextuer2D)inputHeight.Reference.Data : null;
+            GLTextuer2D occlusion = (inputOcclusion.HasInput) ? (GLTextuer2D)inputOcclusion.Reference.Data : null;
+            GLTextuer2D thickness = (inputThickness.HasInput) ? (GLTextuer2D)inputThickness.Reference.Data : null;
 
             mesh.IrradianceMap = Irradiance;
             mesh.PrefilterMap = Prefilter;
@@ -462,9 +386,8 @@ namespace Materia.Nodes.Atomic
             processor.Process(width, height, buffer);
             processor.Complete();
 
-            Updated();
             Output.Data = buffer;
-            Output.Changed();
+            TriggerTextureChange();
         }
 
         public class MeshNodeData : NodeData
@@ -544,10 +467,6 @@ namespace Materia.Nodes.Atomic
             return JsonConvert.SerializeObject(d);
         }
 
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
-        }
 
         public override void CopyResources(string CWD)
         {
@@ -558,8 +477,6 @@ namespace Materia.Nodes.Atomic
 
         public override void Dispose()
         {
-            OnHdriChanged -= MeshNode_OnHdriChanged;
-
             base.Dispose();
 
             if (mesh != null)

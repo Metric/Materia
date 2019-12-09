@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
 using System.Text.RegularExpressions;
+using Materia.Nodes.Helpers;
+using Materia.MathHelpers;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -44,54 +46,24 @@ namespace Materia.Nodes.MathNodes
             Inputs.Add(incrementInput);
 
 
-            startInput.OnInputAdded += Input_OnInputAdded;
-            startInput.OnInputChanged += Input_OnInputChanged;
-
-            endInput.OnInputAdded += Input_OnInputAdded;
-            endInput.OnInputChanged += Input_OnInputChanged;
-
-            incrementInput.OnInputAdded += Input_OnInputAdded;
-            incrementInput.OnInputChanged += Input_OnInputChanged;
-
             Outputs.Add(incrementOutput);
             Outputs.Add(completeOutput);
         }
 
-        private void Input_OnInputAdded(NodeInput input)
-        {
-            UpdateOutputType();
-            Updated();
-        }
-
-        private void Input_OnInputChanged(NodeInput input)
-        {
-            TryAndProcess();
-        }
-
-        public override void UpdateOutputType()
-        {
-
-        }
-
         public override string GetShaderPart(string currentFrag)
         {
-            if (ParentGraph == null)
-            {
-                return "";
-            }
-
             if(!startInput.HasInput || !endInput.HasInput || !incrementInput.HasInput)
             {
                 return "";
             }
 
-            string startId = (startInput.Input.Node as MathNode).ShaderId;
-            string endId = (endInput.Input.Node as MathNode).ShaderId;
-            string incrementId = (incrementInput.Input.Node as MathNode).ShaderId;
+            string startId = (startInput.Reference.Node as MathNode).ShaderId;
+            string endId = (endInput.Reference.Node as MathNode).ShaderId;
+            string incrementId = (incrementInput.Reference.Node as MathNode).ShaderId;
 
-            var idx2 = startInput.Input.Node.Outputs.IndexOf(startInput.Input);
-            var idx3 = endInput.Input.Node.Outputs.IndexOf(endInput.Input);
-            var idx4 = incrementInput.Input.Node.Outputs.IndexOf(incrementInput.Input);
+            var idx2 = startInput.Reference.Node.Outputs.IndexOf(startInput.Reference);
+            var idx3 = endInput.Reference.Node.Outputs.IndexOf(endInput.Reference);
+            var idx4 = incrementInput.Reference.Node.Outputs.IndexOf(incrementInput.Reference);
 
             startId += idx2.ToString();
             endId += idx3.ToString();
@@ -150,7 +122,7 @@ namespace Materia.Nodes.MathNodes
                 {
                     if (op.HasInput)
                     {
-                        bool nodeHasExecute = op.Input.Node.Outputs.Find(m => m.Type == NodeType.Execute) != null;
+                        bool nodeHasExecute = op.Reference.Node.Outputs.Find(m => m.Type == NodeType.Execute) != null;
 
                         if (!nodeHasExecute)
                         {
@@ -162,9 +134,9 @@ namespace Materia.Nodes.MathNodes
                             //and Constant types
                             //everything else requires
                             //an execute flow
-                            forward.Add(op.Input.Node);
+                            forward.Add(op.Reference.Node);
                             //we have to tell the node to update output type
-                            (op.Input.Node as MathNode).UpdateOutputType();
+                            (op.Reference.Node as MathNode).UpdateOutputType();
                         }
                     }
                 }
@@ -185,7 +157,7 @@ namespace Materia.Nodes.MathNodes
                         //as each for loop will handle it
                         if (n is ForLoopNode && i == 0)
                         {
-                            i++;
+                            ++i;
                             continue;
                         }
 
@@ -271,49 +243,37 @@ namespace Materia.Nodes.MathNodes
 
         public override void TryAndProcess()
         {
-            if(startInput.HasInput
-                && endInput.HasInput && incrementInput.HasInput)
-            {
-                Process();
-            }
-        }
-
-        void Process()
-        {
-            if (startInput.Input.Data == null
-                || endInput.Input.Data == null
-                || incrementInput.Input.Data == null || ParentGraph == null)
+            if(!startInput.IsValid || !incrementInput.IsValid || !endInput.IsValid)
             {
                 return;
             }
 
-            float s = Convert.ToSingle(startInput.Input.Data);
-            float e = Convert.ToSingle(endInput.Input.Data);
-            float incr = Convert.ToSingle(incrementInput.Input.Data);
-
             List<Node> loop = GetLoopNodes();
 
-            //handle forwards or backwards loops
+            float s = startInput.Data.ToFloat();
+            float e = endInput.Data.ToFloat();
+            float incr = incrementInput.Data.ToFloat();
+
             if (s <= e)
             {
                 for (float i = s; i < e; i += incr)
                 {
                     incrementOutput.Data = i;
-
-                    foreach(var n in loop)
+                    for(int j = 0; j < loop.Count; ++j)
                     {
+                        Node n = loop[j];
                         n.TryAndProcess();
                     }
                 }
             }
             else
             {
-                for(float i = s; i >= e; i-=incr)
+                for (float i = s; i >= e; i -= incr)
                 {
                     incrementOutput.Data = i;
-
-                    foreach(var n in loop)
+                    for (int j = 0; j < loop.Count; ++j)
                     {
+                        Node n = loop[j];
                         n.TryAndProcess();
                     }
                 }

@@ -22,7 +22,7 @@ namespace Materia.Nodes.Helpers
             double m = Math.Round(mIdeal);
 
             float[] sizes = new float[n];
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < n; ++i)
             {
                 if (i < m)
                 {

@@ -64,7 +64,7 @@ namespace Materia.Imaging.GLProcessing
 
                 Blit(output, width, height);
 
-                for(int i = 1; i < 3; i++)
+                for(int i = 1; i < 3; ++i)
                 {
                     shader.SetUniform("magnitude", (boxes[i] - 1.0f) / 2.0f);
                     IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);

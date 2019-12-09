@@ -9,46 +9,47 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" SizeChanged="UserControl_SizeChanged" Unloaded="UserControl_Unloaded" Loaded="UserControl_Loaded">
     <Grid>
-        <WindowsFormsHost Name="FHost" Margin="0,24,0,0" />
-        <Menu VerticalAlignment="Top" Margin="0,0,0,0" Background="#333" BorderThickness="0">
-            <MenuItem Foreground="LightGray" Header="{x:Static p:Resources.MENU_SCENE}" Height="25">
-                <MenuItem Header="_Cube" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="True" IsCheckable="True" />
-                <MenuItem Header="_Sphere" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Cube Sphere" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Rounded Cube" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Plane" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Cylinder" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Custom" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
+        <WindowsFormsHost Name="FHost" Margin="0,32,0,0" />
+        <Menu VerticalAlignment="Top" Margin="0,0,0,0" Height="32" Background="{StaticResource Surface}" BorderThickness="0">
+            <MenuItem Foreground="{StaticResource TextLight}" Height="32" VerticalAlignment="Stretch" Header="{x:Static p:Resources.MENU_SCENE}">
+                <MenuItem Header="_Cube" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="{StaticResource TextDark}" IsChecked="True" IsCheckable="True" />
+                <MenuItem Header="_Sphere" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Cube Sphere" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Rounded Cube" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Plane" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Cylinder" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
                 <Separator />
-                <MenuItem Header="_Reset" Foreground="#555" Click="ResetScene_Click" />
+                <MenuItem Header="_Custom" h:MenuItemExtensions.GroupName="previewType" Click="PreviewType_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <Separator />
+                <MenuItem Header="_Reset" Foreground="{StaticResource TextDark}" Click="ResetScene_Click" />
             </MenuItem>
-            <MenuItem Foreground="LightGray" Header="{x:Static p:Resources.MENU_CAMERA}" Height="25">
-                <MenuItem Header="_Top" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Bottom" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Left" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Right" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Front" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Back" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Perspective" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="#555" IsChecked="True" IsCheckable="True" />
+            <MenuItem Foreground="{StaticResource TextLight}" Header="{x:Static p:Resources.MENU_CAMERA}" Height="32">
+                <MenuItem Header="_Top" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Bottom" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Left" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Right" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Front" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Back" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Perspective" h:MenuItemExtensions.GroupName="cameraPosition" Click="CameraPosition_Click" Foreground="{StaticResource TextDark}" IsChecked="True" IsCheckable="True" />
                 <Separator />
-                <MenuItem Header="_Orthographic" h:MenuItemExtensions.GroupName="cameraMode" Click="CameraMode_Click" Foreground="#555" IsChecked="False" IsCheckable="True" />
-                <MenuItem Header="_Perspective" h:MenuItemExtensions.GroupName="cameraMode" Click="CameraMode_Click" Foreground="#555" IsChecked="True" IsCheckable="True" />
+                <MenuItem Header="_Orthographic" h:MenuItemExtensions.GroupName="cameraMode" Click="CameraMode_Click" Foreground="{StaticResource TextDark}" IsChecked="False" IsCheckable="True" />
+                <MenuItem Header="_Perspective" h:MenuItemExtensions.GroupName="cameraMode" Click="CameraMode_Click" Foreground="{StaticResource TextDark}" IsChecked="True" IsCheckable="True" />
                 <Separator />
-                <MenuItem Header="_Settings" Foreground="#555" Click="CameraSettings_Click" />
+                <MenuItem Header="_Settings" Foreground="{StaticResource TextDark}" Click="CameraSettings_Click" />
             </MenuItem>
-            <MenuItem Height="25" Foreground="LightGray" Header="{x:Static p:Resources.MENU_LIGHT}">
-                <MenuItem Header="_Default Position" Click="MenuItem_Click" Foreground="#555" />
-                <MenuItem Header="_Set to Origin" Click="MenuItem_Click" Foreground="#555" />
-                <MenuItem Header="_Reset Light" Click="MenuItem_Click" Foreground="#555" />
+            <MenuItem Foreground="{StaticResource TextLight}" Height="32" Header="{x:Static p:Resources.MENU_LIGHT}">
+                <MenuItem Header="_Default Position" Click="MenuItem_Click" Foreground="{StaticResource TextDark}" />
+                <MenuItem Header="_Set to Origin" Click="MenuItem_Click" Foreground="{StaticResource TextDark}" />
+                <MenuItem Header="_Reset Light" Click="MenuItem_Click" Foreground="{StaticResource TextDark}" />
                 <Separator></Separator>
-                <MenuItem Header="_Light Settings" Click="MenuItem_Click" Foreground="#555" />
+                <MenuItem Header="_Light Settings" Click="MenuItem_Click" Foreground="{StaticResource TextDark}" />
             </MenuItem>
-            <MenuItem Height="25" Foreground="LightGray" Header="{x:Static p:Resources.MENU_MATERIAL}">
-                <MenuItem Header="_Material Settings" Click="MenuItem_Click" Foreground="#555" />
-                <MenuItem Header="_Wireframe Shading" Click="RenderMode_Click" Foreground="#555" h:MenuItemExtensions.GroupName="renderMode" IsCheckable="True" IsChecked="False"/>
-                <MenuItem Header="_Full Shading" Click="RenderMode_Click" Foreground="#555" h:MenuItemExtensions.GroupName="renderMode" IsCheckable="True" IsChecked="True" />
+            <MenuItem Height="32" Foreground="{StaticResource TextLight}" Header="{x:Static p:Resources.MENU_MATERIAL}">
+                <MenuItem Header="_Material Settings" Click="MenuItem_Click" Foreground="{StaticResource TextDark}" />
+                <MenuItem Header="_Wireframe Shading" Click="RenderMode_Click" Foreground="{StaticResource TextDark}" h:MenuItemExtensions.GroupName="renderMode" IsCheckable="True" IsChecked="False"/>
+                <MenuItem Header="_Full Shading" Click="RenderMode_Click" Foreground="{StaticResource TextDark}" h:MenuItemExtensions.GroupName="renderMode" IsCheckable="True" IsChecked="True" />
                 <Separator />
-                <MenuItem Header="_Reset Material" Click="MenuItem_Click" Foreground="#555" />
+                <MenuItem Header="_Reset Material" Click="MenuItem_Click" Foreground="{StaticResource TextDark}" />
             </MenuItem>
         </Menu>
     </Grid>

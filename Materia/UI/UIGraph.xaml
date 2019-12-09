@@ -13,50 +13,50 @@
             <MenuItem Header="_Import Function" Click="MenuItem_Click" />
         </ContextMenu>
     </UserControl.Resources>
-    <Grid ClipToBounds="True" MouseWheel="ViewPort_MouseWheel" MouseDown="ViewPort_MouseDown" Background="#333" MouseUp="ViewPort_MouseUp" MouseMove="ViewPort_MouseMove">
+    <Grid ClipToBounds="True" MouseWheel="ViewPort_MouseWheel" MouseDown="ViewPort_MouseDown" Background="{StaticResource Overlay5}" MouseUp="ViewPort_MouseUp" MouseMove="ViewPort_MouseMove">
         <Canvas Name="ViewPort" ClipToBounds="True" Margin="0,0,0,0">
         </Canvas>
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,32,0,0" FlowDirection="RightToLeft">
-            <Button Name="ApplySize" Click="ApplySize_Click" Width="48" Background="#444" Margin="5" BorderThickness="1" BorderBrush="#666" ToolTip="{x:Static p:Resources.TIP_APPLY_SIZE}" Style="{DynamicResource ImageTextButton}">
-                <TextBlock Foreground="LightGray" Text="{x:Static p:Resources.BUTTON_APPLY}" />
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Height="32" HorizontalAlignment="Right" Margin="0,40,8,0" FlowDirection="RightToLeft">
+            <Button Name="ApplySize" Click="ApplySize_Click" Width="64" Margin="0,0,0,0" ToolTip="{x:Static p:Resources.TIP_APPLY_SIZE}" Style="{DynamicResource ImageTextButton}">
+                <TextBlock Foreground="{StaticResource TextLight}" Text="{x:Static p:Resources.BUTTON_APPLY}" />
             </Button>
-            <ComboBox Foreground="LightGray" SelectedIndex="0" Style="{StaticResource ComboBoxFlatStyle}" SelectionChanged="DefaultNodeSize_SelectionChanged" Name="DefaultNodeSize" FlowDirection="LeftToRight" Width="100"  Margin="4,4,4,4">
+            <ComboBox Foreground="{StaticResource TextLight}" SelectedIndex="0" Style="{StaticResource ComboBoxFlatStyle}" SelectionChanged="DefaultNodeSize_SelectionChanged" Name="DefaultNodeSize" FlowDirection="LeftToRight" Width="100"  Margin="0">
                 <ComboBox.Items>
-                    <ComboBoxItem Content="8" />
-                    <ComboBoxItem Content="16" />
-                    <ComboBoxItem Content="32" />
-                    <ComboBoxItem Content="64" />
-                    <ComboBoxItem Content="128" />
-                    <ComboBoxItem Content="256" />
-                    <ComboBoxItem Content="512" />
-                    <ComboBoxItem Content="1024" />
-                    <ComboBoxItem Content="2048" />
-                    <ComboBoxItem Content="4096" />
+                    <ComboBoxItem Foreground="{StaticResource TextLight}" Content="8" />
+                    <ComboBoxItem Foreground="{StaticResource TextLight}" Content="16" />
+                    <ComboBoxItem Foreground="{StaticResource TextLight}" Content="32" />
+                    <ComboBoxItem Foreground="{StaticResource TextLight}" Content="64" />
+                    <ComboBoxItem Foreground="{StaticResource TextLight}" Content="128" />
+                    <ComboBoxItem Foreground="{StaticResource TextLight}" Content="256" />
+                    <ComboBoxItem Foreground="{StaticResource TextLight}" Content="512" />
+                    <ComboBoxItem Foreground="{StaticResource TextLight}" Content="1024" />
+                    <ComboBoxItem Foreground="{StaticResource TextLight}" Content="2048" />
+                    <ComboBoxItem Foreground="{StaticResource TextLight}" Content="4096" />
                     <!--<ComboBoxItem Content="8192" /> -->
                 </ComboBox.Items>
             </ComboBox>
-            <TextBlock Name="ApplySizeLabel" Text="{x:Static p:Resources.TITLE_SIZE}" Foreground="LightGray" VerticalAlignment="Center"  Margin="5,5,20,5"/>
-            <Button Name="ZoomIn" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomIn_Click" ToolTip="{x:Static p:Resources.TIP_ZOOM_IN}" Style="{DynamicResource ImageTextButton}">
-                <Image Source="/Materia;component/Images/add.png" />
+            <TextBlock Name="ApplySizeLabel" Text="{x:Static p:Resources.TITLE_SIZE}" Foreground="{StaticResource TextLight}" VerticalAlignment="Center"  Margin="10,5,20,5"/>
+            <Button Name="ZoomIn" Width="32" Click="ZoomIn_Click" ToolTip="{x:Static p:Resources.TIP_ZOOM_IN}" Style="{DynamicResource ImageTextButton}">
+                <Image Source="/Materia;component/Images/add.png" Margin="4" />
             </Button>
             <TextBlock Name="ZoomLevel" Width="54" VerticalAlignment="Center" FlowDirection="LeftToRight" Text="100%" TextAlignment="Center" Foreground="LightGray" />
-            <Button Name="ZoomOut" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="ZoomOut_Click" ToolTip="{x:Static p:Resources.TIP_ZOOM_OUT}" Style="{DynamicResource ImageTextButton}">
-                <Image Source="/Materia;component/Images/minus.png" />
+            <Button Name="ZoomOut" Width="32" Margin="2,0,0,0" Click="ZoomOut_Click" ToolTip="{x:Static p:Resources.TIP_ZOOM_OUT}" Style="{DynamicResource ImageTextButton}">
+                <Image Source="/Materia;component/Images/minus.png" Margin="4" />
             </Button>
-            <Button Name="Ratio1" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="Ratio1_Click" ToolTip="{x:Static p:Resources.TIP_RESET_ZOOM}" Style="{DynamicResource ImageTextButton}">
-                <Image Source="/Materia;component/Images/1x1.png" />
+            <Button Name="Ratio1" Width="32" Margin="2,0,0,0" Click="Ratio1_Click" ToolTip="{x:Static p:Resources.TIP_RESET_ZOOM}" Style="{DynamicResource ImageTextButton}">
+                <Image Source="/Materia;component/Images/1x1.png" Margin="4" />
             </Button>
-            <Button Name="FitIntoView" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="FitIntoView_Click" ToolTip="{x:Static p:Resources.TIP_FIT_VIEW}" Style="{DynamicResource ImageTextButton}">
-                <Image Source="/Materia;component/Images/aspect.png" />
+            <Button Name="FitIntoView" Width="32" Margin="2,0,0,0" Click="FitIntoView_Click" ToolTip="{x:Static p:Resources.TIP_FIT_VIEW}" Style="{DynamicResource ImageTextButton}">
+                <Image Source="/Materia;component/Images/aspect.png" Margin="4" />
             </Button>
-            <Button Name="AlignVert" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="AlignVert_Click" ToolTip="{x:Static p:Resources.TIP_ALIGN_VERTICALLY}" Style="{DynamicResource ImageTextButton}">
-                <Image Source="/Materia;component/Images/align-vert.png" />
+            <Button Name="AlignVert" Width="32" Margin="2,0,0,0" Click="AlignVert_Click" ToolTip="{x:Static p:Resources.TIP_ALIGN_VERTICALLY}" Style="{DynamicResource ImageTextButton}">
+                <Image Source="/Materia;component/Images/align-vert.png" Margin="4" />
             </Button>
-            <Button Name="AlignHoriz" Width="24" Background="Transparent" Margin="5" BorderThickness="0" Click="AlignHoriz_Click" ToolTip="{x:Static p:Resources.TIP_ALIGN_HORIZONTALLY}" Style="{DynamicResource ImageTextButton}">
-                <Image Source="/Materia;component/Images/align-horiz.png" />
+            <Button Name="AlignHoriz" Width="32" Margin="2,0,0,0" Click="AlignHoriz_Click" ToolTip="{x:Static p:Resources.TIP_ALIGN_HORIZONTALLY}" Style="{DynamicResource ImageTextButton}">
+                <Image Source="/Materia;component/Images/align-horiz.png" Margin="4" />
             </Button>
         </StackPanel>
-        <local:BreadCrumbs x:Name="Crumbs" VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="32" Background="#222" />
+        <local:BreadCrumbs x:Name="Crumbs" VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="32" Background="{StaticResource Overlay5}" />
         <TextBlock Name="OutputRequirementsLabel" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="5" Foreground="YellowGreen" FontSize="16" />
     </Grid>
 </UserControl>

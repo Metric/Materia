@@ -8,8 +8,8 @@
              d:DesignHeight="450" d:DesignWidth="800" Loaded="UserControl_Loaded" Unloaded="UserControl_Unloaded">
     <StackPanel Orientation="Vertical">
         <Grid>
-            <TextBlock Name="More" MouseDown="Expander_MouseDown" HorizontalAlignment="Left" FontSize="16" Foreground="LightGray" Margin="5" VerticalAlignment="Center" Cursor="Hand" />
-            <TextBlock Name="Title" HorizontalAlignment="Stretch" Margin="24,0,0,0" Foreground="LightGray" Background="Transparent" Padding="2" MouseDown="Title_MouseDown" Cursor="Hand" VerticalAlignment="Center" />
+            <TextBlock Name="More" MouseDown="Expander_MouseDown" HorizontalAlignment="Left" FontSize="16" Foreground="{StaticResource TextLight}" Margin="5" VerticalAlignment="Center" Cursor="Hand" />
+            <TextBlock Name="Title" HorizontalAlignment="Stretch" Margin="24,0,0,0" Foreground="{StaticResource TextLight}" Background="Transparent" Padding="2" MouseDown="Title_MouseDown" Cursor="Hand" VerticalAlignment="Center" />
         </Grid>
         <StackPanel Margin="5,0,0,0" Name="Items" Orientation="Vertical" />
     </StackPanel>

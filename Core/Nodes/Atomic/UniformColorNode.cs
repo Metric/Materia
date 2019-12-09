@@ -27,7 +27,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 color = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -58,7 +58,7 @@ namespace Materia.Nodes.Atomic
         NodeOutput output;
         UniformColorProcessor processor;
 
-        public UniformColorNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public UniformColorNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Uniform Color";
 
@@ -80,38 +80,8 @@ namespace Materia.Nodes.Atomic
             output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
             Outputs = new List<NodeOutput>();
             Outputs.Add(output);
-
-            //this is a special case for uniform color node
-            //so it will render the node preview on drag drop
-            TryAndProcess();
         }
 
-        public override void TryAndProcess()
-        {
-            if (!Async)
-            {
-                GetParams();
-                Process();
-                return;
-            }
-
-            if (ParentGraph != null)
-            {
-                ParentGraph.Schedule(this);
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                Process();
-            }, Context);
-        }
 
         private void GetParams()
         {
@@ -137,6 +107,12 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
+        }
+
         Vector4 pcolor;
         void Process()
         {
@@ -146,9 +122,8 @@ namespace Materia.Nodes.Atomic
             processor.Process(width, height, null, buffer);
             processor.Complete();
 
-            Updated();
             output.Data = buffer;
-            output.Changed();
+            TriggerTextureChange();
         }
 
         public class UniformColorNodeData : NodeData
@@ -172,11 +147,6 @@ namespace Materia.Nodes.Atomic
             d.color = new float[] { color.X, color.Y, color.Z, color.W };
 
             return JsonConvert.SerializeObject(d);
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
         }
 
         public override void Dispose()

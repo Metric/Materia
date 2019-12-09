@@ -59,9 +59,9 @@ namespace DDSReader.Internal.Decoders
                     colors[3].r = (byte)((colors[0].r + 2 * colors[1].r + 1) / 3);
 
                     var k = 0;
-                    for (var j = 0; j < 4; j++)
+                    for (var j = 0; j < 4; ++j)
                     {
-                        for (var i = 0; i < 4; i++, k++)
+                        for (var i = 0; i < 4; ++i, ++k)
                         {
                             var select = (bitmask & (0x03 << k * 2)) >> k * 2;
                             var col = colors[select];
@@ -110,9 +110,9 @@ namespace DDSReader.Internal.Decoders
                     //bits = *((ILint*)alphamask);
                     var bits = (compressedData[alphamaskIndex]) | (compressedData[alphamaskIndex + 1] << 8) |
                                (compressedData[alphamaskIndex + 2] << 16);
-                    for (var j = 0; j < 2; j++)
+                    for (var j = 0; j < 2; ++j)
                     {
-                        for (var i = 0; i < 4; i++)
+                        for (var i = 0; i < 4; ++i)
                         {
                             // only put pixels out < width or height
                             if (((x + i) < width) && ((y + j) < height))
@@ -129,9 +129,9 @@ namespace DDSReader.Internal.Decoders
                     //bits = *((ILint*)&alphamask[3]);
                     bits = (compressedData[alphamaskIndex + 3]) | (compressedData[alphamaskIndex + 4] << 8) |
                            (compressedData[alphamaskIndex + 5] << 16);
-                    for (var j = 2; j < 4; j++)
+                    for (var j = 2; j < 4; ++j)
                     {
-                        for (var i = 0; i < 4; i++)
+                        for (var i = 0; i < 4; ++i)
                         {
                             // only put pixels out < width or height
                             if (((x + i) < width) && ((y + j) < height))
@@ -190,9 +190,9 @@ namespace DDSReader.Internal.Decoders
                     colors[3].r = (byte) ((colors[0].r + 2 * colors[1].r + 1) / 3);
 
                     var k = 0;
-                    for (var j = 0; j < 4; j++)
+                    for (var j = 0; j < 4; ++j)
                     {
-                        for (var i = 0; i < 4; i++, k++)
+                        for (var i = 0; i < 4; ++i, ++k)
                         {
                             var select = (bitmask & (0x03 << k * 2)) >> k * 2;
                             var col = colors[select];
@@ -241,9 +241,9 @@ namespace DDSReader.Internal.Decoders
                     //bits = *((ILint*)alphamask);
                     var bits = (compressedData[alphamaskIndex]) | (compressedData[alphamaskIndex + 1] << 8) |
                                (compressedData[alphamaskIndex + 2] << 16);
-                    for (var j = 0; j < 2; j++)
+                    for (var j = 0; j < 2; ++j)
                     {
-                        for (var i = 0; i < 4; i++)
+                        for (var i = 0; i < 4; ++i)
                         {
                             // only put pixels out < width or height
                             if (((x + i) < width) && ((y + j) < height))
@@ -260,9 +260,9 @@ namespace DDSReader.Internal.Decoders
                     //bits = *((ILint*)&alphamask[3]);
                     bits = (compressedData[alphamaskIndex + 3]) | (compressedData[alphamaskIndex + 4] << 8) |
                            (compressedData[alphamaskIndex + 5] << 16);
-                    for (var j = 2; j < 4; j++)
+                    for (var j = 2; j < 4; ++j)
                     {
-                        for (var i = 0; i < 4; i++)
+                        for (var i = 0; i < 4; ++i)
                         {
                             // only put pixels out < width or height
                             if (((x + i) < width) && ((y + j) < height))

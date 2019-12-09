@@ -213,8 +213,12 @@ namespace Materia
 
         private void Glview_Load(object sender, EventArgs e)
         {
+            glview.MakeCurrent();
+            glview.VSync = false;
+
             ViewContext.VerifyContext(glview);
             ViewContext.Context.MakeCurrent(glview.WindowInfo);
+            ViewContext.Context.SwapInterval = 1;
 
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
@@ -263,7 +267,9 @@ namespace Materia
         {
             if(current == n)
             {
-                current.Node.OnUpdate -= Node_OnUpdate;
+                current.Node.OnTextureChanged -= Node_OnTextureChanged;
+                current.Node.OnTextureRebuilt -= Node_OnTextureRebuilt;
+
                 current = null;
             }
 
@@ -272,31 +278,23 @@ namespace Materia
 
         public void SetPreviewNode(UINode n)
         {
-            if(current != null)
-            {
-                current.Node.OnUpdate -= Node_OnUpdate;
-            }
-
             current = n;
-            current.Node.OnUpdate += Node_OnUpdate;
-
-            Node_OnUpdate(n.Node);
+            current.Node.OnTextureChanged += Node_OnTextureChanged;
+            current.Node.OnTextureRebuilt += Node_OnTextureRebuilt;
+            vw = n.Node.Width;
+            vh = n.Node.Height;
+            Invalidate();
         }
 
-        private void Node_OnUpdate(Nodes.Node n)
+        private void Node_OnTextureRebuilt(Nodes.Node n)
         {
-            /*byte[] src = n.GetPreview(512, 512);
+            vw = current.Node.Width;
+            vh = current.Node.Height;
+            Invalidate();
+        }
 
-            if (src != null)
-            {
-                RawBitmap bitmap = new RawBitmap(512, 512, src);
- 
-                Histogram.GenerateHistograph(bitmap);
-            }*/
-
-            vw = n.Width;
-            vh = n.Height;
-
+        private void Node_OnTextureChanged(Nodes.Node n)
+        {
             Invalidate();
         }
 
@@ -308,8 +306,6 @@ namespace Materia
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            //HistMode.SelectedIndex = 0;
-
             UpdateZoomText();
         }
 

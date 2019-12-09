@@ -7,11 +7,15 @@ using Materia.Imaging.GLProcessing;
 using Materia.Textures;
 using Materia.Nodes.Attributes;
 using Newtonsoft.Json;
+using Materia.Nodes.Helpers;
+using Materia.GLInterfaces;
 
 namespace Materia.Nodes.Atomic
 {
     public class DistanceNode : ImageNode
     {
+        IGLProgram shader;
+        IGLProgram preshader;
         NodeInput input;
         NodeInput input2;
         NodeOutput Output;
@@ -30,7 +34,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 distance = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -46,11 +50,27 @@ namespace Materia.Nodes.Atomic
             set
             {
                 sourceOnly = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
-        public DistanceNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        
+        //we override as the distance node
+        //does not allow changing internal pixel format
+        //since it requires RGBA32F no matter what to function
+        public new GraphPixelType InternalPixelFormat
+        {
+            get
+            {
+                return internalPixelType;
+            }
+            set
+            {
+                internalPixelType = value;
+            }
+        } 
+
+        public DistanceNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Distance";
             Id = Guid.NewGuid().ToString();
@@ -63,55 +83,16 @@ namespace Materia.Nodes.Atomic
             previewProcessor = new BasicImageRenderer();
             processor = new DistanceProcessor();
 
-            internalPixelType = p;
+            //distance node requires RGBA32F to compute properly
+            internalPixelType = GraphPixelType.RGBA32F;
 
             input = new NodeInput(NodeType.Gray, this, "Mask");
             input2 = new NodeInput(NodeType.Gray | NodeType.Color, this, "Source");
             Output = new NodeOutput(NodeType.Gray, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input2.OnInputAdded += Input_OnInputAdded;
-            input2.OnInputChanged += Input_OnInputChanged;
-
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if (!Async)
-            {
-                if (input.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
         }
 
         public override void Dispose()
@@ -123,74 +104,134 @@ namespace Materia.Nodes.Atomic
                 processor.Release();
                 processor = null;
             }
-        }
 
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
+            if(shader != null)
             {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                if (input.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
-        }
+                shader.Release();
+                shader = null;
+            }
 
+            if(preshader != null)
+            {
+                preshader.Release();
+                preshader = null;
+            }
+        }
+        
         void GetParams()
         {
+            if (!input.HasInput) return;
+
             pmaxDistance = distance;
             psourceonly = sourceOnly;
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "MaxDistance"))
             {
-                pmaxDistance = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "MaxDistance"));
+                pmaxDistance = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "MaxDistance"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "SourceOnly"))
             {
-                psourceonly = Convert.ToBoolean(ParentGraph.GetParameterValue(Id, "SourceOnly"));
+                psourceonly = Utils.ConvertToBool(ParentGraph.GetParameterValue(Id, "SourceOnly"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            BuildShader();
+            Process();
+        }
+
+        bool rebuild = true;
+        void BuildShader()
+        {
+            if (shader == null || preshader == null || rebuild)
+            {
+                if(shader != null)
+                {
+                    shader.Release();
+                    shader = null;
+                }
+
+                if(preshader != null)
+                {
+                    preshader.Release();
+                    preshader = null;
+                }
+
+                string rawFrag = Material.Material.GetRawFrag("distance.glsl");
+
+                if (string.IsNullOrEmpty(rawFrag)) return;
+
+                string outputType = "rgba32f";
+                rawFrag = rawFrag.Replace("{0}", outputType);
+
+                shader = Material.Material.CompileCompute(rawFrag);
+
+                if (shader == null) return;
+
+                rawFrag = Material.Material.GetRawFrag("distanceprecalc.glsl");
+
+                if (string.IsNullOrEmpty(rawFrag)) return;
+                rawFrag = rawFrag.Replace("{0}", outputType);
+                preshader = Material.Material.CompileCompute(rawFrag);
+
+                if (preshader == null) return;
+
+                rebuild = false;
+            }
+        }
+
+        protected override void OnPixelFormatChange()
+        {
+            
+        }
+
+        public override void AssignPixelType(GraphPixelType pix)
+        {
+            
         }
 
         float pmaxDistance;
         bool psourceonly;
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+            if (!input.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
             GLTextuer2D i2 = null;
 
             if(input2.HasInput)
             {
-                i2 = (GLTextuer2D)input2.Input.Data;
+                i2 = (GLTextuer2D)input2.Reference.Data;
             }
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
 
             if (processor == null) return;
+            if (shader == null) return;
+            if (preshader == null) return;
 
             CreateBufferIfNeeded();
+
+            buffer.Bind();
+            IGL.Primary.ClearTexImage(buffer.Id, (int)PixelFormat.Rgba, (int)PixelType.Float);
+            GLTextuer2D.Unbind();
 
             processor.TileX = tileX;
             processor.TileY = tileY;
 
+            processor.Shader = shader;
+            processor.PreShader = preshader;
             processor.SourceOnly = psourceonly;
             processor.Distance = pmaxDistance;
             processor.Process(width, height, i1, i2, buffer);
             processor.Complete();
 
             Output.Data = buffer;
-            Output.Changed();
-            Updated();
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
+            TriggerTextureChange();
         }
 
         public class DistanceNodeData : NodeData
@@ -212,6 +253,7 @@ namespace Materia.Nodes.Atomic
         {
             DistanceNodeData d = JsonConvert.DeserializeObject<DistanceNodeData>(data);
             SetBaseNodeDate(d);
+            internalPixelType = GraphPixelType.RGBA32F;
             distance = d.maxDistance;
             sourceOnly = d.sourceOnly;
         }

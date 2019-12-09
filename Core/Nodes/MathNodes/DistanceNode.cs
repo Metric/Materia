@@ -4,11 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Materia.MathHelpers;
+using NLog;
 
 namespace Materia.Nodes.MathNodes
 {
     public class DistanceNode : MathNode
     {
+        private static ILogger Log = LogManager.GetCurrentClassLogger();
+
         NodeOutput output;
 
         public DistanceNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
@@ -23,67 +26,34 @@ namespace Materia.Nodes.MathNodes
 
             output = new NodeOutput(NodeType.Float, this);
 
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 2; ++i)
             {
                 var input = new NodeInput(NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Vector Input " + i);
                 Inputs.Add(input);
-
-                input.OnInputAdded += Input_OnInputAdded;
-                input.OnInputChanged += Input_OnInputChanged;
 
             }
             Outputs.Add(output);
         }
 
 
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            UpdateOutputType();
-            Updated();
-        }
-
-        protected override void AddPlaceholderInput()
-        {
-            var input = new NodeInput(NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Vector Input " + Inputs.Count);
-
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
-            Inputs.Add(input);
-            AddedInput(input);
-        }
-
-        public override void TryAndProcess()
-        {
-            if(Inputs[1].HasInput && Inputs[2].HasInput)
-            {
-                Process();
-            }
-        }
-
         public override string GetShaderPart(string currentFrag)
         {
             if (!Inputs[1].HasInput || !Inputs[2].HasInput) return "";
 
             var s = shaderId + "1";
-            var n1id = (Inputs[1].Input.Node as MathNode).ShaderId;
-            var n2id = (Inputs[2].Input.Node as MathNode).ShaderId;
+            var n1id = (Inputs[1].Reference.Node as MathNode).ShaderId;
+            var n2id = (Inputs[2].Reference.Node as MathNode).ShaderId;
 
-            var index = Inputs[1].Input.Node.Outputs.IndexOf(Inputs[1].Input);
+            var index = Inputs[1].Reference.Node.Outputs.IndexOf(Inputs[1].Reference);
 
             n1id += index;
 
-            var index2 = Inputs[2].Input.Node.Outputs.IndexOf(Inputs[2].Input);
+            var index2 = Inputs[2].Reference.Node.Outputs.IndexOf(Inputs[2].Reference);
 
             n2id += index2;
 
-            var t1 = Inputs[1].Input.Type;
-            var t2 = Inputs[2].Input.Type;
+            var t1 = Inputs[1].Reference.Type;
+            var t2 = Inputs[2].Reference.Type;
 
             if (t1 == NodeType.Float2 && t2 == NodeType.Float2)
             {
@@ -101,40 +71,23 @@ namespace Materia.Nodes.MathNodes
             return "float " + s + " = 0;\r\n";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            object d1 = Inputs[1].Input.Data;
-            object d2 = Inputs[2].Input.Data;
+            NodeInput input = Inputs[1];
+            NodeInput input2 = Inputs[2];
 
-            if (d1 == null || d2 == null) return;
+            if (!input.IsValid || !input2.IsValid) return;
 
-            var t1 = Inputs[1].Input.Type;
-            var t2 = Inputs[2].Input.Type;
-
-            if((t1 == NodeType.Float2 && t2 == NodeType.Float2)
-                || (t1 == NodeType.Float3 && t2 == NodeType.Float3)
-                || (t1 == NodeType.Float4 && t2 == NodeType.Float4))
+            try
             {
-                MVector f1 = (MVector)d1;
-                MVector f2 = (MVector)d2;
-
-                output.Data = (f1 - f2).Length;
+                MVector v = (MVector)input.Data;
+                MVector v2 = (MVector)input2.Data;
+                output.Data = v.Distance(v2);
+                result = output.Data?.ToString();
             }
-            else
+            catch (Exception e)
             {
-                output.Data = 0;
-            }
-
-            result = output.Data.ToString();
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
+                Log.Error(e);
             }
         }
     }

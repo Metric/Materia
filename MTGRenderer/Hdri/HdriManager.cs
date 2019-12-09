@@ -71,7 +71,7 @@ namespace Materia.Hdri
 
             string[] list = Directory.GetDirectories(dir);
 
-            for(int i = 0; i < list.Length; i++)
+            for(int i = 0; i < list.Length; ++i)
             {
                 string f = list[i];
                 if (Directory.Exists(f))
@@ -168,7 +168,7 @@ namespace Materia.Hdri
                         Prefiltered.Bind();
                         Prefiltered.SetMaxMipLevel(4);
 
-                        for (int i = 0; i < mips.Count; i++)
+                        for (int i = 0; i < mips.Count; ++i)
                         {
                             var mip = mips[i];
                             byte[] data = mip.MipmapData[0];

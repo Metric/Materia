@@ -22,11 +22,16 @@ namespace Materia.UI.Helpers
         New,
         Comment,
         Pin,
-        NextPin
+        NextPin,
     }
 
     public class MateriaInputManager
     {
+        public delegate void MouseMove(MouseEventArgs e);
+        public delegate void MouseUp(MouseButtonEventArgs e);
+        public static event MouseMove OnMouseMove;
+        public static event MouseUp OnMouseUp;
+
         protected static Dictionary<string, InputManagerCommand> keyMap = new Dictionary<string, InputManagerCommand>();
         protected static Dictionary<InputManagerCommand, List<Action<KeyEventArgs>>> actionMap = new Dictionary<InputManagerCommand, List<Action<KeyEventArgs>>>();
 
@@ -63,6 +68,8 @@ namespace Materia.UI.Helpers
         public static void Init()
         {
             EventManager.RegisterClassHandler(typeof(Window), Window.KeyDownEvent, new KeyEventHandler(HandleKeys), true);
+            EventManager.RegisterClassHandler(typeof(Window), Window.MouseMoveEvent, new MouseEventHandler(HandleMouseMove), true);
+            EventManager.RegisterClassHandler(typeof(Window), Window.MouseUpEvent, new MouseButtonEventHandler(HandleMouseUp), true);
         }
 
         protected static void Defaults()
@@ -79,6 +86,16 @@ namespace Materia.UI.Helpers
             Set(InputManagerCommand.Comment, Key.C, false, false, false);
             Set(InputManagerCommand.Pin, Key.P, false, false, false);
             Set(InputManagerCommand.NextPin, Key.Tab, false, false, false);
+        }
+
+        protected static void HandleMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            OnMouseUp?.Invoke(e);
+        }
+
+        protected static void HandleMouseMove(object sender, MouseEventArgs e)
+        {
+            OnMouseMove?.Invoke(e);
         }
 
         protected static void HandleKeys(object sender, KeyEventArgs e)

@@ -91,7 +91,7 @@ namespace Materia.UI.Components
 
         private void RemoveFunction_Click(object sender, RoutedEventArgs e)
         {
-            var g = graph.TopGraph();
+            var g = graph.ParentNode != null ? graph.ParentNode.ParentGraph : graph.ParentGraph;
 
             if (MessageBox.Show("Remove Function: " + graph.Name + "?", "", MessageBoxButton.OKCancel) == MessageBoxResult.OK)
             {

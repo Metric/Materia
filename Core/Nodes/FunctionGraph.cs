@@ -14,31 +14,63 @@ using Materia.Math3D;
 using Materia.GLInterfaces;
 using NLog;
 using Materia.Archive;
-using Materia.MathHelpers;
+using Materia.Textures;
+using Materia.Buffers;
+using System.Runtime.InteropServices;
+using Materia.Nodes.Atomic;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes
 {
     public class FunctionGraph : Graph
     {
-        protected bool modified = false;
+        public const int MAX_NODES_FOR_SHADER = 20;
+
+        protected static GLShaderBuffer shaderBuffer;
+        protected static float[] shaderBufferStorage = new float[4];
+        protected static IntPtr mappedMemoryLocation;
+
+        protected bool isDirty;
+        protected bool modified;
+
+        protected bool variablesModified;
+
+        public new bool Modified
+        {
+            get
+            {
+                return modified;
+            }
+        }
+
+        public string CodeName
+        {
+            get
+            {
+                return Name.Replace(" ", "").Replace("-", "_");
+            }
+        }
+
         protected List<Node> orderCache = new List<Node>();
 
         public delegate void OutputNodeSet(Node n);
         public event OutputNodeSet OnOutputSet;
+        public event OutputNodeSet OnArgAdded;
+        public event OutputNodeSet OnArgRemoved;
 
         public delegate void FunctionParentSet(FunctionGraph g);
         public event FunctionParentSet OnParentGraphSet;
         public event FunctionParentSet OnParentNodeSet;
-
-
+        public event FunctionParentSet OnVariablesSet;
 
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
-        static string GLSLHash = "float rand(vec2 co) {\r\n"
+        public const string GLSLHash = "float rand(vec2 co) {\r\n"
                                  + "return fract(sin(dot(co, vec2(12.9898,78.233))) * 43758.5453) * 2.0 - 1.0;\r\n"
                                  + "}\r\n\r\n";
 
         protected string lastShaderCode;
+        protected string lastInternalCode;
 
         public ExecuteNode Execute { get; set; }
 
@@ -55,10 +87,6 @@ namespace Materia.Nodes
         {
             get
             {
-                if (OutputNode == null) return false;
-                if (OutputNode.Outputs == null) return false;
-                if (OutputNode.Outputs.Count == 0) return false;
-
                 var type = GetOutputType();
 
                 if (type == null) return false;
@@ -87,6 +115,32 @@ namespace Materia.Nodes
             get
             {
                 return calls;
+            }
+        }
+
+        protected List<ForLoopNode> forLoops;
+        public List<ForLoopNode> ForLoops
+        {
+            get
+            {
+                return forLoops;
+            }
+        }
+
+        protected List<SamplerNode> samplers;
+        public List<SamplerNode> Samplers
+        {
+            get
+            {
+                return samplers;
+            }
+        }
+
+        public bool BuildAsShader
+        {
+            get
+            {
+                return Nodes.Count >= MAX_NODES_FOR_SHADER || Samplers.Count > 0 || ForLoops.Count > 0;
             }
         }
 
@@ -122,8 +176,6 @@ namespace Materia.Nodes
             }
             set
             {
-                Graph g = TopGraph();
-
                 parentNode = value;
 
                 if(OnParentNodeSet != null)
@@ -131,7 +183,7 @@ namespace Materia.Nodes
                     OnParentNodeSet.Invoke(this);
                 }
 
-                g = TopGraph();
+                var g = parentNode.ParentGraph;
                 if(g != null)
                 {
                     //update randomSeed
@@ -149,8 +201,8 @@ namespace Materia.Nodes
         public override void AssignSeed(int seed)
         {
             base.AssignSeed(seed);
-
             SetVar("RandomSeed", seed, NodeType.Float);
+            randomSeed = seed;
         }
 
         public new int Width
@@ -176,13 +228,34 @@ namespace Materia.Nodes
                 height = value;
             }
         }
+        
+        protected Dictionary<string, GraphParameterValue> uniforms; 
 
-        public FunctionGraph(string name, int w = 256, int h = 256) : base(name, w, h, false)
+        public FunctionGraph(string name, int w = 256, int h = 256) : base(name, w, h)
         {
+            samplers = new List<SamplerNode>();
+            forLoops = new List<ForLoopNode>();
+            uniforms = new Dictionary<string, GraphParameterValue>();
             orderCache = new List<Node>();
             calls = new List<CallNode>();
             args = new List<ArgNode>();
             Name = name;
+            isDirty = true;
+            SetBaseVars();
+        }
+
+        public virtual void SetAllVars()
+        {
+            Variables.Clear();
+            SetBaseVars();
+            Graph g = parentNode != null ? parentNode.ParentGraph : parentGraph;
+            SetParentGraphVars(g);
+            SetParentNodeVars(g);
+            OnVariablesSet?.Invoke(this);
+        }
+
+        public virtual void SetBaseVars()
+        {
             SetVar("PI", 3.14159265359f, NodeType.Float);
             SetVar("Rad2Deg", (180.0f / 3.14159265359f), NodeType.Float);
             SetVar("Deg2Rad", (3.14159265359f / 180.0f), NodeType.Float);
@@ -191,7 +264,40 @@ namespace Materia.Nodes
             //just set these so they are available
             //as a drop down selection
             SetVar("pos", new MVector(0, 0), NodeType.Float2);
-            SetVar("size", new MVector(w, h), NodeType.Float2);
+
+            if (parentNode != null)
+            {
+                SetVar("size", new MVector(parentNode.Width, parentNode.Height), NodeType.Float2);
+            }
+            else if(parentGraph != null)
+            {
+                SetVar("size", new MVector(parentGraph.Width, parentGraph.Height), NodeType.Float2);
+            }
+            else
+            {
+                SetVar("size", new MVector(0,0), NodeType.Float2);
+            }
+
+            //just make these available to all
+            //graphs even if they do not apply
+            //since custom functions can use these as well
+            //these are all related to FX node specific
+            //variables that are helpful
+            SetVar("iteration", 0, NodeType.Float);
+            SetVar("maxIterations", 0, NodeType.Float);
+            SetVar("w_pos", new MVector(0, 0), NodeType.Float2);
+            SetVar("quad", 0, NodeType.Float);
+
+            foreach (ArgNode arg in args)
+            {
+                if (arg == null) continue;
+                SetVar(arg.InputName, 0, arg.InputType);
+            }
+        }
+
+        public override void Schedule(Node n)
+        {
+            Updated();
         }
 
         protected override void Updated()
@@ -209,6 +315,7 @@ namespace Materia.Nodes
                 {
                     Execute = n as ExecuteNode;
                     modified = true;
+                    isDirty = true;
                     return true;
                 }
 
@@ -223,7 +330,9 @@ namespace Materia.Nodes
                 if(base.Add(n))
                 {
                     args.Add(n as ArgNode);
+                    OnArgAdded?.Invoke(n);
                     modified = true;
+                    isDirty = true;
                     return true;
                 }
 
@@ -235,6 +344,31 @@ namespace Materia.Nodes
                 {
                     calls.Add(n as CallNode);
                     modified = true;
+                    isDirty = true;
+                    return true;
+                }
+
+                return false;
+            }
+            else if(n is ForLoopNode)
+            {
+                if (base.Add(n))
+                {
+                    forLoops.Add(n as ForLoopNode);
+                    modified = true;
+                    isDirty = true;
+                    return true;
+                }
+
+                return false;
+            }
+            else if(n is SamplerNode)
+            {
+                if (base.Add(n))
+                {
+                    samplers.Add(n as SamplerNode);
+                    modified = true;
+                    isDirty = true;
                     return true;
                 }
 
@@ -245,6 +379,7 @@ namespace Materia.Nodes
                 if(base.Add(n))
                 {
                     modified = true;
+                    isDirty = true;
                     return true;
                 }
             }
@@ -262,56 +397,46 @@ namespace Materia.Nodes
             if(n is ArgNode)
             {
                 args.Remove(n as ArgNode);
+                OnArgRemoved?.Invoke(n);
             }
             else if(n is CallNode)
             {
                 calls.Remove(n as CallNode);
-            }  
+            } 
+            else if(n is SamplerNode)
+            {
+                samplers.Remove(n as SamplerNode);
+            }
+            else if(n is ForLoopNode)
+            {
+                forLoops.Remove(n as ForLoopNode);
+            }
 
             base.Remove(n);
 
+            isDirty = true;
             modified = true;
-        }
-
-        public override Graph TopGraph()
-        {
-            Graph p = null;
-            //parentGraph takes priority!
-            if(parentGraph != null)
-            {
-                return parentGraph;
-            }
-
-            if (ParentNode != null)
-            {
-                p = ParentNode.ParentGraph;
-
-                while(p != null && p is FunctionGraph)
-                {
-                    var np = (p as FunctionGraph).parentNode;
-                    if(np != null)
-                    {
-                        p = np.ParentGraph;
-                    }
-                    else
-                    {
-                        p = null;
-                    }
-                }
-            }
-
-            return p;
         }
 
         public NodeType? GetOutputType()
         {
             if (OutputNode == null) return null;
 
-            if (OutputNode.Outputs.Count == 0) return null;
+            if (OutputNode is ExecuteNode) return null;
 
-            NodeOutput op = OutputNode.Outputs.Find(m => m.Type != NodeType.Execute);
+            if (OutputNode.Outputs.Count > 1)
+            { 
+                NodeOutput op = OutputNode.Outputs[1];
 
-            return op.Type;
+                return op.Type;
+            }
+            else if(OutputNode.Outputs.Count == 1)
+            {
+                NodeOutput op = OutputNode.Outputs[0];
+                return op.Type;
+            }
+
+            return null;
         }
 
         public virtual string GetFunctionShaderCode()
@@ -321,37 +446,17 @@ namespace Materia.Nodes
                 return "";
             }
 
-            string otherCalls = "";
-            string frag = "";
-
             List<Node> ordered = OrderNodesForShader();
 
-            //this is in case this function references
-            //other functions
-            int count = calls.Count;
-            for(int i = 0; i < count; i++)
+            //ensure output type is properly updated
+            for (int i = 0; i < ordered.Count; ++i)
             {
-                CallNode m = calls[i];
-
-                //no need to recreate the function
-                //if it is a recursive function!
-                if (m.selectedFunction == this)
-                {
-                    continue;
-                }
-
-                string s = m.GetFunctionShaderCode();
-
-                if (string.IsNullOrEmpty(s))
-                {
-                    return "";
-                }
-
-                if (otherCalls.IndexOf(s) == -1)
-                {
-                    otherCalls += s;
-                }
+                (ordered[i] as MathNode).UpdateOutputType();
+                if (ordered[i] == OutputNode) break;
             }
+
+            int count = 0;
+            string frag = "";
 
             NodeType? outtype = GetOutputType();
 
@@ -380,7 +485,7 @@ namespace Materia.Nodes
             }
             else if(outtype.Value == NodeType.Bool)
             {
-                frag += "bool ";
+                frag += "float ";
             }
             else if(outtype.Value == NodeType.Matrix)
             {
@@ -394,7 +499,7 @@ namespace Materia.Nodes
             frag += Name.Replace(" ", "").Replace("-", "_") + "(";
 
             count = args.Count;
-            for(int i = 0; i < count; i++)
+            for(int i = 0; i < count; ++i)
             {
                 ArgNode a = args[i];
 
@@ -416,7 +521,7 @@ namespace Materia.Nodes
                 }
                 else if (a.InputType == NodeType.Bool)
                 {
-                    frag += "bool " + a.InputName + ",";
+                    frag += "float " + a.InputName + ",";
                 }
                 else if(a.InputType == NodeType.Matrix)
                 {
@@ -433,7 +538,7 @@ namespace Materia.Nodes
                 frag += ") {\r\n";
             }
 
-            string intern = GetInternalShaderCode(ordered, frag, true);
+            string intern = lastInternalCode = GetInternalShaderCode(ordered, frag, true);
 
             if (string.IsNullOrEmpty(intern))
             {
@@ -442,7 +547,7 @@ namespace Materia.Nodes
 
             frag = intern + "}\r\n\r\n";
 
-            return otherCalls + frag;
+            return frag;
         }
 
         protected List<Node> TravelBranch(Node parent, HashSet<Node> seen)
@@ -465,13 +570,13 @@ namespace Materia.Nodes
                 seen.Add(n);
 
                 count = n.Inputs.Count;
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < count; ++i)
                 {
                     NodeInput op = n.Inputs[i];
 
                     if (op.HasInput)
                     {
-                        bool nodeHasExecute = op.Input.Node.Outputs.Find(m => m.Type == NodeType.Execute) != null;
+                        bool nodeHasExecute = op.Reference.Node.Outputs.Find(m => m.Type == NodeType.Execute) != null;
 
                         if (!nodeHasExecute)
                         {
@@ -483,7 +588,7 @@ namespace Materia.Nodes
                             //and Constant types
                             //everything else requires
                             //an execute flow
-                            forward.Add(op.Input.Node);
+                            forward.Add(op.Reference.Node);
                         }
                     }
                 }
@@ -505,7 +610,7 @@ namespace Materia.Nodes
                 {
                     int i = 0;
                     count = n.Outputs.Count;
-                    for (i = 0; i < count; i++)
+                    for (i = 0; i < count; ++i)
                     {
                         NodeOutput op = n.Outputs[i];
 
@@ -525,7 +630,7 @@ namespace Materia.Nodes
                                 //otherwise we queue up in queue
                                 //and proceed in order
                                 int count2 = op.To.Count;
-                                for (int j = 0; j < count2; j++)
+                                for (int j = 0; j < count2; ++j)
                                 {
                                     NodeInput t = op.To[j];
                                     var branch = TravelBranch(t.Node, seen);
@@ -546,7 +651,9 @@ namespace Materia.Nodes
 
         protected List<Node> OrderNodesForShader()
         {
-            if (modified || orderCache.Count == 0)
+            //is dirty is only for order node caches
+            //where as modified is for shader rebuild
+            if (isDirty || orderCache.Count == 0)
             {
                 Stack<Node> reverse = new Stack<Node>();
                 Stack<Node> stack = new Stack<Node>();
@@ -576,14 +683,14 @@ namespace Materia.Nodes
                         Node n = reverse.Pop();
                         stack.Push(n);
 
-                        for (int i = 0; i < n.Inputs.Count; i++)
+                        for (int i = 0; i < n.Inputs.Count; ++i)
                         {
                             NodeInput op = n.Inputs[i];
                             if (op.HasInput)
                             {
                                 if (op.Type == NodeType.Execute)
                                 {
-                                    reverse.Push(op.Input.Node);
+                                    reverse.Push(op.Reference.Node);
                                 }
                             }
                         }
@@ -606,7 +713,7 @@ namespace Materia.Nodes
                 }
 
                 orderCache = forward;
-                modified = false;
+                isDirty = false;
 
                 return forward;
             }
@@ -614,52 +721,26 @@ namespace Materia.Nodes
             return orderCache;
         }
 
-        public void UpdateOutputTypes()
-        {
-            var nodes = OrderNodesForShader();
-
-            int count = nodes.Count;
-            for(int i = 0; i < count; i++)
-            {
-                Node n = nodes[i];
-                (n as MathNode).UpdateOutputType();
-            }
-        }
-
-        protected string GetInternalShaderCode(List<Node> nodes, string frag = "", bool asFunc = false)
+        protected string GetInternalShaderCode(List<Node> nodes, string frag = "", bool asFunc = false, bool asBufferShader = false)
         {
             if (OutputNode == null)
             {
                 return "";
             }
 
-            string sizePart = "vec2 size = vec2(0);\r\n";
+            NodeType? type = GetOutputType();
 
-            if (parentNode != null)
+            if (type == null)
             {
-                Node n = parentNode.TopNode();
-                int w = n.Width;
-                int h = n.Height;
-
-                sizePart = "vec2 size = vec2(" + w.ToCodeString() + "," + h.ToCodeString() + ");\r\n";
+                return "";
             }
-            else if(parentGraph != null)
-            {
-                int w = parentGraph.Width;
-                int h = parentGraph.Height;
-
-                sizePart = "vec2 size = vec2(" + w.ToCodeString() + "," + h.ToCodeString() + ");\r\n";
-            }
-
-            frag += sizePart
-                        + "vec2 pos = UV;\r\n"
-                        + GetParentGraphShaderParams();
 
             int count = nodes.Count;
-            for(int i = 0; i < count; i++)
+            for(int i = 0; i < count; ++i)
             {
                 var n = nodes[i] as MathNode;
 
+                n.UpdateOutputType();
                 string d = n.GetShaderPart(frag);
 
                 if (string.IsNullOrEmpty(d))
@@ -672,6 +753,8 @@ namespace Materia.Nodes
                     frag += d;
                 }
             }
+
+            type = GetOutputType();
 
             var last = OutputNode as MathNode;
 
@@ -688,8 +771,43 @@ namespace Materia.Nodes
 
             if (!asFunc)
             {
-                
-                frag += "FragColor = min(vec4(1), max(vec4(0), vec4(" + last.ShaderId + endIndex.ToCodeString() + ")));\r\n";
+                if (asBufferShader)
+                {
+                    if(type.Value == NodeType.Float4 || type.Value == NodeType.Color || type.Value == NodeType.Gray)
+                    {
+                        frag += "vec4 _f_shader_output = " + last.ShaderId + endIndex.ToCodeString() + ";\r\n";
+                        frag += "_out_put[0] = _f_shader_output.x;\r\n"
+                             + "_out_put[1] = _f_shader_output.y;\r\n"
+                             + "_out_put[2] = _f_shader_output.z;\r\n"
+                             + "_out_put[3] = _f_shader_output.w;\r\n";
+                    }
+                    else if(type.Value == NodeType.Bool || type.Value == NodeType.Float)
+                    {
+                        frag += "vec4 _f_shader_output = vec4(" + last.ShaderId + endIndex.ToCodeString() + ");\r\n";
+                        frag += "_out_put[0] = _f_shader_output.x;\r\n"
+                            + "_out_put[1] = _f_shader_output.y;\r\n"
+                            + "_out_put[2] = _f_shader_output.z;\r\n"
+                            + "_out_put[3] = _f_shader_output.w;\r\n";
+                    }
+                    else if(type.Value == NodeType.Float2)
+                    {
+                        frag += "vec2 _f_shader_output = " + last.ShaderId + endIndex.ToCodeString() + ";\r\n";
+                        frag += "_out_put[0] = _f_shader_output.x;\r\n"
+                            + "_out_put[1] = _f_shader_output.y;\r\n";
+                    }
+                    else if(type.Value == NodeType.Float3)
+                    {
+                        frag += "vec3 _f_shader_output = " + last.ShaderId + endIndex.ToCodeString() + ";\r\n";
+                        frag += "_out_put[0] = _f_shader_output.x;\r\n"
+                           + "_out_put[1] = _f_shader_output.y;\r\n"
+                           + "_out_put[2] = _f_shader_output.z;\r\n";
+                    }
+                }
+                else
+                {
+
+                    frag += "imageStore(_out_put, opos, vec4(" + last.ShaderId + endIndex.ToCodeString() + "));\r\n";
+                }
             }
             else
             {
@@ -699,37 +817,100 @@ namespace Materia.Nodes
             return frag;
         }
 
-        public virtual void PrepareShader()
+        public virtual void PrepareShader(GraphPixelType type = GraphPixelType.RGBA32F, bool asBufferShader = true)
         {
+            uniforms.Clear();
             lastShaderCode = null;
-            if (OutputNode == null)
-            {
-                return;
-            }
 
             List<Node> ordered = OrderNodesForShader();
 
-            string frag = "#version 330 core\r\n"
-                         + "out vec4 FragColor;\r\n"
-                         + "in vec2 UV;\r\n"
-                         + "const float PI = 3.14159265359;\r\n"
-                         + "const float Rad2Deg = (180.0 / PI);\r\n"
-                         + "const float Deg2Rad = (PI / 180.0);\r\n"
-                         + "const float RandomSeed = " + randomSeed.ToCodeString() + ";\r\n"
-                         + "uniform sampler2D Input0;\r\n"
-                         + "uniform sampler2D Input1;\r\n"
-                         + "uniform sampler2D Input2;\r\n"
-                         + "uniform sampler2D Input3;\r\n"
-                         + GLSLHash;
+            string outputType = "rgba32f";
 
-            int count = calls.Count;
-            for (int i = 0; i < count; i++)
+            if (type == GraphPixelType.RGBA16F || type == GraphPixelType.RGB16F)
             {
-                CallNode m = calls[i];
-                if (m.selectedFunction == this)
-                {
-                    continue;
-                }
+                outputType = "rgba16f";
+            }
+            else if (type == GraphPixelType.RGBA || type == GraphPixelType.RGB)
+            {
+                outputType = "rgba8";
+            }
+            else if (type == GraphPixelType.Luminance32F)
+            {
+                outputType = "r32f";
+            }
+            else if (type == GraphPixelType.Luminance16F)
+            {
+                outputType = "r16f";
+            }
+
+            string sizePart = "vec2 size = vec2(0);\r\n";
+
+            if (parentNode != null)
+            {
+                Node n = parentNode;
+                int w = n.Width;
+                int h = n.Height;
+
+                sizePart = "vec2 size = vec2(" + w.ToCodeString() + "," + h.ToCodeString() + ");\r\n";
+            }
+            else if (parentGraph != null)
+            {
+                int w = parentGraph.Width;
+                int h = parentGraph.Height;
+
+                sizePart = "vec2 size = vec2(" + w.ToCodeString() + "," + h.ToCodeString() + ");\r\n";
+            }
+
+            string frag = "";
+            if (asBufferShader)
+            {
+                frag = "#version 430 core\r\n"
+                             + "layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\r\n"
+                             + "layout(std430, binding = 0) writeonly buffer Pos{\r\n"
+                             + " float _out_put[];\r\n"
+                             + "};\r\n"
+                             + "uniform sampler2D Input0;\r\n"
+                             + "uniform sampler2D Input1;\r\n"
+                             + "uniform sampler2D Input2;\r\n"
+                             + "uniform sampler2D Input3;\r\n"
+                             + sizePart
+                             + "vec2 uv = vec2(0);\r\n"
+                             + "vec2 pos = uv = vec2(gl_GlobalInvocationID.xy) / size;\r\n"
+                             + "ivec2 opos = ivec2(gl_GlobalInvocationID.xy);\r\n"
+                             + "const float PI = 3.14159265359;\r\n"
+                             + "const float Rad2Deg = (180.0 / PI);\r\n"
+                             + "const float Deg2Rad = (PI / 180.0);\r\n"
+                             + "uniform float RandomSeed = " + randomSeed.ToCodeString() + ";\r\n"
+                             + GLSLHash
+                             + GetParentGraphShaderParams(true, uniforms);
+            }
+            else
+            {
+                frag = "#version 430 core\r\n"
+                             + "layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;\r\n"
+                             + $"layout({outputType}, binding = 0) uniform writeonly image2D _out_put;\r\n"
+                             + "uniform sampler2D Input0;\r\n"
+                             + "uniform sampler2D Input1;\r\n"
+                             + "uniform sampler2D Input2;\r\n"
+                             + "uniform sampler2D Input3;\r\n"
+                             + sizePart
+                             + "vec2 uv = vec2(0);\r\n"
+                             + "vec2 pos = uv = vec2(gl_GlobalInvocationID.xy) / size;\r\n"
+                             + "ivec2 opos = ivec2(gl_GlobalInvocationID.xy);\r\n"
+                             + "const float PI = 3.14159265359;\r\n"
+                             + "const float Rad2Deg = (180.0 / PI);\r\n"
+                             + "const float Deg2Rad = (PI / 180.0);\r\n"
+                             + "uniform float RandomSeed = " + randomSeed.ToCodeString() + ";\r\n"
+                             + GLSLHash
+                             + GetParentGraphShaderParams(true, uniforms);
+            }
+
+            string previousCalls = "";
+            Stack<CallNode> finalStack = GetFullCallStack();
+
+            while (finalStack.Count > 0)
+            {
+                CallNode m = finalStack.Pop();
 
                 string s = m.GetFunctionShaderCode();
 
@@ -738,15 +919,15 @@ namespace Materia.Nodes
                     return;
                 }
 
-                if (frag.IndexOf(s) == -1)
+                if(previousCalls.IndexOf(s) == -1)
                 {
-                    frag += s;
+                    previousCalls += s;
                 }
             }
 
-            frag += "void main() {\r\n";
+            frag += previousCalls + "void main() {\r\n";
 
-            string intern = GetInternalShaderCode(ordered);
+            string intern = lastInternalCode = GetInternalShaderCode(ordered, "", false, asBufferShader);
 
             if (string.IsNullOrEmpty(intern))
             {
@@ -764,6 +945,46 @@ namespace Materia.Nodes
             lastShaderCode = frag;
         }
 
+        public virtual Stack<CallNode> GetFullCallStack()
+        {
+            int count = calls.Count;
+            Queue<CallNode> stack = new Queue<CallNode>();
+            Stack<CallNode> finalStack = new Stack<CallNode>();
+            HashSet<string> seenCalls = new HashSet<string>();
+
+            for (int i = 0; i < count; ++i)
+            {
+                CallNode m = calls[i];
+                if (m.selectedFunction == null || m.selectedFunction == this
+                    || seenCalls.Contains(m.selectedFunction.CodeName))
+                {
+                    continue;
+                }
+                seenCalls.Add(m.selectedFunction.CodeName);
+                stack.Enqueue(m);
+            }
+
+            while (stack.Count > 0)
+            {
+                CallNode m = stack.Dequeue();
+                finalStack.Push(m);
+                List<CallNode> nextCalls = m.selectedFunction.calls;
+                for (int i = 0; i < nextCalls.Count; ++i)
+                {
+                    CallNode next = nextCalls[i];
+                    if (next.selectedFunction == null || next.selectedFunction == this
+                        || seenCalls.Contains(next.selectedFunction.CodeName))
+                    {
+                        continue;
+                    };
+                    seenCalls.Add(next.selectedFunction.CodeName);
+                    stack.Enqueue(next);
+                }
+            }
+
+            return finalStack;
+        }
+
         public virtual bool BuildShader()
         {
             if (OutputNode == null || string.IsNullOrEmpty(lastShaderCode))
@@ -777,24 +998,205 @@ namespace Materia.Nodes
                 Shader = null;
             }
 
-            //one last check to verify the output actually has the expected output
             if (!HasExpectedOutput)
             {
                 return false;
             }
 
-            //Log.Debug(lastShaderCode);
+            if (ShaderLogging)
+            {
+                Log.Debug(lastShaderCode);
+            }
 
-            Shader = Material.Material.CompileFragWithVert("image.glsl", lastShaderCode);
+            Shader = Material.Material.CompileCompute(lastShaderCode);
 
             if (Shader == null)
             {
+                lastInternalCode = null;
                 lastShaderCode = null;
                 return false;
             }
 
+            lastInternalCode = null;
             lastShaderCode = null;
             return true;
+        }
+
+        protected virtual void SetUniform(string k, object value, NodeType type)
+        {
+            if (value == null) return;
+
+            try
+            {
+                if (type == NodeType.Bool)
+                {
+                    Shader.SetUniform(k, Utils.ConvertToBool(value) ? 1.0f : 0.0f);
+                }
+                else if (type == NodeType.Float)
+                {
+                    Shader.SetUniform(k, Utils.ConvertToFloat(value));
+                }
+                else if (type == NodeType.Float2)
+                {
+                    if (value is MVector)
+                    {
+                        MVector mv = (MVector)value;
+                        Math3D.Vector2 vec2 = new Math3D.Vector2(mv.X, mv.Y);
+                        Shader.SetUniform2(k, ref vec2);
+                    }
+                }
+                else if (type == NodeType.Float3)
+                {
+                    if (value is MVector)
+                    {
+                        MVector mv = (MVector)value;
+                        Math3D.Vector3 vec3 = new Math3D.Vector3(mv.X, mv.Y, mv.Z);
+                        Shader.SetUniform3(k, ref vec3);
+                    }
+                }
+                else if (type == NodeType.Float4 || type == NodeType.Color || type == NodeType.Gray)
+                {
+                    if (value is MVector)
+                    {
+                        MVector mv = (MVector)value;
+                        Math3D.Vector4 vec4 = new Math3D.Vector4(mv.X, mv.Y, mv.Z, mv.W);
+                        Shader.SetUniform4F(k, ref vec4);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+            }
+        }
+
+        public virtual void PrepareUniforms()
+        {
+            foreach (string k in uniforms.Keys)
+            {
+                GraphParameterValue v = uniforms[k];
+
+                object value = v.Value;
+
+                if (v.IsFunction())
+                {
+                    FunctionGraph temp = value as FunctionGraph;
+
+                    if (temp.BuildAsShader)
+                    {
+                        temp.ComputeResult();
+                    }
+                    else
+                    {
+                        temp.TryAndProcess();
+                    }
+                }
+            }
+        }
+
+        public virtual void AssignUniforms()
+        {
+            if (Shader == null) return;
+
+            //set other uniform params
+            foreach (string k in uniforms.Keys)
+            {
+                GraphParameterValue v = uniforms[k];
+
+                object value = v.Value;
+
+                if (v.IsFunction())
+                {
+                    FunctionGraph temp = value as FunctionGraph;
+                    value = temp.Result;
+                }
+
+                SetUniform(k, value, v.Type);
+            }
+
+            SetUniform("RandomSeed", randomSeed, NodeType.Float);
+        }
+
+        /// <summary>
+        /// This is used for param computation
+        /// </summary>
+        public virtual void ComputeResult()
+        {
+            if (Shader == null || modified)
+            {
+                try
+                {
+                    PrepareShader(GraphPixelType.RGB32F);
+                    if(BuildShader() && Shader != null)
+                    {
+                        modified = false;
+                    }
+                    Log.Debug("Created shader for: " + Name);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                }
+            }
+
+            if (Shader == null) return;
+
+            if(shaderBuffer == null || shaderBuffer.Id == 0)
+            {
+                shaderBufferStorage = new float[4];
+                shaderBuffer = new GLShaderBuffer();
+                shaderBuffer.Bind();
+                shaderBuffer.Storage(shaderBufferStorage.Length);
+                mappedMemoryLocation = shaderBuffer.MapRange(BufferAccessMask.MapCoherentBit | BufferAccessMask.MapReadBit | BufferAccessMask.MapPersistentBit);
+                if (mappedMemoryLocation.ToInt64() == 0)
+                {
+                    shaderBuffer.Unmap();
+                    shaderBuffer.Release();
+                    shaderBuffer.Unbind();
+                    return;
+                }
+                shaderBuffer.Unbind();
+            }
+
+
+            Shader.Use();
+            shaderBuffer.Bind();
+
+            AssignUniforms();
+
+            IGL.Primary?.DispatchCompute(1, 1, 1);
+            IGL.Primary?.Finish();
+
+            Marshal.Copy(mappedMemoryLocation, shaderBufferStorage, 0, shaderBufferStorage.Length);
+            shaderBuffer.Unbind();
+
+            var type = GetOutputType();
+            if (type == NodeType.Bool)
+            {
+                Result = shaderBufferStorage[0] <= 0 ? false : true;
+            }
+            else if(type == NodeType.Float)
+            {
+                Result = shaderBufferStorage[0];
+            }
+            else if(type == NodeType.Float2)
+            {
+                Result = new MVector(shaderBufferStorage[0], shaderBufferStorage[1]);
+            }
+            else if(type == NodeType.Float3)
+            {
+                Result = new MVector(shaderBufferStorage[0], shaderBufferStorage[1], shaderBufferStorage[2]);
+            }
+            else if(type == NodeType.Float4 || type == NodeType.Gray || type == NodeType.Color)
+            {
+                Result = new MVector(shaderBufferStorage[0], shaderBufferStorage[1], shaderBufferStorage[2], shaderBufferStorage[3]);               
+            }
+            else
+            {
+                Result = null;
+            }
+
+            Shader.Unbind();
         }
 
         public virtual void SetOutputNode(string id)
@@ -806,7 +1208,6 @@ namespace Materia.Nodes
                 {
                     OnOutputSet.Invoke(null);
                 }
-                Updated();
                 return;
             }
 
@@ -818,7 +1219,6 @@ namespace Materia.Nodes
                 {
                     OnOutputSet.Invoke(n);
                 }
-                Updated();
             }
         }
 
@@ -850,17 +1250,20 @@ namespace Materia.Nodes
         public void AssignParentGraph(Graph g)
         {
             parentGraph = g;
-
-            var top = TopGraph();
-            SetParentGraphVars(top);
+            SetParentGraphVars(parentGraph);
+            OnVariablesSet?.Invoke(this);
         }
 
         public override void AssignParentNode(Node n)
         {
             base.AssignParentNode(n);
 
-            var top = TopGraph();
-            SetParentNodeVars(top);
+            Graph g = null;
+            if (n != null) g = n.ParentGraph;
+
+            SetParentNodeVars(g);
+            SetParentGraphVars(g);
+            OnVariablesSet?.Invoke(this);
         }
 
         public override void ResizeWith(int width, int height)
@@ -868,189 +1271,148 @@ namespace Materia.Nodes
             //do nothing in this graph
         }
 
-        protected void BuildShaderParam(GraphParameterValue param, StringBuilder builder, bool useMinMaxValue = false)
+        public static string BuildShaderParam(GraphParameterValue param, bool isUniform = false, bool isCustom = false)
         {
             string type = "";
 
             if (param.Type == NodeType.Bool)
             {
-                type = "bool ";
+                type = isUniform ? "uniform float " : "float ";
             }
             else if (param.Type == NodeType.Float)
             {
-                type = "float ";
+                type = isUniform ? "uniform float " : "float ";
             }
             else if (param.Type == NodeType.Color || param.Type == NodeType.Float4 || param.Type == NodeType.Gray)
             {
-                type = "vec4 ";
+                type = isUniform ? "uniform vec4 " : "vec4 ";
             }
             else if (param.Type == NodeType.Float2)
             {
-                type = "vec2 ";
+                type = isUniform ? "uniform vec2 " : "vec2 ";
             }
             else if (param.Type == NodeType.Float3)
             {
-                type = "vec3 ";
+                type = isUniform ? "uniform vec3 " : "vec3 ";
             }
-            else if(param.Type == NodeType.Matrix)
+            else
             {
-                type = "mat4 ";
+                return "";
+            }
+
+            string result = BuildShaderParamValue(param);
+
+            if (string.IsNullOrEmpty(result)) return "";
+
+            string s1 = type + (isCustom ? param.CustomCodeName : param.CodeName) + " = ";
+            return s1 + result;
+        }
+
+        public static void BuildShaderParam(GraphParameterValue param, StringBuilder builder, bool isUniform = false, bool isCustom = false)
+        {
+            string type = "";
+
+            if (param.Type == NodeType.Bool)
+            {
+                type = isUniform ? "uniform float " : "float ";
+            }
+            else if (param.Type == NodeType.Float)
+            {
+                type = isUniform ? "uniform float " : "float ";
+            }
+            else if (param.Type == NodeType.Color || param.Type == NodeType.Float4 || param.Type == NodeType.Gray)
+            {
+                type = isUniform ? "uniform vec4 " : "vec4 ";
+            }
+            else if (param.Type == NodeType.Float2)
+            {
+                type = isUniform ? "uniform vec2 " : "vec2 ";
+            }
+            else if (param.Type == NodeType.Float3)
+            {
+                type = isUniform ? "uniform vec3 " : "vec3 ";
             }
             else
             {
                 return;
             }
 
-            string prefix = "p_";
-            string s1 = prefix + param.Name.Replace(" ", "").Replace("-", "") + " = ";
+            string result = BuildShaderParamValue(param);
 
-            builder.Append(type);
+            if (string.IsNullOrEmpty(result)) return;
+
+            string s1 = type + (isCustom ? param.CustomCodeName : param.CodeName) + " = " ;
+
+            if (builder.ToString().Contains(s1)) return;
+
             builder.Append(s1);
-
-            if (param.IsFunction())
-            {
-                BuildShaderFunctionValue(param, builder);
-            }
-            else
-            {
-                BuildShaderParamValue(param, builder, useMinMaxValue);
-            }
+            builder.Append(result);
         }
 
-        protected void BuildShaderParamValue(GraphParameterValue param, StringBuilder builder, bool useMinMaxValue = false)
+        protected static string BuildShaderParamValue(GraphParameterValue param)
         {
+            object value = param.Value;
+
+            //if a param is a function
+            //it is considered a shared uniform param
+            //and thus we just do place holders
+            //as these are calculated 
+            //when the node processes
+            if(param.IsFunction())
+            {
+                if (param.Type == NodeType.Bool)
+                {
+                    return "0;\r\n";
+                }
+                else if(param.Type == NodeType.Float)
+                {
+                    return "0;\r\n";
+                }
+                else if (param.Type == NodeType.Float4 || param.Type == NodeType.Gray || param.Type == NodeType.Color)
+                {
+                    return "vec4(0);\r\n";
+                }
+                else if (param.Type == NodeType.Float2)
+                {
+                    return "vec2(0);\r\n";
+                }
+                else if (param.Type == NodeType.Float3)
+                {
+                    return "vec3(0);\r\n";
+                }
+
+                return "";
+            }
+
             if (param.Type == NodeType.Bool)
             {
                 try
                 {
-                    builder.Append(Convert.ToBoolean(param.Value).ToString().ToLower() + ";\r\n");
+                    return (Convert.ToBoolean(value) ? 1 : 0) + ";\r\n";
                 }
                 catch (Exception e)
                 {
                     Log.Error(e);
                     Log.Info("Defaulting to false for parameter " + param.Name);
-                    builder.Append("false;\r\n");
+                    return "0;\r\n";
                 }
             }
             else if (param.Type == NodeType.Float)
             {
                 try
                 {
-                    if (useMinMaxValue)
-                    {
-                        builder.Append(param.FloatValue.ToCodeString() + ";\r\n");
-                    }
-                    else
-                    {
-                        builder.Append(Convert.ToSingle(param.Value).ToCodeString() + ";\r\n");
-                    }
+                    return Utils.ConvertToFloat(param.Value).ToCodeString() + ";\r\n";
                 }
                 catch (Exception e)
                 {
                     Log.Error(e);
                     Log.Info("Defaulting to 0 for parameter " + param.Name);
-                    builder.Append("0;\r\n");
+                    return "0;\r\n";
                 }
             }
             else if (param.Type == NodeType.Float4 || param.Type == NodeType.Gray || param.Type == NodeType.Color)
             {
-                MVector vec = new MVector();
 
-                if (param.Value is MVector)
-                {
-                    if (!useMinMaxValue)
-                    {
-                        vec = (MVector)param.Value;
-                    }
-                    else
-                    {
-                        vec = param.VectorValue;
-                    }
-                }
-
-                builder.Append("vec4(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + "," + vec.W.ToCodeString() + ");\r\n");
-            }
-            else if (param.Type == NodeType.Float2)
-            {
-                MVector vec = new MVector();
-
-                if (param.Value is MVector)
-                {
-                    if (!useMinMaxValue)
-                    {
-                        vec = (MVector)param.Value;
-                    }
-                    else
-                    {
-                        vec = param.VectorValue;
-                    }
-                }
-
-                builder.Append("vec2(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + ");\r\n");
-            }
-            else if (param.Type == NodeType.Float3)
-            {
-                MVector vec = new MVector();
-
-                if (param.Value is MVector)
-                {
-                    if (!useMinMaxValue)
-                    {
-                        vec = (MVector)param.Value;
-                    }
-                    else
-                    {
-                        vec = param.VectorValue;
-                    }
-                }
-
-                builder.Append("vec3(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + ");\r\n");
-            }
-            else if(param.Type == NodeType.Matrix)
-            {
-                Matrix4 m4 = param.Matrix4Value;
-                //glsl matrices are column major order
-                builder.Append("mat3(" + m4.Column0.X.ToCodeString() + ", " + m4.Column0.Y.ToCodeString() + ", " + m4.Column0.Z.ToCodeString() + ", " + m4.Column0.W.ToCodeString() + ", "
-                                        + m4.Column1.X.ToCodeString() + ", " + m4.Column1.Y.ToCodeString() + ", " + m4.Column1.Z.ToCodeString() + ", " + m4.Column1.W.ToCodeString() + ", "
-                                        + m4.Column2.X.ToCodeString() + ", " + m4.Column2.Y.ToCodeString() + ", " + m4.Column2.Z.ToCodeString() + ", " + m4.Column2.W.ToCodeString() + "," 
-                                        + m4.Column3.X.ToCodeString() + ", " + m4.Column3.Y.ToCodeString() + ", " + m4.Column3.Z.ToCodeString() + ", " + m4.Column3.W.ToCodeString() + ");\r\n");
-            }
-        }
-
-        protected void BuildShaderFunctionValue(GraphParameterValue param, StringBuilder builder)
-        {
-            FunctionGraph fn = param.Value as FunctionGraph;
-            fn.TryAndProcess();
-            object value = fn.Result;
-
-            if (param.Type == NodeType.Bool)
-            {
-                try
-                {
-                    builder.Append(Convert.ToBoolean(value).ToString().ToLower() + ";\r\n");
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                    Log.Info("Defaulting to false for value of parameter " + param.Name);
-                    builder.Append("false;\r\n");
-                }
-            }
-            else if (param.Type == NodeType.Float)
-            {
-                try
-                {
-                    builder.Append(Convert.ToSingle(value).ToCodeString() + ";\r\n");
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                    Log.Info("Defaulting to 0 for value of parameter " + param.Name);
-                    builder.Append("0;\r\n");
-                }
-            }
-            else if (param.Type == NodeType.Float4 || param.Type == NodeType.Gray || param.Type == NodeType.Color)
-            {
                 MVector vec = new MVector();
 
                 if (value is MVector)
@@ -1058,7 +1420,7 @@ namespace Materia.Nodes
                     vec = (MVector)value;
                 }
 
-                builder.Append("vec4(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + "," + vec.W.ToCodeString() + ");\r\n");
+                return "vec4(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + "," + vec.W.ToCodeString() + ");\r\n";
             }
             else if (param.Type == NodeType.Float2)
             {
@@ -1069,7 +1431,7 @@ namespace Materia.Nodes
                     vec = (MVector)value;
                 }
 
-                builder.Append("vec2(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + ");\r\n");
+                return "vec2(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + ");\r\n";
             }
             else if (param.Type == NodeType.Float3)
             {
@@ -1080,44 +1442,44 @@ namespace Materia.Nodes
                     vec = (MVector)value;
                 }
 
-                builder.Append("vec3(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + ");\r\n");
+                return "vec3(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + ");\r\n";
             }
-            else if (param.Type == NodeType.Matrix && value is Matrix4)
-            {
-                Matrix4 m4 = (Matrix4)value;
-                //glsl matrices are column major order
-                builder.Append("mat3(" + m4.Column0.X.ToCodeString() + ", " + m4.Column0.Y.ToCodeString() + ", " + m4.Column0.Z.ToCodeString() + ", " + m4.Column0.W.ToCodeString() + ", "
-                                        + m4.Column1.X.ToCodeString() + ", " + m4.Column1.Y.ToCodeString() + ", " + m4.Column1.Z.ToCodeString() + ", " + m4.Column1.W.ToCodeString() + ", "
-                                        + m4.Column2.X.ToCodeString() + ", " + m4.Column2.Y.ToCodeString() + ", " + m4.Column2.Z.ToCodeString() + ", " + m4.Column2.W.ToCodeString() + ","
-                                        + m4.Column3.X.ToCodeString() + ", " + m4.Column3.Y.ToCodeString() + ", " + m4.Column3.Z.ToCodeString() + ", " + m4.Column3.W.ToCodeString() + ");\r\n");
-            }
+
+            return "";
         }
 
-        protected string GetParentGraphShaderParams()
+        public string GetParentGraphShaderParams(bool isUniform = false, Dictionary<string, GraphParameterValue> seen = null)
         {
             StringBuilder builder = new StringBuilder();
 
             try
             {
-                var p = TopGraph();
+                var p = parentNode != null ? parentNode.ParentGraph : parentGraph;
 
                 if (p != null)
                 {
-                    foreach (var param in p.Parameters.Values)
-                    {
-                        BuildShaderParam(param, builder);
-                    }
-
                     int count = p.CustomParameters.Count;
-                    for(int i = 0; i < count; i++)
+                    for (int i = 0; i < count; ++i)
                     {
                         GraphParameterValue param = p.CustomParameters[i];
-                        if (param.IsFunction()) continue;
-                        BuildShaderParam(param, builder, true);
+                        if (param.Value == this) continue;
+                        string paramId = param.CustomCodeName;
+                        if (seen != null && seen.ContainsKey(paramId)) continue;
+                        BuildShaderParam(param, builder, isUniform, true);
+                        if (seen != null) seen.Add(paramId, param);
+                    }
+
+                    foreach (var param in p.Parameters.Values)
+                    {
+                        string paramId = param.CodeName;
+                        if (param.Value == this) continue;
+                        if (seen != null && seen.ContainsKey(paramId)) continue;
+                        BuildShaderParam(param, builder, isUniform);
+                        if (seen != null) seen.Add(paramId, param);
                     }
                 }
             }
-            catch (StackOverflowException e)
+            catch (Exception e)
             {
                 Log.Error(e);
                 Log.Error("There is an infinite function reference loop in promoted graph parameters.");
@@ -1127,36 +1489,62 @@ namespace Materia.Nodes
             return builder.ToString();
         }
 
-        protected void SetParentGraphVars(Graph g)
+        protected object GetVar(Dictionary<string, VariableDefinition> vars, string key)
+        {
+            VariableDefinition vd;
+            if (vars.TryGetValue(key, out vd))
+            {
+                return vd.Value;
+            }
+
+            return null;
+        }
+
+        protected void SetVar(Dictionary<string, VariableDefinition> vars, string key, object value, NodeType type)
+        {
+
+            VariableDefinition vd;
+
+            if (vars.TryGetValue(key, out vd))
+            {
+                vd.Type = type;
+                vd.Value = value;
+            }
+            else
+            {
+                vd = new VariableDefinition(value, type);
+                vars[key] = vd;
+            }
+        }
+
+        protected void GetParentGraphVars(Graph g, Dictionary<string, VariableDefinition> vars)
         {
             if (g == null) return;
 
             try
             {
-                var p = g;
-
-                if (p != null)
+                //parameters can be function or constant
+                foreach (var k in g.Parameters.Keys)
                 {
-                    foreach (var k in p.Parameters.Keys)
+                    var param = g.Parameters[k];
+                    if (param.Value == this) continue;
+                    if (!param.IsFunction())
                     {
-                        var param = p.Parameters[k];
-
-                        if (!param.IsFunction())
-                        {
-                            SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value, param.Type);
-                        }
+                        SetVar(vars, param.CodeName, param.Value, param.Type);
                     }
-
-                    int count = p.CustomParameters.Count;
-                    for(int i = 0; i < count; i++)
+                    else
                     {
-                        GraphParameterValue param = p.CustomParameters[i];
-
-                        if (!param.IsFunction())
-                        {
-                            SetVar("p_" + param.Name.Replace(" ", "").Replace("-", ""), param.Value, param.Type);
-                        }
+                        FunctionGraph gf = param.Value as FunctionGraph;
+                        SetVar(vars, param.CodeName, gf.Result, param.Type);
                     }
+                }
+
+                int count = g.CustomParameters.Count;
+                for (int i = 0; i < count; ++i)
+                {
+                    GraphParameterValue param = g.CustomParameters[i];
+                    if (param.Value == this) continue;
+                    SetVar(vars, param.CustomCodeName, param.Value, param.Type);
                 }
             }
             catch (StackOverflowException e)
@@ -1167,9 +1555,50 @@ namespace Materia.Nodes
             }
         }
 
+        protected void SetParentGraphVars(Graph g)
+        {
+            if (g == null) return;
+
+            try
+            {
+                //parameters can be function or constant
+                foreach (var k in g.Parameters.Keys)
+                {
+                    var param = g.Parameters[k];
+                    if (param.Value == this) continue;
+                    if (!param.IsFunction())
+                    {
+                        SetVar(param.CodeName, param.Value, param.Type);
+                    }
+                    else
+                    {
+                        FunctionGraph gf = param.Value as FunctionGraph;
+                        SetVar(param.CodeName, gf.Result, param.Type);
+                    }
+                }
+
+                int count = g.CustomParameters.Count;
+                for(int i = 0; i < count; ++i)
+                {
+                    GraphParameterValue param = g.CustomParameters[i];
+                    if (param.Value == this) continue;
+                    SetVar(param.CustomCodeName, param.Value, param.Type);
+                }
+            }
+            catch (StackOverflowException e)
+            {
+                //possible
+                Log.Error(e);
+                Log.Error("There is an infinite function reference loop in promoted graph parameters.");
+            }
+        }
+
+        //conver this code to building as part of shader
+        //will readd in the future when
+        //these are available via shaders as well
         protected void SetParentNodeVars(Graph g)
         {
-            try
+            /*try
             {
                 if (g == null || parentNode == null) return;
 
@@ -1180,7 +1609,7 @@ namespace Materia.Nodes
                 if (p != null)
                 {
                     int count = props.Length;
-                    for(int i = 0; i < count; i++)
+                    for(int i = 0; i < count; ++i)
                     {
                         var prop = props[i];
                         PromoteAttribute promote = prop.GetCustomAttribute<PromoteAttribute>();
@@ -1258,7 +1687,7 @@ namespace Materia.Nodes
                 else
                 {
                     int count = props.Length;
-                    for(int i = 0; i < count; i++)
+                    for(int i = 0; i < count; ++i)
                     {
                         NodeType pType = NodeType.Float;
                         var prop = props[i];
@@ -1321,50 +1750,37 @@ namespace Materia.Nodes
                 Log.Error(e);
                 //stackoverflow possible if you do a loop of function parameter values
                 Log.Error("There is an infinite function reference loop between node parameters");
-            }
+            }*/
         }
 
         public override void TryAndProcess()
         {
-            //if (!HasExpectedOutput) return;
+            SetAllVars();
+            List<Node> nodes = OrderNodesForShader();
 
-            //small optimization
-            var top = TopGraph();
-
-            SetParentNodeVars(top);
-            SetParentGraphVars(top);
-
-            if(parentNode != null)
+            for(int i = 0; i < nodes.Count; ++i)
             {
-                var n = parentNode.TopNode();
-                int w = n.Width;
-                int h = n.Height;
-
-                SetVar("size", new MVector(w, h), NodeType.Float2);
-            }
-            else if(parentGraph != null)
-            {
-                SetVar("size", new MVector(parentGraph.Width, parentGraph.Height), NodeType.Float2);
-            }
-            else
-            {
-                SetVar("size", new MVector(), NodeType.Float2);
-            }
-
-            if (OutputNode == null) return;
-
-            List<Node> ordered = OrderNodesForShader();
-
-            //this ensures the function graph is processed
-            //in the proper order
-            //just as if it was running in the shader code
-            if (ordered.Count > 0)
-            {
-                int count = ordered.Count;
-                for(int i = 0; i < count; i++)
+                Node n = nodes[i];
+                n.TryAndProcess();
+                if (n == OutputNode)
                 {
-                    ordered[i].TryAndProcess();
-                } 
+                    NodeOutput output = null;
+                    if (n.Outputs.Count == 1)
+                    {
+                        output = n.Outputs[0];
+                    }
+                    else if(n.Outputs.Count > 1)
+                    {
+                        output = n.Outputs[1];
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    Result = output.Data;
+                    break;
+                }
             }
         }
 
@@ -1380,7 +1796,7 @@ namespace Materia.Nodes
             List<string> data = new List<string>();
 
             int count = Nodes.Count;
-            for(int i = 0; i < count; i++)
+            for(int i = 0; i < count; ++i)
             {
                 Node n = Nodes[i];
                 data.Add(n.GetJson());
@@ -1420,13 +1836,9 @@ namespace Materia.Nodes
             foreach(ArgNode arg in args)
             {
                 object temp = 0;
-                if(arg.InputType == NodeType.Float)
+                if(arg.InputType == NodeType.Float || arg.InputType == NodeType.Bool)
                 {
                     temp = 0;
-                }
-                else if(arg.InputType == NodeType.Bool)
-                {
-                    temp = false;
                 }
                 else if(arg.InputType == NodeType.Matrix)
                 {
@@ -1438,6 +1850,22 @@ namespace Materia.Nodes
                 }
 
                 SetVar(arg.InputName, temp, arg.InputType);
+            }
+        }
+
+        public static void ReleaseShaderBuffer()
+        {
+            if(shaderBuffer != null)
+            {
+                if(mappedMemoryLocation.ToInt64() != 0)
+                {
+                    shaderBuffer.Bind();
+                    shaderBuffer.Unmap();
+                    shaderBuffer.Unbind();
+                    mappedMemoryLocation = IntPtr.Zero;
+                }
+                shaderBuffer.Release();
+                shaderBuffer = null;
             }
         }
 

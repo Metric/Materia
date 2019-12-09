@@ -32,7 +32,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 r = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -47,7 +47,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 g = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -62,7 +62,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 b = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -77,11 +77,11 @@ namespace Materia.Nodes.Atomic
             set
             {
                 a = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
-        public GrayscaleConversionNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public GrayscaleConversionNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Grayscale Conversion";
 
@@ -105,72 +105,20 @@ namespace Materia.Nodes.Atomic
             input = new NodeInput(NodeType.Color, this);
             Output = new NodeOutput(NodeType.Gray, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
-
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            Output.Data = null;
-            Output.Changed();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
         }
 
         public override void TryAndProcess()
         {
-            if(!Async)
-            {
-                if (input.HasInput)
-                {
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-
-            })
-            .ContinueWith(t =>
-            {
-                if (input.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
+            Process();
         }
 
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+            if (!input.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
@@ -183,9 +131,8 @@ namespace Materia.Nodes.Atomic
             processor.Process(width, height, i1, buffer);
             processor.Complete();
 
-            Updated();
             Output.Data = buffer;
-            Output.Changed();
+            TriggerTextureChange();
         }
 
         public class GrayscaleConversionNodeData : NodeData
@@ -216,11 +163,6 @@ namespace Materia.Nodes.Atomic
             d.alpha = a;
 
             return JsonConvert.SerializeObject(d);
-        }
-
-        protected override void OnWidthHeightSet()
-        {   
-            TryAndProcess();
         }
 
         public override void Dispose()

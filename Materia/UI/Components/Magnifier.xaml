@@ -9,7 +9,6 @@
     <Grid>
         <Image Name="Preview" RenderOptions.BitmapScalingMode="NearestNeighbor" />
         <Rectangle RadiusX="5" RadiusY="5" Width="5" Height="5" StrokeThickness="0.5" Stroke="Black" />
-        <Rectangle RadiusX="3" RadiusY="3" Width="3" Height="3" StrokeThickness="0.5" Stroke="White" Margin="0,0,0,0" />
         <Rectangle Stroke="Black" />
         <Rectangle Stroke="White" Margin="1" />
     </Grid>

@@ -112,9 +112,10 @@ namespace Materia.Imaging.GLProcessing
                 }
 
                 GLTextuer2D.Unbind();
-                output.Bind();
+                /*output.Bind();
                 output.CopyFromFrameBuffer(width, height);
-                GLTextuer2D.Unbind();
+                GLTextuer2D.Unbind();*/
+                Blit(output, width, height);
 
                 shader.SetUniform("horizontal", false);
                 shader.SetUniform("intensity", (boxes[1] - 1.0f) / 2.0f);

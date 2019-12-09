@@ -42,7 +42,7 @@ namespace Materia.Nodes.Atomic
                 {
                     relativePath = System.IO.Path.Combine("resources", System.IO.Path.GetFileName(path));
                 }
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -63,7 +63,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 position = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -78,7 +78,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 rotation = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -93,7 +93,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 scale = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -109,7 +109,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 cameraZoom = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -120,7 +120,7 @@ namespace Materia.Nodes.Atomic
         static Matrix4 Proj = Matrix4.CreatePerspectiveFieldOfView(40 * ((float)Math.PI / 180.0f), 1, 0.03f, 1000.0f);
         static PBRMaterial mat = new PBRDepth();
 
-        public MeshDepthNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public MeshDepthNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Mesh Depth";
 
@@ -141,42 +141,8 @@ namespace Materia.Nodes.Atomic
 
             internalPixelType = p;
 
-            Inputs = new List<NodeInput>();
-
             Output = new NodeOutput(NodeType.Gray, this);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        public override void TryAndProcess()
-        {
-            if (!Async)
-            {
-                ReadMeshFile();
-                LoadMesh();
-                Process();
-
-                return;
-            }
-
-            if (ParentGraph != null)
-            {
-                ParentGraph.Schedule(this);
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                ReadMeshFile();
-            })
-            .ContinueWith(t =>
-            {
-                LoadMesh();
-                Process();
-            }, Context);
         }
 
         private void ReadMeshFile()
@@ -239,6 +205,13 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        public override void TryAndProcess()
+        {
+            ReadMeshFile();
+            LoadMesh();
+            Process();
+        }
+
         List<RSMI.Containers.Mesh> meshes;
         void Process()
         {
@@ -278,9 +251,8 @@ namespace Materia.Nodes.Atomic
             processor.Process(width, height, buffer);
             processor.Complete();
 
-            Updated();
             Output.Data = buffer;
-            Output.Changed();
+            TriggerTextureChange();
         }
 
         public class MeshDepthNodeData : NodeData
@@ -350,11 +322,6 @@ namespace Materia.Nodes.Atomic
             d.cameraZoom = cameraZoom;
 
             return JsonConvert.SerializeObject(d);
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
         }
 
         public override void CopyResources(string CWD)

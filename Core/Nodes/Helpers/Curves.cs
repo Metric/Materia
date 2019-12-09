@@ -20,7 +20,7 @@ namespace Materia.Nodes.Helpers
             double[,] matrix = new double[n, 3];
             double[] result = new double[n];
             matrix[0, 1] = 1;
-            for (int i = 1; i < n - 1; i++)
+            for (int i = 1; i < n - 1; ++i)
             {
                 matrix[i, 0] = (double)(P[i].X - P[i - 1].X) / 6;
                 matrix[i, 1] = (double)(P[i + 1].X - P[i - 1].X) / 3;
@@ -30,7 +30,7 @@ namespace Materia.Nodes.Helpers
             matrix[n - 1, 1] = 1;
 
             // solving pass1 (up->down)
-            for (int i = 1; i < n; i++)
+            for (int i = 1; i < n; ++i)
             {
                 double k = matrix[i, 0] / matrix[i - 1, 1];
                 matrix[i, 1] -= k * matrix[i - 1, 2];
@@ -38,7 +38,7 @@ namespace Materia.Nodes.Helpers
                 result[i] -= k * result[i - 1];
             }
             // solving pass2 (down->up)
-            for (int i = n - 2; i >= 0; i--)
+            for (int i = n - 2; i >= 0; --i)
             {
                 double k = matrix[i, 2] / matrix[i + 1, 1];
                 matrix[i, 1] -= k * matrix[i + 1, 0];
@@ -48,7 +48,7 @@ namespace Materia.Nodes.Helpers
 
             // return second derivative value for each point P
             double[] y2 = new double[n];
-            for (int i = 0; i < n; i++) y2[i] = result[i] / matrix[i, 1];
+            for (int i = 0; i < n; ++i) y2[i] = result[i] / matrix[i, 1];
             return y2;
         }
     }

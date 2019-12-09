@@ -68,7 +68,7 @@ namespace Materia.Nodes.Atomic
                 if(style != value)
                 {
                     style = value;
-                    TryAndProcess();
+                    TriggerValueChange();
                 }
             }
         }
@@ -85,7 +85,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 alignment = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -101,7 +101,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 spacing = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -117,7 +117,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 position = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -133,7 +133,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 rotation = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -149,7 +149,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 scale = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -163,7 +163,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 fontFamily = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -179,7 +179,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 fontSize = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -196,12 +196,12 @@ namespace Materia.Nodes.Atomic
                 if (!text.Equals(value))
                 {
                     text = value;
-                    TryAndProcess();
+                    TriggerValueChange();
                 }
             }
         }
 
-        public TextNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public TextNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Text";
 
@@ -238,27 +238,7 @@ namespace Materia.Nodes.Atomic
             previewProcessor = new BasicImageRenderer();
 
             Output = new NodeOutput(NodeType.Gray, this);
-
-            Inputs = new List<NodeInput>();
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            Output.Data = null;
-            Output.Changed();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
         }
 
         public class TextNodeData : NodeData
@@ -310,11 +290,6 @@ namespace Materia.Nodes.Atomic
             return JsonConvert.SerializeObject(d);
         }
 
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
-        }
-
         public override void Dispose()
         {
             base.Dispose();
@@ -332,41 +307,10 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        public override void TryAndProcess()
-        {
-            if (!Async)
-            {
-                GetParams();
-                TryAndGenerateCharacters();
-                GetTransforms();
-                Process();
-
-                return;
-            }
-
-            if (ParentGraph != null)
-            {
-                ParentGraph.Schedule(this);
-            }
-        }
-
         void TryAndGenerateCharacters()
         {
             if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(fontFamily) || pfontSize <= 0) return;
             map = FontManager.Generate(fontFamily, fontSize, text, style);
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-                TryAndGenerateCharacters();
-                GetTransforms();
-            }).ContinueWith(t =>
-            {
-                Process();
-            }, Context);
         }
 
         private void GetParams()
@@ -377,22 +321,22 @@ namespace Materia.Nodes.Atomic
             pspacing = spacing;
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "FontSize"))
             { 
-                pfontSize = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "FontSize"));
+                pfontSize = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "FontSize"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Spacing"))
             {
-                pspacing = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Spacing"));
+                pspacing = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Spacing"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Style"))
             {
-                pstyle = (FontStyle)Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Style"));
+                pstyle = (FontStyle)Utils.ConvertToInt(ParentGraph.GetParameterValue(Id, "Style"));
             }
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alignment"))
             {
-                palignment = (TextAlignment)Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Alignment"));
+                palignment = (TextAlignment)Utils.ConvertToInt(ParentGraph.GetParameterValue(Id, "Alignment"));
             }
 
             if (string.IsNullOrEmpty(text))
@@ -412,11 +356,11 @@ namespace Materia.Nodes.Atomic
 
             adjustments.Clear();
 
-            for (int i = 0; i < lines.Length; i++)
+            for (int i = 0; i < lines.Length; ++i)
             {
                 string line = lines[i];
                 float alignmentAdjustment = 0;
-                for (int j = 0; j < line.Length; j++)
+                for (int j = 0; j < line.Length; ++j)
                 {
                     string ch = line.Substring(j, 1);
                     FontManager.CharData data = null;
@@ -436,7 +380,7 @@ namespace Materia.Nodes.Atomic
                             func.SetVar("maxLines", lines.Length, NodeType.Float);
                         }
 
-                        pcharRotation = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Rotation"));
+                        pcharRotation = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Rotation"));
                     }
 
                     if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Scale"))
@@ -494,6 +438,14 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        public override void TryAndProcess()
+        {
+            GetParams();
+            TryAndGenerateCharacters();
+            GetTransforms();
+            Process();
+        }
+
         List<CharacterTransform> transforms = new List<CharacterTransform>();
         Dictionary<string, FontManager.CharData> map = new Dictionary<string, FontManager.CharData>();
         float pfontSize;
@@ -526,13 +478,13 @@ namespace Materia.Nodes.Atomic
             if (map != null && map.Count > 0 && transforms.Count > 0)
             {
                 int tindex = 0;
-                for (int i = 0; i < lines.Length; i++)
+                for (int i = 0; i < lines.Length; ++i)
                 {
                     string line = lines[i];
                     float left = 0;
                     float alignmentAdjustment = adjustments[i];
 
-                    for (int j = 0; j < line.Length; j++)
+                    for (int j = 0; j < line.Length; ++j)
                     {
                         if (tindex >= transforms.Count) continue;
 
@@ -542,7 +494,7 @@ namespace Materia.Nodes.Atomic
                         {
                             if (data.texture == null)
                             {
-                                tindex++;
+                                ++tindex;
                                 continue;
                             }
 
@@ -562,16 +514,14 @@ namespace Materia.Nodes.Atomic
                             processor.ProcessCharacter(width, height, character, buffer);
                         }
 
-                        tindex++;
+                        ++tindex;
                     }
                 }
             }
 
             processor.Complete();
-
-            Updated();
             Output.Data = buffer;
-            Output.Changed();
+            TriggerTextureChange();
         }
     }
 }

@@ -13,7 +13,6 @@ namespace Materia.Nodes.MathNodes
         MVector vec;
 
         protected float x;
-        [Promote(NodeType.Float4)]
         [Editable(ParameterInputType.Float4Input, "Vector")]
         public MVector Vector
         {
@@ -24,8 +23,7 @@ namespace Materia.Nodes.MathNodes
             set
             {
                 vec = value;
-                OnDescription($"{vec.X},{vec.Y},{vec.Z},{vec.W}");
-                Updated();
+                TriggerValueChange();
             }
         }
 
@@ -51,12 +49,7 @@ namespace Materia.Nodes.MathNodes
 
         public override string GetDescription()
         {
-            return $"{vec.X},{vec.Y},{vec.Z},{vec.W}";
-        }
-
-        public override void TryAndProcess()
-        {
-            Process();
+            return string.Format("{0:0.00},{1:0.00},{2:0.00},{3:0.00}", vec.X, vec.Y, vec.Z, vec.W);
         }
 
         public class Float4ConstantData : NodeData
@@ -88,52 +81,21 @@ namespace Materia.Nodes.MathNodes
 
             return JsonConvert.SerializeObject(d);
         }
-
         public override string GetShaderPart(string currentFrag)
         {
             var s = shaderId + "0";
-
 
             float px = vec.X;
             float py = vec.Y;
             float pz = vec.Z;
             float pw = vec.W;
 
-            var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "Vector"))
-            {
-                MVector v = p.GetParameterValue<MVector>(Id, "Vector");
-                px = v.X;
-                py = v.Y;
-                pz = v.Z;
-                pw = v.W;
-            }
-
-
             return "vec4 " + s + " = vec4(" + px.ToCodeString() + "," + py.ToCodeString() + "," + pz.ToCodeString() + "," + pw.ToCodeString() + ");\r\n";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            MVector v = vec;
-
-            var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "Vector"))
-            {
-                v = p.GetParameterValue<MVector>(Id, "Vector");
-            }
-
-            output.Data = v;
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
+            output.Data = vec;
         }
     }
 }

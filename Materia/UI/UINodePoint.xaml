@@ -11,11 +11,11 @@
         <SolidColorBrush x:Key="ColorInputOutput" Color="#FFa200ee" />
         <SolidColorBrush x:Key="GrayInputOutput" Color="Gray" />
         <SolidColorBrush x:Key="FloatInputOutput" Color="#FF00ffa2" />
-        <SolidColorBrush x:Key="Float2InputOutput" Color="#FF00c67e" />
-        <SolidColorBrush x:Key="Float3InputOutput" Color="#FF006e46" />
-        <SolidColorBrush x:Key="Float4InputOutput" Color="#FF00432a" />
-        <SolidColorBrush x:Key="MatrixInputOutput" Color="#FFd76f00" />
-        <SolidColorBrush x:Key="BoolInputOutput" Color="#FF374999" />
+        <SolidColorBrush x:Key="Float2InputOutput" Color="#FF02D88A" />
+        <SolidColorBrush x:Key="Float3InputOutput" Color="#FF00AA6C" />
+        <SolidColorBrush x:Key="Float4InputOutput" Color="#FF00955D" />
+        <SolidColorBrush x:Key="MatrixInputOutput" Color="#FFBF832B" />
+        <SolidColorBrush x:Key="BoolInputOutput" Color="#FFFF91FA" />
         <LinearGradientBrush x:Key="GrayColorInputOutput" StartPoint="0,0" EndPoint="0,1">
             <GradientStopCollection>
                 <GradientStop Color="#FFa200ee" Offset="0.0" />
@@ -27,8 +27,8 @@
         <SolidColorBrush x:Key="AnyFloatInputOutput" Color="#FF50947b" />
     </UserControl.Resources>
     <Canvas Width="16" Height="16" ClipToBounds="False">
-        <Border Width="16" Height="16" Name="node" MouseEnter="Node_MouseEnter" MouseLeave="Node_MouseLeave"  Background="LightGray" CornerRadius="{Binding Path=ActualHeight, ElementName=node}" ClipToBounds="False">
-            <Border Name="insideBorder" BorderThickness="2" BorderBrush="Black" CornerRadius="{Binding Path=ActualHeight, ElementName=insideBorder}"></Border>
+        <Border Width="16" Height="16" Name="node" MouseEnter="Node_MouseEnter" MouseLeave="Node_MouseLeave"  Background="{StaticResource TextLight}" CornerRadius="{Binding Path=ActualHeight, ElementName=node}" ClipToBounds="False">
+            <Border Name="insideBorder" BorderThickness="2" BorderBrush="{StaticResource Surface}" CornerRadius="{Binding Path=ActualHeight, ElementName=insideBorder}"></Border>
         </Border>
         <TextBlock Name="OutputName" Foreground="LightGray" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="18" IsHitTestVisible="False" />
         <TextBlock Name="InputName" Foreground="LightGray" HorizontalAlignment="Right" VerticalAlignment="Center" Canvas.Right="18" IsHitTestVisible="False" />

@@ -47,13 +47,13 @@ namespace Materia.UI.Components
             SelectColor.Background = new SolidColorBrush(Color.FromArgb(c.A, c.R, c.G, c.B));
         }
 
-        private void SelectColor_Click(object sender, RoutedEventArgs e)
+        private void SelectColor_MouseUp(object sender, MouseButtonEventArgs e)
         {
             ColorPicker cp = new ColorPicker(c);
             cp.Owner = MateriaMainWindow.Instance;
             cp.ShowDialog();
 
-            if(cp.DialogResult == true)
+            if (cp.DialogResult == true)
             {
                 var r = cp.Selected;
                 c = r;

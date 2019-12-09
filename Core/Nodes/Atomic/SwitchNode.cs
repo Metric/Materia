@@ -7,6 +7,7 @@ using Materia.Nodes.Attributes;
 using Materia.Textures;
 using Materia.Imaging.GLProcessing;
 using Newtonsoft.Json;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.Atomic
 {
@@ -35,7 +36,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 selected = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -110,7 +111,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        public SwitchNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public SwitchNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Switch";
             Id = Guid.NewGuid().ToString();
@@ -130,88 +131,27 @@ namespace Materia.Nodes.Atomic
             input2 = new NodeInput(NodeType.Gray | NodeType.Color, this, "Input 1");
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputRemoved += Input_OnInputRemoved;
-            input.OnInputChanged += Input_OnInputChanged;
-
-            input2.OnInputAdded += Input_OnInputAdded;
-            input2.OnInputRemoved += Input_OnInputRemoved;
-            input2.OnInputChanged += Input_OnInputChanged;
-
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            Output.Data = null;
-            Output.Changed();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if (!Async)
-            {
-                if (input.HasInput && input2.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput && input2.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                if (input.HasInput && input2.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
         }
 
         private void GetParams()
         {
+            if (!input.HasInput) return;
+
             pinput = selected;
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Selected"))
             {
-                pinput = (SwitchInput)Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Selected"));
+                pinput = (SwitchInput)Utils.ConvertToInt(ParentGraph.GetParameterValue(Id, "Selected"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         SwitchInput pinput;
@@ -221,9 +161,8 @@ namespace Materia.Nodes.Atomic
 
             if (buff == null || buff.Id == 0) return;
 
-            Updated();
             Output.Data = buff;
-            Output.Changed();
+            TriggerTextureChange();
         }
 
         public override byte[] GetPreview(int width, int height)
@@ -244,10 +183,10 @@ namespace Materia.Nodes.Atomic
             switch(pinput)
             {
                 case SwitchInput.Input1:
-                    return input2.HasInput ? (GLTextuer2D)input2.Input.Data : null;
+                    return input2.HasInput ? (GLTextuer2D)input2.Reference.Data : null;
                 case SwitchInput.Input0:
                 default:
-                    return input.HasInput ? (GLTextuer2D)input.Input.Data : null;
+                    return input.HasInput ? (GLTextuer2D)input.Reference.Data : null;
             }
         }
 

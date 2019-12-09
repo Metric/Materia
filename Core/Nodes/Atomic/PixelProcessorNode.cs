@@ -10,6 +10,7 @@ using Materia.Imaging;
 using Materia.Textures;
 using Materia.MathHelpers;
 using System.Threading;
+using Materia.GLInterfaces;
 
 namespace Materia.Nodes.Atomic
 {
@@ -30,7 +31,9 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        public PixelProcessorNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        bool isRebuildRequired = false;
+
+        public PixelProcessorNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Pixel Processor";
             Id = Guid.NewGuid().ToString();
@@ -44,93 +47,55 @@ namespace Materia.Nodes.Atomic
             function.AssignParentNode(this);
 
             function.ExpectedOutput = NodeType.Float4 | NodeType.Float;
-            function.OnGraphUpdated += Function_OnGraphUpdated;
 
             previewProcessor = new BasicImageRenderer();
             processor = new PixelShaderProcessor();
 
             internalPixelType = p;
 
-            Inputs = new List<NodeInput>();
+            for(int i = 0; i < 4; ++i)
+            {
+                var input = new NodeInput(NodeType.Gray | NodeType.Color, this, "Input " + Inputs.Count);
+                Inputs.Add(input);
+            }
 
-            AddPlaceholderInput();
-            AddPlaceholderInput();
-            AddPlaceholderInput();
-            AddPlaceholderInput();
-
-            Outputs = new List<NodeOutput>();
             output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
             Outputs.Add(output);
         }
 
-        private void Function_OnGraphUpdated(Graph g)
-        {
-            TryAndProcess();
-        }
-
-        protected override void AddPlaceholderInput()
-        {
-            var input = new NodeInput(NodeType.Gray | NodeType.Color, this, "Input " + Inputs.Count);
-            Inputs.Add(input);
-
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputAdded += Input_OnInputAdded;
-
-            AddedInput(input);
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
         public override void TryAndProcess()
         {
-            if(!Async)
-            {
-                if (function.HasExpectedOutput)
-                {
-                    Prepare();
-                    BuildShader();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (function.HasExpectedOutput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
+            if (function != null && (function.Shader == null || function.Modified || isRebuildRequired))
             {
                 Prepare();
-            })
-            .ContinueWith(t =>
-            {
                 BuildShader();
-                Process();
-            }, Context);
+            }
+            else
+            {
+                shaderBuilt = true;
+            }
+
+            Process();
         }
 
         private void Prepare()
         {
             if(function != null)
             {
-                function.PrepareShader();
+                function.PrepareShader(internalPixelType, false);
             }
+        }
+
+        protected override void OnPixelFormatChange()
+        {
+            base.OnPixelFormatChange();
+            isRebuildRequired = true;
+        }
+
+        public override void AssignPixelType(GraphPixelType pix)
+        {
+            base.AssignPixelType(pix);
+            isRebuildRequired = true;
         }
 
         private void BuildShader()
@@ -138,6 +103,10 @@ namespace Materia.Nodes.Atomic
             if (function != null)
             {
                 shaderBuilt = function.BuildShader();
+                if(shaderBuilt)
+                {
+                    isRebuildRequired = false;
+                }
             }
             else
             {
@@ -155,38 +124,42 @@ namespace Materia.Nodes.Atomic
 
             if(Inputs[0].HasInput)
             {
-                i1 = (GLTextuer2D)Inputs[0].Input.Data;
+                i1 = (GLTextuer2D)Inputs[0].Reference.Data;
             }
 
             if (Inputs[1].HasInput)
             {
-                i2 = (GLTextuer2D)Inputs[1].Input.Data;
+                i2 = (GLTextuer2D)Inputs[1].Reference.Data;
             }
 
             if(Inputs[2].HasInput)
             {
-                i3 = (GLTextuer2D)Inputs[2].Input.Data;
+                i3 = (GLTextuer2D)Inputs[2].Reference.Data;
             }
 
             if(Inputs[3].HasInput)
             {
-                i4 = (GLTextuer2D)Inputs[3].Input.Data;
+                i4 = (GLTextuer2D)Inputs[3].Reference.Data;
             }
 
-            if (!shaderBuilt)
+            if (!shaderBuilt || function == null)
             {
                 return;
             }
 
             CreateBufferIfNeeded();
 
+            buffer.Bind();
+
+            IGL.Primary.ClearTexImage(buffer.Id, (int)PixelFormat.Rgba, (int)PixelType.Float);
+
+            GLTextuer2D.Unbind();      
             processor.Shader = function.Shader;
-            processor.Process(width, height, i1, i2, i3, i4, buffer);
+            processor.Process(function, width, height, i1, i2, i3, i4, buffer);
             processor.Complete();
 
             output.Data = buffer;
-            output.Changed();
-            Updated();
+            TriggerTextureChange();
         }
 
         public class PixelProcessorData : NodeData
@@ -199,14 +172,8 @@ namespace Materia.Nodes.Atomic
             PixelProcessorData d = JsonConvert.DeserializeObject<PixelProcessorData>(data);
             SetBaseNodeDate(d);
 
-            if(function != null)
-            {
-                function.OnGraphUpdated -= Function_OnGraphUpdated;
-            }
-
             function = new FunctionGraph("Pixel Processor Function");
             function.ExpectedOutput = NodeType.Float4 | NodeType.Float;
-            function.OnGraphUpdated += Function_OnGraphUpdated;
             function.AssignParentNode(this);
             function.FromJson(d.functionGraph);
             function.SetConnections();

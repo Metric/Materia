@@ -8,6 +8,7 @@ using Materia.Textures;
 using Materia.Nodes.Attributes;
 using Materia.Imaging.GLProcessing;
 using Newtonsoft.Json;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.Atomic
 {
@@ -33,7 +34,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 redChannel = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -51,7 +52,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 greenChannel = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -69,7 +70,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 blueChannel = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -87,11 +88,11 @@ namespace Materia.Nodes.Atomic
             set
             {
                 alphaChannel = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
-        public ChannelSwitchNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public ChannelSwitchNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Channel Switch";
             Id = Guid.NewGuid().ToString();
@@ -115,78 +116,15 @@ namespace Materia.Nodes.Atomic
             input2 = new NodeInput(NodeType.Color | NodeType.Gray, this, "Input 1");
             output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
-
-            input2.OnInputAdded += Input_OnInputAdded;
-            input2.OnInputChanged += Input_OnInputChanged;
-            input2.OnInputRemoved += Input_OnInputRemoved;
-
-            Inputs = new List<NodeInput>();
-            Outputs = new List<NodeOutput>();
-
             Inputs.Add(input);
             Inputs.Add(input2);
-
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            output.Data = null;
-            output.Changed();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                if (input.HasInput && input2.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput && input2.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                if(input.HasInput && input2.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
         }
 
         private void GetParams()
         {
+            if (!input.HasInput || !input2.HasInput) return;
+
             predChannel = redChannel;
             pgreenChannel = greenChannel;
             pblueChannel = blueChannel;
@@ -196,24 +134,30 @@ namespace Materia.Nodes.Atomic
             {
                 if (ParentGraph.HasParameterValue(Id, "RedChannel"))
                 {
-                    predChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "RedChannel"));
+                    predChannel = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "RedChannel"));
                 }
 
                 if (ParentGraph.HasParameterValue(Id, "GreenChannel"))
                 {
-                    pgreenChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "GreenChannel"));
+                    pgreenChannel = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "GreenChannel"));
                 }
 
                 if (ParentGraph.HasParameterValue(Id, "BlueChannel"))
                 {
-                    pblueChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "BlueChannel"));
+                    pblueChannel = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "BlueChannel"));
                 }
 
                 if (ParentGraph.HasParameterValue(Id, "AlphaChannel"))
                 {
-                    palphaChannel = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "AlphaChannel"));
+                    palphaChannel = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "AlphaChannel"));
                 }
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         float predChannel;
@@ -222,8 +166,10 @@ namespace Materia.Nodes.Atomic
         float palphaChannel;
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
-            GLTextuer2D i2 = (GLTextuer2D)input2.Input.Data;
+            if (!input.HasInput || !input2.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
+            GLTextuer2D i2 = (GLTextuer2D)input2.Reference.Data;
 
             if (i1 == null || i1.Id == 0) return;
             if (i2 == null || i2.Id == 0) return;
@@ -241,8 +187,7 @@ namespace Materia.Nodes.Atomic
             processor.Complete();
 
             output.Data = buffer;
-            output.Changed();
-            Updated();
+            TriggerTextureChange();
         }
 
         public class ChannelSwitchData : NodeData

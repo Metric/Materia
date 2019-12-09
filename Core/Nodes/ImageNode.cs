@@ -29,6 +29,8 @@ namespace Materia.Nodes
             return JsonConvert.SerializeObject(d);
         }
 
+        //the only problem with this is that it is really
+        //intensive time wise
         public override byte[] GetPreview(int width, int height)
         {
             if (previewProcessor != null && buffer != null)
@@ -41,11 +43,6 @@ namespace Materia.Nodes
             }
 
             return null;
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
         }
     }
 }

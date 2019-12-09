@@ -11,6 +11,7 @@ using System.Threading;
 using Materia.Imaging;
 using Materia.Nodes.Attributes;
 using Newtonsoft.Json;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.Atomic
 {
@@ -35,7 +36,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 horizontal = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -60,60 +61,10 @@ namespace Materia.Nodes.Atomic
             input3 = new NodeInput(NodeType.Gray, this, "Mask");
             Output = new NodeOutput(NodeType.Color, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
-            input2.OnInputAdded += Input_OnInputAdded;
-            input2.OnInputChanged += Input_OnInputChanged;
-
-            input3.OnInputAdded += Input_OnInputAdded;
-            input3.OnInputChanged += Input_OnInputChanged;
-            input3.OnInputRemoved += Input_OnInputRemoved;
-
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
             Inputs.Add(input2);
             Inputs.Add(input3);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if (!Async)
-            {
-                if (input.HasInput && input2.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput && input2.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
         }
 
         public override void Dispose()
@@ -127,43 +78,38 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                if(input.HasInput && input2.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
-        }
-
         private void GetParams()
         {
+            if (!input.HasInput) return;
+
             horiz = horizontal;
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Horizontal"))
             {
-                horiz = Convert.ToBoolean(ParentGraph.GetParameterValue(Id, "Horizontal"));
+                horiz = Utils.ConvertToBool(ParentGraph.GetParameterValue(Id, "Horizontal"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         bool horiz;
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
-            GLTextuer2D i2 = (GLTextuer2D)input2.Input.Data;
+            if (!input.HasInput || !input2.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
+            GLTextuer2D i2 = (GLTextuer2D)input2.Reference.Data;
             GLTextuer2D i3 = null;
 
             if (input3.HasInput)
             {
-                if (input3.Input.Data != null)
+                if (input3.Reference.Data != null)
                 {
-                    i3 = (GLTextuer2D)input3.Input.Data;
+                    i3 = (GLTextuer2D)input3.Reference.Data;
                 }
             }
 
@@ -187,8 +133,7 @@ namespace Materia.Nodes.Atomic
             processor.Complete();
 
             Output.Data = buffer;
-            Output.Changed();
-            Updated();
+            TriggerTextureChange();
         }
 
         public class GradientMapData : NodeData
@@ -210,11 +155,6 @@ namespace Materia.Nodes.Atomic
             d.horizontal = horizontal;
 
             return JsonConvert.SerializeObject(d);
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
         }
     }
 }

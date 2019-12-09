@@ -82,10 +82,10 @@ namespace Materia.UI.Components
 
             Task.Run(() =>
             {
-                for (int y = 0; y < fromBitmap.Height; y++)
+                for (int y = 0; y < fromBitmap.Height; ++y)
                 {
                     byte r = 0, g = 0, b = 0, a = 0;
-                    for (int x = 0; x < fromBitmap.Width; x++)
+                    for (int x = 0; x < fromBitmap.Width; ++x)
                     {
                         fromBitmap.GetPixel(x, y, out r, out g, out b, out a);
 
@@ -120,10 +120,10 @@ namespace Materia.UI.Components
 
             Task.Run(() =>
             {
-                for (int y = 0; y < fromBitmap.Height; y++)
+                for (int y = 0; y < fromBitmap.Height; ++y)
                 {
                     float r = 0, g = 0, b = 0, a = 0;
-                    for (int x = 0; x < fromBitmap.Width; x++)
+                    for (int x = 0; x < fromBitmap.Width; ++x)
                     {
                         fromBitmap.GetPixel(x, y, out r, out g, out b, out a);
 
@@ -168,14 +168,14 @@ namespace Materia.UI.Components
                 {
                     if (mode == LevelMode.RGB)
                     {
-                        for (int g = 0; g < 3; g++)
+                        for (int g = 0; g < 3; ++g)
                         {
                             if (maxValue[g] != 0)
                             {
                                 //gather initial points
                                 List<Vector2> points = new List<Vector2>();
 
-                                for (int x = 0; x < 256; x++)
+                                for (int x = 0; x < 256; ++x)
                                 {
                                     int t = histograph[g, x];
                                     float w = (float)x / 255.0f;
@@ -193,9 +193,9 @@ namespace Materia.UI.Components
                                 {
                                     Vector2 p = spline[i];
 
-                                    for (int k = 0; k < p.Y; k++)
+                                    for (int k = 0; k < p.Y; ++k)
                                     {
-                                        bmp.SetPixel((int)p.X, bmp.Height - 1 - k, 175, 175, 175, 255);
+                                        bmp.SetPixel((int)p.X, bmp.Height - 1 - k, 255, 255, 255, 220);
                                     }
                                 });
                             }
@@ -210,7 +210,7 @@ namespace Materia.UI.Components
                             List<Vector2> points = new List<Vector2>();
 
                             //gather initial points
-                            for (int x = 0; x < 256; x++)
+                            for (int x = 0; x < 256; ++x)
                             {
                                 int t = histograph[g, x];
                                 float w = (float)x / 255.0f;
@@ -228,9 +228,9 @@ namespace Materia.UI.Components
                             {
                                 Vector2 p = spline[i];
 
-                                for (int k = 0; k < p.Y; k++)
+                                for (int k = 0; k < p.Y; ++k)
                                 {
-                                    bmp.SetPixel((int)p.X, bmp.Height - 1 - k, 175, 175, 175, 255);
+                                    bmp.SetPixel((int)p.X, bmp.Height - 1 - k, 255, 255, 255, 220);
                                 }
                             });
                         }
@@ -253,9 +253,9 @@ namespace Materia.UI.Components
         {
             int[] max = new int[3];
 
-            for (int g = 0; g < 3; g++)
+            for (int g = 0; g < 3; ++g)
             {
-                for (int i = 0; i < 256; i++)
+                for (int i = 0; i < 256; ++i)
                 {
                     if(histograph[g,i] > max[g])
                     {

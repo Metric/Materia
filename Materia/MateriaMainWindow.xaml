@@ -9,38 +9,38 @@
         mc:Ignorable="d"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         Title="Materia" Height="720" Width="1280" Focusable="True" Closing="Window_Closing" Loaded="Window_Loaded" WindowState="Maximized" Icon="Images/Icons/App/icon.ico">
-    <Grid Background="#FF202020">
-        <DockPanel Height="20" VerticalAlignment="Top" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
-            <Menu Background="#FF333333" DockPanel.Dock="Top" >
-                <MenuItem Foreground="LightGray" Header="{x:Static p:Resources.MENU_FILE}">
-                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_NEW}" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_OPEN}" Click="MenuItem_Click" />
+    <Grid x:Name="MainGrid" Background="{StaticResource Surface}">
+        <DockPanel Height="32" VerticalAlignment="Top" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
+            <Menu Background="{StaticResource Overlay5}" Height="32" DockPanel.Dock="Top" >
+                <MenuItem Foreground="{StaticResource TextLight}" Height="32" Header="{x:Static p:Resources.MENU_FILE}">
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_NEW}" Click="MenuItem_Click" />
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_OPEN}" Click="MenuItem_Click" />
                     <Separator />
-                    <MenuItem Name="SaveMenuItem" Foreground="Black" Header="{x:Static p:Resources.MENU_SAVE}" Click="MenuItem_Click" />
-                    <MenuItem Name="SaveAsMenuItem" Foreground="Black" Header="{x:Static p:Resources.MENU_SAVE_AS}" Click="MenuItem_Click" />
+                    <MenuItem Name="SaveMenuItem" Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_SAVE}" Click="MenuItem_Click" />
+                    <MenuItem Name="SaveAsMenuItem" Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_SAVE_AS}" Click="MenuItem_Click" />
                     <Separator />
-                    <MenuItem Name="RecentMenu" Foreground="Black" Header="{x:Static p:Resources.MENU_RECENT}" />
+                    <MenuItem Name="RecentMenu" Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_RECENT}" />
                     <Separator />
-                    <MenuItem Name="ExportMenuItem" Header="{x:Static p:Resources.MENU_EXPORT_OUTPUTS}" Foreground="Black" Click="MenuItem_Click" />
+                    <MenuItem Name="ExportMenuItem" Header="{x:Static p:Resources.MENU_EXPORT_OUTPUTS}" Foreground="{StaticResource TextDark}" Click="MenuItem_Click" />
                 </MenuItem>
-                <MenuItem Name="EditMenu" Foreground="LightGray" Header="{x:Static p:Resources.MENU_EDIT}">
-                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_UNDO}" Name="mnuUndo" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_REDO}" Name="mnuRedo" Click="MenuItem_Click" />
+                <MenuItem Name="EditMenu" Foreground="{StaticResource TextLight}" Height="32" Header="{x:Static p:Resources.MENU_EDIT}">
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_UNDO}" Name="mnuUndo" Click="MenuItem_Click" />
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_REDO}" Name="mnuRedo" Click="MenuItem_Click" />
                     <Separator />
-                    <MenuItem Name="mnuGraphSettings" Foreground="Black" Header="{x:Static p:Resources.MENU_GRAPH_SETTINGS}" Click="MenuItem_Click" />
+                    <MenuItem Name="mnuGraphSettings" Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_GRAPH_SETTINGS}" Click="MenuItem_Click" />
                 </MenuItem>
-                <MenuItem Name="WindowsMenu" Foreground="LightGray" Header="_Windows">
-                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_2D_PREVIEW}" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_3D_PREVIEW}" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_SHELF}" Click="MenuItem_Click"/>
-                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_PARAMETERS}" Click="MenuItem_Click" />
-                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_LOG}" Click="MenuItem_Click" />
+                <MenuItem Name="WindowsMenu" Foreground="{StaticResource TextLight}" Height="32" Header="_Windows">
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_2D_PREVIEW}" Click="MenuItem_Click" />
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_3D_PREVIEW}" Click="MenuItem_Click" />
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_SHELF}" Click="MenuItem_Click"/>
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_PARAMETERS}" Click="MenuItem_Click" />
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_LOG}" Click="MenuItem_Click" />
                     <Separator />
-                    <MenuItem Foreground="Black" Header="{x:Static p:Resources.MENU_CLOSE_ALL}" Click="MenuItem_Click" />
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_CLOSE_ALL}" Click="MenuItem_Click" />
                 </MenuItem>
             </Menu>
         </DockPanel>
-        <Grid Margin="0,20,0,0">
+        <Grid Margin="0,32,0,0">
             <xcad:DockingManager x:Name="Docker" AllowMixedOrientation="True" GridSplitterHeight="3" GridSplitterWidth="3" Background="#111" BorderBrush="#333" BorderThickness="0">
                 <xcad:DockingManager.Theme>
                     <xcad:MetroTheme />
@@ -69,6 +69,11 @@
 
                                 </xcad:LayoutDocumentPane>
                             </xcad:LayoutDocumentPaneGroup>
+                            <xcad:LayoutAnchorablePane DockWidth="256">
+                                <xcad:LayoutAnchorable ContentId="layers" x:Name="LayersPane" Title="Layers" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
+                                    <localui:UILayers />
+                                </xcad:LayoutAnchorable>
+                            </xcad:LayoutAnchorablePane>
                             <xcad:LayoutAnchorablePane DockMinWidth="280">
                                 <xcad:LayoutAnchorable ContentId="parameters" x:Name="ParametersPane" Title="{x:Static p:Resources.TITLE_PARAMETERS}" CanHide="True" CanClose="False" CanDockAsTabbedDocument="False">
                                     <local:UINodeParameters />
@@ -100,28 +105,28 @@
                     </xcad:LayoutPanel>
                 </xcad:LayoutRoot>
             </xcad:DockingManager>
-            <Grid Name="StartupShortcuts" Background="#111">
+            <Grid Name="StartupShortcuts" Background="{StaticResource Surface}">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0">
                         <Button Name="CreateNew" Click="CreateNew_Click" Height="128" Width="128" HorizontalAlignment="Left" VerticalAlignment="Top" Style="{StaticResource ImageTextButton}">
-                            <Border Width="126" Height="126" BorderBrush="#444" BorderThickness="2">
+                            <Border Width="126" Height="126" BorderBrush="Transparent" BorderThickness="0">
                                 <Grid>
                                     <Image Source="Images/add.png" MaxHeight="64" VerticalAlignment="Top" Margin="0,21,0.4,0" />
-                                    <TextBlock Foreground="LightGray" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="24" Text="{x:Static p:Resources.BUTTON_CREATE}" Margin="0,0,0,10.4" />
+                                    <TextBlock Foreground="{StaticResource TextLight}" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="24" Text="{x:Static p:Resources.BUTTON_CREATE}" Margin="0,0,0,10.4" />
                                 </Grid>
                             </Border>
                         </Button>
                         <Button Name="OpenPrevious" Click="OpenPrevious_Click" Height="128" Width="128" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,0,0,0" Style="{StaticResource ImageTextButton}">
-                            <Border Width="126" Height="126" BorderBrush="#444" BorderThickness="2">
+                            <Border Width="126" Height="126" BorderBrush="Transparent" BorderThickness="0">
                                 <Grid>
                                     <Image Source="Images/align-horiz.png" MaxHeight="64" VerticalAlignment="Top" Margin="0,21,0.4,0" />
-                                    <TextBlock Foreground="LightGray" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="24" Text="{x:Static p:Resources.BUTTON_OPEN}" Margin="0,0,0,10.4" />
+                                    <TextBlock Foreground="{StaticResource TextLight}" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="24" Text="{x:Static p:Resources.BUTTON_OPEN}" Margin="0,0,0,10.4" />
                                 </Grid>
                             </Border>
                         </Button>
                     </StackPanel>
                     <StackPanel Name="RecentShortcuts" HorizontalAlignment="Center" VerticalAlignment="Center" Width="512" Margin="0,20,0,0">
-                        <TextBlock Foreground="LightGray" FontSize="24" Text="{x:Static p:Resources.TITLE_RECENT}" />
+                        <TextBlock Foreground="{StaticResource TextLight}" FontSize="24" Text="{x:Static p:Resources.TITLE_RECENT}" />
                         <StackPanel Name="RecentList">
                         
                         </StackPanel>

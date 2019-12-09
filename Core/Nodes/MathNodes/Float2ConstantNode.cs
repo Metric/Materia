@@ -14,7 +14,6 @@ namespace Materia.Nodes.MathNodes
         NodeOutput output;
 
         MVector vec;
-        [Promote(NodeType.Float2)]
         [Editable(ParameterInputType.Float2Input, "Vector")]
         public MVector Vector
         {
@@ -25,8 +24,7 @@ namespace Materia.Nodes.MathNodes
             set
             {
                 vec = value;
-                OnDescription($"{vec.X},{vec.Y}");
-                Updated();
+                TriggerValueChange();
             }
         }
 
@@ -52,12 +50,7 @@ namespace Materia.Nodes.MathNodes
 
         public override string GetDescription()
         {
-            return $"{vec.X},{vec.Y}";
-        }
-
-        public override void TryAndProcess()
-        {
-            Process();
+            return string.Format("{0:0.00},{1:0.00}", vec.X, vec.Y);
         }
 
         public class Float2ConstantData : NodeData
@@ -91,39 +84,12 @@ namespace Materia.Nodes.MathNodes
             float px = vec.X;
             float py = vec.Y;
 
-            var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "Vector"))
-            {
-                MVector v = p.GetParameterValue<MVector>(Id, "Vector");
-                px = v.X;
-                py = v.Y;
-            }
-
             return "vec2 " + s + " = vec2(" + px.ToCodeString() + "," + py.ToCodeString() + ");\r\n";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            MVector v = vec;
-
-            var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "Vector"))
-            {
-                v = p.GetParameterValue<MVector>(Id, "Vector");
-            }
-
-
-            output.Data = v;
-    
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
+            output.Data = vec;
         }
     }
 }

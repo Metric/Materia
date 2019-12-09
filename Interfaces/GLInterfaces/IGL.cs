@@ -9,6 +9,19 @@ namespace Materia.GLInterfaces
     public abstract class IGL
     {
         public static IGL Primary { get; set; }
+
+        public abstract void Finish();
+
+        public abstract void Flush();
+
+        public abstract void MemoryBarrier(int mask);
+        public abstract IntPtr MapBufferRange(int target, IntPtr start, int length, int flags);
+        public abstract void BufferStorage(int target, int size, IntPtr data, int flags);
+        public abstract bool UnmapBuffer(int target);
+        public abstract IntPtr MapBuffer(int target, int access);
+        public abstract void ClearTexImage(int id, int format, int type);
+        public abstract ErrorCode GetError();
+
         /// Shaders
         public abstract int CreateProgram();
         public abstract int CreateShader(int type);
@@ -26,6 +39,8 @@ namespace Materia.GLInterfaces
 
         public abstract void DeleteProgram(int id);
         public abstract void DeleteShader(int id);
+
+        public abstract void DispatchCompute(int w, int h, int z);
 
         public abstract void GetProgram(int id, int programParamName, out int status);
         public abstract void GetProgramInfoLog(int id, int size, out int length, out string log);
@@ -78,6 +93,8 @@ namespace Materia.GLInterfaces
         public abstract void ReadPixels(int x, int y, int w, int h, int format, int type, byte[] buffer);
         public abstract void ReadPixels(int x, int y, int w, int h, int format, int type, float[] buffer);
 
+        public abstract void ReadTexture(float[] buffer);
+
         public abstract void DrawBuffer(int mode);
         public abstract void DrawBuffers(int[] modes);
         public abstract void ReadBuffer(int mode);
@@ -87,7 +104,13 @@ namespace Materia.GLInterfaces
         ///Textures
         public abstract int GenTexture();
         public abstract void BindTexture(int target, int id);
+
+        public abstract void BindImageTexture(int unit, int id, int level, bool layerd, int layer, int access, int internalSize);
+
         public abstract void GenerateMipmap(int target);
+
+        public abstract void TexStorage2D(int target, int level, int internalSize, int width, int height);
+
         public abstract void TexImage2D(int target, int level, int internalFormat, int w, int h, int border, int format, int pixelType, IntPtr data);
         public abstract void TexImage2D(int target, int level, int internalFormat, int w, int h, int border, int format, int pixelType, float[] data);
         public abstract void TexImage2D(int target, int level, int internalFormat, int w, int h, int border, int format, int pixelType, byte[] data);

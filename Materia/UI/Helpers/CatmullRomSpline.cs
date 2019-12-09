@@ -20,7 +20,7 @@ namespace Materia.UI.Helpers
             List<Vector2> spline = new List<Vector2>();
 
 
-            for(int i = 0; i < points.Count - 3; i++)
+            for(int i = 0; i < points.Count - 3; ++i)
             {
                 Vector2 p0 = points[i];
                 Vector2 p1 = points[i + 1];

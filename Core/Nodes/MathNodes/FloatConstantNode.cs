@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
 using Materia.MathHelpers;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -14,7 +15,6 @@ namespace Materia.Nodes.MathNodes
         NodeOutput output;
 
         protected float val;
-        [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Value")]
         public float Value
         {
@@ -25,8 +25,7 @@ namespace Materia.Nodes.MathNodes
             set
             {
                 val = value;
-                OnDescription(string.Format("{0:0.000}", val));
-                Updated();
+                TriggerValueChange();
             }
         }
 
@@ -53,11 +52,6 @@ namespace Materia.Nodes.MathNodes
         public override string GetDescription()
         {
             return string.Format("{0:0.000}", val);
-        }
-
-        public override void TryAndProcess()
-        {
-            Process();
         }
 
         public class FloatConstantData : NodeData
@@ -87,36 +81,12 @@ namespace Materia.Nodes.MathNodes
 
             float v = val;
 
-            var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "Value"))
-            {
-                v = Convert.ToSingle(p.GetParameterValue(Id, "Value"));
-            }
-
             return "float " + s + " = " + v.ToCodeString() + ";\r\n";
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            float v = val;
-
-            var p = TopGraph();
-            if (p != null && p.HasParameterValue(Id, "Value"))
-            {
-                v = Convert.ToSingle(p.GetParameterValue(Id, "Value"));
-            }
-
-            output.Data = v;
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
+            output.Data = val;
         }
     }
 }

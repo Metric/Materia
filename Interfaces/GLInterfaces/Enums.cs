@@ -908,6 +908,25 @@ namespace Materia.GLInterfaces
 
     //
     // Summary:
+    //     Used in GL.MapBuffer, GL.MapNamedBuffer and 1 other function
+    public enum BufferAccess
+    {
+        //
+        // Summary:
+        //     Original was GL_READ_ONLY = 0x88B8
+        ReadOnly = 35000,
+        //
+        // Summary:
+        //     Original was GL_WRITE_ONLY = 0x88B9
+        WriteOnly = 35001,
+        //
+        // Summary:
+        //     Original was GL_READ_WRITE = 0x88BA
+        ReadWrite = 35002
+    }
+
+    //
+    // Summary:
     //     Used in GL.BufferData, GL.NamedBufferData and 1 other function
     public enum BufferUsageHint
     {
@@ -5118,5 +5137,431 @@ namespace Materia.GLInterfaces
         // Summary:
         //     Original was GL_LINEAR = 0x2601
         Linear = 9729
+    }
+
+    //
+    // Summary:
+    //     Used in GL.BindImageTexture
+    public enum TextureAccess
+    {
+        //
+        // Summary:
+        //     Original was GL_READ_ONLY = 0x88B8
+        ReadOnly = 35000,
+        //
+        // Summary:
+        //     Original was GL_WRITE_ONLY = 0x88B9
+        WriteOnly = 35001,
+        //
+        // Summary:
+        //     Original was GL_READ_WRITE = 0x88BA
+        ReadWrite = 35002
+    }
+
+    //
+    // Summary:
+    //     Used in GL.BindImageTexture, GL.GetInternalformat and 21 other functions
+    public enum SizedInternalFormat
+    {
+        //
+        // Summary:
+        //     Original was GL_RGBA8 = 0x8058
+        Rgba8 = 32856,
+        //
+        // Summary:
+        //     Original was GL_RGBA16 = 0x805B
+        Rgba16 = 32859,
+        //
+        // Summary:
+        //     Original was GL_R8 = 0x8229
+        R8 = 33321,
+        //
+        // Summary:
+        //     Original was GL_R16 = 0x822A
+        R16 = 33322,
+        //
+        // Summary:
+        //     Original was GL_RG8 = 0x822B
+        Rg8 = 33323,
+        //
+        // Summary:
+        //     Original was GL_RG16 = 0x822C
+        Rg16 = 33324,
+        //
+        // Summary:
+        //     Original was GL_R16F = 0x822D
+        R16f = 33325,
+        //
+        // Summary:
+        //     Original was GL_R32F = 0x822E
+        R32f = 33326,
+        //
+        // Summary:
+        //     Original was GL_RG16F = 0x822F
+        Rg16f = 33327,
+        //
+        // Summary:
+        //     Original was GL_RG32F = 0x8230
+        Rg32f = 33328,
+        //
+        // Summary:
+        //     Original was GL_R8I = 0x8231
+        R8i = 33329,
+        //
+        // Summary:
+        //     Original was GL_R8UI = 0x8232
+        R8ui = 33330,
+        //
+        // Summary:
+        //     Original was GL_R16I = 0x8233
+        R16i = 33331,
+        //
+        // Summary:
+        //     Original was GL_R16UI = 0x8234
+        R16ui = 33332,
+        //
+        // Summary:
+        //     Original was GL_R32I = 0x8235
+        R32i = 33333,
+        //
+        // Summary:
+        //     Original was GL_R32UI = 0x8236
+        R32ui = 33334,
+        //
+        // Summary:
+        //     Original was GL_RG8I = 0x8237
+        Rg8i = 33335,
+        //
+        // Summary:
+        //     Original was GL_RG8UI = 0x8238
+        Rg8ui = 33336,
+        //
+        // Summary:
+        //     Original was GL_RG16I = 0x8239
+        Rg16i = 33337,
+        //
+        // Summary:
+        //     Original was GL_RG16UI = 0x823A
+        Rg16ui = 33338,
+        //
+        // Summary:
+        //     Original was GL_RG32I = 0x823B
+        Rg32i = 33339,
+        //
+        // Summary:
+        //     Original was GL_RG32UI = 0x823C
+        Rg32ui = 33340,
+        //
+        // Summary:
+        //     Original was GL_RGBA32F = 0x8814
+        Rgba32f = 34836,
+        //
+        // Summary:
+        //     Original was GL_RGBA16F = 0x881A
+        Rgba16f = 34842,
+        //
+        // Summary:
+        //     Original was GL_RGBA32UI = 0x8D70
+        Rgba32ui = 36208,
+        //
+        // Summary:
+        //     Original was GL_RGBA16UI = 0x8D76
+        Rgba16ui = 36214,
+        //
+        // Summary:
+        //     Original was GL_RGBA8UI = 0x8D7C
+        Rgba8ui = 36220,
+        //
+        // Summary:
+        //     Original was GL_RGBA32I = 0x8D82
+        Rgba32i = 36226,
+        //
+        // Summary:
+        //     Original was GL_RGBA16I = 0x8D88
+        Rgba16i = 36232,
+        //
+        // Summary:
+        //     Original was GL_RGBA8I = 0x8D8E
+        Rgba8i = 36238
+    }
+
+    //
+    // Summary:
+    //     Used in GL.TexStorage2D
+    public enum TextureTarget2d
+    {
+        //
+        // Summary:
+        //     Original was GL_TEXTURE_2D = 0x0DE1
+        Texture2D = 3553,
+        //
+        // Summary:
+        //     Original was GL_PROXY_TEXTURE_2D = 0x8064
+        ProxyTexture2D = 32868,
+        //
+        // Summary:
+        //     Original was GL_TEXTURE_RECTANGLE = 0x84F5
+        TextureRectangle = 34037,
+        //
+        // Summary:
+        //     Original was GL_PROXY_TEXTURE_RECTANGLE = 0x84F7
+        ProxyTextureRectangle = 34039,
+        //
+        // Summary:
+        //     Original was GL_TEXTURE_CUBE_MAP = 0x8513
+        TextureCubeMap = 34067,
+        //
+        // Summary:
+        //     Original was GL_PROXY_TEXTURE_CUBE_MAP = 0x851B
+        ProxyTextureCubeMap = 34075,
+        //
+        // Summary:
+        //     Original was GL_TEXTURE_1D_ARRAY = 0x8C18
+        Texture1DArray = 35864,
+        //
+        // Summary:
+        //     Original was GL_PROXY_TEXTURE_1D_ARRAY = 0x8C19
+        ProxyTexture1DArray = 35865
+    }
+
+    //
+    // Summary:
+    //     Not used directly.
+    public enum ErrorCode
+    {
+        //
+        // Summary:
+        //     Original was GL_NO_ERROR = 0
+        NoError = 0,
+        //
+        // Summary:
+        //     Original was GL_INVALID_ENUM = 0x0500
+        InvalidEnum = 1280,
+        //
+        // Summary:
+        //     Original was GL_INVALID_VALUE = 0x0501
+        InvalidValue = 1281,
+        //
+        // Summary:
+        //     Original was GL_INVALID_OPERATION = 0x0502
+        InvalidOperation = 1282,
+        //
+        // Summary:
+        //     Original was GL_STACK_OVERFLOW = 0x0503
+        StackOverflow = 1283,
+        //
+        // Summary:
+        //     Original was GL_STACK_UNDERFLOW = 0x0504
+        StackUnderflow = 1284,
+        //
+        // Summary:
+        //     Original was GL_OUT_OF_MEMORY = 0x0505
+        OutOfMemory = 1285,
+        //
+        // Summary:
+        //     Original was GL_INVALID_FRAMEBUFFER_OPERATION = 0x0506
+        InvalidFramebufferOperation = 1286,
+        //
+        // Summary:
+        //     Original was GL_INVALID_FRAMEBUFFER_OPERATION_EXT = 0x0506
+        InvalidFramebufferOperationExt = 1286,
+        //
+        // Summary:
+        //     Original was GL_INVALID_FRAMEBUFFER_OPERATION_OES = 0x0506
+        InvalidFramebufferOperationOes = 1286,
+        //
+        // Summary:
+        //     Original was GL_CONTEXT_LOST = 0x0507
+        ContextLost = 1287,
+        //
+        // Summary:
+        //     Original was GL_TABLE_TOO_LARGE = 0x8031
+        TableTooLarge = 32817,
+        //
+        // Summary:
+        //     Original was GL_TABLE_TOO_LARGE_EXT = 0x8031
+        TableTooLargeExt = 32817,
+        //
+        // Summary:
+        //     Original was GL_TEXTURE_TOO_LARGE_EXT = 0x8065
+        TextureTooLargeExt = 32869
+    }
+
+    //
+    // Summary:
+    //     Used in GL.MapBufferRange, GL.MapNamedBufferRange and 1 other function
+    [Flags]
+    public enum BufferAccessMask
+    {
+        //
+        // Summary:
+        //     Original was GL_MAP_READ_BIT = 0x0001
+        MapReadBit = 1,
+        //
+        // Summary:
+        //     Original was GL_MAP_READ_BIT_EXT = 0x0001
+        MapReadBitExt = 1,
+        //
+        // Summary:
+        //     Original was GL_MAP_WRITE_BIT = 0x0002
+        MapWriteBit = 2,
+        //
+        // Summary:
+        //     Original was GL_MAP_WRITE_BIT_EXT = 0x0002
+        MapWriteBitExt = 2,
+        //
+        // Summary:
+        //     Original was GL_MAP_INVALIDATE_RANGE_BIT = 0x0004
+        MapInvalidateRangeBit = 4,
+        //
+        // Summary:
+        //     Original was GL_MAP_INVALIDATE_RANGE_BIT_EXT = 0x0004
+        MapInvalidateRangeBitExt = 4,
+        //
+        // Summary:
+        //     Original was GL_MAP_INVALIDATE_BUFFER_BIT = 0x0008
+        MapInvalidateBufferBit = 8,
+        //
+        // Summary:
+        //     Original was GL_MAP_INVALIDATE_BUFFER_BIT_EXT = 0x0008
+        MapInvalidateBufferBitExt = 8,
+        //
+        // Summary:
+        //     Original was GL_MAP_FLUSH_EXPLICIT_BIT = 0x0010
+        MapFlushExplicitBit = 16,
+        //
+        // Summary:
+        //     Original was GL_MAP_FLUSH_EXPLICIT_BIT_EXT = 0x0010
+        MapFlushExplicitBitExt = 16,
+        //
+        // Summary:
+        //     Original was GL_MAP_UNSYNCHRONIZED_BIT = 0x0020
+        MapUnsynchronizedBit = 32,
+        //
+        // Summary:
+        //     Original was GL_MAP_UNSYNCHRONIZED_BIT_EXT = 0x0020
+        MapUnsynchronizedBitExt = 32,
+        //
+        // Summary:
+        //     Original was GL_MAP_PERSISTENT_BIT = 0x0040
+        MapPersistentBit = 64,
+        //
+        // Summary:
+        //     Original was GL_MAP_PERSISTENT_BIT_EXT = 0x0040
+        MapPersistentBitExt = 64,
+        //
+        // Summary:
+        //     Original was GL_MAP_COHERENT_BIT = 0x0080
+        MapCoherentBit = 128,
+        //
+        // Summary:
+        //     Original was GL_MAP_COHERENT_BIT_EXT = 0x0080
+        MapCoherentBitExt = 128
+    }
+
+    //
+    // Summary:
+    //     Used in GL.BufferStorage, GL.NamedBufferStorage and 1 other function
+    public enum BufferStorageFlags
+    {
+        //
+        // Summary:
+        //     Original was GL_NONE = 0
+        None = 0,
+        //
+        // Summary:
+        //     Original was GL_MAP_READ_BIT = 0x0001
+        MapReadBit = 1,
+        //
+        // Summary:
+        //     Original was GL_MAP_WRITE_BIT = 0x0002
+        MapWriteBit = 2,
+        //
+        // Summary:
+        //     Original was GL_MAP_PERSISTENT_BIT = 0x0040
+        MapPersistentBit = 64,
+        //
+        // Summary:
+        //     Original was GL_MAP_COHERENT_BIT = 0x0080
+        MapCoherentBit = 128,
+        //
+        // Summary:
+        //     Original was GL_DYNAMIC_STORAGE_BIT = 0x0100
+        DynamicStorageBit = 256,
+        //
+        // Summary:
+        //     Original was GL_CLIENT_STORAGE_BIT = 0x0200
+        ClientStorageBit = 512
+    }
+
+    //
+    // Summary:
+    //     Used in GL.MemoryBarrier
+    public enum MemoryBarrierFlags
+    {
+        //
+        // Summary:
+        //     Original was GL_ALL_BARRIER_BITS = 0xFFFFFFFF
+        AllBarrierBits = -1,
+        //
+        // Summary:
+        //     Original was GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT = 0x00000001
+        VertexAttribArrayBarrierBit = 1,
+        //
+        // Summary:
+        //     Original was GL_ELEMENT_ARRAY_BARRIER_BIT = 0x00000002
+        ElementArrayBarrierBit = 2,
+        //
+        // Summary:
+        //     Original was GL_UNIFORM_BARRIER_BIT = 0x00000004
+        UniformBarrierBit = 4,
+        //
+        // Summary:
+        //     Original was GL_TEXTURE_FETCH_BARRIER_BIT = 0x00000008
+        TextureFetchBarrierBit = 8,
+        //
+        // Summary:
+        //     Original was GL_SHADER_IMAGE_ACCESS_BARRIER_BIT = 0x00000020
+        ShaderImageAccessBarrierBit = 32,
+        //
+        // Summary:
+        //     Original was GL_COMMAND_BARRIER_BIT = 0x00000040
+        CommandBarrierBit = 64,
+        //
+        // Summary:
+        //     Original was GL_PIXEL_BUFFER_BARRIER_BIT = 0x00000080
+        PixelBufferBarrierBit = 128,
+        //
+        // Summary:
+        //     Original was GL_TEXTURE_UPDATE_BARRIER_BIT = 0x00000100
+        TextureUpdateBarrierBit = 256,
+        //
+        // Summary:
+        //     Original was GL_BUFFER_UPDATE_BARRIER_BIT = 0x00000200
+        BufferUpdateBarrierBit = 512,
+        //
+        // Summary:
+        //     Original was GL_FRAMEBUFFER_BARRIER_BIT = 0x00000400
+        FramebufferBarrierBit = 1024,
+        //
+        // Summary:
+        //     Original was GL_TRANSFORM_FEEDBACK_BARRIER_BIT = 0x00000800
+        TransformFeedbackBarrierBit = 2048,
+        //
+        // Summary:
+        //     Original was GL_ATOMIC_COUNTER_BARRIER_BIT = 0x00001000
+        AtomicCounterBarrierBit = 4096,
+        //
+        // Summary:
+        //     Original was GL_SHADER_STORAGE_BARRIER_BIT = 0x00002000
+        ShaderStorageBarrierBit = 8192,
+        //
+        // Summary:
+        //     Original was GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT = 0x00004000
+        ClientMappedBufferBarrierBit = 16384,
+        //
+        // Summary:
+        //     Original was GL_QUERY_BUFFER_BARRIER_BIT = 0x00008000
+        QueryBufferBarrierBit = 32768
     }
 }

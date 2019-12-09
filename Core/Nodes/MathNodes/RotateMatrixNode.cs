@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Materia.Nodes.Helpers;
 using Materia.Math3D;
+using Materia.MathHelpers;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -31,7 +32,7 @@ namespace Materia.Nodes.MathNodes
         {
             if(Utils.IsNumber(o))
             {
-                float p = Convert.ToSingle(o);
+                float p = o.ToFloat();
                 matrix = Matrix4.CreateRotationZ(p * (float)(Math.PI / 180.0f)); 
             }
         }

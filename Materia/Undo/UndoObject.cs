@@ -67,13 +67,13 @@ namespace Materia.Undo
 
                                     if (unode != null)
                                     {
-                                        unode.Node.SetConnection(n.Node, p);
+                                        unode.Node.SetConnection(n.Node, p, true);
                                         unode.LoadConnection(n.Id);
                                     }
                                 }
 
-                            //update the graph after reconnections
-                            graph.Graph.TryAndProcess();
+                                //update the graph after reconnections
+                                graph.Graph.TryAndProcess();
                             });
                         });
                     }

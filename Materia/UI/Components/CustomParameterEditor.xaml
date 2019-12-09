@@ -11,11 +11,10 @@
         <StackPanel Name="Stack">
             
         </StackPanel>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,5,0">
-            <Button Name="AddParam" Background="Transparent" Margin="5" BorderThickness="0" Click="AddParam_Click" ToolTip="{x:Static p:Resources.BUTTON_ADD_PARAMETER}" Style="{DynamicResource ImageTextButton}">
-                <StackPanel Height="24" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Foreground="LightGray" Text="{x:Static p:Resources.BUTTON_ADD_PARAMETER}" Margin="5" VerticalAlignment="Center" />
-                    <Image Source="/Materia;component/Images/add.png" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,5,0">
+            <Button Name="AddParam" Margin="5" BorderThickness="0" Click="AddParam_Click" ToolTip="{x:Static p:Resources.BUTTON_ADD_PARAMETER}" Style="{DynamicResource ImageTextButton}">
+                <StackPanel Height="32" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Source="/Materia;component/Images/add.png" Margin="4" />
                 </StackPanel>
             </Button>
         </StackPanel>

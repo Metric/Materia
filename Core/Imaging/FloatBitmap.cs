@@ -53,9 +53,9 @@ namespace Materia.Imaging
             int w = src.Width;
             int h = src.Height;
 
-            for(int y = 0; y < h; y++)
+            for(int y = 0; y < h; ++y)
             { 
-                for (int x = 0; x < w; x++)
+                for (int x = 0; x < w; ++x)
                 {
                     var c = src.GetPixel(x, y);
                     f.SetPixel(x, y, c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
@@ -246,9 +246,9 @@ namespace Materia.Imaging
             int wh = Width / 2;
             int hh = Height / 2;
 
-            for (int y = -r; y <= r; y++)
+            for (int y = -r; y <= r; ++y)
             {
-                for (int x = -r; x <= r; x++)
+                for (int x = -r; x <= r; ++x)
                 {
                     if (x * x + y * y <= r * r)
                     {

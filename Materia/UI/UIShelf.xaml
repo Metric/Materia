@@ -7,7 +7,7 @@
              xmlns:local="clr-namespace:Materia"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" AllowDrop="True" Drop="UserControl_Drop" Loaded="UserControl_Loaded">
-    <Grid Background="#222" AllowDrop="True">
+    <Grid Background="{StaticResource Surface}" AllowDrop="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="28" />
             <RowDefinition Height="*" />
@@ -16,11 +16,12 @@
             <ColumnDefinition Width="256" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBox Name="SearchBox" Grid.ColumnSpan="2" Padding="2" Margin="2,2,4,2" Grid.Row="0" Text="{x:Static p:Resources.TITLE_SEARCH}" HorizontalAlignment="Stretch" Background="#222" Foreground="LightGray" VerticalAlignment="Top" Height="24" TextChanged="SearchBox_TextChanged" GotFocus="SearchBox_GotFocus" LostFocus="SearchBox_LostFocus" />
-        <ScrollViewer Margin="2,2,2,2" Grid.Row="1" Grid.Column="0" Name="ShelfPaths">
+        <TextBox Name="SearchBox" Grid.ColumnSpan="2" CaretBrush="{StaticResource Primary}" Padding="5,5,5,0" Margin="0" Grid.Row="0" Text="{x:Static p:Resources.TITLE_SEARCH}" HorizontalAlignment="Stretch" Background="{StaticResource Overlay5}" Foreground="{StaticResource TextLight}" 
+                 VerticalAlignment="Top" Height="28" TextChanged="SearchBox_TextChanged" BorderThickness="0" GotFocus="SearchBox_GotFocus" LostFocus="SearchBox_LostFocus" />
+        <ScrollViewer Margin="0" Grid.Row="1" Grid.Column="0" Background="{StaticResource Overlay7}" Name="ShelfPaths">
         </ScrollViewer>
         <GridSplitter VerticalAlignment="Stretch" Grid.Row="1" HorizontalAlignment="Right" Width="3" />
-        <ScrollViewer Margin="2,2,2,2" Grid.Row="1" Grid.Column="1" Background="#111">
+        <ScrollViewer Margin="0" Grid.Row="1" Grid.Column="1" Background="Transparent">
             <StackPanel Name="ShelfContent" Orientation="Vertical" VerticalAlignment="Top" />
         </ScrollViewer>
     </Grid>

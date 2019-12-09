@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Materia.Imaging.GLProcessing;
 using Materia.Nodes.Attributes;
+using Materia.Nodes.Helpers;
 using Materia.Textures;
 using Newtonsoft.Json;
 
@@ -28,7 +29,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 gamma = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -54,84 +55,34 @@ namespace Materia.Nodes.Atomic
             input = new NodeInput(NodeType.Color | NodeType.Gray, this, "Image Input");
             output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
-
-            Inputs = new List<NodeInput>();
             Inputs.Add(input);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            output.Data = null;
-            output.Changed();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                if (input.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                if(input.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
         }
 
         private void GetParams()
         {
+            if (!input.HasInput) return;
+
             pgamma = gamma;
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Gamma"))
             {
-                pgamma = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Gamma"));
+                pgamma = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Gamma"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         float pgamma;
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
+            if (!input.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
@@ -144,9 +95,8 @@ namespace Materia.Nodes.Atomic
             processor.Process(width, height, i1, buffer);
             processor.Complete();
 
-            Updated();
             output.Data = buffer;
-            output.Changed();
+            TriggerTextureChange();
         }
 
         public class GammaData : NodeData
@@ -168,11 +118,6 @@ namespace Materia.Nodes.Atomic
             GammaData d = JsonConvert.DeserializeObject<GammaData>(data);
             SetBaseNodeDate(d);
             gamma = d.gamma;
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
         }
 
         public override void Dispose()

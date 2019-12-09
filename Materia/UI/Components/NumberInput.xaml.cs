@@ -29,6 +29,9 @@ namespace Materia
     /// </summary>
     public partial class NumberInput : UserControl
     {
+        public delegate void ValueChange(NumberInput input, float value);
+        public event ValueChange OnValueChanged;
+
         bool initing;
 
         public NumberInputType NumberType { get; protected set; }
@@ -139,6 +142,7 @@ namespace Materia
                                     float.TryParse(Input.Text, out fv);
 
                                     property.SetValue(propertyOwner, fv);
+                                    OnValueChanged?.Invoke(this, fv);
                                 });
                             });
                         break;
@@ -155,6 +159,7 @@ namespace Materia
                                     int.TryParse(Input.Text, out iv);
 
                                     property.SetValue(propertyOwner, iv);
+                                    OnValueChanged?.Invoke(this, iv);
                                 });
                             });
                         break;

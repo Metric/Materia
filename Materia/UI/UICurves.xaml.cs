@@ -139,7 +139,7 @@ namespace Materia
         {
             Dictionary<int, List<MathHelpers.Point>> pts = new Dictionary<int, List<MathHelpers.Point>>();
 
-            for(int i = 0; i < 4; i++)
+            for(int i = 0; i < 4; ++i)
             {
                 var cps = Points[i];
 
@@ -226,7 +226,7 @@ namespace Materia
 
             display = new RawBitmap((int)CurveView.ActualWidth, (int)CurveView.ActualHeight);
 
-            for(int i = 0; i < 3; i++)
+            for(int i = 0; i < 3; ++i)
             {
                 var pts = Points[i];
 
@@ -286,12 +286,12 @@ namespace Materia
 
             double[] sd = Curves.SecondDerivative(points.ToArray());
 
-            for (int i = 0; i < points.Count - 1; i++)
+            for (int i = 0; i < points.Count - 1; ++i)
             {
                 MathHelpers.Point cur = points[i];
                 MathHelpers.Point next = points[i + 1];
 
-                for (double x = cur.X; x < next.X; x++)
+                for (double x = cur.X; x < next.X; ++x)
                 {
                     double t = (double)(x - cur.X) / (next.X - cur.X);
 
@@ -336,7 +336,7 @@ namespace Materia
 
             if(ShowAllCurves)
             {
-                for(int i = 0; i < 4; i++)
+                for(int i = 0; i < 4; ++i)
                 {
                     switch(i)
                     {

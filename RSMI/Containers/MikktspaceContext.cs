@@ -292,14 +292,14 @@ namespace RSMI.Containers
                     int verts = context.m_pInterface.m_getNumVerticesOfFace(ref context, f);
                     if (verts != 3) continue;
 
-                    for(i  = 0; i < verts; i++)
+                    for(i  = 0; i < verts; ++i)
                     {
                         var pSpace = psTspace[index];
                         float[] tang = new float[] { pSpace.vOs.X, pSpace.vOs.Y, pSpace.vOs.Z };
                         float[] bitang = new float[] { pSpace.vOt.X, pSpace.vOt.Y, pSpace.vOt.Z };
                         context.m_pInterface.m_setTSpace(ref context, tang, bitang, pSpace.fMagS, pSpace.fMagT, pSpace.bOrient, f, i);
                         context.m_pInterface.m_setTSpaceBasic(ref context, tang, pSpace.bOrient ? 1 : -1, f, i);
-                        index++;
+                        ++index;
                     }
                 }
             }
@@ -339,7 +339,7 @@ namespace RSMI.Containers
             Vector3 vMin = GetPosition(ref pContext, 0), vMax = vMin, vDim = new Vector3();
             float fMin, fMax;
 
-            for(i = 1; i < (iNrTrianglesIn * 3); i++)
+            for(i = 1; i < (iNrTrianglesIn * 3); ++i)
             {
                 int index = piTriList_in_and_out[i];
                 Vector3 vP = GetPosition(ref pContext, index);
@@ -372,7 +372,7 @@ namespace RSMI.Containers
 
             try
             {
-                for (i = 0; i < iNrTrianglesIn * 3; i++)
+                for (i = 0; i < iNrTrianglesIn * 3; ++i)
                 {
                     int index = piTriList_in_and_out[i];
                     Vector3 vP = GetPosition(ref pContext, index);
@@ -387,14 +387,14 @@ namespace RSMI.Containers
             }
 
             piHashOffsets[0] = 0;
-            for(k = 1; k < g_iCells; k++)
+            for(k = 1; k < g_iCells; ++k)
             {
                 piHashOffsets[k] = piHashOffsets[k - 1] + piHashCount[k - 1];
             }
 
             try
             {
-                for (i = 0; i < iNrTrianglesIn * 3; i++)
+                for (i = 0; i < iNrTrianglesIn * 3; ++i)
                 {
                     int index = piTriList_in_and_out[i];
                     Vector3 vP = GetPosition(ref pContext, index);
@@ -413,7 +413,7 @@ namespace RSMI.Containers
             piHashCount2 = null;
 
             iMaxCount = piHashCount[0];
-            for(k = 1; k < g_iCells; k++)
+            for(k = 1; k < g_iCells; ++k)
             {
                 if(iMaxCount < piHashCount[k])
                 {
@@ -425,7 +425,7 @@ namespace RSMI.Containers
 
             try
             {
-                for (k = 0; k < g_iCells; k++)
+                for (k = 0; k < g_iCells; ++k)
                 {
 
                     int entries = piHashCount[k];
@@ -589,7 +589,7 @@ namespace RSMI.Containers
                     piTriList_out[iDstTriIndex * 3] = MakeIndex(f, 0);
                     piTriList_out[iDstTriIndex * 3 + 1] = MakeIndex(f, 1);
                     piTriList_out[iDstTriIndex * 3 + 2] = MakeIndex(f, 2);
-                    iDstTriIndex++;
+                    ++iDstTriIndex;
                 }
                 else
                 {
@@ -664,19 +664,19 @@ namespace RSMI.Containers
         {
             int f = 0, i = 0;
 
-            for(f = 0; f < iNrTrianglesIn; f++)
+            for(f = 0; f < iNrTrianglesIn; ++f)
             {
                 pTriInfos[f].faceNeighbors = new int[3];
                 pTriInfos[f].AssignedGroup = new SGroup[3];
 
-                for (i = 0; i < 3; i++)
+                for (i = 0; i < 3; ++i)
                 {
                     pTriInfos[f].faceNeighbors[i] = -1;
                     pTriInfos[f].iFlag |= GROUP_WITH_ANY;
                 }
             }
 
-            for(f = 0; f < iNrTrianglesIn; f++)
+            for(f = 0; f < iNrTrianglesIn; ++f)
             {
                 Vector3 v1 = GetPosition(ref context, pTriListIn[f * 3]);
                 Vector3 v2 = GetPosition(ref context, pTriListIn[f * 3 + 1]);
@@ -728,9 +728,9 @@ namespace RSMI.Containers
             int iNrMaxGroups = iNrTrianglesIn * 3;
             int iNrActiveGroups = 0;
             int iOffset = 0, f = 0, i = 0;
-            for(f = 0; f < iNrTrianglesIn; f++)
+            for(f = 0; f < iNrTrianglesIn; ++f)
             {
-                for(i = 0; i < 3; i++)
+                for(i = 0; i < 3; ++i)
                 {
                     if((pTriInfos[f].iFlag & GROUP_WITH_ANY) == 0 && pTriInfos[f].AssignedGroup[i] == null)
                     {
@@ -823,7 +823,7 @@ namespace RSMI.Containers
             SSubGroup[] pUniSubGroups = null;
             int[] pTmpMembers = null;
             int iMaxNrFaces = 0, iUniqueTSpaces = 0, g = 0, i = 0;
-            for(g = 0; g < iNrActiveGroups; g++)
+            for(g = 0; g < iNrActiveGroups; ++g)
             {
                 if(iMaxNrFaces < pGroups[g].iNrFaces)
                 {
@@ -838,11 +838,11 @@ namespace RSMI.Containers
             pTmpMembers = new int[iMaxNrFaces];
 
             iUniqueTSpaces = 0;
-            for(g = 0; g < iNrActiveGroups; g++)
+            for(g = 0; g < iNrActiveGroups; ++g)
             {
                 int iUniqueSubGroups = 0;
 
-                for(i = 0; i < pGroups[g].iNrFaces; i++)
+                for(i = 0; i < pGroups[g].iNrFaces; ++i)
                 {
                     int f = pGroupTriangleBuffer[pGroups[g].faceOffset];
                     int index = -1, iVertIndex = -1, iOF_1 = -1, iMembers = 0, j = 0, l = 0;
@@ -865,7 +865,7 @@ namespace RSMI.Containers
                     iOF_1 = pTriInfos[f].iOrgFaceNumber;
 
                     iMembers = 0;
-                    for(j = 0; j < pGroups[g].iNrFaces; j++)
+                    for(j = 0; j < pGroups[g].iNrFaces; ++j)
                     {
                         int t = pGroupTriangleBuffer[pGroups[g].faceOffset + j];
                         int iOf_2 = pTriInfos[t].iOrgFaceNumber;
@@ -1027,9 +1027,9 @@ namespace RSMI.Containers
         static void BuildNeighborsFast(ref STriInfo[] pTriInfos, ref SEdge[] pEdges, int[] piTriListIn, int iNrTrianglesIn)
         {
             int iEntries = 0, f = 0, i = 0;
-            for(f = 0; f < iNrTrianglesIn; f++)
+            for(f = 0; f < iNrTrianglesIn; ++f)
             {
-                for(i = 0; i < 3; i++)
+                for(i = 0; i < 3; ++i)
                 {
                     int i0 = piTriListIn[f * 3 + i];
                     int i1 = piTriListIn[f * 3 + (i < 2 ? (i + 1) : 0)];
@@ -1055,7 +1055,7 @@ namespace RSMI.Containers
                 }
             });
 
-            for(i = 0; i < iEntries; i++)
+            for(i = 0; i < iEntries; ++i)
             {
                 int i0 = pEdges[i].i0;
                 int i1 = pEdges[i].i1;

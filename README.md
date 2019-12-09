@@ -19,8 +19,7 @@ Pre-Alpha as quite a bit is still changing, and not all features are available y
 Computer Requirements
 ------------------------
  - .Net 4.6.1 Runtime
- - OpenGL 3.3 compatible video card with as much vram as possible.
-    - OpenGL 4.1 compatible video card for real time tessellation displacement
+ - OpenGL 4.4 compatible video card with as much vram as possible.
  - Windows 7, 8, or 10 64-Bit
  - Approx Hard Drive Space Needed: 300MB (Not Including .Net 4.6 Runtime)
  - Approx system memory required: 1GB+
@@ -46,6 +45,7 @@ Major TODO
   * Various UI feedback mechanisms
   * Various shape nodes.
   * Keyboard Shortcuts
+  * Add menu item to toggle Layers window / pane
   * Re-creation of various substance graph instances.
   * More Undo and Redo tracking operations.
   * Thorough testing of function graphs for both CPU and GPU.
@@ -56,12 +56,16 @@ If you are using a laptop with both an Intel processor and a discrete GPU. Pleas
 
 Known Bugs
 ====================
-* Color selector magnifier window fails to update on multiple displays when they are different scaling and resolution on Windows 10. This is an internal bug of the .Net framework. Already reported to the .Net developer forum. However, the actual color being selected is the correct color, even if the magnifier window fails to update.
-  - Work around for now is to set scaling for all displays to 100% in Windows 10.
-  - UPDATE: I just received an email that this issue has now been added to the dotnot WPF github issues tracker at: https://github.com/dotnet/wpf/issues/1320
-
-* Sometimes node graph lines are not properly deleted, when deleting a node where the input is connected.
-* For some weird reason, when pasting a node and when connecting the output of it to another node, it does not properly connect in the underly UI / graph.
+* Still working on an issue where some nodes are not properly reprocessing in some cases. Unless, a parameter or input is changed on that node specifically. This is most likely due to a processing order bug.
+* Splatter circle pivot of min and max is not working as expected anymore, due to FX using compute shader pivot point differently. Splatter circle center pivot is working as expected.
+* Seems the 3D cubes have incorrect normals on 3 sides. Not sure if it is a bug in the Mikktspace calculations or was like that in Maya before exporting.
+* Node names are not interactively updating when modified via parameters view. This has to do with some UI / node changes, will be fixed later.
+* MTG Renderer is no longer working. Needs to be updated to take into account the new way graphs are processed.
+* AND and OR nodes do not add extra inputs as needed. Will be added back in later.
+* Max and Min nodes do not add extra inputs as needed. Will be added back in later.
+* Sequence Node does not add extra outputs as needed. Will be added back in later.
+* The gradient editor positions, curves min/max and levels multi range sliders are still finicky to move with the mouse.
+* The window panes icons and document pane close icon are not the proper color in AvalonDock when focused. They should still be a gray / white, but instead they are black.
 
 How-To and Various Info
 ========================
@@ -71,8 +75,8 @@ How-to and various info on available features can be found in the github wiki: h
 Build Dependencies
 ===================
  * .Net 4.6.1
- * OpenTK 3.0.1 via Nuget
- * OpenTK.GLControl 3.0.1 via Nuget
+ * OpenTK via Nuget
+ * OpenTK.GLControl via Nuget
  * Assimp via Nuget
  * Newtonsoft JSON via Nuget
  * NLog via Nuget

@@ -7,10 +7,13 @@
              xmlns:comps="clr-namespace:Materia.UI.Components"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="256">
-    <Grid Background="#FF2b2b2b">
-        <Border Background="#FF333333" Margin="1,26,1,1" />
-        <TextBlock Name="Title" VerticalAlignment="Top" Height="20" Foreground="Gray" Text="" Margin="5,5,0,0"></TextBlock>
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Margin="2,28,2,2">
+    <Grid Background="{StaticResource Surface}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock Name="Title" VerticalAlignment="Center" FontSize="20" Foreground="{StaticResource TextLight}" Margin="5,0,5,0"></TextBlock>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="2,2,2,2">
             <comps:ParameterMap x:Name="Params" />
         </ScrollViewer>
     </Grid>

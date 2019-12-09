@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="8" d:DesignWidth="8 ">
     <Grid Width="8" Height="8">
-        <Border CornerRadius="8" Background="LightGray" />
+        <Border CornerRadius="8" Background="{StaticResource TextLight}" />
     </Grid>
 </UserControl>

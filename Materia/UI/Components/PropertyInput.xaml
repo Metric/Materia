@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="256" Height="32" HorizontalAlignment="Stretch">
     <Grid>
-        <TextBox Name="IField" Margin="5" Background="#222" Foreground="LightGray" GotFocus="IField_GotFocus" LostFocus="IField_LostFocus" TextChanged="TextInput_TextChanged" KeyDown="IField_KeyDown" />
+        <TextBox Name="IField" Text="" Margin="2" Padding="2,4,2,0" CaretBrush="{StaticResource Primary}" Background="{StaticResource Overlay5}" BorderThickness="0" Foreground="{StaticResource TextLight}" GotFocus="IField_GotFocus" LostFocus="IField_LostFocus" TextChanged="TextInput_TextChanged" KeyDown="IField_KeyDown" />
     </Grid>
 </UserControl>

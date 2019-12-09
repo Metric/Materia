@@ -7,8 +7,8 @@
              mc:Ignorable="d" 
              d:DesignHeight="16" d:DesignWidth="800">
     <Grid MouseLeave="GridView_MouseLeave" MouseMove="GridView_MouseMove" MouseUp="GridView_MouseUp" Name="GridView" Background="Transparent">
-        <Border BorderThickness="0" Background="#222" VerticalAlignment="Center" Height="2" Margin="8,0,8,0"></Border>
-        <Border BorderBrush="White" MouseDown="Min_MouseDown"  MouseMove="Min_MouseMove"  HorizontalAlignment="Left" VerticalAlignment="Center"  Name="Min" Width="16" Height="16" BorderThickness="0">
+        <Border BorderThickness="0" Background="{StaticResource Overlay5}" VerticalAlignment="Center" Height="2" Margin="8,0,8,0"></Border>
+        <Border BorderBrush="Transparent" MouseDown="Min_MouseDown"  MouseMove="Min_MouseMove"  HorizontalAlignment="Left" VerticalAlignment="Center"  Name="Min" Width="16" Height="16" BorderThickness="0">
             <Path HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 0 12 L 12 0">
                 <Path.RenderTransform>
                     <TransformGroup>
@@ -17,11 +17,11 @@
                     </TransformGroup>
                 </Path.RenderTransform>
                 <Path.Fill>
-                    <SolidColorBrush Color="#888" />
+                    <SolidColorBrush Color="{StaticResource ColorOverlay16}" />
                 </Path.Fill>
             </Path>
         </Border>
-        <Border BorderBrush="White" MouseDown="Min_MouseDown" MouseMove="Max_MouseMove" HorizontalAlignment="Left" VerticalAlignment="Center" Name="Max" Width="16" Height="16" BorderThickness="0">
+        <Border BorderBrush="Transparent" MouseDown="Min_MouseDown" MouseMove="Max_MouseMove" HorizontalAlignment="Left" VerticalAlignment="Center" Name="Max" Width="16" Height="16" BorderThickness="0">
             <Path HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 0 12 L 12 0">
                 <Path.RenderTransform>
                     <TransformGroup>
@@ -30,7 +30,7 @@
                     </TransformGroup>
                 </Path.RenderTransform>
                 <Path.Fill>
-                    <SolidColorBrush Color="#fff" />
+                    <SolidColorBrush Color="{StaticResource ColorTextLight}" />
                 </Path.Fill>
             </Path>
         </Border>

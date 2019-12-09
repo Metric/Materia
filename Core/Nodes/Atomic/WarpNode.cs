@@ -8,6 +8,7 @@ using Materia.Textures;
 using Materia.Imaging.GLProcessing;
 using Newtonsoft.Json;
 using Materia.Nodes.Attributes;
+using Materia.Nodes.Helpers;
 
 namespace Materia.Nodes.Atomic
 {
@@ -33,7 +34,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 intensity = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -49,11 +50,11 @@ namespace Materia.Nodes.Atomic
             set
             {
                 blurIntensity = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
-        public WarpNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public WarpNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Warp";
             Id = Guid.NewGuid().ToString();
@@ -76,97 +77,43 @@ namespace Materia.Nodes.Atomic
 
             output = new NodeOutput(NodeType.Gray | NodeType.Color, this);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-            input.OnInputRemoved += Input_OnInputRemoved;
-
-            input1.OnInputAdded += Input_OnInputAdded;
-            input1.OnInputChanged += Input_OnInputChanged;
-            input1.OnInputRemoved += Input_OnInputRemoved;
-
-            Inputs = new List<NodeInput>();
-            Outputs = new List<NodeOutput>();
-
             Inputs.Add(input);
             Inputs.Add(input1);
             Outputs.Add(output);
         }
 
-        private void Input_OnInputRemoved(NodeInput n)
-        {
-            output.Data = null;
-            output.Changed();
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                if (input.HasInput && input1.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (input.HasInput && input1.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            })
-            .ContinueWith(t =>
-            {
-                if(input.HasInput && input1.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
-        }
-
         private void GetParams()
         {
+            if (!input.HasInput || !input1.HasInput) return;
+
             pintensity = intensity;
             bintensity = blurIntensity;
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
             {
-                pintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Intensity"));
+                pintensity = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Intensity"));
             }
 
             if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "BlurIntensity"))
             {
-                bintensity = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "BlurIntensity"));
+                bintensity = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "BlurIntensity"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         float bintensity;
         float pintensity;
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)input.Input.Data;
-            GLTextuer2D i2 = (GLTextuer2D)input1.Input.Data;
+            if (!input.HasInput || !input1.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)input.Reference.Data;
+            GLTextuer2D i2 = (GLTextuer2D)input1.Reference.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
@@ -188,9 +135,8 @@ namespace Materia.Nodes.Atomic
             blur.Process(width, height, buffer, buffer);
             blur.Complete();
 
-            Updated();
             output.Data = buffer;
-            output.Changed();
+            TriggerTextureChange();
         }
 
         public class WarpData : NodeData

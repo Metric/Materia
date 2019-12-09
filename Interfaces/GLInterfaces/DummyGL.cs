@@ -14,6 +14,71 @@ namespace Materia.GLInterfaces
             Primary = this;
         }
 
+        public override void Finish()
+        {
+            
+        }
+
+        public override void Flush()
+        {
+
+        }
+
+        public override void MemoryBarrier(int mask)
+        {
+          
+        }
+
+        public override IntPtr MapBufferRange(int target, IntPtr start, int length, int flags)
+        {
+            return IntPtr.Zero;
+        }
+
+        public override void BufferStorage(int target, int size, IntPtr data, int flags)
+        {
+           
+        }
+
+        public override bool UnmapBuffer(int target)
+        {
+            return true;
+        }
+
+        public override IntPtr MapBuffer(int target, int access)
+        {
+            return IntPtr.Zero;
+        }
+
+        public override void ClearTexImage(int id, int format, int type)
+        {
+
+        }
+
+        public override ErrorCode GetError()
+        {
+            return ErrorCode.NoError;
+        }
+
+        public override void TexStorage2D(int target, int level, int internalSize, int width, int height)
+        {
+            
+        }
+
+        public override void ReadTexture(float[] buffer)
+        {
+            
+        }
+
+        public override void BindImageTexture(int unit, int id, int level, bool layerd, int layer, int access, int internalSize)
+        {
+         
+        }
+
+        public override void DispatchCompute(int w, int h, int z)
+        {
+            
+        }
+
         public override void ActiveTexture(int index)
         {
            

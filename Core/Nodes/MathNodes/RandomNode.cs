@@ -28,49 +28,23 @@ namespace Materia.Nodes.MathNodes
 
             Inputs.Add(input);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            Updated();
-        }
-
-        public override void TryAndProcess()
-        {
-            if (input.HasInput)
-            {
-                Process();
-            }
         }
 
         public override string GetShaderPart(string currentFrag)
         {
             if (!input.HasInput) return "";
 
-            int seed = 0;
-
-            if (ParentGraph != null)
-            {
-                seed = ParentGraph.RandomSeed;
-            }
+            int seed = parentGraph.RandomSeed;
 
             var s = shaderId + "1";
-            var n1id = (input.Input.Node as MathNode).ShaderId;
+            var n1id = (input.Reference.Node as MathNode).ShaderId;
 
-            var index = input.Input.Node.Outputs.IndexOf(input.Input);
+            var index = input.Reference.Node.Outputs.IndexOf(input.Reference);
 
             n1id += index;
 
-            if (input.Input.Type == NodeType.Float2)
+            if (input.Reference.Type == NodeType.Float2)
             {
                 return "float " + s + " = rand(" + n1id + " + " + seed.ToCodeString() + ");\r\n";
             }
@@ -80,45 +54,31 @@ namespace Materia.Nodes.MathNodes
             }
         }
 
-        void Process()
+        public override void TryAndProcess()
         {
-            if (input.Input.Data == null) return;
+            if (!input.IsValid) return;
+            int seed = parentGraph.RandomSeed;
+            NodeType t = input.Reference.Type;
 
-            object o = input.Input.Data;
-
-            float seed = 0;
-
-            if(ParentGraph != null)
+            try
             {
-                seed = ParentGraph.RandomSeed;
-            }
-
-            if (o is float || o is int || o is double || o is long)
-            {
-                float v = Convert.ToSingle(o);
-                MVector v2 = new MVector(v, 1.0f - v) + seed;
-                output.Data = Utils.Rand(ref v2);
-            }
-            else if(o is MVector)
-            {
-                MVector v = (MVector)o + seed;
-                output.Data = Utils.Rand(ref v);
-            }
-            else
-            {
-                output.Data = 0;
-            }
-
-            result = output.Data.ToString();
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
+                if (t == NodeType.Float)
                 {
-                    g.Result = output.Data;
+                    float f = input.Data.ToFloat();
+                    MVector v2 = new MVector(f, 1.0f - f) + seed;
+                    output.Data = Utils.Rand(ref v2);
                 }
+                else if (t == NodeType.Float2 || t == NodeType.Float3 || t == NodeType.Float4)
+                {
+                    MVector v = (MVector)input.Data;
+                    v += seed;
+                    output.Data = Utils.Rand(ref v);
+                }
+                result = output.Data?.ToString();
+            }
+            catch (Exception e)
+            {
+
             }
         }
     }

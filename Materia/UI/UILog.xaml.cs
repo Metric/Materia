@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Materia.Logging;
+using Materia.Nodes;
 
 namespace Materia.UI
 {
@@ -28,6 +29,7 @@ namespace Materia.UI
         {
             InitializeComponent();
             target = MateriaLogLevel.All;
+            
             MateriaLogTarget.OnLogWrite += MateriaLogTarget_OnLogWrite;
         }
 
@@ -89,6 +91,17 @@ namespace Materia.UI
         private void ChkInfo_Click(object sender, RoutedEventArgs e)
         {
             UpdateTargetLevel();
+
+            //handle separate case for
+            //shader specific debug logging
+            if (chkShader.IsChecked == true)
+            {
+                Graph.ShaderLogging = true;
+            }
+            else
+            {
+                Graph.ShaderLogging = false;
+            }
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)

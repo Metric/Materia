@@ -25,6 +25,18 @@ namespace Materia.UI.Components
     /// </summary>
     public partial class PropertyLabel : UserControl
     {
+        public class FuncMenuItem : MenuItem
+        {
+            public string Key { get; protected set; }
+            public FunctionGraph Graph { get; protected set; }
+            public FuncMenuItem(FunctionGraph g, string key) : base()
+            {
+                Graph = g;
+                Header = g.Name;
+                Key = key;
+            }
+        }
+
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
         public string Title
@@ -72,18 +84,13 @@ namespace Materia.UI.Components
 
                 var p = Node.ParentGraph;
 
-                if(p != null)
-                {
-                    p = p.TopGraph();
-                }
+                p = p.ParentNode != null ? p.ParentNode.ParentGraph : p;
 
                 if(p != null)
                 {
-                    var g = p;
-
-                    if(g.HasParameterValue(Node.Id, Parameter.Replace("$Custom.", "")))
+                    if(p.HasParameterValue(Node.Id, Parameter.Replace("$Custom.", "")))
                     {
-                        if(g.IsParameterValueFunction(Node.Id, Parameter.Replace("$Custom.", "")))
+                        if(p.IsParameterValueFunction(Node.Id, Parameter.Replace("$Custom.", "")))
                         {
                             FIcon.Opacity = 1;
                         }
@@ -94,15 +101,29 @@ namespace Materia.UI.Components
 
                         ConstantVar.IsEnabled = false;
                         FunctionVar.IsEnabled = false;
+                        AssignVar.IsEnabled = false;
                         DefaultVar.IsEnabled = true;
                     }
                     else
                     {
                         FIcon.Opacity = 0.25;
                         DefaultVar.IsEnabled = false;
+                        AssignVar.IsEnabled = true;
                         ConstantVar.IsEnabled = true;
                         FunctionVar.IsEnabled = true;
                     }
+                }
+
+                var functionsAvailable = Node.ParentGraph.ParameterFunctions;
+
+                AssignVar.Items.Clear();
+
+                foreach(string k in functionsAvailable.Keys)
+                {
+                    FunctionGraph f = functionsAvailable[k];
+                    MenuItem mitem = new FuncMenuItem(f,k);
+                    mitem.Click += AssignVar_Click;
+                    AssignVar.Items.Add(mitem);
                 }
             }
             else
@@ -132,11 +153,6 @@ namespace Materia.UI.Components
                         if (param != null)
                         {
                             var cparent = Node.ParentGraph;
-
-                            if(cparent != null)
-                            {
-                                cparent = cparent.TopGraph();
-                            }
 
                             if (cparent != null)
                             {
@@ -191,16 +207,11 @@ namespace Materia.UI.Components
 
                         var p = Node.ParentGraph;
 
-                        if (p != null)
-                        {
-                            p = p.TopGraph();
-                        }
+                        p = p.ParentNode != null ? p.ParentNode.ParentGraph : p;
 
                         if (p != null)
                         {
-                            var pg = p;
-
-                            pg.SetParameterValue(Node.Id, Parameter, v, pro != null, t);
+                            p.SetParameterValue(Node.Id, Parameter, v, pro != null, t);
 
                             FIcon.Opacity = 0.25;
                             DefaultVar.IsEnabled = true;
@@ -230,6 +241,11 @@ namespace Materia.UI.Components
             if (Node == null || string.IsNullOrEmpty(Parameter)) return;
 
             FunctionGraph g = new FunctionGraph(Node.Name + " - " + Parameter.Replace("$Custom.", "") + " Function", Node.Width, Node.Height);
+            CreateFunctionParameter(g);
+        }
+
+        private void CreateFunctionParameter(FunctionGraph g)
+        {
             g.AssignParentNode(Node);
 
             try
@@ -248,11 +264,6 @@ namespace Materia.UI.Components
                         if (param != null)
                         {
                             var cparent = Node.ParentGraph;
-
-                            if(cparent != null)
-                            {
-                                cparent = cparent.TopGraph();
-                            }
 
                             g.ExpectedOutput = param.Type;
 
@@ -299,16 +310,11 @@ namespace Materia.UI.Components
 
                     var p = Node.ParentGraph;
 
-                    if (p != null)
-                    {
-                        p = p.TopGraph();
-                    }
+                    p = p.ParentNode != null ? p.ParentNode.ParentGraph : p;
 
                     if (p != null)
                     {
-                        var pg = p;
-
-                        pg.SetParameterValue(Node.Id, Parameter, g, true, g.ExpectedOutput);
+                        p.SetParameterValue(Node.Id, Parameter, g, true, g.ExpectedOutput);
 
                         FIcon.Opacity = 1;
                         DefaultVar.IsEnabled = true;
@@ -333,16 +339,11 @@ namespace Materia.UI.Components
 
             var p = Node.ParentGraph;
 
-            if(p != null)
-            {
-                p = p.TopGraph();
-            }
+            p = p.ParentNode != null ? p.ParentNode.ParentGraph : p;
 
             if (p != null)
             {
-                var g = p;
-
-                g.RemoveParameterValue(Node.Id, Parameter.Replace("$Custom.", ""));
+                p.RemoveParameterValue(Node.Id, Parameter.Replace("$Custom.", ""));
 
                 FIcon.Opacity = 0.25;
                 ConstantVar.IsEnabled = true;
@@ -357,20 +358,16 @@ namespace Materia.UI.Components
 
             var p = Node.ParentGraph;
 
-            if(p != null)
-            {
-                p = p.TopGraph();
-            }
+            p = p.ParentNode != null ? p.ParentNode.ParentGraph : p;
 
             if (p != null)
             {
-                var g = p;
                 var realParam = Parameter.Replace("$Custom.", "");
-                if (g.HasParameterValue(Node.Id, realParam))
+                if (p.HasParameterValue(Node.Id, realParam))
                 {
-                    if(g.IsParameterValueFunction(Node.Id, realParam))
+                    if(p.IsParameterValueFunction(Node.Id, realParam))
                     {
-                        var v = g.GetParameterRaw(Node.Id, realParam);
+                        var v = p.GetParameterRaw(Node.Id, realParam);
 
                         if(MateriaMainWindow.Instance != null)
                         {
@@ -379,6 +376,19 @@ namespace Materia.UI.Components
                     }
                 }
             }
+        }
+
+        private void AssignVar_Click(object sender, RoutedEventArgs e)
+        {
+            if (Node == null || string.IsNullOrEmpty(Parameter)) return;
+
+            FuncMenuItem fmenu = sender as FuncMenuItem;
+            FunctionGraph g = fmenu.Graph;
+            Graph parent = g.ParentNode != null ? g.ParentNode.ParentGraph : g.ParentGraph;
+            parent.RemoveParameterValueNoDispose(fmenu.Key);
+            g.Name = Node.Name + " - " + Parameter.Replace("$Custom.", "") + " Function";
+
+            CreateFunctionParameter(g);
         }
     }
 }

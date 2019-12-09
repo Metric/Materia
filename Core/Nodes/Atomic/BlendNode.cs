@@ -77,7 +77,7 @@ namespace Materia.Nodes.Atomic
                 if (value > 1) alpha = 1;
 
                 alpha = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -93,7 +93,7 @@ namespace Materia.Nodes.Atomic
             set
             {
                 mode = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -109,11 +109,11 @@ namespace Materia.Nodes.Atomic
             set
             {
                 alphaMode = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
-        public BlendNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
+        public BlendNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Blend";
 
@@ -132,102 +132,44 @@ namespace Materia.Nodes.Atomic
             tileX = tileY = 1;
 
             Id = Guid.NewGuid().ToString();
-            Inputs = new List<NodeInput>();
-            Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
 
+            Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
             first = new NodeInput(NodeType.Color | NodeType.Gray, this, "Foreground");
             second = new NodeInput(NodeType.Color | NodeType.Gray, this, "Background");
             mask = new NodeInput(NodeType.Gray, this, "Mask");
 
-            first.OnInputAdded += OnInputAdded;
-            first.OnInputRemoved += OnInputRemoved;
-            first.OnInputChanged += OnInputChanged;
-
-            second.OnInputRemoved += OnInputRemoved;
-            second.OnInputAdded += OnInputAdded;
-            second.OnInputChanged += OnInputChanged;
-
-            mask.OnInputRemoved += OnInputRemoved;
-            mask.OnInputAdded += OnInputAdded;
-            mask.OnInputChanged += OnInputChanged;
-
             Inputs.Add(first);
             Inputs.Add(second);
             Inputs.Add(mask);
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(Output);
-        }
-
-        private void OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void OnInputRemoved(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void OnInputAdded(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        public override void TryAndProcess()
-        {
-            if(!Async)
-            {
-                if(first.HasInput && second.HasInput)
-                {
-                    GetParams();
-                    Process();
-                }
-
-                return;
-            }
-
-            if (first.HasInput && second.HasInput)
-            {
-                if (ParentGraph != null)
-                {
-                    ParentGraph.Schedule(this);
-                }
-            }
-        }
-
-        public override Task GetTask()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                GetParams();
-            }).ContinueWith(t =>
-            {
-                if(first.HasInput && second.HasInput)
-                {
-                    Process();
-                }
-            }, Context);
         }
 
         private void GetParams()
         {
+            if (!first.HasInput || !second.HasInput) return;
+
             pmode = (int)mode;
             palpha = alpha;
             amode = (int)alphaMode;
 
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Mode"))
             {
-                pmode = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "Mode"));
+                pmode = Utils.ConvertToInt(ParentGraph.GetParameterValue(Id, "Mode"));
             }
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alpha"))
             {
-                palpha = Convert.ToSingle(ParentGraph.GetParameterValue(Id, "Alpha"));
+                palpha = Utils.ConvertToFloat(ParentGraph.GetParameterValue(Id, "Alpha"));
             }
             if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "AlphaMode"))
             {
-                amode = Convert.ToInt32(ParentGraph.GetParameterValue(Id, "AlphaMode"));
+                amode = Utils.ConvertToInt(ParentGraph.GetParameterValue(Id, "AlphaMode"));
             }
+        }
+
+        public override void TryAndProcess()
+        {
+            GetParams();
+            Process();
         }
 
         int pmode;
@@ -235,13 +177,15 @@ namespace Materia.Nodes.Atomic
         int amode;
         void Process()
         {
-            GLTextuer2D i1 = (GLTextuer2D)first.Input.Data;
-            GLTextuer2D i2 = (GLTextuer2D)second.Input.Data;
+            if (!first.HasInput || !second.HasInput) return;
+
+            GLTextuer2D i1 = (GLTextuer2D)first.Reference.Data;
+            GLTextuer2D i2 = (GLTextuer2D)second.Reference.Data;
             GLTextuer2D i3 = null;
 
             if(mask.HasInput)
             {
-                i3 = (GLTextuer2D)mask.Input.Data;
+                i3 = (GLTextuer2D)mask.Reference.Data;
             }
 
             if (i1 == null || i2 == null) return;
@@ -258,9 +202,8 @@ namespace Materia.Nodes.Atomic
             processor.Process(width, height, i1, i2, i3, buffer);
             processor.Complete();
 
-            Updated();
             Output.Data = buffer;
-            Output.Changed();
+            TriggerTextureChange();
         }
 
         public override void Dispose()
@@ -272,11 +215,6 @@ namespace Materia.Nodes.Atomic
                 processor.Release();
                 processor = null;
             }
-        }
-
-        protected override void OnWidthHeightSet()
-        {
-            TryAndProcess();
         }
 
         public class BlendData : NodeData

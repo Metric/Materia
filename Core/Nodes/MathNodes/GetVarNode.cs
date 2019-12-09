@@ -38,8 +38,22 @@ namespace Materia.Nodes.MathNodes
             set
             {
                 varName = value;
-                OnDescription(varName);
-                Updated();
+                TriggerValueChange();
+            }
+        }
+
+        private void TryAndUpdateVarName()
+        {
+            if (!string.IsNullOrEmpty(varName))
+            {
+                if (varName.StartsWith(GraphParameterValue.CODE_PREFIX))
+                {
+                    string cvar = varName.Replace(GraphParameterValue.CODE_PREFIX, GraphParameterValue.CUSTOM_CODE_PREFIX);
+                    if (parentGraph != null && !parentGraph.HasVar(varName) && parentGraph.HasVar(cvar))
+                    {
+                        varName = cvar;
+                    }
+                }
             }
         }
 
@@ -63,11 +77,6 @@ namespace Materia.Nodes.MathNodes
         public override string GetDescription()
         {
             return varName;
-        }
-
-        public override void TryAndProcess()
-        {
-            Process();
         }
 
         public override string GetShaderPart(string currentFrag)
@@ -94,7 +103,7 @@ namespace Materia.Nodes.MathNodes
             }
             else if(output.Type == NodeType.Bool)
             {
-                 prefix = "bool ";
+                 prefix = "float ";
             }
 
            
@@ -110,30 +119,10 @@ namespace Materia.Nodes.MathNodes
             return prefix;
         }
 
-        protected virtual void Process()
+        public override void TryAndProcess()
         {
-            object d = null;
-            if (ParentGraph != null)
-            {
-                d = ParentGraph.GetVar(varName);
-            }
-
-            output.Data = d;
-
-            if (output.Data != null)
-            {
-                result = output.Data.ToString();
-            }
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
+            output.Data = parentGraph.GetVar(VarName);
+            result = output.Data?.ToString();
         }
 
         public override void FromJson(string data)
@@ -141,6 +130,7 @@ namespace Materia.Nodes.MathNodes
             VarData d = JsonConvert.DeserializeObject<VarData>(data);
             SetBaseNodeDate(d);
             varName = d.varName;
+            TryAndUpdateVarName();
         }
 
         public override string GetJson()

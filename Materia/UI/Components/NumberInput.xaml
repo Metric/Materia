@@ -5,8 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Materia"
              mc:Ignorable="d" 
-             d:DesignHeight="32" d:DesignWidth="256">
+             d:DesignHeight="32" d:DesignWidth="256" Height="32">
     <Grid>
-        <TextBox Background="#222" Foreground="LightGray" BorderBrush="#666" BorderThickness="1" Name="Input" TextChanged="Input_TextChanged" PreviewTextInput="Input_PreviewTextInput" HorizontalAlignment="Left" Width="48" Margin="5" KeyDown="Input_KeyDown"></TextBox>
+        <TextBox IsEnabled="{Binding IsEnabled}" Background="{StaticResource Overlay5}" CaretBrush="{StaticResource Primary}" Height="32" Padding="2,4,2,0" Foreground="{StaticResource TextLight}" BorderThickness="0" Name="Input" TextChanged="Input_TextChanged" PreviewTextInput="Input_PreviewTextInput" HorizontalAlignment="Stretch" Margin="2" KeyDown="Input_KeyDown"></TextBox>
     </Grid>
 </UserControl>

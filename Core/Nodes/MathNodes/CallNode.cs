@@ -22,59 +22,77 @@ namespace Materia.Nodes.MathNodes
             {
                 selectedIndex = value;
 
-                if (topGraph != null)
+                FunctionGraph g = parentGraph as FunctionGraph;
+                Graph p = g.ParentNode != null ? g.ParentNode.ParentGraph : g.ParentGraph;
+                
+                if (selectedIndex >= 0 && selectedIndex < p.CustomFunctions.Count)
                 {
-                    if (selectedIndex >= 0 && selectedIndex < topGraph.CustomFunctions.Count)
+                    UnsubscribeFromArgs();
+
+                    if(selectedFunction != null)
                     {
-                        if (selectedFunction != null)
-                        {
-                            var o = selectedFunction.OutputNode;
-                            selectedFunction.OnGraphUpdated -= SelectedFunction_OnGraphUpdated;
-
-                            if(o != null)
-                            {
-                                if(o.Outputs.Count > 1)
-                                {
-                                    o.Outputs[1].OnTypeChanged -= CallNode_OnTypeChanged;
-                                }
-                                else if(o.Outputs.Count > 0)
-                                {
-                                    o.Outputs[0].OnTypeChanged -= CallNode_OnTypeChanged;
-                                }
-                            }
-                        }
-
-                        selectedFunction = topGraph.CustomFunctions[selectedIndex];
-                        selectedFunction.OnGraphUpdated += SelectedFunction_OnGraphUpdated;
-
-                        var ou = selectedFunction.OutputNode;
-
-                        if(ou != null)
-                        {
-                            if(ou.Outputs.Count > 1)
-                            {
-                                ou.Outputs[1].OnTypeChanged += CallNode_OnTypeChanged;
-                            }
-                            else if(ou.Outputs.Count > 0)
-                            {
-                                ou.Outputs[0].OnTypeChanged += CallNode_OnTypeChanged;
-                            }
-                        }
-
-                        selectedName = selectedFunction.Name;
-                        OnDescription(selectedName);
-                        UpdateInputs();
+                        selectedFunction.OnOutputSet -= SelectedFunction_OnOutputSet;
+                        selectedFunction.OnArgAdded -= SelectedFunction_OnArgAdded;
+                        selectedFunction.OnArgRemoved -= SelectedFunction_OnArgRemoved;
                     }
+
+                    selectedFunction = p.CustomFunctions[selectedIndex];
+                    selectedName = selectedFunction.Name;
+                    selectedFunction.OnOutputSet += SelectedFunction_OnOutputSet;
+                    selectedFunction.OnArgAdded += SelectedFunction_OnArgAdded;
+                    selectedFunction.OnArgRemoved += SelectedFunction_OnArgRemoved;
+                        
+                    SubscribeToArgs();
+
+                    UpdateInputs();
+                    TriggerValueChange();
                 }
             }
         }
 
-        private void CallNode_OnTypeChanged(NodeOutput inp)
+        private void SelectedFunction_OnArgRemoved(Node n)
         {
-            UpdateOutputType();
+            n.OnValueUpdated -= Arg_OnValueUpdated;
+            UpdateInputs();
         }
 
-        private void SelectedFunction_OnGraphUpdated(Graph g)
+        private void SelectedFunction_OnArgAdded(Node n)
+        {
+            n.OnValueUpdated += Arg_OnValueUpdated;
+            UpdateInputs();
+        }
+
+        private void SubscribeToArgs()
+        {
+            if (selectedFunction != null) {
+                List<ArgNode> args = selectedFunction.Args;
+
+                foreach(ArgNode n in args)
+                {
+                    n.OnValueUpdated += Arg_OnValueUpdated;
+                }
+            }
+        }
+
+        private void Arg_OnValueUpdated(Node n)
+        {
+            UpdateInputs();
+        }
+
+        private void UnsubscribeFromArgs()
+        {
+            if (selectedFunction != null)
+            {
+                List<ArgNode> args = selectedFunction.Args;
+
+                foreach (ArgNode n in args)
+                {
+                    n.OnValueUpdated -= Arg_OnValueUpdated;
+                }
+            }
+        }
+
+        private void SelectedFunction_OnOutputSet(Node n)
         {
             UpdateInputs();
         }
@@ -95,7 +113,6 @@ namespace Materia.Nodes.MathNodes
         public FunctionGraph selectedFunction { get; protected set; }
 
         NodeOutput output;
-        Graph topGraph;
 
         public CallNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
@@ -118,58 +135,38 @@ namespace Materia.Nodes.MathNodes
 
         protected void OnParentSet()
         {
-            Graph g =  topGraph = TopGraph();
+            FunctionGraph g = parentGraph as FunctionGraph;
 
             if(g != null)
             {
-                function = new string[g.CustomFunctions.Count];
+                Graph p = g.ParentNode != null ? g.ParentNode.ParentGraph : g.ParentGraph;
+
+                function = new string[p.CustomFunctions.Count];
 
                 int i = 0;
-                for (i = 0; i < g.CustomFunctions.Count; i++)
+                for (i = 0; i < p.CustomFunctions.Count; ++i)
                 {
-                    var f = g.CustomFunctions[i];
+                    var f = p.CustomFunctions[i];
 
                     if (f.Name.Equals(selectedName) || string.IsNullOrEmpty(selectedName))
                     {
-                        if (selectedFunction != null)
-                        {
-                            var o = selectedFunction.OutputNode;
-                            selectedFunction.OnGraphUpdated -= SelectedFunction_OnGraphUpdated;
+                        UnsubscribeFromArgs();
 
-                            if (o != null)
-                            {
-                                if (o.Outputs.Count > 1)
-                                {
-                                    o.Outputs[1].OnTypeChanged -= CallNode_OnTypeChanged;
-                                }
-                                else if (o.Outputs.Count > 0)
-                                {
-                                    o.Outputs[0].OnTypeChanged -= CallNode_OnTypeChanged;
-                                }
-                            }
+                        if(selectedFunction != null)
+                        {
+                            selectedFunction.OnOutputSet -= SelectedFunction_OnOutputSet;
+                            selectedFunction.OnArgAdded -= SelectedFunction_OnArgAdded;
+                            selectedFunction.OnArgRemoved -= SelectedFunction_OnArgRemoved;
                         }
+
                         selectedName = f.Name;
                         selectedIndex = i;
                         selectedFunction = f;
-                        selectedFunction.OnGraphUpdated += SelectedFunction_OnGraphUpdated;
 
-                        var ou = selectedFunction.OutputNode;
-
-                        if (ou != null)
-                        {
-                            if (ou.Outputs.Count > 1)
-                            {
-                                ou.Outputs[1].OnTypeChanged += CallNode_OnTypeChanged;
-                            }
-                            else if (ou.Outputs.Count > 0)
-                            {
-                                ou.Outputs[0].OnTypeChanged += CallNode_OnTypeChanged;
-                            }
-                        }
+                        SubscribeToArgs();
                     }
 
                     function[i] = f.Name;
-                    OnDescription(f.Name);
                 }
 
                 UpdateInputs();
@@ -194,12 +191,12 @@ namespace Materia.Nodes.MathNodes
 
                 int index = -1;
 
-                previousOutputs.Add(i.Input);
+                previousOutputs.Add(i.Reference);
 
                 if (i.HasInput)
                 {
-                    index = i.Input.To.IndexOf(i);
-                    i.Input.Remove(i);
+                    index = i.Reference.To.IndexOf(i);
+                    i.Reference.Remove(i);
                 }
 
                 indices.Add(index);
@@ -216,11 +213,11 @@ namespace Materia.Nodes.MathNodes
                 {
                     if (idx == -1)
                     {
-                        prevEx.Add(executeInput, false);
+                        prevEx.Add(executeInput);
                     }
                     else
                     {
-                        prevEx.InsertAt(idx, executeInput, false);
+                        prevEx.InsertAt(idx, executeInput);
                     }
                 }
             }
@@ -238,8 +235,7 @@ namespace Materia.Nodes.MathNodes
 
             if(selectedFunction != null)
             {
-                var nodes = selectedFunction.Nodes;
-                List<Node> args = nodes.FindAll(m => m is ArgNode);
+                var args = selectedFunction.Args;
 
                 int i = 1;
                 foreach(ArgNode arg in args)
@@ -257,19 +253,16 @@ namespace Materia.Nodes.MathNodes
                         {
                             if (idx < 0)
                             {
-                                prev.Add(input, false);
+                                prev.Add(input);
                             }
                             else
                             {
-                                prev.InsertAt(idx, input, false);
+                                prev.InsertAt(idx, input);
                             }
                         }
                     }
 
                     Inputs.Add(input);
-
-                    input.OnInputAdded += Input_OnInputAdded;
-                    input.OnInputChanged += Input_OnInputChanged;
 
                     //if we still have previous nodes
                     //then we simply want to try and
@@ -285,7 +278,7 @@ namespace Materia.Nodes.MathNodes
                         AddedInput(input);
                     }
 
-                    i++;
+                    ++i;
                 }
 
                 //remove any left over nodes from ui
@@ -296,7 +289,7 @@ namespace Materia.Nodes.MathNodes
                 while (i < previous.Count)
                 {
                     RemovedInput(previous[i]);
-                    i++;
+                    ++i;
                 }
 
                 UpdateOutputType();
@@ -323,7 +316,10 @@ namespace Materia.Nodes.MathNodes
                 return "";
             }
 
-            return selectedFunction.GetFunctionShaderCode();
+            string code = selectedFunction.GetFunctionShaderCode();
+            UpdateOutputType();
+
+            return code;
         }
 
         public override string GetShaderPart(string currentFrag)
@@ -374,7 +370,7 @@ namespace Materia.Nodes.MathNodes
             }
             else if(output.Type == NodeType.Bool)
             {
-                prefix = "bool ";
+                prefix = "float ";
             }
             else if(output.Type == NodeType.Matrix)
             {
@@ -387,8 +383,8 @@ namespace Materia.Nodes.MathNodes
             {
                 if (i != executeInput)
                 {
-                    var nid = (i.Input.Node as MathNode).ShaderId;
-                    var index = i.Input.Node.Outputs.IndexOf(i.Input);
+                    var nid = (i.Reference.Node as MathNode).ShaderId;
+                    var index = i.Reference.Node.Outputs.IndexOf(i.Reference);
                     nid += index;
 
                     frag += nid + ",";
@@ -405,78 +401,27 @@ namespace Materia.Nodes.MathNodes
             return frag;
         }
 
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            Updated();
-        }
-
         public override void TryAndProcess()
         {
             if (selectedFunction == null) return;
 
-            bool canProcess = true;
-
-            foreach(var i in Inputs)
+            foreach(NodeInput inp in Inputs)
             {
-                if (i != executeInput)
+                if(inp != executeInput && inp.IsValid)
                 {
-                    if (!i.HasInput)
-                    {
-                        canProcess = false;
-                        break;
-                    }
-                }
-            }
-
-            if(canProcess)
-            {
-                Process();
-            }
-        }
-
-        void Process()
-        {
-            if (selectedFunction == null) return;
-
-            foreach(var i in Inputs)
-            {
-                if (i != executeInput)
-                {
-                    if (i.Input.Data == null) return;
-                }
-            }
-
-            foreach(var i in Inputs)
-            {
-                if (i != executeInput)
-                {
-                    selectedFunction.SetVar(i.Name, i.Input.Data, i.Input.Type);
+                    selectedFunction.SetVar(inp.Name, inp.Data, inp.Type);
                 }
             }
 
             selectedFunction.TryAndProcess();
 
-            output.Data = selectedFunction.Result;
-
-            if (output.Data != null)
+            if (selectedFunction.Result != null)
             {
-                result = output.Data.ToString();
+                output.Data = selectedFunction.Result;
+                result = output.Data?.ToString();
             }
 
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
-                {
-                    g.Result = output.Data;
-                }
-            }
+            UpdateOutputType();
         }
 
         public class CallNodeData : NodeData

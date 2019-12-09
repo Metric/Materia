@@ -46,6 +46,9 @@ namespace Materia.Nodes
 
     public class GraphParameterValue
     {
+        public const string CODE_PREFIX = "p_";
+        public const string CUSTOM_CODE_PREFIX = "c_";
+
         public delegate void GraphParameterUpdate(GraphParameterValue param);
         public event GraphParameterUpdate OnGraphParameterUpdate;
         public event GraphParameterUpdate OnGraphParameterTypeChanged;
@@ -62,7 +65,25 @@ namespace Materia.Nodes
         [Editable(ParameterInputType.Text, "Section")]
         public string Section { get; set; }
 
+        public string CodeName 
+        { 
+            get
+            {
+                return CODE_PREFIX + Name.Replace(" ", "").Replace("-", "");
+            } 
+        }
+
+        public string CustomCodeName
+        {
+            get
+            {
+                return CUSTOM_CODE_PREFIX + Name.Replace(" ", "").Replace("-", "");
+            }
+        }
+
         public string Id { get; set; }
+
+        public string Key { get; set; }
 
         protected NodeType type;
         [Dropdown(null, false, "Bool", "Float", "Float2", "Float3", "Float4")]
@@ -168,7 +189,7 @@ namespace Materia.Nodes
         {
             get
             {
-                float m = Convert.ToSingle(v);
+                float m = Utils.ConvertToFloat(v);
                 if (m < Min) m = Min;
                 if (m > Max) m = Max;
                 return m;
@@ -179,7 +200,7 @@ namespace Materia.Nodes
         {
             get
             {
-                return Convert.ToInt32(v);
+                return Utils.ConvertToInt(v);
             }
         }
 
@@ -187,7 +208,7 @@ namespace Materia.Nodes
         {
             get
             {
-                return Convert.ToBoolean(v);
+                return Utils.ConvertToBool(v);
             }
         }
 

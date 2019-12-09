@@ -23,6 +23,8 @@
                     </Menu.ItemsPanel>
                     <MenuItem Name="ConstantVar" Header="{x:Static p:Resources.MENU_PROMOTE_TO_CONSTANT}" Click="ConstantVar_Click" />
                     <MenuItem Name="FunctionVar" Header="{x:Static p:Resources.MENU_PROMOTE_TO_FUNCTION}" Click="FunctionVar_Click" />
+                    <MenuItem Name="AssignVar" Header="Assign Function">
+                    </MenuItem>
                     <MenuItem Name="DefaultVar" Header="{x:Static p:Resources.MENU_RESET_TO_DEFAULT}" Click="DefaultVar_Click" />
                 </Menu>
             </xctk:SplitButton.DropDownContent>

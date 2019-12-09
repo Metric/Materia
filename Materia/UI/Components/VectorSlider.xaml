@@ -9,19 +9,19 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <StackPanel Orientation="Vertical">
         <local:StackPanelAuto Direction="Horizontal" HalfAndHalf="False">
-            <TextBlock Foreground="LightGray" Text="X" Margin="5" />
+            <TextBlock Foreground="{StaticResource TextLight}" Text="X" Margin="5" />
             <o:NumberSlider x:Name="XValue" />
         </local:StackPanelAuto>
         <local:StackPanelAuto Direction="Horizontal" HalfAndHalf="False">
-            <TextBlock Foreground="LightGray" Text="Y" Margin="5" />
+            <TextBlock Foreground="{StaticResource TextLight}" Text="Y" Margin="5" />
             <o:NumberSlider x:Name="YValue" />
         </local:StackPanelAuto>
         <local:StackPanelAuto Direction="Horizontal" x:Name="ZView" HalfAndHalf="False">
-            <TextBlock Foreground="LightGray" Text="Z" Margin="5" />
+            <TextBlock Foreground="{StaticResource TextLight}" Text="Z" Margin="5" />
             <o:NumberSlider x:Name="ZValue" />
         </local:StackPanelAuto>
         <local:StackPanelAuto Direction="Horizontal" x:Name="WView" HalfAndHalf="False">
-            <TextBlock Foreground="LightGray" Text="W" Margin="5" />
+            <TextBlock Foreground="{StaticResource TextLight}" Text="W" Margin="5" />
             <o:NumberSlider x:Name="WValue" />
         </local:StackPanelAuto>
     </StackPanel>

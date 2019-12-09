@@ -9,17 +9,18 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVisible" />
     </UserControl.Resources>
-    <StackPanel Margin="0">
-        <Grid Name="Header" Background="#222">
-            <TextBlock x:Name="LabelContent" Foreground="LightGray" Margin="32,5,5,5" FontSize="18"  />
-            <Button x:Name="CollapsedButton" Click="CollapsedButton_Click" Background="Transparent" BorderBrush="Transparent" Width="32" Height="32" HorizontalAlignment="Left" Style="{StaticResource ImageTextButton}">
-                <Image HorizontalAlignment="Left" Width="32" Height="32" Source="/Materia;component/Images/chevron_right.png" />
-                <Button.RenderTransformOrigin>
-                    <Point X="0.5" Y="0.5" />
-                </Button.RenderTransformOrigin>
-                <Button.RenderTransform>
-                    <RotateTransform x:Name="CollapseButtonRotation" Angle="90" />
-                </Button.RenderTransform>
+    <StackPanel Background="{StaticResource Overlay5}" Margin="0,2,0,0">
+        <Grid Name="Header" Height="32">
+            <TextBlock x:Name="LabelContent" Foreground="{StaticResource TextLight}" Margin="36,5,5,5" FontSize="18"  />
+            <Button x:Name="CollapsedButton" Click="CollapsedButton_Click" Width="26" Margin="4,4,0,4" VerticalAlignment="Center" HorizontalAlignment="Left" Style="{StaticResource ImageTextButton}">
+                <Image HorizontalAlignment="Left" Source="/Materia;component/Images/chevron_right.png">
+                    <Image.RenderTransformOrigin>
+                        <Point X="0.5" Y="0.5" />
+                    </Image.RenderTransformOrigin>
+                    <Image.RenderTransform>
+                        <RotateTransform x:Name="CollapseButtonRotation" Angle="90" />
+                    </Image.RenderTransform>
+                </Image>
             </Button>
         </Grid>
         <StackPanel Name="PanelItems" />

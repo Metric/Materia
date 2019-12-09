@@ -29,32 +29,27 @@ namespace Materia.Nodes
         Matrix = 512,
     }
 
-    public abstract class Node : IDisposable
+    public abstract class Node : IDisposable, ISchedulable
     {
         private static ILogger Log = LogManager.GetCurrentClassLogger();
 
         public static TaskScheduler Context { get; set; }
-        public bool Async { get; set; }
-        public bool IsScheduled { get; set; }
+        public static SynchronizationContext SyncContext { get; set; }
 
-        public delegate void UpdateEvent(Node n);
+        public delegate void NodeChanged(Node n);
         public delegate void InputChanged(Node n, NodeInput inp, NodeInput previous = null);
         public delegate void OutputChanged(Node n, NodeOutput inp, NodeOutput previosu = null);
-        public delegate void DescriptionChange(Node n, string desc);
-
-        protected delegate void GraphParentSet();
-        protected event GraphParentSet OnGraphParentSet;
-
-        public event UpdateEvent OnUpdate;
-        public event UpdateEvent OnNameUpdate;
 
         public event InputChanged OnInputRemovedFromNode;
         public event InputChanged OnInputAddedToNode;
 
+        public event NodeChanged OnTextureChanged;
+        public event NodeChanged OnTextureRebuilt;
+        public event NodeChanged OnValueUpdated;
+        public event NodeChanged OnSizeChanged;
+
         public event OutputChanged OnOutputRemovedFromNode;
         public event OutputChanged OnOutputAddedToNode;
-
-        public event DescriptionChange OnDescriptionChanged;
 
         public bool CanPreview = true;
 
@@ -62,8 +57,6 @@ namespace Materia.Nodes
         public double ViewOriginY = 0;
 
         protected BasicImageRenderer previewProcessor;
-
-        protected long lastUpdated = 0;
 
         protected GLTextuer2D buffer;
         public GLTextuer2D Buffer
@@ -84,11 +77,6 @@ namespace Materia.Nodes
             set
             {
                 parentGraph = value;
-
-                if(OnGraphParentSet != null)
-                {
-                    OnGraphParentSet.Invoke();
-                }
             }
         }
 
@@ -106,11 +94,12 @@ namespace Materia.Nodes
             set
             {
                 name = value;
-                if(OnNameUpdate != null)
-                {
-                    OnNameUpdate.Invoke(this);
-                }
             }
+        }
+
+        public bool IsScheduled
+        {
+            get; set;
         }
 
         public class NodeData
@@ -152,7 +141,9 @@ namespace Materia.Nodes
             set
             {
                 width = value;
-                OnWidthHeightSet();
+                OnSizeChanged?.Invoke(this);
+                ReleaseBuffer();
+                TriggerValueChange();
             }
         }
 
@@ -167,7 +158,9 @@ namespace Materia.Nodes
             set
             {
                 height = value;
-                OnWidthHeightSet();
+                OnSizeChanged?.Invoke(this);
+                ReleaseBuffer();
+                TriggerValueChange();
             }
         }
 
@@ -187,7 +180,7 @@ namespace Materia.Nodes
             set
             {
                 tileX = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -201,7 +194,7 @@ namespace Materia.Nodes
             set
             {
                 tileY = value;
-                TryAndProcess();
+                TriggerValueChange();
             }
         }
 
@@ -218,6 +211,7 @@ namespace Materia.Nodes
             {
                 internalPixelType = value;
                 OnPixelFormatChange();
+                TriggerValueChange();
             }
         }
 
@@ -225,9 +219,7 @@ namespace Materia.Nodes
         {
             get
             {
-                if (Outputs == null) return false;
-
-                return Outputs.FindIndex(m => m.To.Count == 0) > -1;
+                return false;
             }
         }
 
@@ -235,9 +227,7 @@ namespace Materia.Nodes
         {
             get
             {
-                if (Inputs == null) { return false; }
-
-                return Inputs.FindIndex(m => !m.HasInput) > -1;
+                return false;
             }
         }
 
@@ -245,26 +235,15 @@ namespace Materia.Nodes
         public List<NodeInput> Inputs { get; protected set; }
         public List<NodeOutput> Outputs { get; protected set; }
 
-        protected abstract void OnWidthHeightSet();
-        protected virtual void OnDescription(string desc)
+        public Node()
         {
-            if(OnDescriptionChanged != null)
-            {
-                OnDescriptionChanged.Invoke(this, desc);
-            }
+            Outputs = new List<NodeOutput>();
+            Inputs = new List<NodeInput>();
         }
 
         public virtual string GetDescription()
         {
             return "";
-        }
-
-        protected void Updated()
-        {
-            if(OnUpdate != null)
-            {
-                OnUpdate.Invoke(this);
-            }
         }
 
         protected virtual void RemoveParameters()
@@ -273,7 +252,8 @@ namespace Materia.Nodes
 
             if(p != null && p is FunctionGraph)
             {
-                p = (p as FunctionGraph).TopGraph();
+                FunctionGraph fg = p as FunctionGraph;
+                p = fg.ParentNode != null ? fg.ParentNode.ParentGraph : fg.ParentGraph;
             }
 
             if(p != null)
@@ -285,6 +265,50 @@ namespace Materia.Nodes
                     p.RemoveParameterValue(Id, info.Name);
                 }
             }
+        }
+
+        public virtual void TryAndProcess() 
+        {
+            
+        }
+
+        public virtual void TriggerValueChange()
+        {
+            OnValueUpdated?.Invoke(this);
+
+            if(parentGraph != null)
+            {
+                if ((parentGraph.ParentNode == null || parentGraph is FunctionGraph) 
+                    && parentGraph.State == GraphState.Ready)
+                {
+                    parentGraph.Schedule(this);
+                }
+                else if(parentGraph.ParentNode != null)
+                {
+                    //go up heirachy to trigger real parent node
+                    Node n = parentGraph.ParentNode;
+                    while(n.parentGraph.ParentNode != null)
+                    {
+                        Node tmp = n.parentGraph.ParentNode;
+                        if (tmp == null)
+                        {
+                            break;
+                        }
+
+                        n = tmp;
+                    }
+
+                    if (n.parentGraph.State == GraphState.Ready)
+                    {
+                        n.TriggerValueChange();
+                    }
+                }
+            }
+        }
+
+        public virtual void TriggerTextureChange()
+        {
+            OnTextureChanged?.Invoke(this);
         }
 
         public virtual void Dispose()
@@ -308,16 +332,6 @@ namespace Materia.Nodes
         public abstract string GetJson();
         public abstract void FromJson(string data, MTGArchive archive = null);
 
-        public virtual void AssignWidth(int w)
-        {
-            width = w;
-        }
-
-        public virtual void AssignHeight(int h)
-        {
-            height = h;
-        }
-
         public virtual void AssignParentGraph(Graph g)
         {
             parentGraph = g;
@@ -325,7 +339,7 @@ namespace Materia.Nodes
 
         public virtual void AssignParentNode(Node n)
         {
-           
+          
         }
 
         public virtual void AssignPixelType(GraphPixelType pix)
@@ -338,7 +352,8 @@ namespace Materia.Nodes
         {
             width = w;
             height = h;
-            OnWidthHeightSet();
+
+            ReleaseBuffer();
         }
 
         public virtual void CopyResources(string CWD) { }
@@ -395,28 +410,6 @@ namespace Materia.Nodes
             return buffer;
         }
 
-        public virtual void TryAndProcess()
-        {
-
-        }
-
-        public virtual Node TopNode()
-        {
-            Node p = this;
-
-            while(p != null && p is MathNode)
-            {
-                var tmp = (p as MathNode).ParentNode;
-                if(tmp == null)
-                {
-                    return p;
-                }
-                p = tmp;
-            }
-
-            return p;
-        }
-
         protected virtual void SetBaseNodeDate(NodeData d)
         {
             width = d.width;
@@ -429,38 +422,20 @@ namespace Materia.Nodes
             ViewOriginX = d.viewOriginX;
             ViewOriginY = d.viewOriginY;
 
-            if(Inputs == null && d.inputCount > 0)
-            {
-                Inputs = new List<NodeInput>();
-
-                for(int i = 0; i < d.inputCount; i++)
-                {
-                    AddPlaceholderInput();
-                }
-            }
-            else if(Inputs != null && Inputs.Count < d.inputCount)
+            if(Inputs.Count < d.inputCount)
             {
                 int diff = d.inputCount - Inputs.Count;
 
-                for(int i = 0; i < diff; i++)
+                for(int i = 0; i < diff; ++i)
                 {
                     AddPlaceholderInput();
                 }
             }
 
-            if(Outputs == null && d.outputCount > 0)
-            {
-                Outputs = new List<NodeOutput>();
-
-                for(int i = 0; i < d.outputCount; i++)
-                {
-                    AddPlaceholderOutput();
-                }
-            }
-            else if(Outputs != null && Outputs.Count < d.outputCount)
+            if(Outputs.Count < d.outputCount)
             {
                 int diff = d.outputCount - Outputs.Count;
-                for(int i = 0; i < diff; i++)
+                for(int i = 0; i < diff; ++i)
                 {
                     AddPlaceholderOutput();
                 }
@@ -529,13 +504,7 @@ namespace Materia.Nodes
 
         protected virtual void OnPixelFormatChange()
         {
-            if(buffer != null)
-            {
-                buffer.Release();
-                buffer = null;
-            }
-
-            TryAndProcess();
+            ReleaseBuffer();
         }
 
         protected virtual void CreateBufferIfNeeded()
@@ -547,11 +516,18 @@ namespace Materia.Nodes
                 buffer.SetData(IntPtr.Zero, GLInterfaces.PixelFormat.Rgba, width, height);
                 buffer.Linear();
                 buffer.Repeat();
+                
                 if(internalPixelType == GraphPixelType.Luminance16F || internalPixelType == GraphPixelType.Luminance32F)
                 {
                     buffer.SetSwizzleLuminance();
                 }
+                else if(buffer.IsRGBBased)
+                {
+                    buffer.SetSwizzleRGB();
+                }
+
                 GLTextuer2D.Unbind();
+                OnTextureRebuilt?.Invoke(this);
             }
         }
 
@@ -581,9 +557,9 @@ namespace Materia.Nodes
                         NodeConnection nc = new NodeConnection(Id, n.Node.Id, i, index, k);
                         outputs.Add(nc);
                     }
-                    k++;
+                    ++k;
                 }
-                i++;
+                ++i;
             }
 
             return outputs;
@@ -602,16 +578,16 @@ namespace Materia.Nodes
             {
                 if (n.HasInput)
                 {
-                    int idx = n.Input.Node.Outputs.IndexOf(n.Input);
+                    int idx = n.Reference.Node.Outputs.IndexOf(n.Reference);
                     if (idx > -1)
                     {
-                        NodeOutput no = n.Input.Node.Outputs[idx];
+                        NodeOutput no = n.Reference.Node.Outputs[idx];
                         int ord = no.To.IndexOf(n);
-                        NodeConnection nc = new NodeConnection(n.Input.Node.Id, Id, idx, i, ord);
+                        NodeConnection nc = new NodeConnection(n.Reference.Node.Id, Id, idx, i, ord);
                         connections.Add(nc);
                     }
                 }
-                i++;
+                ++i;
             }
 
             return connections;
@@ -622,14 +598,14 @@ namespace Materia.Nodes
         /// </summary>
         /// <param name="n"></param>
         /// <param name="connection"></param>
-        public void SetConnection(Node n, NodeConnection connection)
+        public void SetConnection(Node n, NodeConnection connection, bool assign)
         {
             if(connection.index < n.Inputs.Count)
             {
                 var inp = n.Inputs[connection.index];
                 if(connection.outIndex >= 0 && connection.outIndex < Outputs.Count)
                 {
-                    Outputs[connection.outIndex].InsertAt(connection.order, inp, false);
+                    Outputs[connection.outIndex].InsertAt(connection.order, inp, assign);
                 }
             }
             else
@@ -647,7 +623,7 @@ namespace Materia.Nodes
         /// <param name="nodes"></param>
         /// <param name="connections"></param>
         /// <param name="triggerAddEvent"></param>
-        public void SetConnections(Dictionary<string,Node> nodes, List<NodeConnection> connections, bool triggerAddEvent = true)
+        public void SetConnections(Dictionary<string,Node> nodes, List<NodeConnection> connections, bool assign)
         {
             if (connections != null)
             {
@@ -661,7 +637,7 @@ namespace Materia.Nodes
                             var inp = n.Inputs[nc.index];
                             if (nc.outIndex >= 0 && nc.outIndex < Outputs.Count)
                             {
-                                Outputs[nc.outIndex].Add(inp, triggerAddEvent);
+                                Outputs[nc.outIndex].Add(inp, assign);
                             }
                         }
                         else
@@ -679,19 +655,14 @@ namespace Materia.Nodes
             }
         }
 
-        public abstract Task GetTask();
-
         public virtual bool IsRoot()
         {
-            bool realputs = Inputs == null || Inputs.Count == 0;
+            return Inputs == null || Inputs.Count == 0 || Inputs.Find(m => m.Reference != null) == null;
+        }
 
-            if (realputs) return true;
-
-            var inp = Inputs.Find(m => m.HasInput);
-            if (inp == null) return true;
-
-            if (inp.Node is GraphInstanceNode) return true;
-            return false;
+        public virtual bool IsEnd()
+        {
+            return Outputs == null || Outputs.Count == 0 || Outputs.Find(m => m.To.Count != 0) == null;
         }
     }
 }

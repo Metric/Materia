@@ -8,9 +8,9 @@
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="800">
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-        <ui:NumberInput x:Name="XPos" Height="32" />
-        <ui:NumberInput x:Name="YPos" Height="32" />
-        <ui:NumberInput x:Name="ZPos" Height="32" />
-        <ui:NumberInput x:Name="WPos" Height="32" />
+        <ui:NumberInput x:Name="XPos" Margin="0,0,5,0" Height="32" Width="64"/>
+        <ui:NumberInput x:Name="YPos" Margin="0,0,5,0" Height="32" Width="64" />
+        <ui:NumberInput x:Name="ZPos" Margin="0,0,5,0" Height="32" Width="64" />
+        <ui:NumberInput x:Name="WPos" Height="32" Width="64" />
     </StackPanel>
 </UserControl>

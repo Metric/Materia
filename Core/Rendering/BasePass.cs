@@ -33,7 +33,7 @@ namespace Materia.Rendering
             width = w;
             height = h;
 
-            for(int i = 0; i < color.Length; i++)
+            for(int i = 0; i < color.Length; ++i)
             {
                 color[i] = new GLTextuer2D(PixelInternalFormat.Rgba32f);
                 color[i].Bind();
@@ -70,7 +70,7 @@ namespace Materia.Rendering
 
             if(color != null)
             {
-                for(int i = 0; i < color.Length; i++)
+                for(int i = 0; i < color.Length; ++i)
                 {
                     color[i].Bind();
                     color[i].SetData(IntPtr.Zero, PixelFormat.Rgba, w, h);
@@ -98,7 +98,7 @@ namespace Materia.Rendering
             IGL.Primary.ClearColor(0, 0, 0, 0);
             IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit);
             IGL.Primary.Clear((int)ClearBufferMask.DepthBufferBit);
-            for (int i = 0; i < Meshes.Length; i++)
+            for (int i = 0; i < Meshes.Length; ++i)
             {
                 Meshes[i].Draw();
             }
@@ -121,7 +121,7 @@ namespace Materia.Rendering
 
             if(color != null)
             {
-                for(int i = 0; i < color.Length; i++)
+                for(int i = 0; i < color.Length; ++i)
                 {
                     color[i].Release();
                 }

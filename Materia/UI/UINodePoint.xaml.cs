@@ -114,14 +114,7 @@ namespace Materia
             }
             set
             {
-                if(output != null)
-                {
-                    output.OnTypeChanged -= Output_OnTypeChanged;
-                }
-
                 output = value;
-
-                output.OnTypeChanged += Output_OnTypeChanged;
 
                 if (loaded)
                 {
@@ -272,16 +265,6 @@ namespace Materia
                 return;
             }
 
-            if (!CanConnect(p))
-            {
-                return;
-            }
-
-            if (IsCircular(p))
-            {
-                return;
-            }
-
             if (p.ParentNode != null)
             {
                 p.ParentNode.RemoveNode(p);
@@ -289,6 +272,16 @@ namespace Materia
 
             if (!loading)
             {
+                if (!CanConnect(p))
+                {
+                    return;
+                }
+
+                if (IsCircular(p))
+                {
+                    return;
+                }
+
                 Output.Add(p.Input);
             }
 
@@ -316,9 +309,9 @@ namespace Materia
 
             if (p.ParentNode == this)
             {
-                if(p.Input != null && p.Input.Input != null && removeFromGraph)
+                if(p.Input != null && p.Input.Reference != null && removeFromGraph)
                 {
-                    p.Input.Input.Remove(p.Input);
+                    p.Input.Reference.Remove(p.Input);
                 }
 
                 p.ParentNode = null;
@@ -403,8 +396,6 @@ namespace Materia
         {
             if (output != null)
             {
-                output.OnTypeChanged -= Output_OnTypeChanged;
-
                 List<UINodePoint> toRemove = new List<UINodePoint>();
 
                 try
@@ -450,8 +441,6 @@ namespace Materia
         {
             if (output != null)
             {
-                output.OnTypeChanged -= Output_OnTypeChanged;
-
                 List<UINodePoint> toRemove = new List<UINodePoint>();
 
                 try

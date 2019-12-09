@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="42" d:DesignWidth="256" HorizontalAlignment="Stretch">
     <Grid Height="42">
-        <ToggleButton x:Name="Toggle" BorderThickness="0" Margin="5" Background="#444" Foreground="LightGray" FontSize="10" HorizontalAlignment="Stretch" Height="32" Click="Toggle_Click" Style="{StaticResource ToggleTextButton}"></ToggleButton>
+        <ToggleButton x:Name="Toggle" BorderThickness="0" Margin="5"  FontSize="10" HorizontalAlignment="Stretch" Height="32" Click="Toggle_Click" Style="{StaticResource ToggleTextButton}"></ToggleButton>
     </Grid>
 </UserControl>

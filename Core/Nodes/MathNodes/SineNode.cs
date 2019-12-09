@@ -27,36 +27,14 @@ namespace Materia.Nodes.MathNodes
 
             Inputs.Add(input);
 
-            input.OnInputAdded += Input_OnInputAdded;
-            input.OnInputChanged += Input_OnInputChanged;
-
             Outputs.Add(output);
-        }
-
-        private void Input_OnInputChanged(NodeInput n)
-        {
-            TryAndProcess();
-        }
-
-        private void Input_OnInputAdded(NodeInput n)
-        {
-            UpdateOutputType();
-            Updated();
         }
 
         public override void UpdateOutputType()
         {
             if(input.HasInput)
             {
-                output.Type = input.Input.Type;
-            }
-        }
-
-        public override void TryAndProcess()
-        {
-            if (input.HasInput)
-            {
-                Process();
+                output.Type = input.Reference.Type;
             }
         }
 
@@ -64,13 +42,13 @@ namespace Materia.Nodes.MathNodes
         {
             if (!input.HasInput) return "";
             var s = shaderId + "1";
-            var n1id = (input.Input.Node as MathNode).ShaderId;
+            var n1id = (input.Reference.Node as MathNode).ShaderId;
 
-            var index = input.Input.Node.Outputs.IndexOf(input.Input);
+            var index = input.Reference.Node.Outputs.IndexOf(input.Reference);
 
             n1id += index;
 
-            NodeType t = input.Input.Type;
+            NodeType t = input.Reference.Type;
 
             if(t == NodeType.Float)
             {
@@ -92,43 +70,30 @@ namespace Materia.Nodes.MathNodes
             return "";
         }
 
-
-        void Process()
+        public override void TryAndProcess()
         {
-            if (input.Input.Data == null) return;
-
-            object o = input.Input.Data;
-
-            if (o is float || o is int || o is double || o is long)
+            if (!input.IsValid) return;
+            NodeType t = input.Reference.Type;
+            try
             {
-                float v = Convert.ToSingle(o);
-                output.Data = (float)Math.Sin(v);
-            }
-            else if(o is MVector)
-            {
-                MVector m = (MVector)o;
-                m.X = (float)Math.Sin(m.X);
-                m.Y = (float)Math.Sin(m.Y);
-                m.Z = (float)Math.Sin(m.Z);
-                m.W = (float)Math.Sin(m.W);
-                output.Data = m;
-            }
-            else
-            {
-                output.Data = 0;
-            }
-
-            result = output.Data.ToString();
-
-            if (ParentGraph != null)
-            {
-                FunctionGraph g = (FunctionGraph)ParentGraph;
-
-                if (g != null && g.OutputNode == this)
+                if (t == NodeType.Float)
                 {
-                    g.Result = output.Data;
+                    float f = input.Data.ToFloat();
+                    output.Data = (float)Math.Sin(f);
                 }
+                else if (t == NodeType.Float2 || t == NodeType.Float3 || t == NodeType.Float4)
+                {
+                    MVector v = (MVector)input.Data;
+                    output.Data = v.Sin();
+                }
+                result = output.Data?.ToString();
             }
+            catch (Exception e)
+            {
+
+            }
+
+            UpdateOutputType();
         }
     }
 }

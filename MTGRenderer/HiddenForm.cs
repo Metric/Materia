@@ -69,11 +69,6 @@ namespace MTGRenderer
                 g.FromJson(System.IO.File.ReadAllText(path));
                 HdriManager.Selected = g.HdriIndex;
                 g.TryAndProcess();
-                while(g.IsProcessing)
-                {
-                    Thread.Sleep(1);
-                }
-
                 return g;
             }
 

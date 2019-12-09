@@ -82,7 +82,7 @@ namespace Materia
 
         private void UserControl_MouseEnter(object sender, MouseEventArgs e)
         {
-            GridView.Background = new SolidColorBrush(Color.FromArgb(255, 32, 32, 32));
+            GridView.Background = (SolidColorBrush)Application.Current.Resources["Overlay5"];
         }
 
         private void UserControl_MouseLeave(object sender, MouseEventArgs e)

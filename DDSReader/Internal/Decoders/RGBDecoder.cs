@@ -18,9 +18,9 @@ namespace DDSReader.Internal.Decoders
 
             try
             {
-                for (int y = 0; y < height; y++)
+                for (int y = 0; y < height; ++y)
                 {
-                    for (int x = 0; x < width; x++)
+                    for (int x = 0; x < width; ++x)
                     {
                         int idx = (x + y * (int)width) * 3;
                         int len = dataSource.Read(buffer, 0, buffer.Length);
@@ -54,9 +54,9 @@ namespace DDSReader.Internal.Decoders
 
                 try
                 {
-                    for (int y = 0; y < height; y++)
+                    for (int y = 0; y < height; ++y)
                     {
-                        for (int x = 0; x < width; x++)
+                        for (int x = 0; x < width; ++x)
                         {
                             int idx = (x + y * (int)width) * 3;
                             int len = dataSource.Read(buffer, 0, buffer.Length);
