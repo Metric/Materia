@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Collections;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Reflection;
@@ -18,6 +19,7 @@ using Materia.Archive;
 using Materia.Layering;
 using Materia.Textures;
 using System.Timers;
+using System.Collections.Concurrent;
 
 namespace Materia.Nodes
 { 
@@ -406,7 +408,7 @@ namespace Materia.Nodes
             public List<string> layers;
         }
 
-        protected List<Node> scheduledNodes;
+        protected ConcurrentQueue<Node> scheduledNodes;
         public bool IsProcessing { get; protected set; }
 
         /// <summary>
@@ -434,7 +436,7 @@ namespace Materia.Nodes
             width = w;
             height = h;
 
-            scheduledNodes = new List<Node>();
+            scheduledNodes = new ConcurrentQueue<Node>();
 
             PixelNodes = new List<PixelProcessorNode>();
             InstanceNodes = new List<GraphInstanceNode>();
@@ -460,8 +462,8 @@ namespace Materia.Nodes
             if (scheduledNodes.Count > 0)
             {
                 IsProcessing = true;
-                Node n = scheduledNodes[0];
-                scheduledNodes.RemoveAt(0);
+                Node n = null;
+                scheduledNodes.TryDequeue(out n);
 
                 if (n == null) return;
 
@@ -535,8 +537,11 @@ namespace Materia.Nodes
                     queue.Enqueue(endNode);
                 }
 
-                List<Node> nodesToSchedule = new List<Node>(queue.ToArray());
-                scheduledNodes?.AddRange(nodesToSchedule);
+                Node[] nodesToSchedule = queue.ToArray();
+                for(int i = 0; i < nodesToSchedule.Length; ++i)
+                {
+                    scheduledNodes.Enqueue(nodesToSchedule[i]);
+                }
             });
         }
 
@@ -606,7 +611,7 @@ namespace Materia.Nodes
                         //and in others it is the first path
                         if (backtracks.Count >= 2)
                         {
-                            if(backtracks[0].Count > backtracks[1].Count)
+                            if(backtracks[0].Count >= backtracks[1].Count)
                             {
                                 backtracks.Sort((a, b) =>
                                 {
@@ -683,7 +688,6 @@ namespace Materia.Nodes
 
             while(stack.Count > 0)
             {
-                bool didAdd = false;
                 Node n = stack.Dequeue();
 
                 if (n.IsScheduled)
@@ -704,7 +708,6 @@ namespace Materia.Nodes
                     if(backs.Count > 0)
                     {
                         backtracks.Add(backs);
-                        didAdd = true;
                     }
                 }
 
@@ -729,19 +732,16 @@ namespace Materia.Nodes
                     }
                 }
 
-                if (didAdd)
-                {
-                    n.IsScheduled = true;
+                n.IsScheduled = true;
                     
-                    //go ahead and populate params if needed
-                    if (n is GraphInstanceNode)
-                    {
-                        GraphInstanceNode gn = n as GraphInstanceNode;
-                        gn.PopulateGraphParams();
-                    }
-
-                    queue.Enqueue(n);
+                //go ahead and populate params if needed
+                if (n is GraphInstanceNode)
+                {
+                    GraphInstanceNode gn = n as GraphInstanceNode;
+                    gn.PopulateGraphParams();
                 }
+
+                queue.Enqueue(n);
 
                 if(n is OutputNode)
                 {
@@ -957,14 +957,19 @@ namespace Materia.Nodes
                 }
             }
 
+            
             Task.Run(() =>
             {
                 List<Node> root = EndNodes;
                 Queue<Node> nodes = new Queue<Node>();
                 GatherNodes(root, nodes, null);
-                List<Node> nodesToSchedule = new List<Node>(nodes.ToArray());
+                Node[] nodesToSchedule = nodes.ToArray();
                 Graph g = Top();
-                g.scheduledNodes.AddRange(nodesToSchedule);
+                ConcurrentQueue<Node> scheduled = g.scheduledNodes;
+                for (int i = 0; i < nodesToSchedule.Length; ++i)
+                {
+                   scheduled.Enqueue(nodesToSchedule[i]);
+                }
             });
         }
 
