@@ -59,6 +59,8 @@ namespace Materia
         protected bool preview3DWasVisibleOnLoad;
         protected bool preview2DWasVisibleOnLoad;
 
+        protected int lastSelectedIndex = -1;
+
         public MateriaMainWindow()
         {
             //initialize OpenTK GL Abstraction Layer first
@@ -103,6 +105,8 @@ namespace Materia
             Materia.Nodes.Node.SyncContext = DispatcherSynchronizationContext.Current;
             //set node context
             Materia.Nodes.Node.Context = TaskScheduler.FromCurrentSynchronizationContext();
+
+            lastSelectedIndex = -1;
         }
 
         private void BuildRecentShortcuts()
@@ -225,9 +229,16 @@ namespace Materia
                 //but still have a node selected
                 UINodePoint.SelectOrigin = null;
 
+                if(graphs.Count > 0 && lastSelectedIndex >= 0 && lastSelectedIndex < graphs.Count)
+                {
+                    graphs[lastSelectedIndex].StoreGraph();
+                }
+
                 if(graphs.Count > 0 && GraphDocuments.SelectedContentIndex > -1 && GraphDocuments.SelectedContentIndex < graphs.Count)
                 {
                     var g = graphs[GraphDocuments.SelectedContentIndex];
+
+                    g.RestoreGraph();
 
                     if(UndoRedoManager.UndoCount(g.Id) > 0)
                     {
@@ -252,6 +263,8 @@ namespace Materia
                         UINodeParameters.Instance.ClearView();
                     }
                 }
+
+                lastSelectedIndex = GraphDocuments.SelectedContentIndex;
             }
         }
 

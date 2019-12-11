@@ -2363,14 +2363,6 @@ namespace Materia
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            if(!string.IsNullOrEmpty(StoredGraph))
-            {
-                LoadGraph(StoredGraph, StoredGraphCWD, false, StoredGraphStack == null || StoredGraphStack.Length == 0);
-                StoredGraph = null;
-
-                RestoreStack();
-            }
-
             timer.IsEnabled = true;
             UILayers.OnRestoreRootView += UILayers_OnRestoreRootView;
             UILayers.OnSelected += UILayers_OnSelected;
@@ -2388,7 +2380,21 @@ namespace Materia
 
             UILayers.OnRestoreRootView -= UILayers_OnRestoreRootView;
             UILayers.OnSelected -= UILayers_OnSelected;
+        }
 
+        public virtual void RestoreGraph()
+        {
+            if (!string.IsNullOrEmpty(StoredGraph))
+            {
+                LoadGraph(StoredGraph, StoredGraphCWD, false, StoredGraphStack == null || StoredGraphStack.Length == 0);
+                StoredGraph = null;
+
+                RestoreStack();
+            }  
+        }
+
+        public virtual void StoreGraph()
+        {
             if (Original != null)
             {
                 CaptureStack();
