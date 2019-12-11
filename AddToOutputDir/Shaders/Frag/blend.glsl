@@ -150,95 +150,95 @@ vec3 FromHSL(vec3 c) {
 //END HSL HELPERS
 
 vec3 Copy(vec4 a, vec4 b, float alpha) {
-    return a.rgb * alpha + b.rgb * (1.0 - alpha);
+    return clamp(clamp(a.rgb, vec3(0), vec3(1)) * clamp(alpha, 0, 1) + clamp(b.rgb, vec3(0), vec3(1)) * (1.0 - clamp(alpha, 0, 1)), vec3(0), vec3(1));
 }
 
 float AddSub(float a, float b) {
     if(a >= 0.5) {
-        return min(1, max(0, a + b));
+        return clamp(a + b, 0, 1);
     }
     else {
-        return min(1, max(0, b - a));
+        return clamp(b - a, 0, 1);
     }
 }
 
-float Multiple(float a, float b) {
-    return min(1, max(0, a * b));
+float Multiply(float a, float b) {
+    return clamp(a * b, 0, 1);
 }
 
 float Screen(float a, float b) {
-    return min(1, max(0, 1 - (1 - a) * (1 - b)));
+    return clamp(1 - (1 - a) * (1 - b), 0, 1);
 }
 
 float Divide(float a, float b) {
-    return min(1, max(0, b / a));
+    return clamp(b / a, 0, 1);
 }
 
 float ColorDodge(float a, float b) {
-    return min(1, max(0, b / (1 - a)));
+    return clamp(b / (1 - a), 0, 1);
 }
 
 float LinearDodge(float a, float b) {
-    return min(1, max(0, a + b));
+    return clamp(a + b, 0, 1);
 }
 
 float ColorBurn(float a, float b) {
-    return min(1, max(0, 1 - (1 - b) / a));
+    return clamp(1 - (1 - b) / a, 0, 1);
 }
 
 float LinearBurn(float a, float b) {
-    return min(1, max(0, a + b - 1));
+    return clamp(a + b - 1, 0, 1);
 }
 
 float Overlay(float a, float b) {
     if(b < 0.5) {
-        return 2 * a * b;
+        return clamp(2 * a * b, 0, 1);
     }
     else {
-        return 1 - 2 * (1 - a) * (1 - b);
+        return clamp(1 - 2 * (1 - a) * (1 - b), 0, 1);
     }
 }
 
 float SoftLight(float a, float b) {
     if(a < 0.5) {
-        return (2 * a - 1) * (b * (b * b)) + b;
+        return clamp((2 * a - 1) * (b * (b * b)) + b, 0, 1);
     }
     else {
-        return (2 * a - 1) * (sqrt(b) - b) + b;
+        return clamp((2 * a - 1) * (sqrt(b) - b) + b, 0, 1);
     }
 }
 
 float HardLight(float a, float b) {
     if(a < 0.5) {
-        return 2 * a * b;
+        return clamp(2 * a * b, 0, 1);
     }
     else {
-        return 1 - 2 * (1 - a) * (1- b);
+        return clamp(1 - 2 * (1 - a) * (1- b), 0, 1);
     }
 }
 
 float LinearLight(float a, float b) {
-    return b + 2 * a - 1;
+    return clamp(b + 2 * a - 1, 0, 1);
 }
 
 float VividLight(float a, float b) {
    if(a < 0.5) {
-       return 1 - (1 - b) / (2 * a);
+       return clamp(1 - (1 - b) / (2 * a), 0, 1);
    }
    else {
-       return b / (2 * (1 - a));
+       return clamp(b / (2 * (1 - a)), 0, 1);
    }
 }
 
 float PinLight(float a, float b) {
     if(b < 2 * a - 1) {
-        return 2 * a - 1;
+        return clamp(2 * a - 1, 0, 1);
     }
     else if(2 * a - 1 < b && b < 2 * a) {
-        return b;
+        return clamp(b, 0, 1);
     } 
     else {
-        return 2 * a;
+        return clamp(2 * a, 0, 1);
     }
 }
 
@@ -252,15 +252,15 @@ float HardMix(float a, float b) {
 }
 
 float Exclusion(float a, float b) {
-    return a + b - 2 * a * b;
+    return clamp(a + b - 2 * a * b, 0, 1);
 }
 
 float Subtract(float a, float b) {
-    return min(1, max(0, b - a));
+    return clamp(b - a, 0, 1);
 }
 
 float Difference(float a, float b) {
-    return min(1, max(0, abs(a - b)));
+    return clamp(abs(a - b), 0, 1);
 }
 
 float Darken(float a, float b) {
@@ -318,85 +318,85 @@ void main() {
     if(hasMask == 1) {
         vec2 ra = texture(Mask, UV).ra;
         if(ra.y >= 1) {
-            m = min(ra.x, 1);
+            m = clamp(ra.x, 0, 1);
         }
         else {
-            m = min(ra.x + ra.y, 1);
+            m = clamp(clamp(ra.x, 0, 1) + clamp(ra.y, 0, 1), 0, 1);
         }        
     }
 
     if(blendMode == 0) {
-        final.r = AddSub(a.r * alpha * m, b.r);
-        final.g = AddSub(a.g * alpha * m, b.g);
-        final.b = AddSub(a.b * alpha * m, b.b);
+        final.r = AddSub(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = AddSub(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = AddSub(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 1) {
         final.rgb = Copy(a, b, alpha * m * a.a);
     }
     else if(blendMode == 2) {
-        final.r = Multiple(a.r * alpha * m, b.r);
-        final.g = Multiple(a.g * alpha * m, b.g);
-        final.b = Multiple(a.b * alpha * m, b.b);
+        final.r = Multiply(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = Multiply(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = Multiply(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 3) {
-        final.r = Screen(a.r * alpha * m, b.r);
-        final.g = Screen(a.g * alpha * m, b.g);
-        final.b = Screen(a.b * alpha * m, b.b);
+        final.r = Screen(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = Screen(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = Screen(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 4) {
-        final.r = Overlay(a.r * alpha * m, b.r);
-        final.g = Overlay(a.g * alpha * m, b.g);
-        final.b = Overlay(a.b * alpha * m, b.b);
+        final.r = Overlay(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = Overlay(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = Overlay(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 5) {
-        final.r = HardLight(a.r * alpha * m, b.r);
-        final.g = HardLight(a.g * alpha * m, b.g);
-        final.b = HardLight(a.b * alpha * m, b.b);
+        final.r = HardLight(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = HardLight(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = HardLight(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 6) {
-        final.r = SoftLight(a.r * alpha * m, b.r);
-        final.g = SoftLight(a.g * alpha * m, b.g);
-        final.b = SoftLight(a.b * alpha * m, b.b);
+        final.r = SoftLight(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = SoftLight(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = SoftLight(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 7) {
-        final.r = ColorDodge(a.r * alpha * m, b.r);
-        final.g = ColorDodge(a.g * alpha * m, b.g);
-        final.b = ColorDodge(a.b * alpha * m, b.b);
+        final.r = ColorDodge(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = ColorDodge(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = ColorDodge(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 8) {
-        final.r = LinearDodge(a.r * alpha * m, b.r);
-        final.g = LinearDodge(a.g * alpha * m, b.g);
-        final.b = LinearDodge(a.b * alpha * m, b.b);
+        final.r = LinearDodge(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = LinearDodge(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = LinearDodge(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 9) {
-        final.r = ColorBurn(a.r * alpha * m, b.r);
-        final.g = ColorBurn(a.g * alpha * m, b.g);
-        final.b = ColorBurn(a.b * alpha * m, b.b);
+        final.r = ColorBurn(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = ColorBurn(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = ColorBurn(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 10) {
-        final.r = LinearBurn(a.r * alpha * m, b.r);
-        final.g = LinearBurn(a.g * alpha * m, b.g);
-        final.b = LinearBurn(a.b * alpha * m, b.b);
+        final.r = LinearBurn(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = LinearBurn(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = LinearBurn(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 11) {
-        final.r = VividLight(a.r * alpha * m, b.r);
-        final.g = VividLight(a.g * alpha * m, b.g);
-        final.b = VividLight(a.b * alpha * m, b.b);
+        final.r = VividLight(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = VividLight(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = VividLight(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 12) {
-        final.r = Divide(a.r * alpha * m, b.r);
-        final.g = Divide(a.g * alpha * m, b.g);
-        final.b = Divide(a.b * alpha * m, b.b);
+        final.r = Divide(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = Divide(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = Divide(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 13) {
-        final.r = Subtract(a.r * alpha * m, b.r);
-        final.g = Subtract(a.g * alpha * m, b.g);
-        final.b = Subtract(a.b * alpha * m, b.b);
+        final.r = Subtract(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = Subtract(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = Subtract(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 14) {
-        final.r = Difference(a.r * alpha * m, b.r);
-        final.g = Difference(a.g * alpha * m, b.g);
-        final.b = Difference(a.b * alpha * m, b.b);
+        final.r = Difference(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = Difference(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = Difference(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 15) {
         final.r = Darken(a.r * alpha * m, b.r);
@@ -409,45 +409,45 @@ void main() {
         final.b = Lighten(a.b * alpha * m, b.b);
     }
     else if(blendMode == 17) {
-        final.rgb = Hue(a.rgb * alpha * m,b.rgb);
+        final.rgb = Hue(clamp(a.rgb * alpha * m, vec3(0), vec3(1)), clamp(b.rgb, vec3(0), vec3(1)));
     }
     else if(blendMode == 18) {
-        final.rgb = Saturation(a.rgb * alpha * m, b.rgb);   
+        final.rgb = Saturation(clamp(a.rgb * alpha * m, vec3(0), vec3(1)), clamp(b.rgb, vec3(0), vec3(1)));  
     }
     else if(blendMode == 19) {
-        final.rgb = Color(a.rgb * alpha * m, b.rgb);
+        final.rgb = Color(clamp(a.rgb * alpha * m, vec3(0), vec3(1)), clamp(b.rgb, vec3(0), vec3(1)));
     }
     else if(blendMode == 20) {
-        final.rgb = Luminosity(a.rgb * alpha * m, b.rgb);
+        final.rgb = Luminosity(clamp(a.rgb * alpha * m, vec3(0), vec3(1)), clamp(b.rgb, vec3(0), vec3(1)));
     }
     else if(blendMode == 21) {
-        final.r = LinearLight(a.r * alpha * m, b.r);
-        final.g = LinearLight(a.g * alpha * m, b.g);
-        final.b = LinearLight(a.b * alpha * m, b.b);
+        final.r = LinearLight(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = LinearLight(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = LinearLight(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 22) {
-        final.r = PinLight(a.r * alpha * m, b.r);
-        final.g = PinLight(a.g * alpha * m, b.g);
-        final.b = PinLight(a.b * alpha * m, b.b);
+        final.r = PinLight(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = PinLight(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = PinLight(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 23) {
-        final.r = HardMix(a.r * alpha * m, b.r);
-        final.g = HardMix(a.g * alpha * m, b.g);
-        final.b = HardMix(a.b * alpha * m, b.b);
+        final.r = HardMix(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = HardMix(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = HardMix(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
     else if(blendMode == 24) {
-        final.r = Exclusion(a.r * alpha * m, b.r);
-        final.g = Exclusion(a.g * alpha * m, b.g);
-        final.b = Exclusion(a.b * alpha * m, b.b);
+        final.r = Exclusion(clamp(a.r, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.r, 0, 1));
+        final.g = Exclusion(clamp(a.g, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.g, 0, 1));
+        final.b = Exclusion(clamp(a.b, 0, 1) * clamp(alpha * m, 0, 1), clamp(b.b, 0, 1));
     }
 
     //background
     if(alphaMode == 0) {
-        final.a = b.a;
+        final.a = clamp(b.a, 0, 1);
     }
     //foreground
     else if(alphaMode == 1) {
-        final.a = a.a;
+        final.a = clamp(a.a, 0, 1);
     }
     //minimum of the two
     else if(alphaMode == 2) {
@@ -459,15 +459,15 @@ void main() {
     }
     //average
     else if(alphaMode == 4) {
-        final.a = (a.a + b.a) * 0.5;
+        final.a = (clamp(a.a, 0, 1) + clamp(b.a, 0, 1)) * 0.5;
     }
     //add
     else if(alphaMode == 5) {
-        final.a = min(a.a + b.a, 1);
+        final.a = clamp(clamp(a.a, 0, 1) + clamp(b.a, 0, 1), 0, 1);
     }
     //default to background alpha mode
     else {
-        final.a = b.a;
+        final.a = clamp(b.a, 0, 1);
     }
 
     FragColor = final;

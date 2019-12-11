@@ -17,19 +17,19 @@ void main() {
     float a = c.a;
 
     if(invertRed > 0) {
-        r = 1.0 - r;
+        r = 1.0 - clamp(r, 0, 1);
     }
 
     if(invertGreen > 0) {
-        g = 1.0 - g;
+        g = 1.0 - clamp(g, 0, 1);
     }
 
     if(invertBlue > 0) {
-        b = 1.0 - b;
+        b = 1.0 - clamp(b, 0, 1);
     }
 
     if(invertAlpha > 0) {
-        a = 1.0 - a;
+        a = 1.0 - clamp(a, 0, 1);
     }
 
     FragColor = vec4(r,g,b,a);
