@@ -34,6 +34,7 @@
                     <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_3D_PREVIEW}" Click="MenuItem_Click" />
                     <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_SHELF}" Click="MenuItem_Click"/>
                     <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_PARAMETERS}" Click="MenuItem_Click" />
+                    <MenuItem Foreground="{StaticResource TextDark}" Header="_Layers" Click="MenuItem_Click" />
                     <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_LOG}" Click="MenuItem_Click" />
                     <Separator />
                     <MenuItem Foreground="{StaticResource TextDark}" Header="{x:Static p:Resources.MENU_CLOSE_ALL}" Click="MenuItem_Click" />

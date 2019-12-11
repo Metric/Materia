@@ -407,6 +407,17 @@ namespace Materia
                     exportdialog.ShowDialog();
                 }
             }
+            else if(item.Header.ToString().Equals("_Layers"))
+            {
+                if (LayersPane.IsVisible)
+                {
+                    LayersPane.Hide();
+                }
+                else
+                {
+                    LayersPane.Show();
+                }
+            }
         }
 
         void ShowSaveDialog(UIGraph g, LayoutDocument doc, bool saveAs = false)

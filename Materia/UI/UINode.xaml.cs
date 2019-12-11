@@ -158,6 +158,7 @@ namespace Materia
             n.OnOutputRemovedFromNode += N_OnOutputRemovedFromNode;
             n.OnTextureChanged += N_OnTextureChanged;
             n.OnValueUpdated += N_OnValueUpdated;
+            n.OnNameChanged += N_OnNameChanged;
 
             if(n is MathNode)
             {
@@ -217,6 +218,11 @@ namespace Materia
                     InputIcon.Visibility = Visibility.Collapsed;
                 }
             }
+        }
+
+        private void N_OnNameChanged(Node n)
+        {
+            NodeName.Text = n.Name;
         }
 
         private void N_OnValueUpdated(Node n)
@@ -714,6 +720,8 @@ namespace Materia
             Node.OnOutputAddedToNode -= N_OnOutputAddedToNode;
             Node.OnOutputRemovedFromNode -= N_OnOutputRemovedFromNode;
             Node.OnTextureChanged -= N_OnTextureChanged;
+            Node.OnNameChanged -= N_OnNameChanged;
+            Node.OnValueUpdated -= N_OnValueUpdated;
 
             if (Graph.Graph is FunctionGraph)
             {
@@ -749,6 +757,8 @@ namespace Materia
             Node.OnOutputAddedToNode -= N_OnOutputAddedToNode;
             Node.OnOutputRemovedFromNode -= N_OnOutputRemovedFromNode;
             Node.OnTextureChanged -= N_OnTextureChanged;
+            Node.OnNameChanged -= N_OnNameChanged;
+            Node.OnValueUpdated -= N_OnValueUpdated;
 
             if (Graph.Graph is FunctionGraph)
             {

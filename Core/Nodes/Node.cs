@@ -47,6 +47,7 @@ namespace Materia.Nodes
         public event NodeChanged OnTextureRebuilt;
         public event NodeChanged OnValueUpdated;
         public event NodeChanged OnSizeChanged;
+        public event NodeChanged OnNameChanged;
 
         public event OutputChanged OnOutputRemovedFromNode;
         public event OutputChanged OnOutputAddedToNode;
@@ -94,6 +95,7 @@ namespace Materia.Nodes
             set
             {
                 name = value;
+                OnNameChanged?.Invoke(this);
             }
         }
 

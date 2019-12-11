@@ -166,7 +166,7 @@
               <Setter Property="Content"
                       TargetName="MenuDropDownButton">
                 <Setter.Value>
-                  <Image Source="Images/PinDocMenu_Black.png" />
+                  <Image Source="Images/PinDocMenu.png" />
                 </Setter.Value>
               </Setter>
             </Trigger>
@@ -176,7 +176,7 @@
               <Setter Property="Content"
                       TargetName="MenuDropDownButton">
                 <Setter.Value>
-                  <Image Source="Images/PinDocMenu_Black.png" />
+                  <Image Source="Images/PinDocMenu.png" />
                 </Setter.Value>
               </Setter>
             </Trigger>
@@ -567,28 +567,28 @@
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgMenuPin"
-                      Value="Images/PinMenu_Black.png" />
+                      Value="Images/PinMenu.png" />
             </Trigger>
             <Trigger Property="IsChecked"
                      SourceName="MenuDropDownButton"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgMenuPin"
-                      Value="Images/PinMenu_Black.png" />
+                      Value="Images/PinMenu.png" />
             </Trigger>
             <Trigger Property="IsMouseOver"
                      SourceName="PART_AutoHidePin"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgAutoHidePin"
-                      Value="Images/PinAutoHide_Black.png" />
+                      Value="Images/PinAutoHide.png" />
             </Trigger>
             <Trigger Property="IsMouseOver"
                      SourceName="PART_HidePin"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgHidePin"
-                      Value="Images/PinClose_Black.png" />
+                      Value="Images/PinClose.png" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -1264,7 +1264,7 @@
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinClose"
-                      Value="Images/PinClose_Black.png" />
+                      Value="Images/PinClose.png" />
             </Trigger>
 
           </ControlTemplate.Triggers>
@@ -1493,35 +1493,35 @@
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinMenu"
-                      Value="Images/PinMenu_Black.png" />
+                      Value="Images/PinMenu.png" />
             </Trigger>
             <Trigger Property="IsChecked"
                      SourceName="ContextMenuDropdownButton"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinMenu"
-                      Value="Images/PinMenu_Black.png" />
+                      Value="Images/PinMenu.png" />
             </Trigger>
             <Trigger Property="IsMouseOver"
                      SourceName="PART_PinMaximize"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinMaximize"
-                      Value="Images/PinMaximize_Black.png" />
+                      Value="Images/PinMaximize.png" />
             </Trigger>
             <Trigger Property="IsMouseOver"
                      SourceName="PART_PinRestore"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinRestore"
-                      Value="Images/PinRestore_Black.png" />
+                      Value="Images/PinRestore.png" />
             </Trigger>
             <Trigger Property="IsMouseOver"
                      SourceName="PART_PinClose"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinClose"
-                      Value="Images/PinClose_Black.png" />
+                      Value="Images/PinClose.png" />
             </Trigger>
 
           </ControlTemplate.Triggers>
@@ -1702,35 +1702,35 @@
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinMenu"
-                      Value="Images/PinMenu_Black.png" />
+                      Value="Images/PinMenu.png" />
             </Trigger>
             <Trigger Property="IsChecked"
                      SourceName="SinglePaneContextMenu"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinMenu"
-                      Value="Images/PinMenu_Black.png" />
+                      Value="Images/PinMenu.png" />
             </Trigger>
             <Trigger Property="IsMouseOver"
                      SourceName="PART_PinMaximize"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinMaximize"
-                      Value="Images/PinMaximize_Black.png" />
+                      Value="Images/PinMaximize.png" />
             </Trigger>
             <Trigger Property="IsMouseOver"
                      SourceName="PART_PinRestore"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinRestore"
-                      Value="Images/PinRestore_Black.png" />
+                      Value="Images/PinRestore.png" />
             </Trigger>
             <Trigger Property="IsMouseOver"
                      SourceName="PART_PinClose"
                      Value="True">
               <Setter Property="Source"
                       TargetName="PART_ImgPinClose"
-                      Value="Images/PinClose_Black.png" />
+                      Value="Images/PinClose.png" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
