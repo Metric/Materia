@@ -17,47 +17,50 @@ namespace Materia.Layering
     {
         Base = 1,
         Metallic = 2,
-        Roughness = 4,
-        Ambient = 8,
-        Normal = 16,
-        Emission = 32,
-        Thickness = 64,
-        Height = 128
+        Roughness = 3,
+        Occlusion = 4,
+        Normal = 5,
+        Emission = 6,
+        Thickness = 7,
+        Height = 8
     }
 
     public class Layer : IDisposable
     {
+        public static LayerPasses LayerMode { get; set; }
+
         public string Id { get; protected set; }
 
         public Graph Core { get; protected set; }
         public Node Mask { get; set; }
 
-        protected BlendType blending;
+        protected Dictionary<LayerPasses, BlendType> blendModes;
+        protected Dictionary<LayerPasses, float> opacityModes;
+
         [Editable(ParameterInputType.Dropdown, "Blending")]
         public BlendType Blending
         {
             get
             {
-                return blending;
+                return blendModes[LayerMode];
             }
             set
             {
-                blending = value;
+                blendModes[LayerMode] = value;
                 ParentGraph?.CombineLayers();
             }
         }
 
-        protected float opacity;
         [Editable(ParameterInputType.FloatSlider, "Opacity")]
         public float Opacity
         {
             get
             {
-                return opacity;
+                return opacityModes[LayerMode];
             }
             set
             {
-                opacity = value;
+                opacityModes[LayerMode] = value;
                 ParentGraph?.CombineLayers();
             }
         }
@@ -129,21 +132,34 @@ namespace Materia.Layering
 
         protected BlendProcessor processor;
 
+        static Layer()
+        {
+            LayerMode = LayerPasses.Base;
+        }
+
         /// <summary>
         /// Use this one only for when restoring
         /// from json
         /// </summary>
         public Layer(int w, int h, Graph parent)
         {
+            opacityModes = new Dictionary<LayerPasses, float>();
+            blendModes = new Dictionary<LayerPasses, BlendType>();
+
             width = w;
             height = h;
             Id = Guid.NewGuid().ToString();
             ParentGraph = parent;
             processor = new BlendProcessor();
+
+            InitDefaultModes();
         }
 
         public Layer(string name, int w, int h, Graph parent)
         {
+            opacityModes = new Dictionary<LayerPasses, float>();
+            blendModes = new Dictionary<LayerPasses, BlendType>();
+
             Id = Guid.NewGuid().ToString();
             Name = name;
             width = w;
@@ -156,10 +172,15 @@ namespace Materia.Layering
             Blending = BlendType.Copy;
             Opacity = 1.0f;
             processor = new BlendProcessor();
+
+            InitDefaultModes();
         }
 
         public Layer(Layer other)
         {
+            opacityModes = new Dictionary<LayerPasses, float>();
+            blendModes = new Dictionary<LayerPasses, BlendType>();
+
             Id = Guid.NewGuid().ToString();
             width = other.width;
             height = other.height;
@@ -167,11 +188,27 @@ namespace Materia.Layering
             FromJson(other, other.ParentGraph);
             processor = new BlendProcessor();
             name += " copy";
+
+            foreach(LayerPasses pass in other.blendModes.Keys)
+            {
+                blendModes[pass] = other.blendModes[pass];
+                opacityModes[pass] = other.opacityModes[pass];
+            }
+        }
+
+        protected void InitDefaultModes()
+        {
+            for(int i = 1; i <= 8; ++i)
+            {
+                LayerPasses pass = (LayerPasses)i;
+                opacityModes[pass] = 1.0f;
+                blendModes[pass] = BlendType.Copy;
+            }
         }
 
         public virtual void TryAndProcess()
         {
-            if (Core.Modified)
+            if (Core.Modified && Visible)
             {
                 Core.TryAndProcess();
                 Core.Modified = false;
@@ -192,42 +229,42 @@ namespace Materia.Layering
                 return false;
             }
 
-            if (CombineOutputTypes(OutputType.basecolor, Opacity, Blending, Core, render, Mask, processor))
+            if (CombineOutputTypes(OutputType.basecolor, opacityModes[LayerPasses.Base], blendModes[LayerPasses.Base], Core, render, Mask, processor))
             {
                 combinedAtLeastOne = true;
             }
             
-            if (CombineOutputTypes(OutputType.metallic, Opacity, Blending, Core, render, Mask, processor))
+            if (CombineOutputTypes(OutputType.metallic, opacityModes[LayerPasses.Metallic], blendModes[LayerPasses.Metallic], Core, render, Mask, processor))
             {
                 combinedAtLeastOne = true;
             }
 
-            if (CombineOutputTypes(OutputType.roughness, Opacity, Blending, Core, render, Mask, processor))
+            if (CombineOutputTypes(OutputType.roughness, opacityModes[LayerPasses.Roughness], blendModes[LayerPasses.Roughness], Core, render, Mask, processor))
             {
                 combinedAtLeastOne = true;
             }
 
-            if (CombineOutputTypes(OutputType.normal, Opacity, Blending, Core, render, Mask, processor))
+            if (CombineOutputTypes(OutputType.normal, opacityModes[LayerPasses.Normal], blendModes[LayerPasses.Normal], Core, render, Mask, processor))
             {
                 combinedAtLeastOne = true;
             }
 
-            if (CombineOutputTypes(OutputType.occlusion, Opacity, Blending, Core, render, Mask, processor))
+            if (CombineOutputTypes(OutputType.occlusion, opacityModes[LayerPasses.Occlusion], blendModes[LayerPasses.Occlusion], Core, render, Mask, processor))
             {
                 combinedAtLeastOne = true;
             }
 
-            if (CombineOutputTypes(OutputType.height, Opacity, Blending, Core, render, Mask, processor))
+            if (CombineOutputTypes(OutputType.height, opacityModes[LayerPasses.Height], blendModes[LayerPasses.Height], Core, render, Mask, processor))
             {
                 combinedAtLeastOne = true;
             }
 
-            if (CombineOutputTypes(OutputType.emission, Opacity, Blending, Core, render, Mask, processor))
+            if (CombineOutputTypes(OutputType.emission, opacityModes[LayerPasses.Emission], blendModes[LayerPasses.Emission], Core, render, Mask, processor))
             {
                 combinedAtLeastOne = true;
             }
 
-            if (CombineOutputTypes(OutputType.thickness, Opacity, Blending, Core, render, Mask, processor))
+            if (CombineOutputTypes(OutputType.thickness, opacityModes[LayerPasses.Thickness], blendModes[LayerPasses.Thickness], Core, render, Mask, processor))
             {
                 combinedAtLeastOne = true;
             }
@@ -277,12 +314,12 @@ namespace Materia.Layering
             public string id;
             public string core;
             public string mask;
-            public float opacity;
-            public int blending;
             public bool visible;
             public string name;
             public int width;
             public int height;
+            public Dictionary<LayerPasses, BlendType> blendModes;
+            public Dictionary<LayerPasses, float> opacityModes;
         }
 
         public string GetJson()
@@ -291,12 +328,12 @@ namespace Materia.Layering
             d.core = Core.GetJson();
             d.mask = Mask == null ? null : Mask.Id;
             d.visible = Visible;
-            d.blending = (int)Blending;
             d.name = Name;
-            d.opacity = Opacity;
             d.width = width;
             d.height = height;
             d.id = Id;
+            d.opacityModes = opacityModes;
+            d.blendModes = blendModes;
 
             return JsonConvert.SerializeObject(d);
         }
@@ -306,9 +343,22 @@ namespace Materia.Layering
             LayerData d = JsonConvert.DeserializeObject<LayerData>(l.GetJson());
             if (d == null) return;
 
+            if (d.blendModes != null)
+            {
+                foreach(LayerPasses pass in d.blendModes.Keys)
+                {
+                    blendModes[pass] = d.blendModes[pass];
+                }
+            }
+            if (d.opacityModes != null)
+            {
+                foreach (LayerPasses pass in d.opacityModes.Keys)
+                {
+                    opacityModes[pass] = d.opacityModes[pass];
+                }
+            }
+
             Name = d.name;
-            opacity = d.opacity;
-            blending = (BlendType)d.blending;
             visible = d.visible;
             width = d.width;
             height = d.height;
@@ -337,9 +387,23 @@ namespace Materia.Layering
             LayerData d = JsonConvert.DeserializeObject<LayerData>(json);
             if (d == null) return;
 
+
+            if (d.blendModes != null)
+            {
+                foreach (LayerPasses pass in d.blendModes.Keys)
+                {
+                    blendModes[pass] = d.blendModes[pass];
+                }
+            }
+            if (d.opacityModes != null)
+            {
+                foreach (LayerPasses pass in d.opacityModes.Keys)
+                {
+                    opacityModes[pass] = d.opacityModes[pass];
+                }
+            }
+
             Name = d.name;
-            opacity = d.opacity;
-            blending = (BlendType)d.blending;
             visible = d.visible;
             width = d.width;
             height = d.height;

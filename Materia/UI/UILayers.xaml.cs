@@ -40,6 +40,7 @@ namespace Materia.UI
         {
             InitializeComponent();
             Instance = this;
+            InitEditDropDown();
         }
 
         public static void Assign(Graph g)
@@ -48,6 +49,19 @@ namespace Materia.UI
             Instance.LayerStack.Children.Clear();
             Current = g;
             Instance.Populate();
+        }
+
+        protected void InitEditDropDown()
+        { 
+            EditModeDropDown.Items.Clear();
+            for (int i = 1; i <= 8; ++i)
+            {
+                LayerPasses pass = (LayerPasses)i;
+                ComboBoxItem item = new ComboBoxItem();
+                item.Content = pass.ToString();
+                EditModeDropDown.Items.Add(item);
+            }
+            EditModeDropDown.SelectedIndex = 0;
         }
 
         protected void Populate()
@@ -334,6 +348,16 @@ namespace Materia.UI
                     }
                 }
             }
+        }
+
+        private void EditModeDropDown_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            int index = EditModeDropDown.SelectedIndex + 1;
+
+            if (index <= 0) return;
+
+            Layer.LayerMode = (LayerPasses)index;
+            HookInputsForSelected();
         }
     }
 }

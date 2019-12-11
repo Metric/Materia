@@ -9,7 +9,7 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid Background="{StaticResource Surface}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="74" />
+            <RowDefinition Height="128" />
             <RowDefinition Height="*" />
             <RowDefinition Height="48" />
             <RowDefinition Height="64" />
@@ -20,11 +20,18 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" Margin="10">
+            <StackPanel VerticalAlignment="Top" Grid.Column="2" Margin="5,10,5,5">
+                <ComboBox Foreground="{StaticResource TextLight}" Height="32" 
+                          Name="EditModeDropDown"
+                          SelectionChanged="EditModeDropDown_SelectionChanged"
+                          HorizontalAlignment="Stretch" Margin="2" Style="{StaticResource ComboBoxFlatStyle}"></ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="0" VerticalAlignment="Bottom" Margin="10">
                 <TextBlock Text="Blend Mode" Foreground="{StaticResource TextLight}" />
                 <TextBlock Margin="0,22,0,0" Text="Opacity" Foreground="{StaticResource TextLight}" />
             </StackPanel>
-            <StackPanel Margin="5" Grid.Column="1">
+            <StackPanel Margin="5" VerticalAlignment="Bottom" Grid.Column="1">
+
                 <m:DropDown x:Name="BlendModeDropDown" />
                 <m:NumberSlider x:Name="OpacitySlider" Margin="0,5,0,0" />
             </StackPanel>

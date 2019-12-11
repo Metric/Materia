@@ -949,7 +949,12 @@ namespace Materia.Nodes
             int c = Layers.Count;
             for(int i = 0; i < c; ++i)
             {
-                Layers[i].TryAndProcess();
+                //no need to process layers
+                //that are invisible
+                if (Layers[i].Visible)
+                {
+                    Layers[i].TryAndProcess();
+                }
             }
 
             Task.Run(() =>
