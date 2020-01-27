@@ -118,103 +118,103 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="BUTTON_ADD_FUNCTION" xml:space="preserve">
-    <value>ADD FUNCTION</value>
+    <value>FUNKTION HINZUFÜGEN</value>
   </data>
   <data name="BUTTON_ADD_PARAMETER" xml:space="preserve">
-    <value>ADD PARAMETER</value>
+    <value>PARAMETER HINZUFÜGEN</value>
   </data>
   <data name="BUTTON_CANCEL" xml:space="preserve">
-    <value>CANCEL</value>
+    <value>ABBRECHEN</value>
   </data>
   <data name="BUTTON_CLEAR" xml:space="preserve">
-    <value>CLEAR</value>
+    <value>LEEREN</value>
   </data>
   <data name="BUTTON_CREATE" xml:space="preserve">
-    <value>CREATE</value>
+    <value>ERSTELLEN</value>
   </data>
   <data name="BUTTON_OPEN" xml:space="preserve">
-    <value>OPEN</value>
+    <value>ÖFFNEN</value>
   </data>
   <data name="BUTTON_REMOVE" xml:space="preserve">
-    <value>REMOVE</value>
+    <value>ENTFERNEN</value>
   </data>
   <data name="BUTTON_SELECT" xml:space="preserve">
-    <value>SELECT</value>
+    <value>AUSWÄHLEN</value>
   </data>
   <data name="GRAPH_Absolute_Size" xml:space="preserve">
     <value>Absolute Size</value>
   </data>
   <data name="GRAPH_Alignment" xml:space="preserve">
-    <value>Alignment</value>
+    <value>Ausrichtung</value>
   </data>
   <data name="GRAPH_Alpha" xml:space="preserve">
     <value>Alpha</value>
   </data>
   <data name="GRAPH_Alpha_Channel" xml:space="preserve">
-    <value>Alpha Channel</value>
+    <value>Alphakanal</value>
   </data>
   <data name="GRAPH_Alpha_Mode" xml:space="preserve">
-    <value>Alpha Mode</value>
+    <value>Alphamodus</value>
   </data>
   <data name="GRAPH_Angle" xml:space="preserve">
-    <value>Angle</value>
+    <value>Winkel</value>
   </data>
   <data name="GRAPH_Basic" xml:space="preserve">
-    <value>Basic</value>
+    <value>Grundlegendes</value>
   </data>
   <data name="GRAPH_Blending" xml:space="preserve">
     <value>Blending</value>
   </data>
   <data name="GRAPH_Blue" xml:space="preserve">
-    <value>Blue</value>
+    <value>Blau</value>
   </data>
   <data name="GRAPH_Blue_Channel" xml:space="preserve">
-    <value>Blue Channel</value>
+    <value>Blauer Kanal</value>
   </data>
   <data name="GRAPH_Blur_Intensity" xml:space="preserve">
-    <value>Blur Intensity</value>
+    <value>Weichzeichnungsintensität</value>
   </data>
   <data name="GRAPH_Camera_Z" xml:space="preserve">
     <value>Camera Z</value>
   </data>
   <data name="GRAPH_Color" xml:space="preserve">
-    <value>Color</value>
+    <value>Farbe</value>
   </data>
   <data name="GRAPH_Comment" xml:space="preserve">
-    <value>Comment</value>
+    <value>Kommentieren</value>
   </data>
   <data name="GRAPH_Content" xml:space="preserve">
-    <value>Content</value>
+    <value>Inhalt</value>
   </data>
   <data name="GRAPH_Current_Output_Result" xml:space="preserve">
     <value>Current Output Result</value>
   </data>
   <data name="GRAPH_Custom_Functions" xml:space="preserve">
-    <value>Custom Functions</value>
+    <value>Benutzerdefinierte Funktionen</value>
   </data>
   <data name="GRAPH_Custom_Parameters" xml:space="preserve">
-    <value>Custom Parameters</value>
+    <value>Benutzerdefinierte Parameter</value>
   </data>
   <data name="GRAPH_Debug" xml:space="preserve">
     <value>Debug</value>
   </data>
   <data name="GRAPH_Default" xml:space="preserve">
-    <value>Default</value>
+    <value>Standard</value>
   </data>
   <data name="GRAPH_Default_Texture_Format" xml:space="preserve">
     <value>Default Texture Format</value>
   </data>
   <data name="GRAPH_Description" xml:space="preserve">
-    <value>Description</value>
+    <value>Beschreibung</value>
   </data>
   <data name="GRAPH_Direction" xml:space="preserve">
-    <value>Direction</value>
+    <value>Richtung</value>
   </data>
   <data name="GRAPH_Display" xml:space="preserve">
     <value>Display</value>
   </data>
   <data name="GRAPH_Effects" xml:space="preserve">
-    <value>Effects</value>
+    <value>Effekte</value>
   </data>
   <data name="GRAPH_Elevation" xml:space="preserve">
     <value>Elevation</value>
@@ -223,10 +223,10 @@
     <value>Environment HDR</value>
   </data>
   <data name="GRAPH_Font" xml:space="preserve">
-    <value>Font</value>
+    <value>Schriftart</value>
   </data>
   <data name="GRAPH_Font_Size" xml:space="preserve">
-    <value>Font Size</value>
+    <value>Schriftgröße</value>
   </data>
   <data name="GRAPH_Gamma" xml:space="preserve">
     <value>Gamma</value>
@@ -235,40 +235,40 @@
     <value>Graph Lines Display</value>
   </data>
   <data name="GRAPH_Green" xml:space="preserve">
-    <value>Green</value>
+    <value>Grün</value>
   </data>
   <data name="GRAPH_Green_Channel" xml:space="preserve">
-    <value>Green Channel</value>
+    <value>Grüner Kanal</value>
   </data>
   <data name="GRAPH_Height" xml:space="preserve">
-    <value>Height</value>
+    <value>Höhe</value>
   </data>
   <data name="GRAPH_Horizontal" xml:space="preserve">
     <value>Horizontal</value>
   </data>
   <data name="GRAPH_Hue" xml:space="preserve">
-    <value>Hue</value>
+    <value>Färbung</value>
   </data>
   <data name="GRAPH_Image" xml:space="preserve">
-    <value>Image</value>
+    <value>Bild</value>
   </data>
   <data name="GRAPH_Input_Type" xml:space="preserve">
-    <value>Input Type</value>
+    <value>Eingabetyp</value>
   </data>
   <data name="GRAPH_Instance_Parameters" xml:space="preserve">
     <value>Instance Parameters</value>
   </data>
   <data name="GRAPH_Intensity" xml:space="preserve">
-    <value>Intensity</value>
+    <value>Intensität</value>
   </data>
   <data name="GRAPH_Iterations" xml:space="preserve">
-    <value>Iterations</value>
+    <value>Iterationen</value>
   </data>
   <data name="GRAPH_Lightness" xml:space="preserve">
-    <value>Lightness</value>
+    <value>Helligkeit</value>
   </data>
   <data name="GRAPH_Luminosity" xml:space="preserve">
-    <value>Luminosity</value>
+    <value>Leuchtkraft</value>
   </data>
   <data name="GRAPH_Luminosity_Randomness" xml:space="preserve">
     <value>Luminosity Randomness</value>
@@ -283,7 +283,7 @@
     <value>Min</value>
   </data>
   <data name="GRAPH_Mode" xml:space="preserve">
-    <value>Mode</value>
+    <value>Modus</value>
   </data>
   <data name="GRAPH_Name" xml:space="preserve">
     <value>Name</value>
@@ -292,7 +292,7 @@
     <value>Noise Reduction</value>
   </data>
   <data name="GRAPH_Offset" xml:space="preserve">
-    <value>Offset</value>
+    <value>Versatz</value>
   </data>
   <data name="GRAPH_Outline" xml:space="preserve">
     <value>Outline</value>
@@ -301,7 +301,7 @@
     <value>Out Type</value>
   </data>
   <data name="GRAPH_Parameters" xml:space="preserve">
-    <value>Parameters</value>
+    <value>Parameter</value>
   </data>
   <data name="GRAPH_Pattern_Pivot" xml:space="preserve">
     <value>Pattern Pivot</value>
@@ -322,25 +322,25 @@
     <value>Radius</value>
   </data>
   <data name="GRAPH_Random_Seed" xml:space="preserve">
-    <value>Random Seed</value>
+    <value>Zufälliger Seed</value>
   </data>
   <data name="GRAPH_Rays" xml:space="preserve">
-    <value>Rays</value>
+    <value>Strahlen</value>
   </data>
   <data name="GRAPH_Red" xml:space="preserve">
-    <value>Red</value>
+    <value>Rot</value>
   </data>
   <data name="GRAPH_Red_Channel" xml:space="preserve">
-    <value>Red Channel</value>
+    <value>Roter Kanal</value>
   </data>
   <data name="GRAPH_Resource" xml:space="preserve">
-    <value>Resource</value>
+    <value>Resourcce</value>
   </data>
   <data name="GRAPH_Rotation" xml:space="preserve">
     <value>Rotation</value>
   </data>
   <data name="GRAPH_Saturation" xml:space="preserve">
-    <value>Saturation</value>
+    <value>Sättigung</value>
   </data>
   <data name="GRAPH_Scale" xml:space="preserve">
     <value>Scale</value>
@@ -349,7 +349,7 @@
     <value>Section</value>
   </data>
   <data name="GRAPH_Selected" xml:space="preserve">
-    <value>Selected</value>
+    <value>Ausgewählt</value>
   </data>
   <data name="GRAPH_Source_Only" xml:space="preserve">
     <value>Source Only</value>
@@ -358,7 +358,7 @@
     <value>Spacing</value>
   </data>
   <data name="GRAPH_Style" xml:space="preserve">
-    <value>Style</value>
+    <value>Stil</value>
   </data>
   <data name="GRAPH_Text" xml:space="preserve">
     <value>Text</value>
@@ -373,40 +373,40 @@
     <value>Tile Y</value>
   </data>
   <data name="GRAPH_Transform" xml:space="preserve">
-    <value>Transform</value>
+    <value>Transformieren</value>
   </data>
   <data name="GRAPH_Translation" xml:space="preserve">
     <value>Translation</value>
   </data>
   <data name="GRAPH_Type" xml:space="preserve">
-    <value>Type</value>
+    <value>Typ</value>
   </data>
   <data name="GRAPH_Variable_Name" xml:space="preserve">
     <value>Variable Name</value>
   </data>
   <data name="GRAPH_Vertical" xml:space="preserve">
-    <value>Vertical</value>
+    <value>Vertikal</value>
   </data>
   <data name="GRAPH_Width" xml:space="preserve">
-    <value>Width</value>
+    <value>Breite</value>
   </data>
   <data name="MENU_2D_PREVIEW" xml:space="preserve">
-    <value>_2D Preview</value>
+    <value>_2D-Vorschau</value>
   </data>
   <data name="MENU_3D_PREVIEW" xml:space="preserve">
-    <value>_3D Preview</value>
+    <value>_3D-Vorschau</value>
   </data>
   <data name="MENU_CLOSE_ALL" xml:space="preserve">
     <value>_Close All Graphs</value>
   </data>
   <data name="MENU_EDIT" xml:space="preserve">
-    <value>_Edit</value>
+    <value>_Bearbeiten</value>
   </data>
   <data name="MENU_EXPORT_OUTPUTS" xml:space="preserve">
     <value>_Export Outputs</value>
   </data>
   <data name="MENU_FILE" xml:space="preserve">
-    <value>_File</value>
+    <value>_Datei</value>
   </data>
   <data name="MENU_GRAPH_SETTINGS" xml:space="preserve">
     <value>_Graph Settings</value>
@@ -415,13 +415,13 @@
     <value>_Log</value>
   </data>
   <data name="MENU_NEW" xml:space="preserve">
-    <value>_New</value>
+    <value>_Neu</value>
   </data>
   <data name="MENU_OPEN" xml:space="preserve">
-    <value>_Open</value>
+    <value>_Öffnen</value>
   </data>
   <data name="MENU_PARAMETERS" xml:space="preserve">
-    <value>_Parameters</value>
+    <value>_Parameter</value>
   </data>
   <data name="MENU_PROMOTE_TO_CONSTANT" xml:space="preserve">
     <value>Promote to Constanst</value>
@@ -430,58 +430,58 @@
     <value>Promote to Function</value>
   </data>
   <data name="MENU_RECENT" xml:space="preserve">
-    <value>_Recent</value>
+    <value>_Zuletzt</value>
   </data>
   <data name="MENU_REDO" xml:space="preserve">
-    <value>_Redo</value>
+    <value>_Wiederholen</value>
   </data>
   <data name="MENU_RESET_TO_DEFAULT" xml:space="preserve">
     <value>Reset to Default</value>
   </data>
   <data name="MENU_SAVE" xml:space="preserve">
-    <value>_Save</value>
+    <value>_Speichern</value>
   </data>
   <data name="MENU_SAVE_AS" xml:space="preserve">
-    <value>_Save As</value>
+    <value>_Speichern unter...</value>
   </data>
   <data name="MENU_SHELF" xml:space="preserve">
     <value>_Shelf</value>
   </data>
   <data name="MENU_UNDO" xml:space="preserve">
-    <value>_Undo</value>
+    <value>_Rückgängig machen</value>
   </data>
   <data name="MENU_WINDOWS" xml:space="preserve">
-    <value>_Windows</value>
+    <value>_Fenster</value>
   </data>
   <data name="TITLE_2D_PREVIEW" xml:space="preserve">
-    <value>2D Preview</value>
+    <value>2D-Vorschau</value>
   </data>
   <data name="TITLE_3D_PREVIEW" xml:space="preserve">
-    <value>3D Preview</value>
+    <value>3D-Vorschau</value>
   </data>
   <data name="TITLE_LOG" xml:space="preserve">
     <value>Log</value>
   </data>
   <data name="TITLE_PARAMETERS" xml:space="preserve">
-    <value>Parameters</value>
+    <value>Parameter</value>
   </data>
   <data name="TITLE_RECENT" xml:space="preserve">
-    <value>RECENT</value>
+    <value>ZULETZT</value>
   </data>
   <data name="TITLE_SHELF" xml:space="preserve">
     <value>Shelf</value>
   </data>
   <data name="BUTTON_ALL" xml:space="preserve">
-    <value>ALL</value>
+    <value>ALLE</value>
   </data>
   <data name="BUTTON_APPLY" xml:space="preserve">
-    <value>APPLY</value>
+    <value>ÜBERNEHMEN</value>
   </data>
   <data name="BUTTON_EXPORT" xml:space="preserve">
-    <value>EXPORT</value>
+    <value>EXPORTIEREN</value>
   </data>
   <data name="BUTTON_RESET" xml:space="preserve">
-    <value>RESET</value>
+    <value>ZURÜCKSETZEN</value>
   </data>
   <data name="TITLE_DEFAULT_FORMAT" xml:space="preserve">
     <value>Default Format</value>
@@ -493,28 +493,28 @@
     <value>Export Outputs</value>
   </data>
   <data name="TITLE_SIZE" xml:space="preserve">
-    <value>Size</value>
+    <value>Größe</value>
   </data>
   <data name="TITLE_TEMPLATE" xml:space="preserve">
-    <value>Template</value>
+    <value>Vorlage</value>
   </data>
   <data name="DROPDOWN_BLANK" xml:space="preserve">
-    <value>Blank</value>
+    <value>Leer</value>
   </data>
   <data name="DROPDOWN_PBR_FULL" xml:space="preserve">
     <value>PBR Full</value>
   </data>
   <data name="DROPDOWN_PBR_NO_HEIGHT" xml:space="preserve">
-    <value>PBR - No Height</value>
+    <value>PBR - Keine Heightmap</value>
   </data>
   <data name="DROPDOWN_PBR_NO_HEIGHT_AO" xml:space="preserve">
-    <value>PBR - No Height, AO</value>
+    <value>PBR - Keine Heightmap, AO</value>
   </data>
   <data name="DROPDOWN_PBR_NO_HEIGHT_AO_NORMAL" xml:space="preserve">
-    <value>PBR - No Height, AO, Normal</value>
+    <value>PBR - Keine Heightmap, AO, Normal</value>
   </data>
   <data name="GRAPH_Ambient" xml:space="preserve">
-    <value>Ambient</value>
+    <value>Umgebung</value>
   </data>
   <data name="GRAPH_Bloom_Intensity" xml:space="preserve">
     <value>Bloom Intensity</value>
@@ -526,10 +526,10 @@
     <value>Distortion</value>
   </data>
   <data name="GRAPH_Far" xml:space="preserve">
-    <value>Far</value>
+    <value>Weit</value>
   </data>
   <data name="GRAPH_General" xml:space="preserve">
-    <value>General</value>
+    <value>Allgemein</value>
   </data>
   <data name="GRAPH_Height_Clip_Bias" xml:space="preserve">
     <value>Height Clip Bias</value>
@@ -544,10 +544,10 @@
     <value>Inherited</value>
   </data>
   <data name="GRAPH_Light" xml:space="preserve">
-    <value>Light</value>
+    <value>Licht</value>
   </data>
   <data name="GRAPH_Near" xml:space="preserve">
-    <value>Near</value>
+    <value>Nah</value>
   </data>
   <data name="GRAPH_Power" xml:space="preserve">
     <value>Power</value>
@@ -562,16 +562,16 @@
     <value>Value</value>
   </data>
   <data name="MENU_CAMERA" xml:space="preserve">
-    <value>Camera</value>
+    <value>Kamera</value>
   </data>
   <data name="MENU_LIGHT" xml:space="preserve">
-    <value>Light</value>
+    <value>Licht</value>
   </data>
   <data name="MENU_MATERIAL" xml:space="preserve">
     <value>Material</value>
   </data>
   <data name="MENU_SCENE" xml:space="preserve">
-    <value>Scene</value>
+    <value>Szene</value>
   </data>
   <data name="TIP_ALIGN_HORIZONTALLY" xml:space="preserve">
     <value>Align Nodes Horizontally</value>
@@ -607,25 +607,25 @@
     <value>Zoom out</value>
   </data>
   <data name="TITLE_COMMENT" xml:space="preserve">
-    <value>Comment...</value>
+    <value>Kommentieren...</value>
   </data>
   <data name="TITLE_HAS_BEEN_MODIFIED" xml:space="preserve">
     <value>has been modified. Do you want to save the changes?</value>
   </data>
   <data name="TITLE_NEW" xml:space="preserve">
-    <value>New</value>
+    <value>Neu</value>
   </data>
   <data name="TITLE_PARAMETER_NAME" xml:space="preserve">
-    <value>Parameter Name</value>
+    <value>Name des Parameters</value>
   </data>
   <data name="TITLE_REMOVE_PARAMETER" xml:space="preserve">
-    <value>Remove Parameter</value>
+    <value>Parameter entfernen</value>
   </data>
   <data name="TITLE_SAVE_CHANGES" xml:space="preserve">
-    <value>Save Changes</value>
+    <value>Änderungen speichern</value>
   </data>
   <data name="TITLE_SEARCH" xml:space="preserve">
-    <value>Search...</value>
+    <value>Suchen...</value>
   </data>
   <data name="TITLE_SEPARATE_FILES" xml:space="preserve">
     <value>Separate Files</value>
