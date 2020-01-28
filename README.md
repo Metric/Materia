@@ -56,16 +56,12 @@ If you are using a laptop with both an Intel processor and a discrete GPU. Pleas
 
 Known Bugs
 ====================
-* Still working on an issue where some nodes are not properly reprocessing in some cases. Unless, a parameter or input is changed on that node specifically. This is most likely due to a processing order bug.
 * Splatter circle pivot of min and max is not working as expected anymore, due to FX using compute shader pivot point differently. Splatter circle center pivot is working as expected.
-* Seems the 3D cubes have incorrect normals on 3 sides. Not sure if it is a bug in the Mikktspace calculations or was like that in Maya before exporting.
-* Node names are not interactively updating when modified via parameters view. This has to do with some UI / node changes, will be fixed later.
 * MTG Renderer is no longer working. Needs to be updated to take into account the new way graphs are processed.
 * AND and OR nodes do not add extra inputs as needed. Will be added back in later.
 * Max and Min nodes do not add extra inputs as needed. Will be added back in later.
 * Sequence Node does not add extra outputs as needed. Will be added back in later.
 * The gradient editor positions, curves min/max and levels multi range sliders are still finicky to move with the mouse.
-* The window panes icons and document pane close icon are not the proper color in AvalonDock when focused. They should still be a gray / white, but instead they are black.
 
 How-To and Various Info
 ========================
