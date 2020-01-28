@@ -214,6 +214,17 @@ namespace RSMI.Containers
             genTangSpaceDefault(ref ctx);
         }
 
+        public static void GenTangents(Mesh m, float angularThreshold)
+        {
+            SMikkTSpaceContext ctx = new SMikkTSpaceContext()
+            {
+                m_pInterface = new SMikkTSpaceInterface(),
+                m_pUserdata = m
+            };
+
+            genTangSpace(ref ctx, angularThreshold);
+        }
+
         /// <summary>
         /// this version of Mikktspace only deals with triangles
         /// in order to save sometime in moving the code over to c#

@@ -17,7 +17,7 @@ namespace RSMI
             List<Containers.Mesh> meshes = new List<Containers.Mesh>();
             using (AssimpContext ctx = new AssimpContext())
             {
-                var scene = ctx.ImportFileFromStream(stream, PostProcessSteps.Triangulate);
+                var scene = ctx.ImportFileFromStream(stream, PostProcessSteps.Triangulate | PostProcessSteps.GenerateNormals);
 
                 if (scene != null)
                 {
@@ -33,7 +33,7 @@ namespace RSMI
             List<Containers.Mesh> meshes = new List<Containers.Mesh>();
             using (AssimpContext ctx = new AssimpContext())
             {
-                var scene = ctx.ImportFile(path, PostProcessSteps.Triangulate);
+                var scene = ctx.ImportFile(path, PostProcessSteps.Triangulate | PostProcessSteps.GenerateNormals);
 
                 if (scene != null)
                 {

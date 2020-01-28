@@ -8,11 +8,11 @@ uniform sampler2D Bloom;
 void main() {
     //c is background real render
     vec4 c = texture(MainTex, UV);
-
     //b is foreground bloom
     vec4 b = texture(Bloom, UV);
-
-    vec4 final = c + b;
+	
+    vec4 final = vec4(0,0,0, clamp(c.a + b.a, 0, 1));
+	final.rgb = c.rgb + b.rgb;
 
     //since we are not doing anything else
     //in the render pipeline besides bloom

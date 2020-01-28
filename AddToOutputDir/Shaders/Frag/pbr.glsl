@@ -226,7 +226,7 @@ vec3 lighting(vec3 lo, vec3 pos, vec3 color, vec3 wPos, Shading shading) {
     vec3 radiance = color * atten;
 
     float NDF = distrubtionGGX(N,H,roughness);
-    float G = geometrySmith(N,V,L, roughness);
+    float G = geometrySmith(N,V,L,roughness);
 
     vec3 numerator = NDF * G * F;
     float denominator = 4.0 * NdotV * NdotL + 0.001;
@@ -285,7 +285,7 @@ void main()
     shading.uv = uv;
 
     vec3 N = shading.normal = unpackNormal(o, uv, normalMap);
-    vec3 R = normalize(reflect(V, N).xyz);
+    vec3 R = reflect(V, N).xyz;
 
     float NdotV = max(dot(N,V), 0.001);
 
@@ -315,16 +315,19 @@ void main()
     final += ldiffuse * lightColor * sss;
     ///
 
-    vec3 iKs = fresnelSchlickRoughness(NdotV, F0, roughness);
-    vec3 iKd = 1.0 - iKs;
+    vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);
+	vec3 iKs = F;
+    vec3 iKd = vec3(1.0) - iKs;
     iKd *= 1.0 - metallic;
-    vec3 irradiance = texture(irradianceMap, toRadialCoords(N)).rgb;
+	
+	//normal for irradiance map must be reversed
+    vec3 irradiance = texture(irradianceMap, toRadialCoords(-N)).rgb;
     vec3 diffuseIBL = irradiance * ldiffuse;
 
     const float MAX_REFLECT_LOD = 4.0;
     vec3 prefilteredColor = textureLod(prefilterMap, toRadialCoords(R), roughness * MAX_REFLECT_LOD).rgb;
-    vec2 envBRDF = texture(brdfLUT, vec2(NdotV, 1.0 - roughness)).rg;
-    vec3 specularIBL = prefilteredColor * (iKs * envBRDF.x + envBRDF.y);
+    vec2 envBRDF = texture(brdfLUT, vec2(NdotV, roughness)).rg;
+    vec3 specularIBL = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
     vec3 ambient = (iKd * diffuseIBL + specularIBL) * ao;
     //add ambient + light + emission
@@ -334,7 +337,7 @@ void main()
     float bright = lengthSqr(final);
     Brightness = vec4(0);
     if(bright > 3) {
-        Brightness = vec4(final, 1.0);
+        Brightness = vec4(clamp(final, vec3(0), vec3(1)), 1.0);
     }
 
     //HDR
