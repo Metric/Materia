@@ -12,6 +12,7 @@ namespace Materia.Nodes.MathNodes
     {
         NodeOutput output;
 
+        static int MIN_INPUTS = 2;
         public OrNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
@@ -28,16 +29,48 @@ namespace Materia.Nodes.MathNodes
             for (int i = 0; i < 2; ++i)
             {
                 var input = new NodeInput(NodeType.Bool, this, "Bool Input " + i);
+                input.OnInputChanged += Input_OnInputChanged;
                 Inputs.Add(input);
             }
 
             Outputs.Add(output);
         }
 
+        private void Input_OnInputChanged(NodeInput n)
+        {
+            int inputsFilled = 0;
+            for (int i = 0; i < Inputs.Count; ++i)
+            {
+                var input = Inputs[i];
+                if (input.HasInput)
+                {
+                    ++inputsFilled;
+                }
+            }
+
+            if (inputsFilled >= Inputs.Count - 1)
+            {
+                AddPlaceholderInput();
+            }
+            // minus 2 to account for an empty one
+            // +1 to account for execute pin
+            else if (inputsFilled < Inputs.Count - 2 && inputsFilled > MIN_INPUTS + 1)
+            {
+                for (int i = MIN_INPUTS + 1; i < Inputs.Count; ++i)
+                {
+                    var input = Inputs[i];
+                    Inputs.RemoveAt(i);
+                    RemovedInput(input);
+                    --i;
+                }
+            }
+        }
+
         protected override void AddPlaceholderInput()
         {
             var input = new NodeInput(NodeType.Bool, this, "Bool Input " + Inputs.Count);
             Inputs.Add(input);
+            AddedInput(input);
         }
         public override string GetShaderPart(string currentFrag)
         {

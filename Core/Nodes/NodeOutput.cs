@@ -36,6 +36,9 @@ namespace Materia.Nodes
 
     public class NodeOutput
     {
+        public delegate void OutputChanged(NodeOutput output);
+        public event OutputChanged OnOutputChanged;
+
         public List<NodeInput> To { get; protected set; }
 
         protected NodeType type;
@@ -112,6 +115,8 @@ namespace Materia.Nodes
             {
                 To.Insert(index, inp);
             }
+
+            OnOutputChanged?.Invoke(this);
         }
 
         public void Add(NodeInput inp, bool assign = false)
@@ -128,6 +133,7 @@ namespace Materia.Nodes
             else
             {
                 inp.Reference = this;
+                OnOutputChanged?.Invoke(this);
             }
 
             To.Add(inp);
@@ -138,6 +144,8 @@ namespace Materia.Nodes
             if (To.Remove(inp))
             {
                 inp.Reference = null;
+
+                OnOutputChanged?.Invoke(this);
             }
         }
     }

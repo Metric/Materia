@@ -14,6 +14,8 @@ namespace Materia.Nodes.Atomic
     {
         public new bool AbsoluteSize { get; set; }
 
+        static int MIN_OUTPUTS = 4;
+
         public new int Height
         {
             get
@@ -90,7 +92,37 @@ namespace Materia.Nodes.Atomic
             for(int i = 0; i < 4; ++i)
             {
                 var output = new NodeOutput(NodeType.Bool | NodeType.Color | NodeType.Gray | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, String.Format("{0:0}", Outputs.Count));
+                output.OnOutputChanged += Output_OnOutputChanged;
                 Outputs.Add(output);
+            }
+        }
+
+        private void Output_OnOutputChanged(NodeOutput output)
+        {
+            int outputsConnected = 0;
+            for (int i = 0; i < Outputs.Count; ++i)
+            {
+                var op = Outputs[i];
+                if (op.To.Count > 0)
+                {
+                    ++outputsConnected;
+                }
+            }
+
+            // minus 1 for execute pin
+            if (outputsConnected >= Outputs.Count - 1)
+            {
+                AddPlaceholderOutput();
+            }
+            else if(outputsConnected  < Outputs.Count - 2 && outputsConnected > MIN_OUTPUTS + 1)
+            {
+                for(int i = MIN_OUTPUTS + 1; i < Outputs.Count; ++i)
+                {
+                    var op = Outputs[i];
+                    Outputs.RemoveAt(i);
+                    --i;
+                    RemovedOutput(op);
+                }
             }
         }
 
@@ -98,6 +130,7 @@ namespace Materia.Nodes.Atomic
         {
             var output = new NodeOutput(NodeType.Bool | NodeType.Color | NodeType.Gray | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, String.Format("{0:0}", Outputs.Count));
             Outputs.Add(output);
+            AddedOutput(output);
         }
 
         public override void TryAndProcess()
