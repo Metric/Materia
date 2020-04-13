@@ -1,0 +1,31 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:m="clr-namespace:MateriaCore.Components"
+             xmlns:p="clr-namespace:MateriaCore.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MateriaCore.Components.Levels">
+  <Grid MinWidth="256">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="36" />
+      <RowDefinition Height="28" />
+      <RowDefinition Height="100" />
+      <RowDefinition Height="28" />
+    </Grid.RowDefinitions>
+    <m:MultiRangeSlider x:Name="MultiSlider" Grid.Row="1" Margin="5" />
+    <ComboBox Foreground="{StaticResource TextLight}" HorizontalAlignment="Left" Width="64" Margin="5" Name="Channels">
+      <ComboBox.Items>
+        <ComboBoxItem Foreground="{StaticResource TextLight}" Content="RGB" />
+        <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:Local Red}" />
+        <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:Local Green}" />
+        <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:Local Blue}" />
+      </ComboBox.Items>
+    </ComboBox>
+    <Border Grid.Row="2" Name="HistoContainer" Background="{StaticResource Overlay5}">
+      <m:Histogram x:Name="Histogram" />
+    </Border>
+    <m:RangeSlider x:Name="ValueRange" Grid.Row="3" Margin="5" />
+    <Button x:Name="ResetButton" Content="{p:Local Reset}" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="64" Height="32" Margin="0,5,5,0" BorderThickness="0" />
+  </Grid>
+</UserControl>

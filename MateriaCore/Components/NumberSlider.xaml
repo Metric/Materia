@@ -1,0 +1,16 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:m ="clr-namespace:MateriaCore.Components"
+             mc:Ignorable="d" d:DesignWidth="256" d:DesignHeight="32" Height="32" HorizontalAlignment="Stretch"
+             x:Class="MateriaCore.Components.NumberSlider">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="62" />
+    </Grid.ColumnDefinitions>
+    <m:Slider Grid.Column="0" x:Name="SlideInput" IsEnabled="{Binding IsEnabled}" Value="0.5" />
+    <m:NumberInput IsEnabled="{Binding IsEnabled}" Grid.Column="1" Margin="2" x:Name="Input" HorizontalAlignment="Stretch"  />
+  </Grid>
+</UserControl>

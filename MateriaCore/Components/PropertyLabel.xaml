@@ -1,0 +1,25 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:m="clr-namespace:MateriaCore.Components"
+             xmlns:p="clr-namespace:MateriaCore.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MateriaCore.Components.PropertyLabel">
+  <Grid Margin="0">
+    <TextBlock Name="LabelContent" TextAlignment="Left" VerticalAlignment="Top" Height="32" Foreground="LightGray" Margin="5" />
+    <m:SplitButton Name="EditVar" Background="Transparent" Height="32" Width="64" VerticalAlignment="Top" Margin="5" HorizontalAlignment="Right">
+      <m:SplitButton.InnerContent>
+        <Image x:Name="FIcon" Source="resm:MateriaCore.Images.functionedit.png" ToolTip.Tip="{p:Local EditFunction}" />
+      </m:SplitButton.InnerContent>
+      <m:SplitButton.ContextMenu>
+          <ContextMenu>
+            <MenuItem Name="ConstantVar" Header="{p:Local PromoteToConstant}" />
+            <MenuItem Name="FunctionVar" Header="{p:Local PromoteToFunction}" />
+            <MenuItem Name="AssignVar" Header="{p:Local AssignFunction}" />
+            <MenuItem Name="DefaultVar" Header="{p:Local ResetToDefault}" />
+          </ContextMenu>
+      </m:SplitButton.ContextMenu>
+    </m:SplitButton>
+  </Grid>
+</UserControl>

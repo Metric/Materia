@@ -1,0 +1,127 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Embedded\brdf.png" />
+    <None Remove="Embedded\Frag\blend.glsl" />
+    <None Remove="Embedded\Frag\bloom.glsl" />
+    <None Remove="Embedded\Frag\blur.glsl" />
+    <None Remove="Embedded\Frag\channelswitch.glsl" />
+    <None Remove="Embedded\Frag\circle.glsl" />
+    <None Remove="Embedded\Frag\curve.glsl" />
+    <None Remove="Embedded\Frag\depth.glsl" />
+    <None Remove="Embedded\Frag\distance.glsl" />
+    <None Remove="Embedded\Frag\distanceprecalc.glsl" />
+    <None Remove="Embedded\Frag\emboss.glsl" />
+    <None Remove="Embedded\Frag\fx.glsl" />
+    <None Remove="Embedded\Frag\gamma.glsl" />
+    <None Remove="Embedded\Frag\gradientmap.glsl" />
+    <None Remove="Embedded\Frag\grayscaleconv.glsl" />
+    <None Remove="Embedded\Frag\hsl.glsl" />
+    <None Remove="Embedded\Frag\image-basic.glsl" />
+    <None Remove="Embedded\Frag\invert.glsl" />
+    <None Remove="Embedded\Frag\irradiance.glsl" />
+    <None Remove="Embedded\Frag\levels.glsl" />
+    <None Remove="Embedded\Frag\motionblur.glsl" />
+    <None Remove="Embedded\Frag\normals.glsl" />
+    <None Remove="Embedded\Frag\occlusion.glsl" />
+    <None Remove="Embedded\Frag\pbr.glsl" />
+    <None Remove="Embedded\Frag\preview.glsl" />
+    <None Remove="Embedded\Frag\sharpen.glsl" />
+    <None Remove="Embedded\Frag\skybox.glsl" />
+    <None Remove="Embedded\Frag\spherical.glsl" />
+    <None Remove="Embedded\Frag\transform.glsl" />
+    <None Remove="Embedded\Frag\uniformcolor.glsl" />
+    <None Remove="Embedded\Frag\uv.glsl" />
+    <None Remove="Embedded\Frag\warp.glsl" />
+    <None Remove="Embedded\Frag\warpdirectional.glsl" />
+    <None Remove="Embedded\Tess\tcs.glsl" />
+    <None Remove="Embedded\Tess\tes.glsl" />
+    <None Remove="Embedded\Vertex\basic.glsl" />
+    <None Remove="Embedded\Vertex\image.glsl" />
+    <None Remove="Embedded\Vertex\pbr.glsl" />
+    <None Remove="Embedded\Vertex\pbrtes.glsl" />
+    <None Remove="Embedded\Vertex\preview.glsl" />
+    <None Remove="Embedded\Vertex\skybox.glsl" />
+    <None Remove="Embedded\Vertex\uv.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Embedded\Frag\skybox.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\spherical.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Embedded\brdf.png" />
+    <EmbeddedResource Include="Embedded\Frag\blend.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\bloom.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\blur.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\channelswitch.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\circle.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\curve.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\depth.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\distance.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\distanceprecalc.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\emboss.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\fx.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\gamma.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\gradientmap.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\grayscaleconv.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\hsl.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\image-basic.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\invert.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\irradiance.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\levels.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\motionblur.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\normals.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\occlusion.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\pbr.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\preview.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\sharpen.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\transform.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\uniformcolor.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\uv.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\warp.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\warpdirectional.glsl" />
+    <EmbeddedResource Include="Embedded\Tess\tcs.glsl" />
+    <EmbeddedResource Include="Embedded\Tess\tes.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\basic.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\image.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\pbr.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\pbrtes.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\preview.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\skybox.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\uv.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AssimpNet" Version="4.1.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="3.1.3" />
+    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="vcdiff\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MLog\MLog.csproj" />
+  </ItemGroup>
+
+</Project>

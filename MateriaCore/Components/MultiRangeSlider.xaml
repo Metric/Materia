@@ -1,0 +1,51 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="21"
+             x:Class="MateriaCore.Components.MultiRangeSlider">
+  <Grid Background="Transparent">
+    <Border BorderThickness="0" Canvas.Top="0" Background="{StaticResource Overlay5}" VerticalAlignment="Center" Height="2" Margin="8,0,8,0"></Border>
+    <Canvas VerticalAlignment="Center">
+      <Border Canvas.Left="0" Canvas.Top="0" BorderBrush="White" HorizontalAlignment="Left" VerticalAlignment="Center"  Name="Min" Width="16" Height="16" BorderThickness="0">
+        <Path HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 0 12 L 12 0">
+          <Path.RenderTransform>
+            <TransformGroup>
+              <RotateTransform Angle="-135" />
+              <TranslateTransform X="0" Y="-12" />
+            </TransformGroup>
+          </Path.RenderTransform>
+          <Path.Fill>
+            <SolidColorBrush Color="#28FFFFFF" />
+          </Path.Fill>
+        </Path>
+      </Border>
+      <Border Canvas.Left="0" Canvas.Top="0" BorderBrush="White" HorizontalAlignment="Left" VerticalAlignment="Center" Name="Mid" Width="16" Height="16" BorderThickness="0">
+        <Path HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 0 12 L 12 0">
+          <Path.RenderTransform>
+            <TransformGroup>
+              <RotateTransform Angle="-135" />
+              <TranslateTransform X="0" Y="-12" />
+            </TransformGroup>
+          </Path.RenderTransform>
+          <Path.Fill>
+            <SolidColorBrush Color="#3DFFFFFF" />
+          </Path.Fill>
+        </Path>
+      </Border>
+      <Border Canvas.Left="0" Canvas.Top="0" BorderBrush="White" HorizontalAlignment="Left" VerticalAlignment="Center" Name="Max" Width="16" Height="16" BorderThickness="0">
+        <Path HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 0 12 L 12 0">
+          <Path.RenderTransform>
+            <TransformGroup>
+              <RotateTransform Angle="-135" />
+              <TranslateTransform X="0" Y="-12" />
+            </TransformGroup>
+          </Path.RenderTransform>
+          <Path.Fill>
+            <SolidColorBrush Color="#DDFFFFFF" />
+          </Path.Fill>
+        </Path>
+      </Border>
+    </Canvas>
+  </Grid>
+</UserControl>

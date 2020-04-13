@@ -1,0 +1,26 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:m="clr-namespace:MateriaCore.Components"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MateriaCore.Components.VectorSlider">
+  <StackPanel Orientation="Vertical">
+    <Grid>
+      <m:NumberSlider x:Name="XValue" />
+      <TextBlock Text="X" Margin="10,10,0,0" />
+    </Grid>
+    <Grid>
+      <m:NumberSlider x:Name="YValue" />
+      <TextBlock Text="Y" Margin="10,10,0,0" />
+    </Grid>
+    <Grid Name="ZView">
+      <m:NumberSlider x:Name="ZValue" />
+      <TextBlock Text="Z" Margin="10,10,0,0" />
+    </Grid>
+    <Grid Name="WView">
+      <m:NumberSlider x:Name="WValue" />
+      <TextBlock Text="W" Margin="10,10,0,0" />
+    </Grid>
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,11 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="256" d:DesignHeight="32" Height="36" HorizontalAlignment="Stretch"
+             x:Class="MateriaCore.Components.DropDown">
+  <Grid>
+    <ComboBox Name="Dropdown" MinWidth="128" Margin="2,2,2,2" Foreground="{StaticResource TextLight}" IsEnabled="{Binding IsEnabled}" Height="36" />
+    <TextBox Name="DropdownEdit" Height="36" MinWidth="108" Margin="2,2,20,2" BorderThickness="0" IsVisible="False" Foreground="{StaticResource TextLight}" />
+  </Grid>
+</UserControl>

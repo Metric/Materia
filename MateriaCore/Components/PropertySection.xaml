@@ -1,0 +1,19 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MateriaCore.Components.PropertySection">
+  <StackPanel Background="{StaticResource Overlay5}" Margin="0,2,0,0">
+    <Grid Name="Header" Height="32">
+      <TextBlock x:Name="LabelContent" Foreground="{StaticResource TextLight}" Margin="42,5,5,5" FontSize="18"  />
+      <Button x:Name="CollapsedButton" Background="Transparent" BorderThickness="0" Width="32" Height="32" Margin="4,4,0,4" VerticalAlignment="Center" RenderTransformOrigin="50%,50%" HorizontalAlignment="Left">
+        <Image HorizontalAlignment="Left" Source="resm:MateriaCore.Images.chevron_right.png"></Image>
+        <Button.RenderTransform>
+          <RotateTransform Angle="90" />
+        </Button.RenderTransform>
+      </Button>
+    </Grid>
+    <StackPanel Name="PanelItems" />
+  </StackPanel>
+</UserControl>

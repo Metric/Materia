@@ -1,0 +1,22 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:m="clr-namespace:MateriaCore.Components"
+             xmlns:p="clr-namespace:MateriaCore.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="34" Height="32" HorizontalAlignment="Stretch"
+             x:Class="MateriaCore.Components.FunctionListItem">
+  <Grid Margin="5,2,5,1">
+    <Grid HorizontalAlignment="Stretch">
+      <Button Name="RemoveFunction" Width="80" Background="Transparent" HorizontalAlignment="Right" BorderThickness="0" Height="32">
+        <StackPanel Height="32" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock MaxWidth="46" Foreground="{StaticResource TextLight}" Text="{p:Local Remove}" Margin="4" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button ToolTip.Tip="{p:Local EditFunction}" Background="Transparent" Name="EditFunction" BorderThickness="0" HorizontalAlignment="Left" Width="32" Height="32">
+        <Image Source="resm:MateriaCore.Images.functionedit.png" Margin="0" />
+      </Button>
+      <m:TextInput x:Name="FuncName" Height="32" Margin="34,0,82,0" />
+    </Grid>
+  </Grid>
+</UserControl>

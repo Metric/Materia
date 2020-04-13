@@ -1,0 +1,61 @@
+﻿<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="MateriaCore.App">
+    <Application.Styles>
+        <StyleInclude Source="avares://Avalonia.Themes.Default/DefaultTheme.xaml"/>
+        <StyleInclude Source="avares://Avalonia.Themes.Default/Accents/BaseDark.xaml"/>
+    </Application.Styles>
+    <Application.Resources>
+      <!-- Color Theme Base -->
+      <SolidColorBrush x:Key="Primary" Color="#FF1976d2" />
+      <SolidColorBrush x:Key="Primary80" Color="#CC1976d2" />
+      <SolidColorBrush x:Key="PrimarDisabled" Color="#1E1976d2" />
+      <SolidColorBrush x:Key="TextDark" Color="#000000" />
+      <SolidColorBrush x:Key="TextLight" Color="#DDFFFFFF" />
+      <SolidColorBrush x:Key="TextLightMedium" Color="#99FFFFFF" />
+      <SolidColorBrush x:Key="TextDisabled" Color="#60FFFFFF" />
+
+      <!-- Color Theme Windows -->
+      <SolidColorBrush x:Key="Surface" Color="#121212" />
+
+      <SolidColorBrush x:Key="Overlay5" Color="#0CFFFFFF" />
+      <!-- 5% -->
+      <SolidColorBrush x:Key="Overlay7" Color="#11FFFFFF" />
+      <!-- 7% -->
+      <SolidColorBrush x:Key="Overlay8" Color="#14FFFFFF"/>
+      <!-- 8% -->
+      <SolidColorBrush x:Key="Overlay9" Color="#16FFFFFF" />
+      <!-- 9% -->
+      <SolidColorBrush x:Key="Overlay11" Color="#1CFFFFFF" />
+      <!-- 11% -->
+      <SolidColorBrush x:Key="Overlay16" Color="#28FFFFFF" />
+      <SolidColorBrush x:Key="Overlay24" Color="#3DFFFFFF" />
+      <SolidColorBrush x:Key="Solid20" Color="#414141" />
+      <SolidColorBrush x:Key="Solid16" Color="#383838" />
+
+      <!-- Just the Colors -->
+      <!--<Color x:Key="ColorPrimary" R="41" G="182" B="246" A="255" />
+      <Color x:Key="ColorPrimary80" R="41" G="182" B="246" A="204" />
+      <Color x:Key="ColorPrimaryDisabled" R="41" G="182" B="246" A="30" />
+
+      <Color x:Key="ColorTextDark" R="0" G="0" B="0" A="255" />
+      <Color x:Key="ColorTextLight" R="255" G="255" B="255" A="222" />
+      <Color x:Key="ColorTextLightMedium" R="255" G="255" B="255" A="153" />
+      <Color x:Key="ColorTextDisabled" R="255" G="255" B="255" A="97" />
+
+      <Color x:Key="ColorSurface" R="18" G="18" B="18" A="255" />
+      <Color x:Key="ColorOverlay5" R="255" G="255" B="255" A="13" />
+      <Color x:Key="ColorOverlay7" R="255" G="255" B="255" A="18" />
+      <Color x:Key="ColorOverlay8" R="255" G="255" B="255" A="20" />
+      <Color x:Key="ColorOverlay9" R="255" G="255" B="255" A="23" />
+      <Color x:Key="ColorOverlay11" R="255" G="255" B="255" A="28" />
+      <Color x:Key="ColorOverlay16" R="255" G="255" B="255" A="40" />
+      <Color x:Key="ColorOverlay24" R="255" G="255" B="255" A="61" />
+
+      <Color x:Key="ColorSolid20" R="65" G="65" B="65" A="255" />-->
+      <!-- solid color roughly equates to 8% like transparency on our surface color -->
+      <!--Color x:Key="ColorSolid16" R="56" G="56" B="56" A="255" />-->
+      <!-- solid color roughly equates to 16% like transparency on our surface color -->
+
+    </Application.Resources>
+</Application>

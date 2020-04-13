@@ -1,0 +1,81 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:p="clr-namespace:MateriaCore.Localization"
+        xmlns:m="clr-namespace:MateriaCore.Components"
+        mc:Ignorable="d" d:DesignWidth="525" d:DesignHeight="420"
+        x:Class="MateriaCore.Components.Dialogs.ColorPicker"
+        Title="Color Picker" Height="420" Width="560" ShowInTaskbar="False" MaxWidth="560" MaxHeight="420" CanResize="False" WindowStartupLocation="CenterOwner">
+  <Grid MinHeight="345" MinWidth="512" Margin="0,0,0,0" Background="{StaticResource Surface}">
+    <Grid Background="{StaticResource Overlay5}"></Grid>
+    <Canvas Name="GHue" VerticalAlignment="Top" HorizontalAlignment="Left" Background="Gray" Width="24" Height="287" Margin="283,24,0,0" ClipToBounds="True">
+      <Image Width="24" Height="287" Name="HueSelector" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="UniformToFill" Canvas.Left="1" Canvas.Top="1" />
+      <Rectangle Name="HPoint" Height="1" Width="24" Fill="White" VerticalAlignment="Top" Margin="0" IsHitTestVisible="False" />
+    </Canvas>
+    <Canvas Name="GSatVal" VerticalAlignment="Top" HorizontalAlignment="Left" Background="Gray" Width="256" Height="287" Margin="24,24,0,0">
+      <Image Width="256" Height="287" Name="SaturationValueSelector" Stretch="UniformToFill" />
+      <Grid Name="SVPoint" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0" IsHitTestVisible="False">
+        <Ellipse Width="10" Height="10" StrokeThickness="0.45" Stroke="Black" IsHitTestVisible="False" />
+        <Ellipse Width="9" Height="9" StrokeThickness="0.45" Stroke="White" IsHitTestVisible="False" />
+      </Grid>
+    </Canvas>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="20,23,25,0">
+      <Grid VerticalAlignment="Top" Width="128" Height="32" Margin="0">
+        <Grid.Background>
+          <VisualBrush SourceRect="0,0,8,8" DestinationRect="0,0,8,8" TileMode="Tile">
+            <VisualBrush.Visual>
+              <Grid Height="8">
+                <Rectangle Fill="White" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0" />
+                <Rectangle Fill="LightGray" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,0,0,0" />
+                <Rectangle Fill="LightGray" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,4,0,0" />
+                <Rectangle Fill="White" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,4,0,0" />
+              </Grid>
+            </VisualBrush.Visual>
+          </VisualBrush>
+        </Grid.Background>
+        <Grid VerticalAlignment="Top" HorizontalAlignment="Left" Name="SelectedColor" Width="64" Height="32" Background="LightGray" Margin="0,0,0,0"></Grid>
+        <Grid VerticalAlignment="Top" HorizontalAlignment="Left" Name="PreviousColor" Width="64" Height="32" Background="LightGray" Margin="65,0,0,0"></Grid>
+      </Grid>
+      <Button Name="Dropper" HorizontalAlignment="Right" Margin="4,0,0,0" BorderThickness="0" VerticalAlignment="Top" Width="32" Height="32">
+        <Button.Content>
+          <Image Source="resm:MateriaCore.Images.dropper.png" Margin="4" />
+        </Button.Content>
+      </Button>
+    </StackPanel>
+    <Grid VerticalAlignment="Top" HorizontalAlignment="Right" Width="178" Height="250" Margin="0,64,20,0">
+      <StackPanel Orientation="Vertical">
+        <Grid Height="32">
+          <m:NumberSlider x:Name="HueSlider" />
+          <TextBlock VerticalAlignment="Top" IsHitTestVisible="false"  Text="{p:Local Hue}" FontSize="10" Foreground="{StaticResource TextLight}" Margin="10,10,0,0" />
+        </Grid>
+        <Grid Height="32">
+          <m:NumberSlider x:Name="SaturationSlider"/>
+          <TextBlock VerticalAlignment="Top" IsHitTestVisible="false"  Text="{p:Local Saturation}" FontSize="10" Foreground="{StaticResource TextLight}" Margin="10,10,0,0" />
+        </Grid>
+        <Grid Height="32">
+          <m:NumberSlider x:Name="ValueSlider" />
+          <TextBlock VerticalAlignment="Top" IsHitTestVisible="false"  Text="{p:Local Value}" FontSize="10" Foreground="{StaticResource TextLight}" Margin="10,10,0,0" />
+        </Grid>
+        <Grid Height="32" Margin="0,10,0,0">
+          <m:NumberSlider x:Name="RedSlider" />
+          <TextBlock VerticalAlignment="Top" IsHitTestVisible="false"  Text="{p:Local Red}" FontSize="10" Foreground="{StaticResource TextLight}" Margin="10,10,0,0" />
+        </Grid>
+        <Grid Height="32">
+          <m:NumberSlider x:Name="GreenSlider" />
+          <TextBlock VerticalAlignment="Top" IsHitTestVisible="false"  Text="{p:Local Green}" FontSize="10" Foreground="{StaticResource TextLight}" Margin="10,10,0,0" />
+        </Grid>
+        <Grid Height="32">
+          <m:NumberSlider x:Name="BlueSlider" />
+          <TextBlock VerticalAlignment="Top" IsHitTestVisible="false"  Text="{p:Local Blue}" FontSize="10" Foreground="{StaticResource TextLight}" Margin="10,10,0,0" />
+        </Grid>
+        <Grid Height="32" Margin="0,10,0,0">
+          <m:NumberSlider x:Name="AlphaSlider" />
+          <TextBlock VerticalAlignment="Top" IsHitTestVisible="false"  Text="{p:Local Alpha}" FontSize="10" Foreground="{StaticResource TextLight}" Margin="10,10,0,0" />
+        </Grid>
+      </StackPanel>
+    </Grid>
+    <Button x:Name="SelectButton" IsDefault="True" Content="{p:Local Select}" FontSize="10"  HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="64" Height="32" Margin="0,0,20,20" BorderThickness="0" />
+    <Button x:Name="CancelButton" Background="{StaticResource Overlay5}" Foreground="{StaticResource TextLight}" Content="{p:Local Cancel}" FontSize="10"  HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="64" Height="32" Margin="24,0,0,20" BorderThickness="0" />
+  </Grid>
+</Window>

@@ -1,0 +1,27 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MateriaCore.Components.GradientEditor">
+  <Grid Height="64" Margin="8,0,8,8">
+    <Grid Name="ImageWrapper" Height="32" VerticalAlignment="Top" >
+      <Grid.Background>
+        <VisualBrush SourceRect="0,0,8,8" DestinationRect="0,0,8,8" TileMode="Tile">
+          <VisualBrush.Visual>
+            <Grid Height="8">
+              <Rectangle Fill="White" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0" />
+              <Rectangle Fill="LightGray" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,0,0,0" />
+              <Rectangle Fill="LightGray" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,4,0,0" />
+              <Rectangle Fill="White" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,4,0,0" />
+            </Grid>
+          </VisualBrush.Visual>
+        </VisualBrush>
+      </Grid.Background>
+      <Image Name="GradientImage" />
+    </Grid>
+    <Canvas Name="HandleHolder" VerticalAlignment="Bottom" Height="32">
+
+    </Canvas>
+  </Grid>
+</UserControl>

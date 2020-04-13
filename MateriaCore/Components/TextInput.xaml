@@ -1,0 +1,10 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="32" Height="32" HorizontalAlignment="Stretch"
+             x:Class="MateriaCore.Components.TextInput">
+  <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <TextBox HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Name="Input" Text="" Margin="2" Padding="2,4,2,0" CaretBrush="{StaticResource Primary}" Background="{StaticResource Overlay5}" BorderThickness="0" Foreground="{StaticResource TextLight}" />
+  </Grid>
+</UserControl>

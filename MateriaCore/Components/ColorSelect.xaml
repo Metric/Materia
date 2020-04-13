@@ -1,0 +1,35 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="256" d:DesignHeight="42" Height="42" HorizontalAlignment="Stretch"
+             x:Class="MateriaCore.Components.ColorSelect">
+  <Grid Height="42" HorizontalAlignment="Stretch">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="42" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <Grid Grid.Column="2" Margin="0" HorizontalAlignment="Stretch" Height="42">
+      <Grid.Background>
+        <VisualBrush SourceRect="0,0,8,8" DestinationRect="0,0,8,8" TileMode="Tile">
+          <VisualBrush.Visual>
+            <Grid Height="8">
+              <Rectangle Fill="White" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0" />
+              <Rectangle Fill="LightGray" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,0,0,0" />
+              <Rectangle Fill="LightGray" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,4,0,0" />
+              <Rectangle Fill="White" Width="4" Height="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,4,0,0" />
+            </Grid>
+          </VisualBrush.Visual>
+        </VisualBrush>
+      </Grid.Background>
+      <Grid Name="SelectColor" Margin="0" Background="Black"></Grid>
+    </Grid>
+
+    <Button Name="Dropper" HorizontalAlignment="Center" BorderThickness="0" VerticalAlignment="Center" Width="32" Height="32">
+      <Button.Content>
+        <Image Source="resm:MateriaCore.Images.dropper.png" Margin="4" />
+      </Button.Content>
+    </Button>
+  </Grid>
+</UserControl>

@@ -1,0 +1,26 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MateriaCore.Components.SplitButton">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="32" />
+    </Grid.ColumnDefinitions>
+    <Button Name="Primary" Background="{Binding Background}" BorderThickness="0" Content="{Binding InnerContent}" />
+    <Button Grid.Column="2" Background="{Binding Background}" Name="Secondary" BorderThickness="0">
+      <Grid x:Name="arrowGlyph"
+          IsHitTestVisible="False"
+          Margin="4,3,4,3">
+        <Path x:Name="Arrow"
+          Width="9"
+          Height="5"
+          Data="M0,0 L3,0 4.5,1.5 6,0 9,0 4.5,4.5 z"
+          Fill="{StaticResource TextLight}"
+          Margin="0,1,0,0" />
+      </Grid>
+    </Button>
+  </Grid>
+</UserControl>

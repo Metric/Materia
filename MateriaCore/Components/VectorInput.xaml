@@ -1,0 +1,14 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:m="clr-namespace:MateriaCore.Components"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MateriaCore.Components.VectorInput">
+  <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+    <m:NumberInput x:Name="XPos" Margin="0,0,5,0" Height="32" Width="64"/>
+    <m:NumberInput x:Name="YPos" Margin="0,0,5,0" Height="32" Width="64" />
+    <m:NumberInput x:Name="ZPos" Margin="0,0,5,0" Height="32" Width="64" />
+    <m:NumberInput x:Name="WPos" Height="32" Width="64" />
+  </StackPanel>
+</UserControl>

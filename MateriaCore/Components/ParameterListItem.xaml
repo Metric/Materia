@@ -1,0 +1,33 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:m="clr-namespace:MateriaCore.Components"
+             xmlns:p="clr-namespace:MateriaCore.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MateriaCore.Components.ParameterListItem">
+  <StackPanel Orientation="Vertical" Background="Transparent" Margin="5,2,5,1">
+    <Grid>
+      <Button Name="RemoveParam" Background="Transparent" Width="80" HorizontalAlignment="Right" Margin="0" BorderThickness="0" Height="32">
+        <StackPanel Height="32" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Foreground="LightGray" Text="{p:Local Remove}" Margin="4" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button x:Name="CollapsedButton" Background="Transparent" BorderThickness="0" Width="32" Height="32" HorizontalAlignment="Left" RenderTransformOrigin="50%,50%">
+        <Image Source="resm:MateriaCore.Images.chevron_right.png" />
+        <Button.RenderTransform>
+          <RotateTransform Angle="90" />
+        </Button.RenderTransform>
+      </Button>
+      <m:TextInput VerticalAlignment="Center" Height="32" x:Name="ParamName" Margin="34,1,82,0" />
+    </Grid>
+    <!--
+    <local:ParameterMap x:Name="Params" />
+    -->
+    <StackPanel Orientation="Vertical">
+      <StackPanel Name="ParamDefaultStack">
+
+      </StackPanel>
+    </StackPanel>
+  </StackPanel>
+</UserControl>

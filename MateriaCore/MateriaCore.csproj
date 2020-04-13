@@ -1,0 +1,254 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>false</Optimize>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Update="**\*.xaml.cs">
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <AvaloniaResource Include="**\*.xaml">
+      <SubType>Designer</SubType>
+    </AvaloniaResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Remove="Components\ColorSelect.xaml" />
+    <AvaloniaResource Remove="Components\CurvePoint.xaml" />
+    <AvaloniaResource Remove="Components\Curves.xaml" />
+    <AvaloniaResource Remove="Components\Dialogs\ColorPicker.xaml" />
+    <AvaloniaResource Remove="Components\Dialogs\MessageBox.xaml" />
+    <AvaloniaResource Remove="Components\DropDown.xaml" />
+    <AvaloniaResource Remove="Components\FileSelector.xaml" />
+    <AvaloniaResource Remove="Components\FunctionEditor.xaml" />
+    <AvaloniaResource Remove="Components\FunctionListItem.xaml" />
+    <AvaloniaResource Remove="Components\GradientEditor.xaml" />
+    <AvaloniaResource Remove="Components\GradientHandle.xaml" />
+    <AvaloniaResource Remove="Components\Histogram.xaml" />
+    <AvaloniaResource Remove="Components\Levels.xaml" />
+    <AvaloniaResource Remove="Components\MultiRangeSlider.xaml" />
+    <AvaloniaResource Remove="Components\NumberInput.xaml" />
+    <AvaloniaResource Remove="Components\NumberSlider.xaml" />
+    <AvaloniaResource Remove="Components\Panes\Layers.xaml" />
+    <AvaloniaResource Remove="Components\ParameterEditor.xaml" />
+    <AvaloniaResource Remove="Components\ParameterListItem.xaml" />
+    <AvaloniaResource Remove="Components\ParameterMap.xaml" />
+    <AvaloniaResource Remove="Components\PropertyLabel.xaml" />
+    <AvaloniaResource Remove="Components\PropertySection.xaml" />
+    <AvaloniaResource Remove="Components\RangeSlider.xaml" />
+    <AvaloniaResource Remove="Components\Slider.xaml" />
+    <AvaloniaResource Remove="Components\SplitButton.xaml" />
+    <AvaloniaResource Remove="Components\TextInput.xaml" />
+    <AvaloniaResource Remove="Components\Toggle.xaml" />
+    <AvaloniaResource Remove="Components\VectorInput.xaml" />
+    <AvaloniaResource Remove="Components\VectorSlider.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Components\ColorSelect.xaml" />
+    <None Remove="Components\CurvePoint.xaml" />
+    <None Remove="Components\Curves.xaml" />
+    <None Remove="Components\Dialogs\MessageBox.xaml" />
+    <None Remove="Components\FileSelector.xaml" />
+    <None Remove="Components\FunctionEditor.xaml" />
+    <None Remove="Components\FunctionListItem.xaml" />
+    <None Remove="Components\GradientEditor.xaml" />
+    <None Remove="Components\GradientHandle.xaml" />
+    <None Remove="Components\Histogram.xaml" />
+    <None Remove="Components\Levels.xaml" />
+    <None Remove="Components\MultiRangeSlider.xaml" />
+    <None Remove="Components\ParameterEditor.xaml" />
+    <None Remove="Components\ParameterListItem.xaml" />
+    <None Remove="Components\ParameterMap.xaml" />
+    <None Remove="Components\PropertyLabel.xaml" />
+    <None Remove="Components\PropertySection.xaml" />
+    <None Remove="Components\RangeSlider.xaml" />
+    <None Remove="Components\SplitButton.xaml" />
+    <None Remove="Components\TextInput.xaml" />
+    <None Remove="Components\Toggle.xaml" />
+    <None Remove="Components\VectorInput.xaml" />
+    <None Remove="Components\VectorSlider.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="0.9.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.9.6" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\Panes\Layers.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\DropDown.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Components\NumberSlider.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Components\Slider.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Components\NumberInput.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+    <ProjectReference Include="..\Graph\Graph.csproj" />
+    <ProjectReference Include="..\MLog\MLog.csproj" />
+    <ProjectReference Include="..\Rendering\Rendering.csproj" />
+    <EmbeddedResource Include="Images\1x1.png" />
+    <EmbeddedResource Include="Images\add.png" />
+    <EmbeddedResource Include="Images\align-horiz.png" />
+    <EmbeddedResource Include="Images\align-vert.png" />
+    <EmbeddedResource Include="Images\aspect.png" />
+    <EmbeddedResource Include="Images\chevron_right.png" />
+    <EmbeddedResource Include="Images\close.png" />
+    <EmbeddedResource Include="Images\delete.png" />
+    <EmbeddedResource Include="Images\drag.png" />
+    <EmbeddedResource Include="Images\dropper.png" />
+    <EmbeddedResource Include="Images\fitintoview.png" />
+    <EmbeddedResource Include="Images\functionedit.png" />
+    <EmbeddedResource Include="Images\mask.png" />
+    <EmbeddedResource Include="Images\minus.png" />
+    <EmbeddedResource Include="Images\node-icon.png" />
+    <EmbeddedResource Include="Images\output.png" />
+    <EmbeddedResource Include="Images\pin.png" />
+    <EmbeddedResource Include="Images\visible.png" />
+    <EmbeddedResource Include="Localization\localization.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\Dialogs\ColorPicker.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\ColorSelect.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\FunctionEditor.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\FunctionListItem.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\TextInput.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\Dialogs\MessageBox.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\ParameterEditor.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\ParameterListItem.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\ParameterMap.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\Toggle.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\VectorInput.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\VectorSlider.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\Curves.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\CurvePoint.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\RangeSlider.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\MultiRangeSlider.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\Levels.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\Histogram.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\PropertySection.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\PropertyLabel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\SplitButton.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\FileSelector.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\GradientHandle.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\GradientEditor.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Components\FunctionEditor.xaml.cs">
+      <DependentUpon>FunctionEditor.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="Components\ParameterEditor.xaml.cs">
+      <DependentUpon>ParameterEditor.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+</Project>
