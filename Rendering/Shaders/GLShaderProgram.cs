@@ -83,7 +83,32 @@ namespace Materia.Rendering.Shaders
             IGL.Primary.UniformMatrix4(location, ref m);
         }
 
+        public void SetUniformMatrix4(string name, ref Matrix4d m)
+        {
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
+
+            IGL.Primary.UniformMatrix4(location, ref m);
+        }
+
         public void SetUniformMatrix3(string name, ref Matrix3 m)
+        {
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
+            IGL.Primary.UniformMatrix3(location, ref m);
+        }
+
+        public void SetUniformMatrix3(string name, ref Matrix3d m)
         {
             int location = 0;
 
@@ -168,6 +193,18 @@ namespace Materia.Rendering.Shaders
             IGL.Primary.Uniform3(location, v.X, v.Y, v.Z);
         }
 
+        public void SetUniform3(string name, ref Vector3i v)
+        {
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
+            IGL.Primary.Uniform3(location, v.X, v.Y, v.Z);
+        }
+
         public void SetUniform2(string name, ref Vector2 v)
         {
             int location = 0;
@@ -180,7 +217,31 @@ namespace Materia.Rendering.Shaders
             IGL.Primary.Uniform2(location, v.X, v.Y);
         }
 
-        public void SetUniform4F(string name, ref Vector4 v)
+        public void SetUniform2(string name, ref Vector2i v)
+        {
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
+            IGL.Primary.Uniform2(location, v.X, v.Y);
+        }
+
+        public void SetUniform4(string name, ref Vector4 v)
+        {
+            int location = 0;
+
+            if (!locations.TryGetValue(name, out location))
+            {
+                location = IGL.Primary.GetUniformLocation(Id, name);
+                locations[name] = location;
+            }
+            IGL.Primary.Uniform4(location, v.X, v.Y, v.Z, v.W);
+        }
+
+        public void SetUniform4(string name, ref Vector4i v)
         {
             int location = 0;
 

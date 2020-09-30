@@ -8,6 +8,14 @@ namespace Materia.Rendering.Buffers
         int ebo;
         BufferUsageHint type;
 
+        public int Id
+        {
+            get
+            {
+                return ebo;
+            }
+        }
+
         public GLElementBuffer(BufferUsageHint t)
         {
             type = t;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Materia.Rendering.Mathematics;
+using System;
 using System.Threading.Tasks;
 
 namespace Materia.Rendering.Imaging
@@ -11,6 +12,8 @@ namespace Materia.Rendering.Imaging
         public int BPP { get; protected set; }
 
         protected static GLPixel BLANK = new GLPixel() { r = 0, g = 0, b = 0, a = 0, fr = 0, fg = 0, fb = 0, fa = 0 };
+
+        public abstract void GetPixel(int x, int y, ref GLPixel pixel);
 
         public abstract GLPixel GetPixel(int x, int y);
         /*{
@@ -215,6 +218,8 @@ namespace Materia.Rendering.Imaging
 
         public abstract void SetPixel(int x, int y, ref GLPixel pixel);
 
+        public abstract void SetPixel(int x, int y, ref Vector4 c);
+
         /*public void SetPixel(int x, int y, byte r, byte g, byte b, byte a)
         {
             int idx = (x + y * Width) * (BPP / 8);
@@ -383,6 +388,54 @@ namespace Materia.Rendering.Imaging
                     SetPixel(x, y, ref pixel);
                 }
             });
+        }
+
+        public GLPixel AverageColor()
+        {
+            float fr = 0;
+            float fg = 0;
+            float fb = 0;
+            float fa = 0;
+
+            GLPixel pixel = new GLPixel();
+
+            int total = 0;
+
+            for (int y = 0; y < Height; ++y)
+            {
+                for (int x = 0; x < Width; ++x)
+                {
+                    GetPixel(x, y, ref pixel);
+
+                    fr += pixel.fr;
+                    fg += pixel.fg;
+                    fb += pixel.fb;
+                    fa += pixel.fa;
+                    ++total;
+                }
+            }
+
+            fr /= total;
+            fg /= total;
+            fb /= total;
+            fa /= total;
+
+            byte r = (byte)(fr * 255);
+            byte g = (byte)(fg * 255);
+            byte b = (byte)(fb * 255);
+            byte a = (byte)(fa * 255);
+
+            return new GLPixel()
+            {
+                r = r,
+                g = g,
+                b = b,
+                a = a,
+                fr = fr,
+                fg = fg,
+                fb = fb,
+                fa = fa
+            };
         }
     }
 }

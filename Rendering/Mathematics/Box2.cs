@@ -135,6 +135,18 @@ namespace Materia.Rendering.Mathematics
             return xOK && yOK;
         }
 
+        public bool Contains(Box2 b)
+        {
+            return b.Left >= Left && b.Right <= Right
+                && b.Top >= Top && b.Bottom <= Bottom;
+        }
+
+        public bool Intersects(Box2 b)
+        {
+            return Left <= b.Right && Right >= b.Left &&
+                Bottom >= b.Top && Top <= b.Bottom;
+        }
+
         /// <summary>
         /// Returns a Box2 translated by the given amount.
         /// </summary>

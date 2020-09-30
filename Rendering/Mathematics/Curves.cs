@@ -1,5 +1,9 @@
 ﻿namespace Materia.Rendering.Mathematics
 {
+    /// <summary>
+    /// This is the bezier curve formula that is similar
+    /// to photoshop curve editor
+    /// </summary>
     public static class Curves
     {
         public static double[] SecondDerivative(params PointD[] P)

@@ -5,6 +5,7 @@ using Materia.Rendering.Mathematics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using Materia.Rendering.Imaging;
+using System.Diagnostics;
 
 namespace Materia.Rendering.Fonts
 {
@@ -31,7 +32,7 @@ namespace Materia.Rendering.Fonts
         private static string[] fontList;
         private static SolidBrush WhiteColor = new SolidBrush(Color.White);
         private static Bitmap fontHelper = new Bitmap(1, 1);
-        private static Dictionary<string, Dictionary<string, CharData>> cache = new Dictionary<string, Dictionary<string, CharData>>();
+        private static Dictionary<Tuple<string, float, FontStyle>, Dictionary<string, CharData>> cache = new Dictionary<Tuple<string, float, FontStyle>, Dictionary<string, CharData>>();
 
         public static string[] GetAvailableFonts()
         {
@@ -54,6 +55,7 @@ namespace Materia.Rendering.Fonts
         public static Dictionary<string, CharData> Generate(string fontFamily, float fontSize, string text, FontStyle style)
         {
             string[] fonts = GetAvailableFonts();
+            Tuple<string, float, FontStyle> key = new Tuple<string, float, FontStyle>(fontFamily, fontSize, style);
 
             if (fonts.Length == 0) return new Dictionary<string, CharData>();
        
@@ -63,7 +65,7 @@ namespace Materia.Rendering.Fonts
             }
 
             Dictionary<string, CharData> map = null;
-            cache.TryGetValue(fontFamily, out map);
+            cache.TryGetValue(key, out map);
 
             if (map == null) map = new Dictionary<string, CharData>();
 
@@ -82,14 +84,7 @@ namespace Materia.Rendering.Fonts
                         {
                             string ch = line.Substring(j, 1);
                             CharData chData = null;
-                            if (map.TryGetValue(ch, out chData))
-                            {
-                                if (chData.fontSize != fontSize || chData.style != style)
-                                {
-                                    CreateCharacter(f, chData, fontFamily, fontSize, ch, style);
-                                }
-                            }
-                            else
+                            if (!map.TryGetValue(ch, out chData))
                             {
                                 CharData nData = new CharData(fontSize, Vector2.Zero, 0, null, style);
                                 CreateCharacter(f, nData, fontFamily, fontSize, ch, style);
@@ -99,11 +94,30 @@ namespace Materia.Rendering.Fonts
                     }
                 }
 
-                cache[fontFamily] = map;
+                cache[key] = map;
             }
-            catch { }
+            catch (Exception e) 
+            {
+                Debug.WriteLine("Failed to generate font data");
+            }
 
             return map;
+        }
+
+        public static Vector2 MeasureString(string fontFamily, float fontSize, string text, FontStyle style)
+        {
+            using (Font f = new Font(fontFamily, fontSize, style, GraphicsUnit.Pixel))
+            {
+                StringFormat format = StringFormat.GenericTypographic;
+                format.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
+                format.Trimming = StringTrimming.None;
+
+                using (var ghelper = Graphics.FromImage(fontHelper))
+                {
+                    var size = ghelper.MeasureString(text, f, 0, format);
+                    return new Vector2(size.Width, f.GetHeight());
+                }
+            }
         }
 
         protected static void CreateCharacter(Font f, CharData data, string fontFamily, float fontSize, string ch, FontStyle style)
@@ -111,7 +125,9 @@ namespace Materia.Rendering.Fonts
             using (var ghelper = Graphics.FromImage(fontHelper))
             {
                 StringFormat format = StringFormat.GenericTypographic;
-                
+                format.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
+                format.Trimming = StringTrimming.None;
+
                 var size = ghelper.MeasureString(ch, f, 0, format);
                 data.size = new Vector2(size.Width, size.Height);
                 data.bearing = f.GetHeight();

@@ -31,6 +31,11 @@ namespace Materia.Rendering.Geometry
             Setup();
         }
 
+        public void Update()
+        {
+            //do nothing here
+        }
+
         void Setup()
         {
             vao.Bind();

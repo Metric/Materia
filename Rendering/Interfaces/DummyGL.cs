@@ -120,6 +120,11 @@ namespace Materia.Rendering.Interfaces
            
         }
 
+        public override void BlendFuncSeparate(int colorsrc, int colordst, int alphasrc, int alphadst)
+        {
+
+        }
+
         public override void BlendEquationSeparate(int rgbMode, int alphaMode)
         {
             
@@ -265,6 +270,11 @@ namespace Materia.Rendering.Interfaces
    
         }
 
+        public override void DrawArrays(int mode, int first, int count)
+        {
+            
+        }
+
         public override void Enable(int cap)
         {
  
@@ -273,6 +283,11 @@ namespace Materia.Rendering.Interfaces
         public override void EnableVertexAttribArray(int index)
         {
        
+        }
+
+        public override void DisableVertexAttribArray(int index)
+        {
+         
         }
 
         public override void FramebufferRenderbuffer(int target, int attachment, int renderTarget, int id)
@@ -432,14 +447,29 @@ namespace Materia.Rendering.Interfaces
             
         }
 
+        public override void Uniform2(int location, int x, int y)
+        {
+
+        }
+
         public override void Uniform3(int location, float x, float y, float z)
         {
             
         }
 
+        public override void Uniform3(int location, int x, int y, int z)
+        {
+
+        }
+
         public override void Uniform4(int location, float x, float y, float z, float w)
         {
             
+        }
+
+        public override void Uniform4(int location, int x, int y, int z, int w)
+        {
+
         }
 
         public override void UniformBlockBinding(int id, int index, int pos)
@@ -452,9 +482,19 @@ namespace Materia.Rendering.Interfaces
             
         }
 
+        public override void UniformMatrix3(int location, ref Matrix3d m)
+        {
+
+        }
+
         public override void UniformMatrix4(int location, ref Matrix4 m)
         {
             
+        }
+
+        public override void UniformMatrix4(int location, ref Matrix4d m)
+        {
+
         }
 
         public override void UseProgram(int id)
@@ -471,5 +511,25 @@ namespace Materia.Rendering.Interfaces
         {
             
         }
+
+        public override void BlendEquation(int mode)
+        {
+           
+        }
+
+        public override void BlendBarrier()
+        {
+ 
+        }
+
+        //Stencil
+        public override void StencilMask(int m) { }
+        public override void StencilMask(int face, int m) { }
+        public override void StencilOp(int sfail, int dfail, int dsfail) { }
+        public override void StencilOp(int face, int sfail, int dfail, int dsfail) { }
+        public override void StencilFunc(int func, int @ref, int m) { }
+        public override void StencilFunc(int face, int func, int @ref, int m) { }
+
+        public override void AlphaFunc(int mode, float threshold) { }
     }
 }

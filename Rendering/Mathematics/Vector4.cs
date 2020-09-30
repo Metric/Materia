@@ -54,6 +54,54 @@ namespace Materia.Rendering.Mathematics
         /// </summary>
         public float W;
 
+        public float x
+        {
+            get
+            {
+                return X;
+            }
+            set
+            {
+                X = value;
+            }
+        }
+
+        public float y
+        {
+            get
+            {
+                return Y;
+            }
+            set
+            {
+                Y = value;
+            }
+        }
+
+        public float z
+        {
+            get
+            {
+                return Z;
+            }
+            set
+            {
+                Z = value;
+            }
+        }
+
+        public float w
+        {
+            get
+            {
+                return W;
+            }
+            set
+            {
+                W = value;
+            }
+        }
+
         /// <summary>
         /// Defines a unit-length Vector4 that points towards the X-axis.
         /// </summary>
@@ -114,6 +162,22 @@ namespace Materia.Rendering.Mathematics
             Y = y;
             Z = z;
             W = w;
+        }
+
+        public Vector4(float x, Vector3 yzw)
+        {
+            X = x;
+            Y = yzw.X;
+            Z = yzw.Y;
+            W = yzw.Z;
+        }
+
+        public Vector4(Vector2 v1, Vector2 v2)
+        {
+            X = v1.X;
+            Y = v1.Y;
+            Z = v2.X;
+            W = v2.Y;
         }
 
         /// <summary>
@@ -1254,6 +1318,9 @@ namespace Materia.Rendering.Mathematics
         /// </summary>
         [XmlIgnore]
         public Vector4 Wzyw { get { return new Vector4(W, Z, Y, W); } set { X = value.X; Z = value.Y; Y = value.Z; W = value.W; } }
+
+        public Vector3 Www { get { return new Vector3(W, W, W); } }
+        public Vector3 Xxx { get { return new Vector3(X, X, X); } }
 
         /// <summary>
         /// Adds two instances.

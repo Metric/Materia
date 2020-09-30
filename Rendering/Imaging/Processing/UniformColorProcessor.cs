@@ -25,7 +25,7 @@ namespace Materia.Rendering.Imaging.Processing
                 Vector4 color = Color;
                 shader.Use();
                 shader.SetUniform2("tiling", ref tiling);
-                shader.SetUniform4F("color", ref color);
+                shader.SetUniform4("color", ref color);
 
                 if (renderQuad != null)
                 {

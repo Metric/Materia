@@ -120,6 +120,11 @@ namespace Materia.Rendering.Geometry
             }
         }
 
+        public void Update()
+        {
+            //do nothing here
+        }
+
         public virtual void DrawBasic()
         {
             ///draw
@@ -184,7 +189,7 @@ namespace Materia.Rendering.Geometry
 
                 shader.SetUniform2("tiling", ref tiling);
 
-                shader.SetUniform4F("color", ref lightColor);
+                shader.SetUniform4("color", ref lightColor);
 
                 ///draw
                 vao.Bind();

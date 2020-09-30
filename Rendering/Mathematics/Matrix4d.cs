@@ -701,6 +701,85 @@ namespace Materia.Rendering.Mathematics
         }
 
         /// <summary>
+        /// Creates a scale matrix.
+        /// </summary>
+        /// <param name="scale">Single scale factor for the x, y, and z axes.</param>
+        /// <returns>A scale matrix.</returns>
+        public static Matrix4d CreateScale(float scale)
+        {
+            Matrix4d result;
+            CreateScale(scale, out result);
+            return result;
+        }
+
+        /// <summary>
+        /// Creates a scale matrix.
+        /// </summary>
+        /// <param name="scale">Scale factors for the x, y, and z axes.</param>
+        /// <returns>A scale matrix.</returns>
+        public static Matrix4d CreateScale(Vector3 scale)
+        {
+            Matrix4d result;
+            CreateScale(ref scale, out result);
+            return result;
+        }
+
+        /// <summary>
+        /// Creates a scale matrix.
+        /// </summary>
+        /// <param name="x">Scale factor for the x axis.</param>
+        /// <param name="y">Scale factor for the y axis.</param>
+        /// <param name="z">Scale factor for the z axis.</param>
+        /// <returns>A scale matrix.</returns>
+        public static Matrix4d CreateScale(float x, float y, float z)
+        {
+            Matrix4d result;
+            CreateScale(x, y, z, out result);
+            return result;
+        }
+
+        /// <summary>
+        /// Creates a scale matrix.
+        /// </summary>
+        /// <param name="scale">Single scale factor for the x, y, and z axes.</param>
+        /// <param name="result">A scale matrix.</param>
+        public static void CreateScale(float scale, out Matrix4d result)
+        {
+            result = Identity;
+            result.Row0.X = scale;
+            result.Row1.Y = scale;
+            result.Row2.Z = scale;
+        }
+
+        /// <summary>
+        /// Creates a scale matrix.
+        /// </summary>
+        /// <param name="scale">Scale factors for the x, y, and z axes.</param>
+        /// <param name="result">A scale matrix.</param>
+        public static void CreateScale(ref Vector3 scale, out Matrix4d result)
+        {
+            result = Identity;
+            result.Row0.X = scale.X;
+            result.Row1.Y = scale.Y;
+            result.Row2.Z = scale.Z;
+        }
+
+        /// <summary>
+        /// Creates a scale matrix.
+        /// </summary>
+        /// <param name="x">Scale factor for the x axis.</param>
+        /// <param name="y">Scale factor for the y axis.</param>
+        /// <param name="z">Scale factor for the z axis.</param>
+        /// <param name="result">A scale matrix.</param>
+        public static void CreateScale(float x, float y, float z, out Matrix4d result)
+        {
+            result = Identity;
+            result.Row0.X = x;
+            result.Row1.Y = y;
+            result.Row2.Z = z;
+        }
+
+        /// <summary>
         /// Creates an orthographic projection matrix.
         /// </summary>
         /// <param name="width">The width of the projection volume.</param>

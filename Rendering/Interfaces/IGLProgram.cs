@@ -11,14 +11,19 @@ namespace Materia.Rendering.Interfaces
         void Use();
         void Unbind();
         void SetUniformMatrix4(string name, ref Matrix4 m);
+        void SetUniformMatrix4(string name, ref Matrix4d m);
         void SetUniformMatrix3(string name, ref Matrix3 m);
+        void SetUniformMatrix3(string name, ref Matrix3d m);
         void UniformBlockBinding(string name, int pos);
         void SetUniform(string name, int i);
         void SetUniform(string name, bool b);
         void SetUniform(string name, uint i);
         void SetUniform(string name, float f);
         void SetUniform3(string name, ref Vector3 v);
+        void SetUniform3(string name, ref Vector3i v);
         void SetUniform2(string name, ref Vector2 v);
-        void SetUniform4F(string name, ref Vector4 v);
+        void SetUniform2(string name, ref Vector2i v);
+        void SetUniform4(string name, ref Vector4 v);
+        void SetUniform4(string name, ref Vector4i v);
     }
 }

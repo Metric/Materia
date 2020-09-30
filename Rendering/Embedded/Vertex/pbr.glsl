@@ -47,7 +47,7 @@ void main()
 
     vec4 clip = projectionMatrix * viewMatrix * modelMatrix * vec4(pos, 1);
 
-    data.ClipPos = clip;
+    o.ClipPos = clip;
     data = o;
     
     gl_Position = clip;

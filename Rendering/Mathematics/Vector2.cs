@@ -44,6 +44,33 @@ namespace Materia.Rendering.Mathematics
         /// </summary>
         public float Y;
 
+        // used in other 3rd party source code
+        #region lower case x / y wrappers
+        public float x
+        {
+            get
+            {
+                return X;
+            }
+            set
+            {
+                X = value;
+            }
+        }
+
+        public float y
+        {
+            get
+            {
+                return Y;
+            }
+            set
+            {
+                Y = value;
+            }
+        }
+        #endregion
+
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
@@ -464,6 +491,17 @@ namespace Materia.Rendering.Mathematics
         }
 
         /// <summary>
+        /// Returns the Vecto2 cross angle
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <returns></returns>
+        public static float Cross(ref Vector2 a, ref Vector2 b)
+        {
+            return a.x * b.y - a.y * b.x;
+        }
+
+        /// <summary>
         /// Returns the Vector3 with the minimum magnitude
         /// </summary>
         /// <param name="left">Left operand</param>
@@ -544,7 +582,7 @@ namespace Materia.Rendering.Mathematics
         /// <param name="vec1">The first vector</param>
         /// <param name="vec2">The second vector</param>
         /// <returns>The squared distance</returns>
-        public static float DistanceSquared(Vector2 vec1, Vector2 vec2)
+        public static float DistanceSquared(ref Vector2 vec1, ref Vector2 vec2)
         {
             float result;
             DistanceSquared(ref vec1, ref vec2, out result);
@@ -885,6 +923,26 @@ namespace Materia.Rendering.Mathematics
         public static bool operator !=(Vector2 left, Vector2 right)
         {
             return !left.Equals(right);
+        }
+
+        public static bool operator < (Vector2 left, Vector2 right)
+        {
+            if (left.x == right.x)
+            {
+                return left.y < right.y;
+            }
+
+            return left.x < right.x;
+        }
+
+        public static bool operator > (Vector2 left, Vector2 right)
+        {
+            if (left.x == right.x)
+            {
+                return left.y > right.y;
+            }
+
+            return left.x > right.x;
         }
 
         private static string listSeparator = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ListSeparator;

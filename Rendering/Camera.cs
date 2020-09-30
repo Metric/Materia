@@ -68,6 +68,11 @@ namespace Materia.Rendering
             }
         }
 
+        public Matrix4 OrthographicWithSize(float width, float height)
+        {
+            return Matrix4.CreateOrthographic(width,height,Near,Far);
+        }
+
         public Matrix4 Orthographic
         {
             get
@@ -88,7 +93,7 @@ namespace Materia.Rendering
         {
             get
             {
-                return Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(-Position);
+                return (Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position)).Inverted();
             }
         }
 
@@ -96,7 +101,7 @@ namespace Materia.Rendering
         {
             get
             {
-                return Vector3.Normalize((View * new Vector4(0, 0, 1, 1)).Xyz) * Position.Z;
+                return Position;
             }
         }
 

@@ -117,7 +117,7 @@ namespace MLog
             }
 
 
-            OnEntry(l, fmsg);
+            OnEntry?.Invoke(l, fmsg);
 
             if (string.IsNullOrEmpty(File))
             {
@@ -142,6 +142,7 @@ namespace MLog
             if (fileStream != null)
             {
                 fileStream.WriteLine(fmsg);
+                fileStream.Flush();
             }
         }
 

@@ -7,6 +7,14 @@ namespace Materia.Rendering.Buffers
     {
         int vao;
 
+        public int Id
+        {
+            get
+            {
+                return vao;
+            }
+        }
+
         public GLVertexArray()
         {
             vao = IGL.Primary.GenVertexArray();

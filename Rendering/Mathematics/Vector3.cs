@@ -51,6 +51,42 @@ namespace Materia.Rendering.Mathematics
         /// </summary>
         public float Z;
 
+        public float x
+        {
+            get
+            {
+                return X;
+            }
+            set
+            {
+                X = value;
+            }
+        }
+
+        public float y
+        {
+            get
+            {
+                return Y;
+            }
+            set
+            {
+                Y = value;
+            }
+        }
+
+        public float z
+        {
+            get
+            {
+                return Z;
+            }
+            set
+            {
+                Z = value;
+            }
+        }
+
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
@@ -1218,6 +1254,22 @@ namespace Materia.Rendering.Mathematics
         /// </summary>
         [XmlIgnore]
         public Vector3 Zyx { get { return new Vector3(Z, Y, X); } set { Z = value.X; Y = value.Y; X = value.Z; } }
+
+        public Vector3 Xxx { get { return new Vector3(X, X, X); } set { X = value.X; Y = value.X; Z = value.X; } }
+
+        public Vector3 Fract()
+        {
+            float x0 = MathF.Truncate(X);
+            float y0 = MathF.Truncate(Y);
+            float z0 = MathF.Truncate(Z);
+
+            return new Vector3(X - x0, Y - y0, Z - z0);
+        }
+
+        public Vector3 Abs()
+        {
+            return new Vector3(MathF.Abs(X), MathF.Abs(Y), MathF.Abs(Z));
+        }
 
         /// <summary>
         /// Adds two instances.

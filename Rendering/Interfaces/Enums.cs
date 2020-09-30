@@ -5095,7 +5095,7 @@ namespace Materia.Rendering.Interfaces
 
     //
     // Summary:
-    //     Used in GL.Arb.BlendEquation, GL.BlendEquation and 2 other functions
+    //     Used in GL.Arb.BlendEquation, GL.BlendEquation and 1 other function
     public enum BlendEquationMode
     {
         //
@@ -5559,5 +5559,719 @@ namespace Materia.Rendering.Interfaces
         // Summary:
         //     Original was GL_QUERY_BUFFER_BARRIER_BIT = 0x00008000
         QueryBufferBarrierBit = 32768
+    }
+
+    //
+    // Summary:
+    //     Used in GL.Amd.MultiDrawArraysIndirect, GL.Amd.MultiDrawElementsIndirect and
+    //     51 other functions
+    public enum PrimitiveType
+    {
+        //
+        // Summary:
+        //     Original was GL_POINTS = 0x0000
+        Points = 0,
+        //
+        // Summary:
+        //     Original was GL_LINES = 0x0001
+        Lines = 1,
+        //
+        // Summary:
+        //     Original was GL_LINE_LOOP = 0x0002
+        LineLoop = 2,
+        //
+        // Summary:
+        //     Original was GL_LINE_STRIP = 0x0003
+        LineStrip = 3,
+        //
+        // Summary:
+        //     Original was GL_TRIANGLES = 0x0004
+        Triangles = 4,
+        //
+        // Summary:
+        //     Original was GL_TRIANGLE_STRIP = 0x0005
+        TriangleStrip = 5,
+        //
+        // Summary:
+        //     Original was GL_TRIANGLE_FAN = 0x0006
+        TriangleFan = 6,
+        //
+        // Summary:
+        //     Original was GL_QUADS = 0x0007
+        Quads = 7,
+        //
+        // Summary:
+        //     Original was GL_QUADS_EXT = 0x0007
+        QuadsExt = 7,
+        //
+        // Summary:
+        //     Original was GL_QUAD_STRIP = 0x0008
+        QuadStrip = 8,
+        //
+        // Summary:
+        //     Original was GL_POLYGON = 0x0009
+        Polygon = 9,
+        //
+        // Summary:
+        //     Original was GL_LINES_ADJACENCY = 0x000A
+        LinesAdjacency = 10,
+        //
+        // Summary:
+        //     Original was GL_LINES_ADJACENCY_ARB = 0x000A
+        LinesAdjacencyArb = 10,
+        //
+        // Summary:
+        //     Original was GL_LINES_ADJACENCY_EXT = 0x000A
+        LinesAdjacencyExt = 10,
+        //
+        // Summary:
+        //     Original was GL_LINE_STRIP_ADJACENCY = 0x000B
+        LineStripAdjacency = 11,
+        //
+        // Summary:
+        //     Original was GL_LINE_STRIP_ADJACENCY_ARB = 0x000B
+        LineStripAdjacencyArb = 11,
+        //
+        // Summary:
+        //     Original was GL_LINE_STRIP_ADJACENCY_EXT = 0x000B
+        LineStripAdjacencyExt = 11,
+        //
+        // Summary:
+        //     Original was GL_TRIANGLES_ADJACENCY = 0x000C
+        TrianglesAdjacency = 12,
+        //
+        // Summary:
+        //     Original was GL_TRIANGLES_ADJACENCY_ARB = 0x000C
+        TrianglesAdjacencyArb = 12,
+        //
+        // Summary:
+        //     Original was GL_TRIANGLES_ADJACENCY_EXT = 0x000C
+        TrianglesAdjacencyExt = 12,
+        //
+        // Summary:
+        //     Original was GL_TRIANGLE_STRIP_ADJACENCY = 0x000D
+        TriangleStripAdjacency = 13,
+        //
+        // Summary:
+        //     Original was GL_TRIANGLE_STRIP_ADJACENCY_ARB = 0x000D
+        TriangleStripAdjacencyArb = 13,
+        //
+        // Summary:
+        //     Original was GL_TRIANGLE_STRIP_ADJACENCY_EXT = 0x000D
+        TriangleStripAdjacencyExt = 13,
+        //
+        // Summary:
+        //     Original was GL_PATCHES = 0x000E
+        Patches = 14,
+        //
+        // Summary:
+        //     Original was GL_PATCHES_EXT = 0x000E
+        PatchesExt = 14
+    }
+
+    //
+    // Summary:
+    //     Not used directly.
+    public enum KhrBlendEquationAdvanced
+    {
+        //
+        // Summary:
+        //     Original was GL_BLEND_ADVANCED_COHERENT_KHR = 0x9285
+        BlendAdvancedCoherentKhr = 37509,
+        //
+        // Summary:
+        //     Original was GL_MULTIPLY_KHR = 0x9294
+        MultiplyKhr = 37524,
+        //
+        // Summary:
+        //     Original was GL_SCREEN_KHR = 0x9295
+        ScreenKhr = 37525,
+        //
+        // Summary:
+        //     Original was GL_OVERLAY_KHR = 0x9296
+        OverlayKhr = 37526,
+        //
+        // Summary:
+        //     Original was GL_DARKEN_KHR = 0x9297
+        DarkenKhr = 37527,
+        //
+        // Summary:
+        //     Original was GL_LIGHTEN_KHR = 0x9298
+        LightenKhr = 37528,
+        //
+        // Summary:
+        //     Original was GL_COLORDODGE_KHR = 0x9299
+        ColordodgeKhr = 37529,
+        //
+        // Summary:
+        //     Original was GL_COLORBURN_KHR = 0x929A
+        ColorburnKhr = 37530,
+        //
+        // Summary:
+        //     Original was GL_HARDLIGHT_KHR = 0x929B
+        HardlightKhr = 37531,
+        //
+        // Summary:
+        //     Original was GL_SOFTLIGHT_KHR = 0x929C
+        SoftlightKhr = 37532,
+        //
+        // Summary:
+        //     Original was GL_DIFFERENCE_KHR = 0x929E
+        DifferenceKhr = 37534,
+        //
+        // Summary:
+        //     Original was GL_EXCLUSION_KHR = 0x92A0
+        ExclusionKhr = 37536,
+        //
+        // Summary:
+        //     Original was GL_HSL_HUE_KHR = 0x92AD
+        HslHueKhr = 37549,
+        //
+        // Summary:
+        //     Original was GL_HSL_SATURATION_KHR = 0x92AE
+        HslSaturationKhr = 37550,
+        //
+        // Summary:
+        //     Original was GL_HSL_COLOR_KHR = 0x92AF
+        HslColorKhr = 37551,
+        //
+        // Summary:
+        //     Original was GL_HSL_LUMINOSITY_KHR = 0x92B0
+        HslLuminosityKhr = 37552
+    }
+
+    //
+    // Summary:
+    //     Not used directly.
+    public enum NvBlendEquationAdvanced
+    {
+        //
+        // Summary:
+        //     Original was GL_ZERO = 0
+        Zero = 0,
+        //
+        // Summary:
+        //     Original was GL_XOR_NV = 0x1506
+        XorNv = 5382,
+        //
+        // Summary:
+        //     Original was GL_INVERT = 0x150A
+        Invert = 5386,
+        //
+        // Summary:
+        //     Original was GL_RED_NV = 0x1903
+        RedNv = 6403,
+        //
+        // Summary:
+        //     Original was GL_GREEN_NV = 0x1904
+        GreenNv = 6404,
+        //
+        // Summary:
+        //     Original was GL_BLUE_NV = 0x1905
+        BlueNv = 6405,
+        //
+        // Summary:
+        //     Original was GL_BLEND_PREMULTIPLIED_SRC_NV = 0x9280
+        BlendPremultipliedSrcNv = 37504,
+        //
+        // Summary:
+        //     Original was GL_BLEND_OVERLAP_NV = 0x9281
+        BlendOverlapNv = 37505,
+        //
+        // Summary:
+        //     Original was GL_UNCORRELATED_NV = 0x9282
+        UncorrelatedNv = 37506,
+        //
+        // Summary:
+        //     Original was GL_DISJOINT_NV = 0x9283
+        DisjointNv = 37507,
+        //
+        // Summary:
+        //     Original was GL_CONJOINT_NV = 0x9284
+        ConjointNv = 37508,
+        //
+        // Summary:
+        //     Original was GL_SRC_NV = 0x9286
+        SrcNv = 37510,
+        //
+        // Summary:
+        //     Original was GL_DST_NV = 0x9287
+        DstNv = 37511,
+        //
+        // Summary:
+        //     Original was GL_SRC_OVER_NV = 0x9288
+        SrcOverNv = 37512,
+        //
+        // Summary:
+        //     Original was GL_DST_OVER_NV = 0x9289
+        DstOverNv = 37513,
+        //
+        // Summary:
+        //     Original was GL_SRC_IN_NV = 0x928A
+        SrcInNv = 37514,
+        //
+        // Summary:
+        //     Original was GL_DST_IN_NV = 0x928B
+        DstInNv = 37515,
+        //
+        // Summary:
+        //     Original was GL_SRC_OUT_NV = 0x928C
+        SrcOutNv = 37516,
+        //
+        // Summary:
+        //     Original was GL_DST_OUT_NV = 0x928D
+        DstOutNv = 37517,
+        //
+        // Summary:
+        //     Original was GL_SRC_ATOP_NV = 0x928E
+        SrcAtopNv = 37518,
+        //
+        // Summary:
+        //     Original was GL_DST_ATOP_NV = 0x928F
+        DstAtopNv = 37519,
+        //
+        // Summary:
+        //     Original was GL_PLUS_NV = 0x9291
+        PlusNv = 37521,
+        //
+        // Summary:
+        //     Original was GL_PLUS_DARKER_NV = 0x9292
+        PlusDarkerNv = 37522,
+        //
+        // Summary:
+        //     Original was GL_MULTIPLY_NV = 0x9294
+        MultiplyNv = 37524,
+        //
+        // Summary:
+        //     Original was GL_SCREEN_NV = 0x9295
+        ScreenNv = 37525,
+        //
+        // Summary:
+        //     Original was GL_OVERLAY_NV = 0x9296
+        OverlayNv = 37526,
+        //
+        // Summary:
+        //     Original was GL_DARKEN_NV = 0x9297
+        DarkenNv = 37527,
+        //
+        // Summary:
+        //     Original was GL_LIGHTEN_NV = 0x9298
+        LightenNv = 37528,
+        //
+        // Summary:
+        //     Original was GL_COLORDODGE_NV = 0x9299
+        ColordodgeNv = 37529,
+        //
+        // Summary:
+        //     Original was GL_COLORBURN_NV = 0x929A
+        ColorburnNv = 37530,
+        //
+        // Summary:
+        //     Original was GL_HARDLIGHT_NV = 0x929B
+        HardlightNv = 37531,
+        //
+        // Summary:
+        //     Original was GL_SOFTLIGHT_NV = 0x929C
+        SoftlightNv = 37532,
+        //
+        // Summary:
+        //     Original was GL_DIFFERENCE_NV = 0x929E
+        DifferenceNv = 37534,
+        //
+        // Summary:
+        //     Original was GL_MINUS_NV = 0x929F
+        MinusNv = 37535,
+        //
+        // Summary:
+        //     Original was GL_EXCLUSION_NV = 0x92A0
+        ExclusionNv = 37536,
+        //
+        // Summary:
+        //     Original was GL_CONTRAST_NV = 0x92A1
+        ContrastNv = 37537,
+        //
+        // Summary:
+        //     Original was GL_INVERT_RGB_NV = 0x92A3
+        InvertRgbNv = 37539,
+        //
+        // Summary:
+        //     Original was GL_LINEARDODGE_NV = 0x92A4
+        LineardodgeNv = 37540,
+        //
+        // Summary:
+        //     Original was GL_LINEARBURN_NV = 0x92A5
+        LinearburnNv = 37541,
+        //
+        // Summary:
+        //     Original was GL_VIVIDLIGHT_NV = 0x92A6
+        VividlightNv = 37542,
+        //
+        // Summary:
+        //     Original was GL_LINEARLIGHT_NV = 0x92A7
+        LinearlightNv = 37543,
+        //
+        // Summary:
+        //     Original was GL_PINLIGHT_NV = 0x92A8
+        PinlightNv = 37544,
+        //
+        // Summary:
+        //     Original was GL_HARDMIX_NV = 0x92A9
+        HardmixNv = 37545,
+        //
+        // Summary:
+        //     Original was GL_HSL_HUE_NV = 0x92AD
+        HslHueNv = 37549,
+        //
+        // Summary:
+        //     Original was GL_HSL_SATURATION_NV = 0x92AE
+        HslSaturationNv = 37550,
+        //
+        // Summary:
+        //     Original was GL_HSL_COLOR_NV = 0x92AF
+        HslColorNv = 37551,
+        //
+        // Summary:
+        //     Original was GL_HSL_LUMINOSITY_NV = 0x92B0
+        HslLuminosityNv = 37552,
+        //
+        // Summary:
+        //     Original was GL_PLUS_CLAMPED_NV = 0x92B1
+        PlusClampedNv = 37553,
+        //
+        // Summary:
+        //     Original was GL_PLUS_CLAMPED_ALPHA_NV = 0x92B2
+        PlusClampedAlphaNv = 37554,
+        //
+        // Summary:
+        //     Original was GL_MINUS_CLAMPED_NV = 0x92B3
+        MinusClampedNv = 37555,
+        //
+        // Summary:
+        //     Original was GL_INVERT_OVG_NV = 0x92B4
+        InvertOvgNv = 37556
+    }
+
+    //
+    // Summary:
+    //     Not used directly.
+    public enum KhrBlendEquationAdvancedCoherent
+    {
+        //
+        // Summary:
+        //     Original was GL_BLEND_ADVANCED_COHERENT_KHR = 0x9285
+        BlendAdvancedCoherentKhr = 37509
+    }
+
+    //
+    // Summary:
+    //     Not used directly.
+    public enum NvBlendEquationAdvancedCoherent
+    {
+        //
+        // Summary:
+        //     Original was GL_BLEND_ADVANCED_COHERENT_NV = 0x9285
+        BlendAdvancedCoherentNv = 37509
+    }
+
+    //
+    // Summary:
+    //     Used in GL.Ati.StencilOpSeparate, GL.StencilOp and 1 other function
+    public enum StencilOp
+    {
+        //
+        // Summary:
+        //     Original was GL_ZERO = 0
+        Zero = 0,
+        //
+        // Summary:
+        //     Original was GL_INVERT = 0x150A
+        Invert = 5386,
+        //
+        // Summary:
+        //     Original was GL_KEEP = 0x1E00
+        Keep = 7680,
+        //
+        // Summary:
+        //     Original was GL_REPLACE = 0x1E01
+        Replace = 7681,
+        //
+        // Summary:
+        //     Original was GL_INCR = 0x1E02
+        Incr = 7682,
+        //
+        // Summary:
+        //     Original was GL_DECR = 0x1E03
+        Decr = 7683,
+        //
+        // Summary:
+        //     Original was GL_INCR_WRAP = 0x8507
+        IncrWrap = 34055,
+        //
+        // Summary:
+        //     Original was GL_DECR_WRAP = 0x8508
+        DecrWrap = 34056
+    }
+
+    //
+    // Summary:
+    //     Used in GL.Ati.StencilFuncSeparate, GL.StencilFunc and 2 other functions
+    public enum StencilFunction
+    {
+        //
+        // Summary:
+        //     Original was GL_NEVER = 0x0200
+        Never = 512,
+        //
+        // Summary:
+        //     Original was GL_LESS = 0x0201
+        Less = 513,
+        //
+        // Summary:
+        //     Original was GL_EQUAL = 0x0202
+        Equal = 514,
+        //
+        // Summary:
+        //     Original was GL_LEQUAL = 0x0203
+        Lequal = 515,
+        //
+        // Summary:
+        //     Original was GL_GREATER = 0x0204
+        Greater = 516,
+        //
+        // Summary:
+        //     Original was GL_NOTEQUAL = 0x0205
+        Notequal = 517,
+        //
+        // Summary:
+        //     Original was GL_GEQUAL = 0x0206
+        Gequal = 518,
+        //
+        // Summary:
+        //     Original was GL_ALWAYS = 0x0207
+        Always = 519
+    }
+
+    //
+    // Summary:
+    //     Used in GL.StencilFuncSeparate, GL.StencilMaskSeparate and 1 other function
+    public enum StencilFace
+    {
+        //
+        // Summary:
+        //     Original was GL_FRONT = 0x0404
+        Front = 1028,
+        //
+        // Summary:
+        //     Original was GL_BACK = 0x0405
+        Back = 1029,
+        //
+        // Summary:
+        //     Original was GL_FRONT_AND_BACK = 0x0408
+        FrontAndBack = 1032
+    }
+
+    //
+    // Summary:
+    //     Used in GL.BlendFunc, GL.BlendFuncSeparate
+    public enum BlendingFactorSrc
+    {
+        //
+        // Summary:
+        //     Original was GL_ZERO = 0
+        Zero = 0,
+        //
+        // Summary:
+        //     Original was GL_ONE = 1
+        One = 1,
+        //
+        // Summary:
+        //     Original was GL_SRC_COLOR = 0x0300
+        SrcColor = 768,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_SRC_COLOR = 0x0301
+        OneMinusSrcColor = 769,
+        //
+        // Summary:
+        //     Original was GL_SRC_ALPHA = 0x0302
+        SrcAlpha = 770,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_SRC_ALPHA = 0x0303
+        OneMinusSrcAlpha = 771,
+        //
+        // Summary:
+        //     Original was GL_DST_ALPHA = 0x0304
+        DstAlpha = 772,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_DST_ALPHA = 0x0305
+        OneMinusDstAlpha = 773,
+        //
+        // Summary:
+        //     Original was GL_DST_COLOR = 0x0306
+        DstColor = 774,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_DST_COLOR = 0x0307
+        OneMinusDstColor = 775,
+        //
+        // Summary:
+        //     Original was GL_SRC_ALPHA_SATURATE = 0x0308
+        SrcAlphaSaturate = 776,
+        //
+        // Summary:
+        //     Original was GL_CONSTANT_COLOR = 0x8001
+        ConstantColor = 32769,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_CONSTANT_COLOR = 0x8002
+        OneMinusConstantColor = 32770,
+        //
+        // Summary:
+        //     Original was GL_CONSTANT_ALPHA = 0x8003
+        ConstantAlpha = 32771,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_CONSTANT_ALPHA = 0x8004
+        OneMinusConstantAlpha = 32772,
+        //
+        // Summary:
+        //     Original was GL_SRC1_ALPHA = 0x8589
+        Src1Alpha = 34185,
+        //
+        // Summary:
+        //     Original was GL_SRC1_COLOR = 0x88F9
+        Src1Color = 35065,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_SRC1_COLOR = 0x88FA
+        OneMinusSrc1Color = 35066,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_SRC1_ALPHA = 0x88FB
+        OneMinusSrc1Alpha = 35067
+    }
+
+    //
+    // Summary:
+    //     Used in GL.BlendFunc, GL.BlendFuncSeparate
+    public enum BlendingFactorDest
+    {
+        //
+        // Summary:
+        //     Original was GL_ZERO = 0
+        Zero = 0,
+        //
+        // Summary:
+        //     Original was GL_ONE = 1
+        One = 1,
+        //
+        // Summary:
+        //     Original was GL_SRC_COLOR = 0x0300
+        SrcColor = 768,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_SRC_COLOR = 0x0301
+        OneMinusSrcColor = 769,
+        //
+        // Summary:
+        //     Original was GL_SRC_ALPHA = 0x0302
+        SrcAlpha = 770,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_SRC_ALPHA = 0x0303
+        OneMinusSrcAlpha = 771,
+        //
+        // Summary:
+        //     Original was GL_DST_ALPHA = 0x0304
+        DstAlpha = 772,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_DST_ALPHA = 0x0305
+        OneMinusDstAlpha = 773,
+        //
+        // Summary:
+        //     Original was GL_DST_COLOR = 0x0306
+        DstColor = 774,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_DST_COLOR = 0x0307
+        OneMinusDstColor = 775,
+        //
+        // Summary:
+        //     Original was GL_SRC_ALPHA_SATURATE = 0x0308
+        SrcAlphaSaturate = 776,
+        //
+        // Summary:
+        //     Original was GL_CONSTANT_COLOR = 0x8001
+        ConstantColor = 32769,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_CONSTANT_COLOR = 0x8002
+        OneMinusConstantColor = 32770,
+        //
+        // Summary:
+        //     Original was GL_CONSTANT_ALPHA = 0x8003
+        ConstantAlpha = 32771,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_CONSTANT_ALPHA = 0x8004
+        OneMinusConstantAlpha = 32772,
+        //
+        // Summary:
+        //     Original was GL_SRC1_ALPHA = 0x8589
+        Src1Alpha = 34185,
+        //
+        // Summary:
+        //     Original was GL_SRC1_COLOR = 0x88F9
+        Src1Color = 35065,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_SRC1_COLOR = 0x88FA
+        OneMinusSrc1Color = 35066,
+        //
+        // Summary:
+        //     Original was GL_ONE_MINUS_SRC1_ALPHA = 0x88FB
+        OneMinusSrc1Alpha = 35067
+    }
+
+    //
+    // Summary:
+    //     Used in GL.AlphaFunc, GL.Oes.AlphaFuncx
+    public enum AlphaFunction
+    {
+        //
+        // Summary:
+        //     Original was GL_NEVER = 0x0200
+        Never = 512,
+        //
+        // Summary:
+        //     Original was GL_LESS = 0x0201
+        Less = 513,
+        //
+        // Summary:
+        //     Original was GL_EQUAL = 0x0202
+        Equal = 514,
+        //
+        // Summary:
+        //     Original was GL_LEQUAL = 0x0203
+        Lequal = 515,
+        //
+        // Summary:
+        //     Original was GL_GREATER = 0x0204
+        Greater = 516,
+        //
+        // Summary:
+        //     Original was GL_NOTEQUAL = 0x0205
+        Notequal = 517,
+        //
+        // Summary:
+        //     Original was GL_GEQUAL = 0x0206
+        Gequal = 518,
+        //
+        // Summary:
+        //     Original was GL_ALWAYS = 0x0207
+        Always = 519
     }
 }

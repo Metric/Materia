@@ -44,19 +44,29 @@ namespace Materia.Rendering.Interfaces
 
         public abstract void VertexAttribPointer(int index, int size, int type, bool normalized, int stride, int offset);
         public abstract void EnableVertexAttribArray(int index);
+        public abstract void DisableVertexAttribArray(int index);
 
         ///Uniforms
         public abstract int GetUniformLocation(int id, string name);
         public abstract int GetUniformBlockIndex(int id, string name);
         public abstract void UniformMatrix4(int location, ref Matrix4 m);
+        public abstract void UniformMatrix4(int location, ref Matrix4d m);
+
         public abstract void UniformMatrix3(int location, ref Matrix3 m);
+
+        public abstract void UniformMatrix3(int location, ref Matrix3d m);
+
         public abstract void UniformBlockBinding(int id, int index, int pos);
         public abstract void Uniform1(int location, int i);
         public abstract void Uniform1(int location, uint i);
         public abstract void Uniform1(int location, float f);
         public abstract void Uniform3(int location, float x, float y, float z);
+        public abstract void Uniform3(int location, int x, int y, int z);
         public abstract void Uniform2(int location, float x, float y);
+        public abstract void Uniform2(int location, int x, int y);
         public abstract void Uniform4(int location, float x, float y, float z, float w);
+
+        public abstract void Uniform4(int location, int x, int y, int z, int w);
 
         ///Buffers
         public abstract int GenBuffer();
@@ -127,10 +137,27 @@ namespace Materia.Rendering.Interfaces
         public abstract void Disable(int cap);
         public abstract void DepthFunc(int func);
         public abstract void BlendFunc(int src, int dst);
+        public abstract void BlendFuncSeparate(int colorsrc, int colordst, int alphasrc, int alphadst);
         public abstract void BlendEquationSeparate(int rgbMode, int alphaMode);
         public abstract void CullFace(int mode);
 
         ///Draw
         public abstract void DrawElements(int mode, int count, int type, int indices);
+        public abstract void DrawArrays(int mode, int first, int count);
+
+        //Blending
+        public abstract void BlendEquation(int mode);
+        public abstract void BlendBarrier();
+
+        //Stencil
+        public abstract void StencilMask(int m);
+        public abstract void StencilMask(int face, int m);
+        public abstract void StencilOp(int sfail, int dfail, int dsfail);
+        public abstract void StencilOp(int face, int sfail, int dfail, int dsfail);
+        public abstract void StencilFunc(int func, int @ref, int m);
+        public abstract void StencilFunc(int face, int func, int @ref, int m);
+
+        public abstract void AlphaFunc(int mode, float threshold);
+
     }
 }

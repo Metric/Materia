@@ -7,6 +7,14 @@ namespace Materia.Rendering.Buffers
     {
         int vbo;
 
+        public int Id
+        {
+            get
+            {
+                return vbo;
+            }
+        }
+
         BufferUsageHint type;
 
         public GLArrayBuffer(BufferUsageHint t)

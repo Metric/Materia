@@ -8,6 +8,14 @@ namespace Materia.Rendering.Buffers
     {
         int id;
 
+        public int Id
+        {
+            get
+            {
+                return id;
+            }
+        }
+
         public GLUniformBuffer()
         {
             id = IGL.Primary.GenBuffer();

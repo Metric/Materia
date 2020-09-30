@@ -7,7 +7,7 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
@@ -29,11 +29,13 @@
     <None Remove="Embedded\Frag\distance.glsl" />
     <None Remove="Embedded\Frag\distanceprecalc.glsl" />
     <None Remove="Embedded\Frag\emboss.glsl" />
+    <None Remove="Embedded\Frag\fill.glsl" />
     <None Remove="Embedded\Frag\fx.glsl" />
     <None Remove="Embedded\Frag\gamma.glsl" />
     <None Remove="Embedded\Frag\gradientmap.glsl" />
     <None Remove="Embedded\Frag\grayscaleconv.glsl" />
     <None Remove="Embedded\Frag\hsl.glsl" />
+    <None Remove="Embedded\Frag\hueselector.glsl" />
     <None Remove="Embedded\Frag\image-basic.glsl" />
     <None Remove="Embedded\Frag\invert.glsl" />
     <None Remove="Embedded\Frag\irradiance.glsl" />
@@ -42,7 +44,11 @@
     <None Remove="Embedded\Frag\normals.glsl" />
     <None Remove="Embedded\Frag\occlusion.glsl" />
     <None Remove="Embedded\Frag\pbr.glsl" />
+    <None Remove="Embedded\Frag\point.glsl" />
+    <None Remove="Embedded\Frag\pointsize.glsl" />
+    <None Remove="Embedded\Frag\pointui.glsl" />
     <None Remove="Embedded\Frag\preview.glsl" />
+    <None Remove="Embedded\Frag\satvalselector.glsl" />
     <None Remove="Embedded\Frag\sharpen.glsl" />
     <None Remove="Embedded\Frag\skybox.glsl" />
     <None Remove="Embedded\Frag\spherical.glsl" />
@@ -51,18 +57,29 @@
     <None Remove="Embedded\Frag\uv.glsl" />
     <None Remove="Embedded\Frag\warp.glsl" />
     <None Remove="Embedded\Frag\warpdirectional.glsl" />
+    <None Remove="Embedded\Geom\point.glsl" />
+    <None Remove="Embedded\Geom\pointui.glsl" />
     <None Remove="Embedded\Tess\tcs.glsl" />
     <None Remove="Embedded\Tess\tes.glsl" />
     <None Remove="Embedded\Vertex\basic.glsl" />
+    <None Remove="Embedded\Vertex\fill.glsl" />
     <None Remove="Embedded\Vertex\image.glsl" />
     <None Remove="Embedded\Vertex\pbr.glsl" />
     <None Remove="Embedded\Vertex\pbrtes.glsl" />
+    <None Remove="Embedded\Vertex\point.glsl" />
+    <None Remove="Embedded\Vertex\pointui.glsl" />
     <None Remove="Embedded\Vertex\preview.glsl" />
     <None Remove="Embedded\Vertex\skybox.glsl" />
     <None Remove="Embedded\Vertex\uv.glsl" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Embedded\Frag\fill.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\hueselector.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\point.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\pointsize.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\pointui.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\satvalselector.glsl" />
     <EmbeddedResource Include="Embedded\Frag\skybox.glsl" />
     <EmbeddedResource Include="Embedded\Frag\spherical.glsl" />
   </ItemGroup>
@@ -99,12 +116,17 @@
     <EmbeddedResource Include="Embedded\Frag\uv.glsl" />
     <EmbeddedResource Include="Embedded\Frag\warp.glsl" />
     <EmbeddedResource Include="Embedded\Frag\warpdirectional.glsl" />
+    <EmbeddedResource Include="Embedded\Geom\point.glsl" />
+    <EmbeddedResource Include="Embedded\Geom\pointui.glsl" />
     <EmbeddedResource Include="Embedded\Tess\tcs.glsl" />
     <EmbeddedResource Include="Embedded\Tess\tes.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\basic.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\fill.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\image.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pbr.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pbrtes.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\point.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\pointui.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\preview.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\skybox.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\uv.glsl" />
@@ -117,6 +139,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Geometry\Simplification\" />
     <Folder Include="vcdiff\" />
   </ItemGroup>
 

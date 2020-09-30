@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Rendering.Imaging
 {
@@ -49,7 +50,7 @@ namespace Materia.Rendering.Imaging
                 {
                     r = g = b = Image[idx];
                 }
-                else if (BPP >= 16)
+                else if (BPP == 16)
                 {
                     r = Image[idx];
                     g = Image[idx + 1];
@@ -75,6 +76,51 @@ namespace Materia.Rendering.Imaging
             return new GLPixel() { r = (byte)r, g = (byte)g, b = (byte)b, a = (byte)a, fr = fr, fg = fg, fb = fb, fa = fa };
         }
 
+        public override void GetPixel(int x, int y, ref GLPixel pixel)
+        {
+            int r = 0, g = 0, b = 0, a = 0;
+            int idx = (x + y * Width) * (BPP / 8);
+
+            if (x >= 0 && x < Width && y >= 0 && y < Height)
+            {
+                if (BPP == 8)
+                {
+                    r = g = b = Image[idx];
+                }
+                else if (BPP == 16)
+                {
+                    r = Image[idx];
+                    g = Image[idx + 1];
+                }
+                else if (BPP >= 24)
+                {
+                    r = Image[idx + 2];
+                    g = Image[idx + 1];
+                    b = Image[idx];
+                }
+
+                if (BPP == 32)
+                    a = Image[idx + 3];
+                else
+                    a = 1;
+            }
+
+            float fr = r / 255.0f;
+            float fg = g / 255.0f;
+            float fb = b / 255.0f;
+            float fa = a / 255.0f;
+
+            pixel.r = (byte)r;
+            pixel.g = (byte)g;
+            pixel.b = (byte)b;
+            pixel.a = (byte)a;
+
+            pixel.fr = fr;
+            pixel.fg = fg;
+            pixel.fb = fb;
+            pixel.fa = fa;
+        }
+
         public override void SetPixel(int x, int y, ref GLPixel pixel)
         {
             int idx = (x + y * Width) * (BPP / 8);
@@ -98,6 +144,32 @@ namespace Materia.Rendering.Imaging
 
                 if (BPP == 32)
                     Image[idx + 3] = pixel.a;
+            }
+        }
+
+        public override void SetPixel(int x, int y, ref Vector4 c)
+        {
+            int idx = (x + y * Width) * (BPP / 8);
+            if (x >= 0 && x < Width && y >= 0 && y < Height)
+            {
+                if (BPP == 8)
+                {
+                    Image[idx] = (byte)(c.X * 255);
+                }
+                else if (BPP == 16)
+                {
+                    Image[idx] = (byte)(c.X * 255);
+                    Image[idx + 1] = (byte)(c.Y * 255);
+                }
+                else if (BPP >= 24)
+                {
+                    Image[idx + 2] = (byte)(c.X * 255);
+                    Image[idx + 1] = (byte)(c.Y * 255);
+                    Image[idx] = (byte)(c.Z * 255);
+                }
+
+                if (BPP == 32)
+                    Image[idx + 3] = (byte)(c.W * 255);
             }
         }
     }

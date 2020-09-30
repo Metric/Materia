@@ -127,6 +127,9 @@ namespace Materia.Rendering.Textures
         {
             SizedInternalFormat format = SizedInternalFormat.Rgba32f;
 
+            Width = width;
+            Height = height;
+
             if (InternalFormat == PixelInternalFormat.Rgba16f || InternalFormat == PixelInternalFormat.Rgb16f)
             {
                 format = SizedInternalFormat.Rgba16f;

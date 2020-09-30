@@ -38,257 +38,119 @@ namespace Materia.Rendering.Imaging
             };
         }
 
+        public Vector4 ToVector(float a)
+        {
+            MVector v = ToMVector(a);
+            return new Vector4(v.X, v.Y, v.Z, a);
+        }
+
+        public Vector3 ToVector()
+        {
+            MVector v = ToMVector(1);
+            return new Vector3(v.X, v.Y, v.Z);
+        }
+
         public MVector ToMVector(float a = 1)
         {
-            float h = H;
-            while (h < 0) h += 360;
-            while (h >= 360) h -= 360;
-            float R, G, B;
-            if (V <= 0)
-            {
-                R = G = B = 0;
-            }
-            else if (S <= 0)
-            {
-                R = G = B = V;
-            }
-            else
-            {
-                float hf = h / 60.0f;
-                int i = (int)Math.Floor(hf);
-                float f = hf - i;
-                float pv = V * (1 - S);
-                float qv = V * (1 - S * f);
-                float tv = V * (1 - S * (1 - f));
-
-                switch (i)
-                {
-                    case 0:
-                        R = V;
-                        G = tv;
-                        B = pv;
-                        break;
-
-                    // Green is the dominant color
-
-                    case 1:
-                        R = qv;
-                        G = V;
-                        B = pv;
-                        break;
-                    case 2:
-                        R = pv;
-                        G = V;
-                        B = tv;
-                        break;
-
-                    // Blue is the dominant color
-
-                    case 3:
-                        R = pv;
-                        G = qv;
-                        B = V;
-                        break;
-                    case 4:
-                        R = tv;
-                        G = pv;
-                        B = V;
-                        break;
-
-                    // Red is the dominant color
-
-                    case 5:
-                        R = V;
-                        G = pv;
-                        B = qv;
-                        break;
-                    // Just in case we overshoot on our math by a little, we put these here. Since its a switch it won't slow us down at all to put these here.
-                    case 6:
-                        R = V;
-                        G = tv;
-                        B = pv;
-                        break;
-                    case -1:
-                        R = V;
-                        G = pv;
-                        B = qv;
-                        break;
-                    default:
-                        //LFATAL("i Value error in Pixel conversion, Value is %d", i);
-                        R = G = B = V; // Just pretend its black/white
-                        break;
-                }
-            }
-
-            R = MathF.Min(1, MathF.Max(0, R));
-            G = MathF.Min(1, MathF.Max(0, G));
-            B = MathF.Min(1, MathF.Max(0, B));
-
-            if (float.IsNaN(R))
-            {
-                R = 0;
-            }
-            if (float.IsNaN(G))
-            {
-                G = 0;
-            }
-            if (float.IsNaN(B))
-            {
-                B = 0;
-            }
-
-            return new MVector(R, G, B, a);
+            Vector3 c = new Vector3(H, S, V);
+            Vector4 k = new Vector4(1.0f, 2.0f / 3.0f, 1.0f / 3.0f, 3.0f);
+            Vector3 p = ((c.Xxx + k.Xyz).Fract() * 6.0f - k.Www).Abs();
+            Vector3 f = c.Z * Vector3.Lerp(k.Xxx, Vector3.Clamp(p - k.Xxx, Vector3.Zero, Vector3.One), c.Y);
+            return new MVector(f.X, f.Y, f.Z, a);
         }
 
         public Color ToColor()
         {
-            float h = H;
-            while (h < 0) h += 360;
-            while (h >= 360) h -= 360;
-            float R, G, B;
-            if (V <= 0)
+            Vector3 c = new Vector3(H, S, V);
+            Vector4 k = new Vector4(1.0f, 2.0f / 3.0f, 1.0f / 3.0f, 3.0f);
+            Vector3 p = ((c.Xxx + k.Xyz).Fract() * 6.0f - k.Www).Abs();
+            Vector3 f = c.Z * Vector3.Lerp(k.Xxx, Vector3.Clamp(p - k.Xxx, Vector3.Zero, Vector3.One), c.Y);
+
+            return Color.FromArgb(255, (int)(f.X * 255), (int)(f.Y * 255), (int)(f.Z * 255));
+        }
+
+        public static float step(float edge0, float x)
+        {
+            if (edge0 > x)
             {
-                R = G = B = 0;
-            }
-            else if (S <= 0)
-            {
-                R = G = B = V;
-            }
-            else
-            {
-                float hf = h / 60.0f;
-                int i = (int)Math.Floor(hf);
-                float f = hf - i;
-                float pv = V * (1 - S);
-                float qv = V * (1 - S * f);
-                float tv = V * (1 - S * (1 - f));
-
-                switch (i)
-                {
-                    case 0:
-                        R = V;
-                        G = tv;
-                        B = pv;
-                        break;
-
-                    // Green is the dominant color
-
-                    case 1:
-                        R = qv;
-                        G = V;
-                        B = pv;
-                        break;
-                    case 2:
-                        R = pv;
-                        G = V;
-                        B = tv;
-                        break;
-
-                    // Blue is the dominant color
-
-                    case 3:
-                        R = pv;
-                        G = qv;
-                        B = V;
-                        break;
-                    case 4:
-                        R = tv;
-                        G = pv;
-                        B = V;
-                        break;
-
-                    // Red is the dominant color
-
-                    case 5:
-                        R = V;
-                        G = pv;
-                        B = qv;
-                        break;
-                    // Just in case we overshoot on our math by a little, we put these here. Since its a switch it won't slow us down at all to put these here.
-                    case 6:
-                        R = V;
-                        G = tv;
-                        B = pv;
-                        break;
-                    case -1:
-                        R = V;
-                        G = pv;
-                        B = qv;
-                        break;
-                    default:
-                        //LFATAL("i Value error in Pixel conversion, Value is %d", i);
-                        R = G = B = V; // Just pretend its black/white
-                        break;
-                }
+                return 0;
             }
 
-            R = Math.Min(255, Math.Max(0, R * 255));
-            G = Math.Min(255, Math.Max(0, G * 255));
-            B = Math.Min(255, Math.Max(0, B * 255));
+            return 1;
+        }
 
-            if (float.IsNaN(R))
-            {
-                R = 0;
-            }
-            if (float.IsNaN(G))
-            {
-                G = 0;
-            }
-            if (float.IsNaN(B))
-            {
-                B = 0;
-            }
+        public static float smoothstep(float edge0, float edge1, float x)
+        {
+            // Scale, bias and saturate x to 0..1 range
+            x = clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+            // Evaluate polynomial
+            return x * x * (3 - 2 * x);
+        }
 
-            return Color.FromArgb(255, (int)R, (int)G, (int)B);
+        public static float clamp(float x, float lowerlimit, float upperlimit)
+        {
+            if (x < lowerlimit)
+                x = lowerlimit;
+            if (x > upperlimit)
+                x = upperlimit;
+            return x;
         }
 
         public static HsvColor FromColor(Color c)
         {
             HsvColor hsv = new HsvColor();
+            Vector3 v = new Vector3(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f);
+            Vector4 k = new Vector4(0, -1.0f / 3.0f, 2.0f / 3.0f, -1.0f);
+            Vector4 p = Vector4.Lerp(new Vector4(v.Zy, k.Wz), new Vector4(v.Yz, k.Xy), HsvColor.step(v.Z, v.Y));
+            Vector4 q = Vector4.Lerp(new Vector4(p.Xyw, v.X), new Vector4(v.X, p.Yzx), HsvColor.step(p.X, v.X));
 
-            int max = Math.Max(c.R, Math.Max(c.G, c.B));
-            int min = Math.Min(c.R, Math.Min(c.G, c.B));
-
-            hsv.H = c.GetHue();
-            hsv.S = (max == 0) ? 0 : 1.0f - (1.0f * (float)min / (float)max);
-            hsv.V = max / 255.0f;
+            float d = q.X - MathF.Min(q.W, q.Y);
+            float e = 1.0e-10f;
+            hsv.H = MathF.Abs(q.Z + (q.W - q.Y) / (6.0f * d + e));
+            hsv.S = d / (q.X + e);
+            hsv.V = q.X;
 
             return hsv;
         }
+
+        public static HsvColor FromVector(ref Vector3 c)
+        {
+            Vector4 v = new Vector4(c, 1);
+            return FromVector(ref v);
+        }
+
+        public static HsvColor FromVector(ref Vector4 v)
+        {
+            HsvColor hsv = new HsvColor();
+
+            Vector4 k = new Vector4(0, -1.0f / 3.0f, 2.0f / 3.0f, -1.0f);
+            Vector4 p = Vector4.Lerp(new Vector4(v.Zy, k.Wz), new Vector4(v.Yz, k.Xy), HsvColor.step(v.Z, v.Y));
+            Vector4 q = Vector4.Lerp(new Vector4(p.Xyw, v.X), new Vector4(v.X, p.Yzx), HsvColor.step(p.X, v.X));
+
+            float d = q.X - MathF.Min(q.W, q.Y);
+            float e = 1.0e-10f;
+            hsv.H = MathF.Abs(q.Z + (q.W - q.Y) / (6.0f * d + e));
+            hsv.S = d / (q.X + e);
+            hsv.V = q.X;
+
+            return hsv;
+        }
+
 
         public static HsvColor FromMVector(ref MVector c)
         {
             HsvColor hsv = new HsvColor();
 
-            int r = (int)(c.X * 255);
-            int g = (int)(c.Y * 255);
-            int b = (int)(c.Z * 255);
+            Vector3 v = new Vector3(c.X, c.Y, c.Z);
+            Vector4 k = new Vector4(0, -1.0f / 3.0f, 2.0f / 3.0f, -1.0f);
+            Vector4 p = Vector4.Lerp(new Vector4(v.Zy, k.Wz), new Vector4(v.Yz, k.Xy), HsvColor.step(v.Z, v.Y));
+            Vector4 q = Vector4.Lerp(new Vector4(p.Xyw, v.X), new Vector4(v.X, p.Yzx), HsvColor.step(p.X, v.X));
 
-            int max = Math.Max(r, Math.Max(g, b));
-            int min = Math.Min(r, Math.Min(g, b));
-
-            float delta = max - min;
-            float h = 0;
-
-            if (delta > float.Epsilon)
-            {
-                if (r == max)
-                {
-                    h = (g - b) / delta;
-                }
-                else if (g == max)
-                {
-                    h = 2f + (b - r) / delta;
-                }
-                else if (b == max)
-                {
-                    h = 4f + (r - g) / delta;
-                }
-            }
-
-            hsv.H = h * 360;
-            hsv.S = (max == 0) ? 0 : 1.0f - (1.0f * (float)min / (float)max);
-            hsv.V = max / 255.0f;
+            float d = q.X - MathF.Min(q.W, q.Y);
+            float e = 1.0e-10f;
+            hsv.H = MathF.Abs(q.Z + (q.W - q.Y) / (6.0f * d + e));
+            hsv.S = d / (q.X + e);
+            hsv.V = q.X;
 
             return hsv;
         }
@@ -305,6 +167,54 @@ namespace Materia.Rendering.Imaging
             H = h;
             S = s;
             L = l;
+        }
+
+        public static HslColor FromVector(ref Vector3 c)
+        {
+            Vector4 v = new Vector4(c, 1);
+            return FromVector(ref v);
+        }
+
+        public static HslColor FromVector(ref Vector4 c)
+        {
+            float r = c.X;
+            float g = c.Y;
+            float b = c.Z;
+
+            float min = MathF.Min(MathF.Min(r, g), b);
+            float max = MathF.Max(MathF.Max(r, g), b);
+            float delta = max - min;
+
+            float h = 0;
+            float s = 0;
+            float l = (max + min) * 0.5f;
+
+            if (delta > float.Epsilon)
+            {
+                if (l < 0.5f)
+                {
+                    s = (delta / (max + min));
+                }
+                else
+                {
+                    s = (delta / (2.0f - max - min));
+                }
+
+                if (r == max)
+                {
+                    h = (g - b) / delta;
+                }
+                else if (g == max)
+                {
+                    h = 2f + (b - r) / delta;
+                }
+                else if (b == max)
+                {
+                    h = 4f + (r - g) / delta;
+                }
+            }
+
+            return new HslColor(h, s, l);
         }
 
         public static HslColor FromMVector(ref MVector c)
@@ -390,6 +300,18 @@ namespace Materia.Rendering.Imaging
             }
 
             return Color.FromArgb(255, (int)r, (int)g, (int)b);
+        }
+
+        public Vector4 ToVector(float a)
+        {
+            MVector v = ToMVector(a);
+            return new Vector4(v.X, v.Y, v.Z, a);
+        }
+
+        public Vector3 ToVector()
+        {
+            MVector v = ToMVector(1);
+            return new Vector3(v.X, v.Y, v.Z);
         }
 
         public MVector ToMVector(float a = 1)

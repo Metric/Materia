@@ -31,7 +31,7 @@ namespace Materia.Rendering.Imaging.Processing
                 shader.Use();
                 shader.SetUniform2("tiling", ref tiling);
                 shader.SetUniform("MainTex", 0);
-                shader.SetUniform4F("weight", ref w);
+                shader.SetUniform4("weight", ref w);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
                 tex.Bind();
 

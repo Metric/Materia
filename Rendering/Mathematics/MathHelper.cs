@@ -66,6 +66,9 @@ namespace Materia.Rendering.Mathematics
         /// </summary>
         public const float Log2E = 1.442695041f;
 
+        public const float Deg2Rad = MathF.PI / 180.0f;
+        public const float Rad2Deg = 180.0f / MathF.PI;
+
         /// <summary>
         /// Returns the next power of two that is greater than or equal to the specified number.
         /// </summary>

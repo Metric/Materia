@@ -26,6 +26,11 @@ namespace Materia.Rendering.Geometry
             }
         }
 
+        public void Update()
+        {
+            //do nothing
+        }
+
         public void Draw()
         {
             if(shader != null && renderer != null)

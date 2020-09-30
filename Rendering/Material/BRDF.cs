@@ -30,7 +30,7 @@ namespace Materia.Rendering.Material
                     RawBitmap fbmp = RawBitmap.FromBitmap(bmp);
 
                     Lut.Bind();
-                    Lut.SetData(fbmp.Image, PixelFormat.Rgba, fbmp.Width, fbmp.Height);
+                    Lut.SetData(fbmp.Image, PixelFormat.Bgra, fbmp.Width, fbmp.Height);
                     Lut.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
                     Lut.SetWrap((int)TextureWrapMode.Repeat);
                     GLTexture2D.Unbind();

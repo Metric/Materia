@@ -4,6 +4,7 @@ using Materia.Rendering.Interfaces;
 using System.IO;
 using Microsoft.Extensions.FileProviders;
 using MLog;
+using System.Diagnostics;
 
 namespace Materia.Rendering.Shaders
 {
@@ -24,7 +25,7 @@ namespace Materia.Rendering.Shaders
             }
             catch (Exception e)
             {
-
+                Debug.WriteLine("failed to load embedded shader text?");
             }
 
             return null;
@@ -198,6 +199,79 @@ namespace Materia.Rendering.Shaders
             return GetEmbeddedShader(fragPath);
         }
 
+        public static IGLProgram GetShader(string vertFile, string geoFile, string fragFile)
+        {
+            string vertexPath = Path.Combine("Embedded", "Vertex", vertFile);
+            string fragPath = Path.Combine("Embedded", "Frag", fragFile);
+            string geoPath = Path.Combine("Embedded", "Geom", geoFile);
+
+            IGLProgram shader = null;
+
+            if (Shaders.TryGetValue(vertexPath + geoPath + fragPath, out shader))
+            {
+                return shader;
+            }
+
+            string vertexData = GetEmbeddedShader(vertexPath);
+            string fragdata = GetEmbeddedShader(fragPath);
+            string geoData = GetEmbeddedShader(geoPath);
+
+            if (string.IsNullOrEmpty(vertexData) || string.IsNullOrEmpty(fragdata))    
+            {
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + fragFile);
+                return null;
+            }
+
+            GLFragmentShader frag = new GLFragmentShader(fragdata);
+            string log = null;
+            if (!frag.Compile(out log))
+            {
+                frag.Dispose();
+                Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + fragFile + " | " + geoFile);
+                return null;
+            }
+
+            GLVertexShader vert = new GLVertexShader(vertexData);
+            if (!vert.Compile(out log))
+            {
+                vert.Dispose();
+                Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + fragFile + " | " + geoFile);
+                return null;
+            }
+
+            GLGeometryShader geo = new GLGeometryShader(geoData);
+            if (!geo.Compile(out log))
+            {
+                geo.Dispose();
+                Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + fragFile + " | " + geoFile);
+                return null;
+            }
+
+            shader = new GLShaderProgram(true);
+            shader.AttachShader(vert);
+            shader.AttachShader(geo);
+            shader.AttachShader(frag);
+
+            if (!shader.Link(out log))
+            {
+                shader.Dispose();
+                Log.Error(log);
+                Log.Debug(Environment.StackTrace);
+                Log.Debug("Shader failure for: " + vertFile + " | " + fragFile + " | " + geoFile);
+                return null;
+            }
+
+            Shaders[vertexPath + geoPath + fragPath] = shader;
+
+            return shader;
+        }
 
         public static IGLProgram GetShader(string vertFile, string fragFile)
         {
