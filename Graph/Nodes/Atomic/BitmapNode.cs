@@ -138,6 +138,7 @@ namespace Materia.Nodes.Atomic
                                 width = bmp.Width;
                                 height = bmp.Height;
                                 brush = RawBitmap.FromBitmap(bmp);
+                                brush.Premult();
                                 archive.Close();
                                 return;
                             }
@@ -157,6 +158,7 @@ namespace Materia.Nodes.Atomic
                             height = bmp.Height;
 
                             brush = RawBitmap.FromBitmap(bmp);
+                            brush.Premult();
                         }
                     }
                 }
@@ -170,6 +172,7 @@ namespace Materia.Nodes.Atomic
                             height = bmp.Height;
 
                             brush = RawBitmap.FromBitmap(bmp);
+                            brush.Premult();
                         }
                     }
                 }

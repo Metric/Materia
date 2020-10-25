@@ -32,5 +32,6 @@ void main() {
         a = 1.0 - clamp(a, 0, 1);
     }
 
-    FragColor = vec4(r,g,b,a);
+    //ensure premult
+    FragColor = vec4(r, g, b, a);
 }

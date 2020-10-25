@@ -2,6 +2,7 @@
 using Materia.Rendering.Geometry;
 using Materia.Rendering.Interfaces;
 using Materia.Rendering.Textures;
+using Materia.Rendering.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,40 +11,23 @@ using System.Text;
 
 namespace Materia.Rendering.Geometry
 {
-    public class FillRenderer : IGeometry
+    public class FillRenderer : IGeometry, IDisposeShared
     {
         public Fill FillData { get; protected set; }
 
-        protected static GLTexture2D sharedGradientTex;
+        protected static bool isSharedDisposed = false;
         protected static GLVertexArray sharedVao;
-        protected GLArrayBuffer vbo;
-        protected GLElementBuffer ebo;
-        protected int indicesCount;
-
-        protected GLTexture2D gradientTexture;
-        public GLTexture2D GradientTexture
-        {
-            get
-            {
-                return gradientTexture;
-            }
-        }
-
-        public FillRenderer(Fill d)
-        {
-            FillData = d;
-
-            vbo = new GLArrayBuffer(Materia.Rendering.Interfaces.BufferUsageHint.StaticDraw);
-            ebo = new GLElementBuffer(Materia.Rendering.Interfaces.BufferUsageHint.StaticDraw);
-            gradientTexture = new GLTexture2D(PixelInternalFormat.Rgba8);
-            UpdateGradientTexture();
-        }
-
+        /// <summary>
+        /// Gets the shared vao. Make sure the Stroke is set before calling this.
+        /// </summary>
+        /// <value>
+        /// The shared vao.
+        /// </value>
         public static GLVertexArray SharedVao
         {
             get
             {
-                if (sharedVao == null)
+                if (sharedVao == null && !isSharedDisposed)
                 {
                     sharedVao = new GLVertexArray();
                 }
@@ -52,12 +36,30 @@ namespace Materia.Rendering.Geometry
             }
         }
 
+        protected GLArrayBuffer vbo;
+        protected GLElementBuffer ebo;
+        protected int indicesCount;
+
+        public GLTexture2D GradientTexture { get; protected set; }
+
+        public FillRenderer(Fill d)
+        {
+            GeometryCache.RegisterForDispose(this);
+
+            FillData = d;
+
+            vbo = new GLArrayBuffer(Materia.Rendering.Interfaces.BufferUsageHint.StaticDraw);
+            ebo = new GLElementBuffer(Materia.Rendering.Interfaces.BufferUsageHint.StaticDraw);
+            GradientTexture = new GLTexture2D(PixelInternalFormat.Rgba8);
+            UpdateGradientTexture();
+        }
+
         public void Update()
         {
             if (vbo == null || ebo == null || FillData == null) return;
 
-            vbo.Bind();
-            ebo.Bind();
+            vbo?.Bind();
+            ebo?.Bind();
 
             try
             {
@@ -78,59 +80,37 @@ namespace Materia.Rendering.Geometry
                 Debug.WriteLine(e.ToString());
             }
 
-            GLArrayBuffer.Unbind();
-            GLElementBuffer.Unbind();
+            vbo?.Unbind();
+            ebo?.Unbind();
         }
 
         public void UpdateGradientTexture()
         {
-            //need to move this somewhere else eventually
-            //so it will only update if we change color etc
-            gradientTexture.Bind();
-            gradientTexture.SetData(FillData.GradientMap.Image, PixelFormat.Bgra, FillData.GradientMap.Width, FillData.GradientMap.Height, 0);
-            gradientTexture.Linear();
-            gradientTexture.Repeat();
+            GradientTexture?.Bind();
+            GradientTexture?.SetData(FillData.GradientMap.Image, PixelFormat.Bgra, FillData.GradientMap.Width, FillData.GradientMap.Height, 0);
+            GradientTexture?.Linear();
+            GradientTexture?.Repeat();
             GLTexture2D.Unbind();
         }
 
-        public static void BindSharedVao()
-        {
-            SharedVao.Bind();
-        }
 
-        public static void UnbindSharedVao()
+        public void DisposeShared()
         {
-            GLVertexArray.Unbind();
-        }
-
-        public static void DisposeSharedResources()
-        {
-            if (sharedVao != null)
-            {
-                sharedVao.Dispose();
-                sharedVao = null;
-            }
+            isSharedDisposed = true;
+            sharedVao?.Dispose();
+            sharedVao = null;
         }
 
         public void Dispose()
         {
-            if (vbo != null)
-            {
-                vbo.Dispose();
-                vbo = null;
-            }
+            vbo?.Dispose();
+            vbo = null;
 
-            if (ebo != null)
-            {
-                ebo.Dispose();
-                ebo = null;
-            }
+            ebo?.Dispose();
+            ebo = null;
 
-            if (gradientTexture != null)
-            {
-                gradientTexture.Dispose();
-                gradientTexture = null;
-            }
+            GradientTexture?.Dispose();
+            GradientTexture = null;
         }
 
         public void Draw()
@@ -138,11 +118,11 @@ namespace Materia.Rendering.Geometry
             if (vbo == null || ebo == null || FillData == null 
                 || indicesCount == 0 || FillData.Points == null || FillData.Points.Count < 3) return;
 
-            vbo.Bind();
-            ebo.Bind();
+            vbo?.Bind();
+            ebo?.Bind();
 
             IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
-            gradientTexture?.Bind();
+            GradientTexture?.Bind();
 
             IGL.Primary.VertexAttribPointer(0, 2, (int)VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
             IGL.Primary.VertexAttribPointer(1, 2, (int)VertexAttribPointerType.Float, false, 4 * sizeof(float), 2 * 4);
@@ -151,8 +131,8 @@ namespace Materia.Rendering.Geometry
 
             IGL.Primary.DrawElements((int)BeginMode.Triangles, indicesCount, (int)DrawElementsType.UnsignedInt, 0);
 
-            GLArrayBuffer.Unbind();
-            GLElementBuffer.Unbind();
+            vbo?.Unbind();
+            ebo?.Unbind();
             GLTexture2D.Unbind();
         }
     }

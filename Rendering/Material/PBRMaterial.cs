@@ -7,8 +7,6 @@ namespace Materia.Rendering.Material
 {
     public class PBRMaterial : IMaterial
     {
-        
-
         public string Name { get; set; }
         public IGLProgram Shader { get; set; }
 

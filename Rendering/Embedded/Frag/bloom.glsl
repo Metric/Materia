@@ -23,8 +23,8 @@ void main() {
     //HDR
     final.rgb = final.rgb / (final.rgb + vec3(1.0)); 
 
-    //GAMMA
-    final.rgb = pow(final.rgb, vec3(1.0/2.2));
+    //GAMMA + premult
+    final.rgb = pow(final.rgb, vec3(1.0/2.2)) * final.a;
 
-    FragColor = final;
+    FragColor = clamp(final, vec4(0), vec4(1));
 }

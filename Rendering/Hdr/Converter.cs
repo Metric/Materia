@@ -76,16 +76,16 @@ namespace Materia.Rendering.Hdr
                 frameBuffer = new GLFrameBuffer();
             }
 
-            if (renderBuffer == null)
-            {
-                renderBuffer = new GLRenderBuffer();
-            }
+            renderBuffer?.Dispose();
+            renderBuffer = new GLRenderBuffer();
 
             renderBuffer.Bind();
             renderBuffer.SetBufferStorageAsDepth(32, 32);
+            renderBuffer.Unbind();
+
             frameBuffer.Bind();
             frameBuffer.AttachDepth(renderBuffer);
-            GLRenderBuffer.Unbind();
+            frameBuffer.Unbind();
 
             GLTextureCube cubeMap = new GLTextureCube(PixelInternalFormat.Rgb16f);
             cubeMap.Bind();
@@ -119,7 +119,7 @@ namespace Materia.Rendering.Hdr
                 cube.DrawBasic();
             }
             GLTextureCube.Unbind();
-            GLFrameBuffer.Unbind();
+            frameBuffer.Unbind();
             
             return cubeMap;
         }
@@ -136,21 +136,21 @@ namespace Materia.Rendering.Hdr
                 cube = new MeshRenderer(cubeVertices, cubeTriangles);
             }
 
+            renderBuffer?.Dispose();
+            renderBuffer = new GLRenderBuffer();
+
+            renderBuffer.Bind();
+            renderBuffer.SetBufferStorageAsDepth(512, 512);
+            renderBuffer.Unbind();
+
             if (frameBuffer == null)
             {
                 frameBuffer = new GLFrameBuffer();
             }
 
-            if (renderBuffer == null)
-            {
-                renderBuffer = new GLRenderBuffer();
-            }
-
-            renderBuffer.Bind();
-            renderBuffer.SetBufferStorageAsDepth(512, 512);
             frameBuffer.Bind();
             frameBuffer.AttachDepth(renderBuffer);
-            GLRenderBuffer.Unbind();
+            frameBuffer.Unbind();
 
             GLTextureCube cubeMap = new GLTextureCube(PixelInternalFormat.Rgb16f);
             cubeMap.Bind();
@@ -185,7 +185,7 @@ namespace Materia.Rendering.Hdr
                 cube.DrawBasic();
             }
             GLTexture2D.Unbind();
-            GLFrameBuffer.Unbind();
+            frameBuffer.Unbind();
 
             cubeMap.Bind();
             cubeMap.GenerateMipMaps();
@@ -196,23 +196,14 @@ namespace Materia.Rendering.Hdr
 
         public void Dispose()
         {
-            if (renderBuffer != null)
-            {
-                renderBuffer.Dispose();
-                renderBuffer = null;
-            }
+            renderBuffer?.Dispose();
+            renderBuffer = null;
 
-           if (frameBuffer != null)
-           {
-               frameBuffer.Dispose();
-               frameBuffer = null;
-           }
+            frameBuffer?.Dispose();
+            frameBuffer = null;
 
-           if (cube != null)
-            {
-                cube.Dispose();
-                cube = null;
-            }
+            cube?.Dispose();
+            cube = null;
         }
     }
 }

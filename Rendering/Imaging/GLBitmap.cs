@@ -46,6 +46,20 @@ namespace Materia.Rendering.Imaging
             }
         }*/
 
+        public virtual void Premult()
+        {
+            Parallel.For(0, Height, y =>
+            {
+                GLPixel rgba = new GLPixel();
+                for (int x = 0; x < Width; ++x)
+                {
+                    GetPixel(x, y, ref rgba);
+                    GLPixel.Premult(ref rgba);
+                    SetPixel(x, y, ref rgba);
+                }
+            });
+        }
+
         public void CopyRedToGreen(GLBitmap src)
         {
             Parallel.For(0, Height, y =>

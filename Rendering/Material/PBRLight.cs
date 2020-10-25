@@ -5,8 +5,6 @@ namespace Materia.Rendering.Material
 {
     public class PBRLight : PBRMaterial
     {
-        
-
         public PBRLight() : base() { }
 
         protected override void LoadShader()

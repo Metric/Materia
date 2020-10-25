@@ -57,7 +57,7 @@ namespace Materia.Nodes.Atomic
 
         BlendProcessor processor;
 
-        float alpha;
+        float alpha = 1;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Alpha")]
         public float Alpha
@@ -76,7 +76,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        BlendType mode;
+        BlendType mode = BlendType.Copy;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.Dropdown, "Mode")]
         public BlendType Mode
@@ -92,7 +92,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        AlphaModeType alphaMode;
+        AlphaModeType alphaMode = AlphaModeType.Add;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.Dropdown, "Alpha Mode")]
         public AlphaModeType AlphaMode
@@ -116,7 +116,7 @@ namespace Materia.Nodes.Atomic
             height = h;
 
             alpha = 1;
-            alphaMode = AlphaModeType.Background;
+            alphaMode = AlphaModeType.Add;
             mode = BlendType.Copy;
 
             previewProcessor = new BasicImageRenderer();

@@ -102,10 +102,7 @@ namespace Materia.Rendering.Imaging.Processing
                     shader.SetUniform("hasMask", 0);
                 }
 
-                if (renderQuad != null)
-                {
-                    renderQuad.Draw();
-                }
+                renderQuad?.Draw();
 
                 GLTexture2D.Unbind();
                 //output.Bind();

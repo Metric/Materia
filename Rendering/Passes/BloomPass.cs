@@ -37,19 +37,13 @@ namespace Materia.Rendering.Passes
             height = h;
         }
 
-        public override void Release()
+        public override void Dispose()
         {
-            if (blur != null)
-            {
-                blur.Dispose();
-                blur = null;
-            }
+            blur?.Dispose();
+            blur = null;
 
-            if(quad != null)
-            {
-                quad.Dispose();
-                quad = null;
-            }
+            quad?.Dispose();
+            quad = null;
         }
 
         public override void Render(GLTexture2D[] inputs, out GLTexture2D[] outputs)
@@ -61,6 +55,8 @@ namespace Materia.Rendering.Passes
             if (inputs == null) return;
 
             if (inputs.Length < 2) return;
+
+            FullScreenQuad.SharedVao?.Bind();
 
             blur.Intensity = Intensity;
             blur.Process(width, height, inputs[1], inputs[1]);
@@ -89,6 +85,8 @@ namespace Materia.Rendering.Passes
             IGL.Primary.Enable((int)EnableCap.CullFace);
 
             GLTexture2D.Unbind();
+
+            FullScreenQuad.SharedVao?.Unbind();
         }
     }
 }

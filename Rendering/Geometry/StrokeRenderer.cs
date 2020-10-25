@@ -3,6 +3,7 @@ using Materia.Rendering.Interfaces;
 using Materia.Rendering.Mathematics;
 using Materia.Rendering.Shaders;
 using Materia.Rendering.Textures;
+using Materia.Rendering.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,13 +15,14 @@ using System.Threading.Tasks;
 
 namespace Materia.Rendering.Geometry
 {
-    public class StrokeRenderer : IGeometry
+    public class StrokeRenderer : IGeometry, IDisposeShared
     {
         public List<Stroke> Strokes { get; protected set; }
 
         protected GLArrayBuffer vbo;
-
         protected int pointCount = 0;
+
+        protected static bool isSharedDisposed = false;
         protected static GLVertexArray sharedVao;
         /// <summary>
         /// Gets the shared vao. Make sure the Stroke is set before calling this.
@@ -28,11 +30,11 @@ namespace Materia.Rendering.Geometry
         /// <value>
         /// The shared vao.
         /// </value>
-        protected static GLVertexArray SharedVao
+        public static GLVertexArray SharedVao
         {
             get
             {
-                if (sharedVao == null)
+                if (sharedVao == null && !isSharedDisposed)
                 {
                     sharedVao = new GLVertexArray();
                 }
@@ -48,6 +50,8 @@ namespace Materia.Rendering.Geometry
 
         public StrokeRenderer(List<Stroke> strokes)
         {
+            GeometryCache.RegisterForDispose(this);
+
             Strokes = strokes;
 
             vbo = new GLArrayBuffer(BufferUsageHint.StaticDraw);
@@ -56,16 +60,6 @@ namespace Materia.Rendering.Geometry
             {
                 Update();
             }
-        }
-
-        public static void BindSharedVao()
-        {
-            SharedVao.Bind();
-        }
-
-        public static void UnbindSharedVao()
-        {
-            GLVertexArray.Unbind();
         }
 
         public bool AppendStroke(Stroke s)
@@ -102,9 +96,9 @@ namespace Materia.Rendering.Geometry
                     {
                         pointCount = Strokes[0].Points.Count;
                     }
-                    vbo.Bind();
-                    vbo.SetData(sdata);
-                    GLArrayBuffer.Unbind();
+                    vbo?.Bind();
+                    vbo?.SetData(sdata);
+                    vbo?.Unbind();
                 }
                 else
                 {
@@ -124,12 +118,9 @@ namespace Materia.Rendering.Geometry
                         data.AddRange(sdata);
                     }
 
-                    vbo.Bind();
-                    if (vbo.Id != 0)
-                    {
-                        vbo.SetData(data.ToArray());
-                    }
-                    GLArrayBuffer.Unbind();
+                    vbo?.Bind();
+                    vbo?.SetData(data.ToArray());
+                    vbo?.Unbind();
                 }
             }
             catch (Exception e)
@@ -140,24 +131,19 @@ namespace Materia.Rendering.Geometry
 
         public void Dispose()
         {
-            if (vbo != null)
-            {
-                vbo.Dispose();
-                vbo = null;
-            }
+            vbo?.Dispose();
+            vbo = null;
         }
 
         /// <summary>
         /// Disposes the shared resources. Call before exiting the application fully.
         /// To properly release GPU resources for Shared VertexArray
         /// </summary>
-        public static void DisposeSharedResources()
+        public void DisposeShared()
         {
-            if (sharedVao != null)
-            {
-                sharedVao.Dispose();
-                sharedVao = null;
-            }
+            isSharedDisposed = true;
+            sharedVao?.Dispose();
+            sharedVao = null;
         }
 
         public void Draw()
@@ -169,7 +155,7 @@ namespace Materia.Rendering.Geometry
 
             if (pointCount > 0)
             {
-                vbo.Bind();
+                vbo?.Bind();
                 IGL.Primary.VertexAttribPointer(0, 2, (int)VertexAttribPointerType.Float, false, 10 * sizeof(float), 0);
                 IGL.Primary.VertexAttribPointer(1, 2, (int)VertexAttribPointerType.Float, false, 10 * sizeof(float), 2 * 4);
                 IGL.Primary.VertexAttribPointer(2, 4, (int)VertexAttribPointerType.Float, false, 10 * sizeof(float), (2 * 4) + (2 * 4));
@@ -182,7 +168,7 @@ namespace Materia.Rendering.Geometry
                 IGL.Primary.EnableVertexAttribArray(4);
 
                 IGL.Primary.DrawArrays((int)PrimitiveType.Points, 0, pointCount);
-                GLArrayBuffer.Unbind();
+                vbo?.Unbind();
             }
         }
     }

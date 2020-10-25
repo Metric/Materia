@@ -11,6 +11,9 @@ float lengthSqr(vec3 v) {
 void main() {
     Brightness = vec4(0);
 
+    //ensure premult
+    color.rgb *= color.a;
+
     if(lengthSqr(color.rgb) > 3) {
         Brightness = vec4(color.rgb, 1.0);
     }

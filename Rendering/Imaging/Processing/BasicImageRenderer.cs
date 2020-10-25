@@ -34,12 +34,9 @@ namespace Materia.Rendering.Imaging.Processing
                 shader.SetUniform2("tiling", ref tiling);
                 shader.SetUniform("MainTex", 0);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-                tex.Bind();
+                tex?.Bind();
 
-                if (renderQuad != null)
-                {
-                    renderQuad.Draw();
-                }
+                renderQuad?.Draw();
 
                 GLTexture2D.Unbind();
             }
@@ -60,17 +57,12 @@ namespace Materia.Rendering.Imaging.Processing
                 shader.SetUniform2("tiling", ref tiling);
                 shader.SetUniform("MainTex", 0);
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-                tex.Bind();
+                tex?.Bind();
 
-                if(renderQuad != null)
-                {
-                    renderQuad.Draw();
-                }
+                renderQuad?.Draw();
 
                 GLTexture2D.Unbind();
-                /*output.Bind();
-                output.CopyFromFrameBuffer(width, height);
-                GLTexture2D.Unbind();*/
+
                 Blit(output, width, height);
             }
         }

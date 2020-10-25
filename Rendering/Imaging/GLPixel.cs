@@ -14,6 +14,18 @@ namespace Materia.Rendering.Imaging
         public byte b;
         public byte a;
 
+        public static void Premult(ref GLPixel p)
+        {
+            float a = p.fa;
+
+            p.r = (byte)(p.r * a);
+            p.g = (byte)(p.g * a);
+            p.b = (byte)(p.b * a);
+            p.fr *= a;
+            p.fg *= a;
+            p.fb *= a;
+        }
+
         public static GLPixel Lerp(ref GLPixel from, ref GLPixel to, float t)
         {
             float fr = from.fr.Lerp(to.fr, t);

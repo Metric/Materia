@@ -44,10 +44,7 @@ namespace Materia.Rendering.Geometry
                 shader.SetUniformMatrix4("projectionMatrix", ref proj);
 
                 IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Line);
-                renderer.Bind();
-                IGL.Primary.DrawElements((int)BeginMode.Triangles, indicesCount, (int)DrawElementsType.UnsignedInt, 0);
-                GLVertexArray.Unbind();
-
+                renderer?.DrawBasic();
                 IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
             }
         }

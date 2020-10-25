@@ -13,6 +13,7 @@ using Materia.Rendering.Buffers;
 using System.Runtime.InteropServices;
 using Materia.Nodes;
 using Materia.Rendering.Extensions;
+using System.Reflection;
 
 namespace Materia.Graph
 {
@@ -221,13 +222,13 @@ namespace Materia.Graph
             }
         }
         
-        protected Dictionary<string, ParameterValue> uniforms; 
+        protected Dictionary<string, object> uniforms; 
 
         public Function(string name, int w = 256, int h = 256) : base(name, w, h)
         {
             samplers = new List<SamplerNode>();
             forLoops = new List<ForLoopNode>();
-            uniforms = new Dictionary<string, ParameterValue>();
+            uniforms = new Dictionary<string, object>();
             orderCache = new List<Node>();
             calls = new List<CallNode>();
             args = new List<ArgNode>();
@@ -874,6 +875,7 @@ namespace Materia.Graph
                              + "const float Deg2Rad = (PI / 180.0);\r\n"
                              + "uniform float RandomSeed = " + randomSeed.ToCodeString() + ";\r\n"
                              + GLSLHash
+                             + GetParentNodeShaderParams(uniforms)
                              + GetParentGraphShaderParams(true, uniforms);
             }
             else
@@ -894,6 +896,7 @@ namespace Materia.Graph
                              + "const float Deg2Rad = (PI / 180.0);\r\n"
                              + "uniform float RandomSeed = " + randomSeed.ToCodeString() + ";\r\n"
                              + GLSLHash
+                             + GetParentNodeShaderParams(uniforms)
                              + GetParentGraphShaderParams(true, uniforms);
             }
 
@@ -1036,6 +1039,11 @@ namespace Materia.Graph
                         Vector2 vec2 = new Vector2(mv.X, mv.Y);
                         Shader.SetUniform2(k, ref vec2);
                     }
+                    else if (value is Vector2)
+                    {
+                        Vector2 vec = (Vector2)value;
+                        Shader.SetUniform2(k, ref vec);
+                    }
                 }
                 else if (type == NodeType.Float3)
                 {
@@ -1045,6 +1053,11 @@ namespace Materia.Graph
                         Vector3 vec3 = new Vector3(mv.X, mv.Y, mv.Z);
                         Shader.SetUniform3(k, ref vec3);
                     }
+                    else if(value is Vector3)
+                    {
+                        Vector3 vec = (Vector3)value;
+                        Shader.SetUniform3(k, ref vec);
+                    }
                 }
                 else if (type == NodeType.Float4 || type == NodeType.Color || type == NodeType.Gray)
                 {
@@ -1052,7 +1065,12 @@ namespace Materia.Graph
                     {
                         MVector mv = (MVector)value;
                         Vector4 vec4 = new Vector4(mv.X, mv.Y, mv.Z, mv.W);
-                        Shader.SetUniform4F(k, ref vec4);
+                        Shader.SetUniform4(k, ref vec4);
+                    }
+                    else if (value is Vector4)
+                    {
+                        Vector4 vec = (Vector4)value;
+                        Shader.SetUniform4(k, ref vec);
                     }
                 }
             }
@@ -1066,7 +1084,12 @@ namespace Materia.Graph
         {
             foreach (string k in uniforms.Keys)
             {
-                ParameterValue v = uniforms[k];
+                ParameterValue v = uniforms[k] as ParameterValue;
+
+                if (v == null)
+                {
+                    continue;
+                }
 
                 object value = v.Value;
 
@@ -1093,7 +1116,19 @@ namespace Materia.Graph
             //set other uniform params
             foreach (string k in uniforms.Keys)
             {
-                ParameterValue v = uniforms[k];
+                ParameterValue v = uniforms[k] as ParameterValue;
+
+                if (v == null)
+                {
+                    Tuple<PropertyInfo,NodeType> prop = uniforms[k] as Tuple<PropertyInfo,NodeType>;
+                    if (prop == null || parentNode == null)
+                    {
+                        continue;
+                    }
+
+                    SetUniform(k, prop.Item1.GetValue(parentNode), prop.Item2);
+                    continue;
+                }
 
                 object value = v.Value;
 
@@ -1341,6 +1376,109 @@ namespace Materia.Graph
             builder.Append(result);
         }
 
+        protected static string BuildShaderValue(PropertyInfo prop, Node parentNode, Dictionary<string, object> uniforms)
+        {
+            PromoteAttribute promote = prop.GetCustomAttribute<PromoteAttribute>();
+
+            object value = null;
+            NodeType pType = NodeType.Float;
+
+            value = prop.GetValue(parentNode);
+
+            if (promote != null)
+            {
+                pType = promote.ExpectedType;
+            }
+            else
+            {
+                if (value.IsNumber())
+                {
+                    pType = NodeType.Float;
+                }
+                else if (value != null && value is MVector)
+                {
+                    pType = NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Gray | NodeType.Color;
+                }
+                else if (value != null && value is Vector4)
+                {
+                    pType = NodeType.Float4;
+                }
+                else if (value != null && value is bool)
+                {
+                    pType = NodeType.Bool;
+                }
+                else
+                {
+                    return "";
+                }
+            }
+
+            uniforms[prop.Name] = new Tuple<PropertyInfo, NodeType>(prop, pType);
+
+            if (pType == NodeType.Bool)
+            {
+                try
+                {
+                    return "uniform float " + prop.Name + " = " + (value.ToBool() ? 1f : 0f).ToCodeString() + ";\r\n";
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                    Log.Info("Defaulting to false for parameter " + prop.Name);
+                    return "0;\r\n";
+                }
+            }
+            else if (pType == NodeType.Float)
+            {
+                try
+                {
+                    return "uniform float " + prop.Name + " = " + value.ToFloat().ToCodeString() + ";\r\n";
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                    Log.Info("Defaulting to 0 for parameter " + prop.Name);
+                    return "0;\r\n";
+                }
+            }
+            else if (pType == NodeType.Float4 || pType == NodeType.Gray || pType == NodeType.Color)
+            {
+
+                MVector vec = new MVector();
+
+                if (value is MVector)
+                {
+                    vec = (MVector)value;
+                }
+
+                return "uniform vec4 " + prop.Name + " = vec4(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + "," + vec.W.ToCodeString() + ");\r\n";
+            }
+            else if (pType == NodeType.Float2)
+            {
+                MVector vec = new MVector();
+
+                if (value is MVector)
+                {
+                    vec = (MVector)value;
+                }
+
+                return "uniform vec2 " + prop.Name + " = vec2(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + ");\r\n";
+            }
+            else if (pType == NodeType.Float3)
+            {
+                MVector vec = new MVector();
+
+                if (value is MVector)
+                {
+                    vec = (MVector)value;
+                }
+
+                return "uniform vec3 " + prop.Name + " = vec3(" + vec.X.ToCodeString() + "," + vec.Y.ToCodeString() + "," + vec.Z.ToCodeString() + ");\r\n";
+            }
+
+            return "";
+        }
+
         protected static string BuildShaderParamValue(ParameterValue param)
         {
             object value = param.Value;
@@ -1380,7 +1518,7 @@ namespace Materia.Graph
             {
                 try
                 {
-                    return (Convert.ToBoolean(value) ? 1 : 0) + ";\r\n";
+                    return (value.ToBool() ? 1f : 0f).ToCodeString() + ";\r\n";
                 }
                 catch (Exception e)
                 {
@@ -1440,7 +1578,7 @@ namespace Materia.Graph
             return "";
         }
 
-        public string GetParentGraphShaderParams(bool isUniform = false, Dictionary<string, ParameterValue> seen = null)
+        public string GetParentGraphShaderParams(bool isUniform = false, Dictionary<string, object> seen = null)
         {
             StringBuilder builder = new StringBuilder();
 
@@ -1481,6 +1619,49 @@ namespace Materia.Graph
             return builder.ToString();
         }
 
+        public string GetParentNodeShaderParams(Dictionary<string, object> seen)
+        {
+            StringBuilder builder = new StringBuilder();
+
+            try
+            {
+                if (parentNode == null) return "";
+
+                var g = ParentGraph;
+
+                var props = parentNode.GetType().GetProperties();
+
+                int count = props.Length;
+                for (int i = 0; i < count; ++i)
+                {
+                    if (seen.ContainsKey(props[i].Name)) continue;
+
+                    var prop = props[i];
+                    EditableAttribute editable = prop.GetCustomAttribute<EditableAttribute>();
+
+                    if (editable == null)
+                    {
+                        continue;
+                    }
+
+                    //we can ignore this here now
+                    //since these will be pulled in GetParentGraphVars
+                    if (g != null && g.HasParameterValue(parentNode.Id, prop.Name))
+                    {
+                        continue;
+                    }
+
+                    builder.Append(BuildShaderValue(prop, parentNode, uniforms));
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return builder.ToString();
+        }
+
         protected object GetVar(Dictionary<string, VariableDefinition> vars, string key)
         {
             VariableDefinition vd;
@@ -1506,44 +1687,6 @@ namespace Materia.Graph
             {
                 vd = new VariableDefinition(value, type);
                 vars[key] = vd;
-            }
-        }
-
-        protected void GetParentGraphVars(Graph g, Dictionary<string, VariableDefinition> vars)
-        {
-            if (g == null) return;
-
-            try
-            {
-                //parameters can be function or constant
-                foreach (var k in g.Parameters.Keys)
-                {
-                    var param = g.Parameters[k];
-                    if (param.Value == this) continue;
-                    if (!param.IsFunction())
-                    {
-                        SetVar(vars, param.CodeName, param.Value, param.Type);
-                    }
-                    else
-                    {
-                        Function gf = param.Value as Function;
-                        SetVar(vars, param.CodeName, gf.Result, param.Type);
-                    }
-                }
-
-                int count = g.CustomParameters.Count;
-                for (int i = 0; i < count; ++i)
-                {
-                    ParameterValue param = g.CustomParameters[i];
-                    if (param.Value == this) continue;
-                    SetVar(vars, param.CustomCodeName, param.Value, param.Type);
-                }
-            }
-            catch (StackOverflowException e)
-            {
-                //possible
-                Log.Error(e);
-                Log.Error("There is an infinite function reference loop in promoted graph parameters.");
             }
         }
 
@@ -1585,164 +1728,76 @@ namespace Materia.Graph
             }
         }
 
-        //conver this code to building as part of shader
-        //will readd in the future when
-        //these are available via shaders as well
         protected void SetParentNodeVars(Graph g)
         {
-            /*try
+            if (parentNode == null) return;
+
+            var props = parentNode.GetType().GetProperties();
+
+            int count = props.Length;
+            for (int i = 0; i < count; ++i)
             {
-                if (g == null || parentNode == null) return;
+                var prop = props[i];
+                PromoteAttribute promote = prop.GetCustomAttribute<PromoteAttribute>();
+                EditableAttribute editable = prop.GetCustomAttribute<EditableAttribute>();
 
-                var props = parentNode.GetType().GetProperties();
-
-                var p = g;
-
-                if (p != null)
+                if (editable == null)
                 {
-                    int count = props.Length;
-                    for(int i = 0; i < count; ++i)
-                    {
-                        var prop = props[i];
-                        PromoteAttribute promote = prop.GetCustomAttribute<PromoteAttribute>();
-                        EditableAttribute editable = prop.GetCustomAttribute<EditableAttribute>();
+                    continue;
+                }
 
-                        if(editable == null)
-                        {
-                            continue;
-                        }
+                object v = null;
+                NodeType pType = NodeType.Float;
 
-                        object v = null;
+                //we can ignore this here now
+                //since these will be pulled in SetParentGraphVars
+                if (g != null && g.HasParameterValue(parentNode.Id, prop.Name))
+                {
+                    continue;
+                }
 
-                        NodeType pType = NodeType.Float;
+                v = prop.GetValue(parentNode);
 
-                        if (p.HasParameterValue(parentNode.Id, prop.Name))
-                        {
-                            var gp = p.GetParameterRaw(parentNode.Id, prop.Name);
-                            if (!gp.IsFunction())
-                            {
-                                v = gp.Value;
-                                pType = gp.Type;
-                            }
-                            else
-                            {
-                                continue;
-                            }
-                        }
-                        else
-                        {
-                            v = prop.GetValue(parentNode);
-
-                            if(promote != null)
-                            {
-                                pType = promote.ExpectedType;
-                            }
-                            else
-                            {
-                                if(Helpers.Utils.IsNumber(v))
-                                {
-                                    pType = NodeType.Float;
-                                }
-                                else if(v != null && v is MVector)
-                                {
-                                    pType = NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Gray | NodeType.Color;
-                                }
-                                else if(v != null && v is Vector4)
-                                {
-                                    pType = NodeType.Float4;
-                                }
-                                else if(v != null && v is bool)
-                                {
-                                    pType = NodeType.Bool;
-                                }
-                                else
-                                {
-                                    //do not add it
-                                    continue;
-                                }
-                            }
-                        }
-
-
-                        if (v != null)
-                        {
-                            if (v is Vector4)
-                            {
-                                Vector4 vec = (Vector4)v;
-                                v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
-                            }
-
-                            SetVar(prop.Name, v, pType);
-                        }
-                    }
+                if (promote != null)
+                {
+                    pType = promote.ExpectedType;
                 }
                 else
                 {
-                    int count = props.Length;
-                    for(int i = 0; i < count; ++i)
+                    if (v.IsNumber())
                     {
-                        NodeType pType = NodeType.Float;
-                        var prop = props[i];
-                        PromoteAttribute promote = prop.GetCustomAttribute<PromoteAttribute>();
-                        EditableAttribute editable = prop.GetCustomAttribute<EditableAttribute>();
-
-                        if(editable == null)
-                        {
-                            continue;
-                        }
-
-                        object v = prop.GetValue(parentNode);
-
-
-                        if(promote != null)
-                        {
-                            pType = promote.ExpectedType;
-                        }
-                        else
-                        {
-                            if (Helpers.Utils.IsNumber(v))
-                            {
-                                pType = NodeType.Float;
-                            }
-                            else if (v != null && v is MVector)
-                            {
-                                pType = NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Gray | NodeType.Color;
-                            }
-                            else if(v != null && v is Vector4)
-                            {
-                                pType = NodeType.Float4;
-                            }
-                            else if(v != null &&  v is bool)
-                            {
-                                pType = NodeType.Bool;
-                            }
-                            else
-                            {
-                                //do not add
-                                continue;
-                            }
-                        }
-
-
-                        if (v != null)
-                        {
-                            if (v is Vector4)
-                            {
-                                Vector4 vec = (Vector4)v;
-                                v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
-                            }
-
-                            SetVar(prop.Name, v, pType);
-                        }
+                        pType = NodeType.Float;
+                    }
+                    else if (v != null && v is MVector)
+                    {
+                        pType = NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Gray | NodeType.Color;
+                    }
+                    else if (v != null && v is Vector4)
+                    {
+                        pType = NodeType.Float4;
+                    }
+                    else if (v != null && v is bool)
+                    {
+                        pType = NodeType.Bool;
+                    }
+                    else
+                    {
+                        //do not add it
+                        continue;
                     }
                 }
+
+                if (v != null)
+                {
+                    if (v is Vector4)
+                    {
+                        Vector4 vec = (Vector4)v;
+                        v = new MVector(vec.X, vec.Y, vec.Z, vec.W);
+                    }
+
+                    SetVar(prop.Name, v, pType);
+                }
             }
-            catch (StackOverflowException e)
-            {
-                Log.Error(e);
-                //stackoverflow possible if you do a loop of function parameter values
-                Log.Error("There is an infinite function reference loop between node parameters");
-            }*/
         }
 
         public override void TryAndProcess()

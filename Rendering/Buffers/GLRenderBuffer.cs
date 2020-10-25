@@ -17,7 +17,7 @@ namespace Materia.Rendering.Buffers
             IGL.Primary.BindRenderbuffer((int)RenderbufferTarget.Renderbuffer, Id);
         }
 
-        public static void Unbind()
+        public void Unbind()
         {
             IGL.Primary.BindRenderbuffer((int)RenderbufferTarget.Renderbuffer, 0);
         }

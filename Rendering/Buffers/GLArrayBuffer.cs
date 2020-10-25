@@ -28,7 +28,7 @@ namespace Materia.Rendering.Buffers
             IGL.Primary.BindBuffer((int)BufferTarget.ArrayBuffer, vbo);
         }
 
-        public static void Unbind()
+        public void Unbind()
         {
             IGL.Primary.BindBuffer((int)BufferTarget.ArrayBuffer, 0);
         }

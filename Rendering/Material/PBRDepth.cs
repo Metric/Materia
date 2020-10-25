@@ -5,8 +5,6 @@ namespace Materia.Rendering.Material
 {
     public class PBRDepth : PBRMaterial
     {
-        
-
         public PBRDepth() : base() {}
 
         protected override void LoadShader()

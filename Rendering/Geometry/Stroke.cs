@@ -215,6 +215,11 @@ namespace Materia.Rendering.Geometry
             }
         }
 
+        public void ClearSmooth()
+        {
+            smoothed = null;
+        }
+
         public void Simplify(out List<StrokePoint> pts, float tolerance = 4)
         {
             pts = Catmull.Simplify(points, tolerance);

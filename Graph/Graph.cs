@@ -1957,6 +1957,8 @@ namespace Materia.Graph
                 {
                     Function g = p.Value as Function;
 
+                    g.PrepareUniforms();
+
                     if(g.BuildAsShader)
                     {
                         g.ComputeResult();

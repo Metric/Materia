@@ -5,8 +5,6 @@ namespace Materia.Rendering.Material
 {
     public class PBRTess : PBRMaterial
     {
-        
-
         protected override void LoadShader()
         {
             Shader = GLShaderCache.GetShader("pbrtes.glsl", "tcs.glsl", "tes.glsl", "pbr.glsl");

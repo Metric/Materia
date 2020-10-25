@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Materia.Rendering.Textures;
 
 namespace Materia.Rendering.Passes
 {
-    public class RenderStack
+    public class RenderStack : IDisposable
     {
         public List<RenderStackItem> renderers;
 
@@ -31,11 +32,11 @@ namespace Materia.Rendering.Passes
             }
         }
 
-        public void Release()
+        public void Dispose()
         {
             for(int i = 0; i < renderers.Count; ++i)
             {
-                renderers[i].Release();
+                renderers[i].Dispose();
             }
 
             renderers.Clear();

@@ -4,6 +4,7 @@ using Materia.Rendering.Textures;
 using Materia.Rendering.Buffers;
 using Materia.Rendering.Interfaces;
 using MLog;
+using System.Linq;
 
 namespace Materia.Rendering.Passes
 {
@@ -39,7 +40,7 @@ namespace Materia.Rendering.Passes
             depth = new GLRenderBuffer();
             depth.Bind();
             depth.SetBufferStorageAsDepth(w, h);
-            GLRenderBuffer.Unbind();
+            depth.Unbind();
 
             frame = new GLFrameBuffer();
             frame.Bind();
@@ -52,7 +53,7 @@ namespace Materia.Rendering.Passes
                 Log.Error("Invalid frame buffer");
             }
 
-            GLFrameBuffer.Unbind();
+            frame.Unbind();
         }
 
         public void Update(MeshRenderer[] m, int w, int h)
@@ -76,7 +77,7 @@ namespace Materia.Rendering.Passes
             {
                 depth.Bind();
                 depth.SetBufferStorageAsDepth(w, h);
-                GLRenderBuffer.Unbind();
+                depth.Unbind();
             }
         }
 
@@ -90,34 +91,33 @@ namespace Materia.Rendering.Passes
             IGL.Primary.DrawBuffers(new int[] { (int)DrawBuffersEnum.ColorAttachment0, (int)DrawBuffersEnum.ColorAttachment1 });
             IGL.Primary.Viewport(0, 0, width, height);
             IGL.Primary.ClearColor(0, 0, 0, 0);
-            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit);
-            IGL.Primary.Clear((int)ClearBufferMask.DepthBufferBit);
+            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit);
+
+            MeshRenderer.SharedVao?.Bind();
+
             for (int i = 0; i < Meshes.Length; ++i)
             {
                 Meshes[i].Draw();
             }
-            GLFrameBuffer.Unbind();
+
+            MeshRenderer.SharedVao?.Unbind();
+
+            frame.Unbind();
         }
 
-        public override void Release()
+        public override void Dispose()
         {
-            if(frame != null)
-            {
-                frame.Dispose();
-                frame = null;
-            }
+            frame?.Dispose();
+            frame = null;
 
-            if(depth != null)
-            {
-                depth.Dispose();
-                depth = null;
-            }
+            depth?.Dispose();
+            depth = null;
 
             if(color != null)
             {
                 for(int i = 0; i < color.Length; ++i)
                 {
-                    color[i].Dispose();
+                    color[i]?.Dispose();
                 }
 
                 color = null;

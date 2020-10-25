@@ -4,6 +4,7 @@ using Materia.Rendering.Mathematics;
 using Materia.Rendering.Interfaces;
 using Materia.Rendering.Material;
 using Materia.Rendering.Textures;
+using Materia.Rendering.Utils;
 
 namespace Materia.Rendering.Geometry
 {
@@ -15,8 +16,14 @@ namespace Materia.Rendering.Geometry
         SkyBox
     }
 
-    public class MeshRenderer : IGeometry
+    public class MeshRenderer : IGeometry, IDisposeShared
     {
+        protected enum InternalRenderType
+        {
+            Basic,
+            Advanced
+        }
+
         public PBRMaterial Mat { get; set; }
 
         public GLTextureCube IrradianceMap { get; set; }
@@ -35,8 +42,30 @@ namespace Materia.Rendering.Geometry
         public float Near { get; set; }
         public float Far { get; set; }
 
+        protected InternalRenderType renderType;
+
+        protected static bool isSharedDisposed = false;
+        protected static GLVertexArray sharedVao;
+        /// <summary>
+        /// Gets the shared vao. Make sure the Stroke is set before calling this.
+        /// </summary>
+        /// <value>
+        /// The shared vao.
+        /// </value>
+        public static GLVertexArray SharedVao
+        {
+            get
+            {
+                if (sharedVao == null && !isSharedDisposed)
+                {
+                    sharedVao = new GLVertexArray();
+                }
+
+                return sharedVao;
+            }
+        }
+
         protected GLArrayBuffer vbo;
-        protected GLVertexArray vao;
         protected GLElementBuffer ebo;
 
         protected int indicesCount;
@@ -53,14 +82,16 @@ namespace Materia.Rendering.Geometry
 
         public MeshRenderer(float[] verts, int[] indices)
         {
+            GeometryCache.RegisterForDispose(this);
+
             IsLight = false;
             Tiling = new Vector2(1, 1);
 
+            renderType = InternalRenderType.Basic;
+
             vbo = new GLArrayBuffer(BufferUsageHint.StaticDraw);
             ebo = new GLElementBuffer(BufferUsageHint.StaticDraw);
-            vao = new GLVertexArray();
 
-            vao.Bind();
             vbo.Bind();
             ebo.Bind();
 
@@ -68,27 +99,23 @@ namespace Materia.Rendering.Geometry
             ebo.SetData(indices);
             indicesCount = indices.Length;
 
-            IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), 0);
-            IGL.Primary.EnableVertexAttribArray(0);
 
-            GLArrayBuffer.Unbind();
-
-            GLVertexArray.Unbind();
-
-            GLElementBuffer.Unbind();
+            vbo.Unbind();
+            ebo.Unbind();
         }
 
         public MeshRenderer(Mesh model)
         {
+            GeometryCache.RegisterForDispose(this);
+
             IsLight = false;
+
+            renderType = InternalRenderType.Advanced;
 
             Tiling = new Vector2(1, 1);
 
             vbo = new GLArrayBuffer(BufferUsageHint.StaticDraw);
             ebo = new GLElementBuffer(BufferUsageHint.StaticDraw);
-            vao = new GLVertexArray();
-
-            vao.Bind();
             vbo.Bind();
             ebo.Bind();
 
@@ -96,28 +123,8 @@ namespace Materia.Rendering.Geometry
             ebo.SetData(model.indices.ToArray());
             indicesCount = model.indices.Count;
 
-            IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), 0);
-            IGL.Primary.VertexAttribPointer(1, 3, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), (3 * 4) + (2 * 4));
-            IGL.Primary.VertexAttribPointer(2, 2, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), 3 * 4);
-            IGL.Primary.VertexAttribPointer(3, 4, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), (3 * 4) + (2 * 4) + (3 * 4));
-            IGL.Primary.EnableVertexAttribArray(0);
-            IGL.Primary.EnableVertexAttribArray(1);
-            IGL.Primary.EnableVertexAttribArray(2);
-            IGL.Primary.EnableVertexAttribArray(3);
-
-            GLArrayBuffer.Unbind();
-
-            GLVertexArray.Unbind();
-
-            GLElementBuffer.Unbind();
-        }
-
-        public void Bind()
-        {
-            if (vao != null)
-            {
-                vao.Bind();
-            }
+            vbo.Unbind();
+            ebo.Unbind();
         }
 
         public void Update()
@@ -127,10 +134,16 @@ namespace Materia.Rendering.Geometry
 
         public virtual void DrawBasic()
         {
-            ///draw
-            vao.Bind();
+            vbo?.Bind();
+            ebo?.Bind();
+
+            IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), 0);
+            IGL.Primary.EnableVertexAttribArray(0);
+
             IGL.Primary.DrawElements((int)BeginMode.Triangles, indicesCount, (int)DrawElementsType.UnsignedInt, 0);
-            GLVertexArray.Unbind();
+
+            vbo?.Unbind();
+            ebo?.Unbind();
         }
 
         public virtual void DrawForDepth()
@@ -157,10 +170,7 @@ namespace Materia.Rendering.Geometry
 
                 shader.SetUniform2("tiling", ref tiling);
 
-                ///draw
-                vao.Bind();
-                IGL.Primary.DrawElements((int)BeginMode.Triangles, indicesCount, (int)DrawElementsType.UnsignedInt, 0);
-                GLVertexArray.Unbind();
+                DrawBasic();
             }
         }
 
@@ -191,10 +201,7 @@ namespace Materia.Rendering.Geometry
 
                 shader.SetUniform4("color", ref lightColor);
 
-                ///draw
-                vao.Bind();
-                IGL.Primary.DrawElements((int)BeginMode.Triangles, indicesCount, (int)DrawElementsType.UnsignedInt, 0);
-                GLVertexArray.Unbind();
+                DrawBasic();
             }
         }
 
@@ -203,6 +210,10 @@ namespace Materia.Rendering.Geometry
             if(IsLight)
             {
                 DrawAsLight();
+            }
+            else if (renderType == InternalRenderType.Basic)
+            {
+                DrawBasic();
             }
             else
             {
@@ -217,67 +228,37 @@ namespace Materia.Rendering.Geometry
                 IGLProgram shader = Mat.Shader;
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-                if (Mat.Albedo != null)
-                {
-                    Mat.Albedo.Bind();
-                }
+                Mat.Albedo?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
-                if (Mat.Metallic != null)
-                {
-                    Mat.Metallic.Bind();
-                }
+                Mat.Metallic?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture2);
-                if (Mat.Roughness != null)
-                {
-                    Mat.Roughness.Bind();
-                }
+                Mat.Roughness?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture3);
-                if (Mat.Occlusion != null)
-                {
-                    Mat.Occlusion.Bind();
-                }
+                Mat.Occlusion?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture4);
-                if (Mat.Normal != null)
-                {
-                    Mat.Normal.Bind();
-                }
+                Mat.Normal?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture5);
-                if (Mat.Height != null)
-                {
-                    Mat.Height.Bind();
-                }
+                Mat.Height?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture6);
-                BRDF.Lut.Bind();
+                BRDF.Lut?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture7);
-                if (IrradianceMap != null)
-                {
-                    IrradianceMap.Bind();
-                }
+                IrradianceMap?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture8);
-                if (PrefilterMap != null)
-                {
-                    PrefilterMap.Bind();
-                }
+                PrefilterMap?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture9);
-                if(Mat.Thickness != null)
-                {
-                    Mat.Thickness.Bind();
-                }
+                Mat.Thickness?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture10);
-                if(Mat.Emission != null)
-                {
-                    Mat.Emission.Bind();
-                }
+                Mat.Emission?.Bind();
 
                 //use shader
                 shader.Use();
@@ -345,7 +326,17 @@ namespace Materia.Rendering.Geometry
                 shader.SetUniform2("tiling", ref tiling);
 
                 ///draw
-                vao.Bind();
+                vbo?.Bind();
+                ebo?.Bind();
+
+                IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), 0);
+                IGL.Primary.VertexAttribPointer(1, 3, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), (3 * 4) + (2 * 4));
+                IGL.Primary.VertexAttribPointer(2, 2, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), 3 * 4);
+                IGL.Primary.VertexAttribPointer(3, 4, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), (3 * 4) + (2 * 4) + (3 * 4));
+                IGL.Primary.EnableVertexAttribArray(0);
+                IGL.Primary.EnableVertexAttribArray(1);
+                IGL.Primary.EnableVertexAttribArray(2);
+                IGL.Primary.EnableVertexAttribArray(3);
 
                 if (Mat.UseDisplacement)
                 {
@@ -356,32 +347,30 @@ namespace Materia.Rendering.Geometry
                     IGL.Primary.DrawElements((int)BeginMode.Triangles, indicesCount, (int)DrawElementsType.UnsignedInt, 0);
                 }
 
-                GLVertexArray.Unbind();
+                vbo?.Unbind();
+                ebo?.Unbind();
+
                 GLTexture2D.Unbind();
             }
         }
 
+        public void DisposeShared()
+        {
+            isSharedDisposed = true;
+            sharedVao?.Dispose();
+            sharedVao = null;
+        }
+
         public void Dispose()
         {
-            if(vbo != null)
-            {
-                vbo.Dispose();
-            }
+            vbo?.Dispose();
+            vbo = null;
 
-            if(ebo != null)
-            {
-                ebo.Dispose();
-            }
+            ebo?.Dispose();
+            ebo = null;
 
-            if(vao != null)
-            {
-                vao.Dispose();
-            }
-
-            if(Mat != null)
-            {
-                Mat.Dispose();
-            }
+            Mat?.Dispose();
+            Mat = null;
         }
     }
 }

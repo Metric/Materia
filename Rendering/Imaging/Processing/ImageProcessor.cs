@@ -12,8 +12,6 @@ namespace Materia.Rendering.Imaging.Processing
 {
     public class ImageProcessor : IDisposable
     {
-        
-
         protected static FullScreenQuad renderQuad;
         protected static GLRenderBuffer renderBuff;
         protected static GLFrameBuffer frameBuff;
@@ -21,8 +19,6 @@ namespace Materia.Rendering.Imaging.Processing
         protected static GLTexture2D colorBuff;
 
         protected static PreviewProcessor resizeProcessor;
-
-        protected static Dictionary<string, GLShaderProgram> Shaders = new Dictionary<string, GLShaderProgram>();
 
         protected int Width { get; set; }
         protected int Height { get; set; }
@@ -65,11 +61,8 @@ namespace Materia.Rendering.Imaging.Processing
 
             inc.ClampToEdge();
 
-            if (renderQuad != null)
-            {
-                renderQuad.Draw();
-            }
-
+            renderQuad?.Draw();
+            
             inc.Repeat();
             resizeProcessor.Unbind();
 
@@ -78,11 +71,6 @@ namespace Materia.Rendering.Imaging.Processing
             GLTexture2D.Unbind();
 
             Blit(o, owidth, oheight);
-
-            /*o.Bind();
-            o.Repeat();
-            o.CopyFromFrameBuffer(owidth, oheight);
-            GLTexture2D.Unbind();*/
         }
 
         protected void ApplyTransform(GLTexture2D inc, GLTexture2D o, int owidth, int oheight, MVector translation, MVector scale, float angle, MVector pivot)
@@ -107,10 +95,7 @@ namespace Materia.Rendering.Imaging.Processing
 
             inc.ClampToEdge();
 
-            if(renderQuad != null)
-            {
-                renderQuad.Draw();
-            }
+            renderQuad?.Draw();
 
             inc.Repeat();
             resizeProcessor.Unbind();
@@ -120,12 +105,6 @@ namespace Materia.Rendering.Imaging.Processing
             GLTexture2D.Unbind();
 
             Blit(o, owidth, oheight);
-
-            /*o.Bind();
-            o.Repeat();
-            o.CopyFromFrameBuffer(owidth, oheight);
-            GLTexture2D.Unbind();*/
-
         } 
 
         protected void ResizeViewTo(GLTexture2D inc, GLTexture2D o, int owidth, int oheight, int nwidth, int nheight)
@@ -136,23 +115,18 @@ namespace Materia.Rendering.Imaging.Processing
             float fp = wp < hp ? wp : hp;
 
             Matrix4 proj = Matrix4.CreateOrthographic(nwidth, nheight, 0.03f, 1000f);
-            Matrix4 translation = Matrix4.CreateTranslation(0, 0, 0);
             //half width/height for scale as it is centered based
             Matrix4 sm = Matrix4.CreateScale(fp * (float)(owidth * 0.5f), fp * (float)(oheight * 0.5f), 1);
-            Matrix4 model = sm * translation;
             Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
 
-            resizeProcessor.Model = model;
+            resizeProcessor.Model = sm;
             resizeProcessor.View = view;
             resizeProcessor.Projection = proj;
             resizeProcessor.Luminosity = Luminosity;
 
             resizeProcessor.Bind(inc);
-
-            if(renderQuad != null)
-            {
-                renderQuad.Draw();
-            }
+            
+            renderQuad?.Draw();
 
             resizeProcessor.Unbind();
 
@@ -170,7 +144,7 @@ namespace Materia.Rendering.Imaging.Processing
                 renderBuff = new GLRenderBuffer();
                 renderBuff.Bind();
                 renderBuff.SetBufferStorageAsDepth(4096, 4096);
-                GLRenderBuffer.Unbind();
+                renderBuff.Unbind();
             }
             if (colorBuff == null)
             {
@@ -179,8 +153,7 @@ namespace Materia.Rendering.Imaging.Processing
                 colorBuff = new GLTexture2D(PixelInternalFormat.Rgba32f);
                 colorBuff.Bind();
                 colorBuff.SetData(IntPtr.Zero, PixelFormat.Rgba, 4096, 4096);
-                colorBuff.Nearest();
-                colorBuff.Repeat();
+                colorBuff.Linear();
                 GLTexture2D.Unbind();
             }
             if (frameBuff == null)
@@ -195,11 +168,11 @@ namespace Materia.Rendering.Imaging.Processing
                 if (!frameBuff.IsValid)
                 {
                     var status = IGL.Primary.CheckFramebufferStatus((int)FramebufferTarget.Framebuffer);  
-                    GLFrameBuffer.Unbind();
+                    frameBuff.Unbind();
                     return;
                 }
 
-                GLFrameBuffer.Unbind();
+                frameBuff.Unbind();
             }
         }
 
@@ -220,13 +193,13 @@ namespace Materia.Rendering.Imaging.Processing
             //these must be disabled
             //otherwise image processing will not work properly
             IGL.Primary.Disable((int)EnableCap.DepthTest);
-            //IGL.Primary.Disable((int)EnableCap.CullFace);
-            IGL.Primary.Disable((int)EnableCap.Blend);
+
             frameBuff.Bind();
+
             IGL.Primary.Viewport(0, 0, width, height);
             IGL.Primary.ClearColor(0, 0, 0, 0);
-            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit);
-            IGL.Primary.Clear((int)ClearBufferMask.DepthBufferBit);
+
+            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit);
         }
 
         protected void Blit(GLTexture2D output, int width, int height)
@@ -248,9 +221,9 @@ namespace Materia.Rendering.Imaging.Processing
             }
 
             IGL.Primary.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, (int)ClearBufferMask.ColorBufferBit, (int)BlitFramebufferFilter.Linear);
-            GLFrameBuffer.UnbindRead();
-            GLFrameBuffer.Unbind();
-            frameBuff.Bind();
+            temp.UnbindRead();
+            temp.Unbind();
+            frameBuff?.Bind();
         }
 
         protected IGLProgram GetShader(string vertFile, string fragFile)
@@ -300,15 +273,9 @@ namespace Materia.Rendering.Imaging.Processing
 
         public virtual void Complete()
         {
-            if(frameBuff != null)
-            {
-                GLFrameBuffer.Unbind();
-            }
+            frameBuff?.Unbind();
 
-            //need to re-enable the ones we disabled
             IGL.Primary.Enable((int)EnableCap.DepthTest);
-            IGL.Primary.Enable((int)EnableCap.CullFace);
-            IGL.Primary.Enable((int)EnableCap.Blend);
         }
 
         public virtual void Dispose()
@@ -318,35 +285,20 @@ namespace Materia.Rendering.Imaging.Processing
 
         public static void DisposeCache()
         {
-            if(temp != null)
-            {
-                temp.Dispose();
-                temp = null;
-            }
+            temp?.Dispose();
+            temp = null;
 
-            if (colorBuff != null)
-            {
-                colorBuff.Dispose();
-                colorBuff = null;
-            }
+            colorBuff?.Dispose();
+            colorBuff = null;
 
-            if (renderQuad != null)
-            {
-                renderQuad.Dispose();
-                renderQuad = null;
-            }
+            renderQuad?.Dispose();
+            renderQuad = null;
 
-            if (renderBuff != null)
-            {
-                renderBuff.Dispose();
-                renderBuff = null;
-            }
+            renderBuff?.Dispose();
+            renderBuff = null;
 
-            if (frameBuff != null)
-            {
-                frameBuff.Dispose();
-                frameBuff = null;
-            }
+            frameBuff?.Dispose();
+            frameBuff = null;
         }
     }
 }

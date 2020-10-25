@@ -31,12 +31,12 @@ namespace Materia.Rendering.Buffers
             IGL.Primary.BindFramebuffer((int)FramebufferTarget.ReadFramebuffer, fbo);
         }
 
-        public static void Unbind()
+        public void Unbind()
         {
             IGL.Primary.BindFramebuffer((int)FramebufferTarget.Framebuffer, 0);
         }
 
-        public static void UnbindRead()
+        public void UnbindRead()
         {
             IGL.Primary.BindFramebuffer((int)FramebufferTarget.ReadFramebuffer, 0);
         }
@@ -87,11 +87,11 @@ namespace Materia.Rendering.Buffers
             float[] buf = new float[width * height * bpp];
             if (bpp == 4)
             {
-                IGL.Primary.ReadPixels(0, 0, width, height, (int)PixelFormat.Rgba, (int)PixelType.Float, buf);
+                IGL.Primary.ReadPixels(0, 0, width, height, (int)PixelFormat.Bgra, (int)PixelType.Float, buf);
             }
             else if (bpp == 3)
             {
-                IGL.Primary.ReadPixels(0, 0, width, height, (int)PixelFormat.Rgb, (int)PixelType.Float, buf);
+                IGL.Primary.ReadPixels(0, 0, width, height, (int)PixelFormat.Bgr, (int)PixelType.Float, buf);
             }
             else if (bpp == 2)
             {
@@ -109,11 +109,11 @@ namespace Materia.Rendering.Buffers
             float[] buf = new float[width * height * bpp];
             if (bpp == 4)
             {
-                IGL.Primary.ReadPixels(x, y, width, height, (int)PixelFormat.Rgba, (int)PixelType.Float, buf);
+                IGL.Primary.ReadPixels(x, y, width, height, (int)PixelFormat.Bgra, (int)PixelType.Float, buf);
             }
             else if (bpp == 3)
             {
-                IGL.Primary.ReadPixels(x, y, width, height, (int)PixelFormat.Rgb, (int)PixelType.Float, buf);
+                IGL.Primary.ReadPixels(x, y, width, height, (int)PixelFormat.Bgr, (int)PixelType.Float, buf);
             }
             else if (bpp == 2)
             {

@@ -25,7 +25,7 @@ namespace Materia.Rendering.Buffers
             IGL.Primary.BindVertexArray(vao);
         }
 
-        public static void Unbind()
+        public void Unbind()
         {
             IGL.Primary.BindVertexArray(0);
         }

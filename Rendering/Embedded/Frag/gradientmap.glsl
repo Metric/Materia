@@ -22,19 +22,16 @@ void main() {
         c = texelFetch(ColorLUT, ivec2(min(rgba.r * size.y, size.y - 1), 0), 0);
     }
 
+    float m = 1;
+
     if(useMask == 1) {
-        vec2 maskSize = textureSize(Mask, 0);
-        vec2 m2 = texture(Mask, UV).ra;
-        if(m2.y >= 1) {
-            float m = min(m2.x, 1);
-            c *= m;
-        }
-        else {
-            float m = min(m2.x + m2.y, 1);
-            c *= m;
-        }
+        m = texture(Mask, UV).r;
     }
 
-    c.a = rgba.a * c.a;
+    float alpha = rgb.a * m;
+
+    //ensure proper premult
+    c.a = alpha * c.a;
+    c.rgb *= c.a;
     FragColor = c;
 }

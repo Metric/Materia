@@ -254,7 +254,7 @@ namespace Materia.Nodes.Atomic
         private HashSet<string> previousCallsSeen;
 
         private string uniformParamCode;
-        private Dictionary<string, ParameterValue> uniformParams;
+        private Dictionary<string, object> uniformParams;
 
         public FXNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
@@ -262,7 +262,7 @@ namespace Materia.Nodes.Atomic
 
             uniformParamCode = "";
             previousCalls = "";
-            uniformParams = new Dictionary<string, ParameterValue>();
+            uniformParams = new Dictionary<string, object>();
             previousCallsSeen = new HashSet<string>();
 
             Id = Guid.NewGuid().ToString();
@@ -1048,15 +1048,15 @@ namespace Materia.Nodes.Atomic
              + "float iteration = 0;\r\n"
              + "vec2 uv = vec2(0,0);\r\n"
              + "float AddSub(float a, float b) {\r\n"
-                + "if (a >= 0.5) { return min(1, max(0, a + b)); }\r\n"
-                + "else { return min(1, max(0, b - a)); }\r\n}\r\n"
+                + "if (a >= 0.5) { return clamp(a + b, 0, 1); }\r\n"
+                + "else { return clamp(b - a, 0, 1); }\r\n}\r\n"
              + "vec4 BlendColors(float blendIdx, vec4 c1, vec4 c2) {\r\n"
                 + "vec4 fc = vec4(0);\r\n"
                 + "blendIdx = floor(blendIdx);\r\n"
-                + "if (blendIdx <= 0) { fc.rgb = min(vec3(1), max(vec3(0), c1.rgb)) * min(1, max(0, c1.a)) + min(vec3(1), max(vec3(0), c2.rgb)) * (1.0 - min(1, max(0, c1.a)));  fc.a = max(c1.a, c2.a); }\r\n"
-                + "else if(blendIdx <= 1) { fc.rgb = min(vec3(1), max(vec3(0), c1.rgb)) + min(vec3(1), max(vec3(0), c2.rgb)); fc.a = max(c1.a, c2.a); }\r\n"
-                + "else if(blendIdx <= 2) { fc.rgb = vec3(max(c1.r, c2.r), max(c1.g, c2.g), max(c1.b, c2.b)); fc.a = max(c1.a, c2.a); }\r\n"
-                + "else if(blendIdx <= 3) { fc.rgb = vec3(AddSub(min(1, max(0, c1.r)), min(1, max(0, c2.r))), AddSub(min(1, max(0, c1.g)), min(1, max(0, c2.g))), AddSub(min(1, max(0, c1.b)), min(1, max(0, c2.b)))); fc.a = max(c1.a, c2.a); }\r\n"
+                + "if (blendIdx <= 0) { fc.rgb = clamp(c1.rgb + c2.rgb * (1.0 - clamp(c1.a, 0, 1)), vec3(0), vec3(1));  fc.a = clamp(c1.a + c2.a, 0, 1); fc.rgb *= fc.a; }\r\n"
+                + "else if(blendIdx <= 1) { fc.rgb = clamp(c1.rgb + c2.rgb, vec3(0), vec3(1)); fc.a = clamp(c1.a + c2.a, 0, 1); fc.rgb *= fc.a; }\r\n"
+                + "else if(blendIdx <= 2) { fc.rgb = vec3(max(c1.r, c2.r), max(c1.g, c2.g), max(c1.b, c2.b)); fc.a = clamp(c1.a + c2.a, 0, 1); fc.rgb *= fc.a; }\r\n"
+                + "else if(blendIdx <= 3) { fc.rgb = vec3(AddSub(c1.r, c2.r), AddSub(c1.g, c2.g), AddSub(c1.b, c2.b)); fc.a = clamp(c1.a + c2.a, 0, 1); fc.rgb *= fc.a;}\r\n"
                 + "return fc; }\r\n"
                 + $"{uniformParamCode}\r\n"
             + $"{previousCalls}\r\n";
@@ -1164,11 +1164,11 @@ namespace Materia.Nodes.Atomic
 
             if(clampIsFunc)
             {
-                fragMain += $"float clamp = {clampFuncName}();\r\n";
+                fragMain += $"float cclamp = {clampFuncName}();\r\n";
             }
             else
             {
-                fragMain += "float clamp = Clamp;\r\n";
+                fragMain += "float cclamp = Clamp;\r\n";
             }
 
             fragMain += "float sina = sin(angle);\r\n"
@@ -1184,10 +1184,10 @@ namespace Materia.Nodes.Atomic
                         + "if (p1.x < 0 || p1.y < 0 || p1.x >= inWidth || p1.y >= inHeight) { c1 = vec4(0); }\r\n";
 
             fragMain += "ivec2 finalpos = c_pos + ivec2(trans);\r\n";
-            fragMain += "if (finalpos.x > size.x && clamp == 0) { finalpos.x = int(mod(finalpos.x, size.x)); }\r\n"
-                       + "else if(finalpos.x < 0 && clamp == 0) { finalpos.x = int(mod(size.x + finalpos.x, size.x)); }\r\n"
-                       + "if (finalpos.y > size.y && clamp == 0) { finalpos.y = int(mod(finalpos.y, size.y)); }\r\n"
-                       + "else if(finalpos.y < 0 && clamp == 0) { finalpos.y = int(mod(size.y + finalpos.y, size.y)); }\r\n";
+            fragMain += "if (finalpos.x > size.x && cclamp == 0) { finalpos.x = int(mod(finalpos.x, size.x)); }\r\n"
+                       + "else if(finalpos.x < 0 && cclamp == 0) { finalpos.x = int(mod(size.x + finalpos.x, size.x)); }\r\n"
+                       + "if (finalpos.y > size.y && cclamp == 0) { finalpos.y = int(mod(finalpos.y, size.y)); }\r\n"
+                       + "else if(finalpos.y < 0 && cclamp == 0) { finalpos.y = int(mod(size.y + finalpos.y, size.y)); }\r\n";
 
             fragMain += "vec4 c2 = imageLoad(_out_put, finalpos);\r\n";
 
@@ -1264,7 +1264,7 @@ namespace Materia.Nodes.Atomic
                     {
                         MVector mv = (MVector)value;
                         Vector4 vec4 = new Vector4(mv.X, mv.Y, mv.Z, mv.W);
-                        shader.SetUniform4F(k, ref vec4);
+                        shader.SetUniform4(k, ref vec4);
                     }
                 }
             }
@@ -1306,7 +1306,12 @@ namespace Materia.Nodes.Atomic
             //if it is a function
             foreach (string k in uniformParams.Keys)
             {
-                ParameterValue v = uniformParams[k];
+                ParameterValue v = uniformParams[k] as ParameterValue;
+
+                if (v == null)
+                {
+                    continue;
+                }
 
                 object value = v.Value;
 
@@ -1405,7 +1410,13 @@ namespace Materia.Nodes.Atomic
             //set other uniform params
             foreach(string k in uniformParams.Keys)
             {
-                ParameterValue v = uniformParams[k];
+                ParameterValue v = uniformParams[k] as ParameterValue;
+
+                //we ignore anything that isn't a parameter value
+                if (v == null)
+                {
+                    continue;
+                }
 
                 object value = v.Value;
 
@@ -1480,12 +1491,8 @@ namespace Materia.Nodes.Atomic
         public override void Dispose()
         {
             base.Dispose();
-
-            if (shader != null)
-            {
-                shader.Dispose();
-                shader = null;
-            }
+            shader?.Dispose();
+            shader = null;
         }
 
         public class FXNodeData : NodeData

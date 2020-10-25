@@ -343,6 +343,9 @@ void main()
     //add ambient + light + emission
     final += (ambient + Lo) + texture(emissionMap, uv).rgb;
 
+    //premult
+    final *= color.a;
+
     //draw to secondary color attachment for bloom
     float bright = lengthSqr(final);
     Brightness = vec4(0);

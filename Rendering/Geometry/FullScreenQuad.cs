@@ -1,10 +1,11 @@
 ﻿using System;
 using Materia.Rendering.Buffers;
 using Materia.Rendering.Interfaces;
+using Materia.Rendering.Utils;
 
 namespace Materia.Rendering.Geometry
 {
-    public class FullScreenQuad : IGeometry
+    public class FullScreenQuad : IGeometry, IDisposeShared
     {
         static float[] buffer =
         {
@@ -19,13 +20,33 @@ namespace Materia.Rendering.Geometry
             0, 1, 2, 2, 1, 3
         };
 
-        GLVertexArray vao;
-        GLElementBuffer ebo;
-        GLArrayBuffer vbo;
+        protected static bool isSharedDisposed = false;
+        protected static GLVertexArray sharedVao;
+        /// <summary>
+        /// Gets the shared vao. Make sure the Stroke is set before calling this.
+        /// </summary>
+        /// <value>
+        /// The shared vao.
+        /// </value>
+        public static GLVertexArray SharedVao
+        {
+            get
+            {
+                if (sharedVao == null && !isSharedDisposed)
+                {
+                    sharedVao = new GLVertexArray();
+                }
+
+                return sharedVao;
+            }
+        }
+
+        protected GLElementBuffer ebo;
+        protected GLArrayBuffer vbo;
 
         public FullScreenQuad()
         {
-            vao = new GLVertexArray();
+            GeometryCache.RegisterForDispose(this);
             ebo = new GLElementBuffer(BufferUsageHint.StaticDraw);
             vbo = new GLArrayBuffer(BufferUsageHint.StaticDraw);
             Setup();
@@ -38,47 +59,44 @@ namespace Materia.Rendering.Geometry
 
         void Setup()
         {
-            vao.Bind();
+            vbo?.Bind();
+            vbo?.SetData(buffer);
+            ebo?.Bind();
+            ebo?.SetData(indices);
+            vbo?.Unbind();
+            ebo?.Unbind();
+        }
 
-            vbo.Bind();
-            vbo.SetData(buffer);
-
-            ebo.Bind();
-            ebo.SetData(indices);
+        public void Draw()
+        {
+            vbo?.Bind();
+            ebo?.Bind();
 
             IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
             IGL.Primary.VertexAttribPointer(1, 2, (int)VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * 4);
             IGL.Primary.EnableVertexAttribArray(0);
             IGL.Primary.EnableVertexAttribArray(1);
-            GLVertexArray.Unbind();
-            GLElementBuffer.Unbind();
-            GLArrayBuffer.Unbind();
+
+            IGL.Primary.DrawElements((int)BeginMode.Triangles, 6, (int)DrawElementsType.UnsignedInt, 0);
+
+            vbo?.Unbind();
+            ebo?.Unbind();
+            
         }
 
-        public void Draw()
+        public void DisposeShared()
         {
-            vao.Bind();
-            IGL.Primary.DrawElements((int)BeginMode.Triangles, 6, (int)DrawElementsType.UnsignedInt, 0);
-            GLVertexArray.Unbind();
+            isSharedDisposed = true;
+            sharedVao?.Dispose();
+            sharedVao = null;
         }
 
         public void Dispose()
         {
-            if(vao != null)
-            {
-                vao.Dispose();
-                vao = null;
-            }
-            if(ebo != null)
-            {
-                ebo.Dispose();
-                ebo = null;
-            }
-            if(vbo != null)
-            {
-                vbo.Dispose();
-                vbo = null;
-            }
+            ebo?.Dispose();
+            ebo = null;
+            vbo?.Dispose();
+            vbo = null;
         }
     }
 }

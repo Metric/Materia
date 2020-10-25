@@ -26,7 +26,7 @@ namespace Materia.Rendering.Buffers
             IGL.Primary.BindBuffer((int)BufferTarget.UniformBuffer, id);
         }
 
-        public static void Unbind()
+        public void Unbind()
         {
             IGL.Primary.BindBuffer((int)BufferTarget.UniformBuffer, 0);
         }
