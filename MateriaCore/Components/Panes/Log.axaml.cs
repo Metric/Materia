@@ -1,17 +1,14 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
 namespace MateriaCore.Components.Panes
 {
-    public class Layers : Window
+    public class Log : Window
     {
-        public Layers()
+        public Log()
         {
-            this.InitializeComponent();
-#if DEBUG
-            this.AttachDevTools();
-#endif
+            InitializeComponent();
         }
 
         private void InitializeComponent()

@@ -166,6 +166,11 @@ namespace MateriaCore.Components
                 return;
             }
 
+            //TODO: Fix this incorrect mouse input handling
+            //for the slider control
+            //Needs to be switched to something similar
+            //like Gradient Editor / Curves / Color Picker / Slider
+
             double w = Bounds.Width;
             double bw = minHandle.Bounds.Width;
 

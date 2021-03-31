@@ -10,11 +10,11 @@
   <Grid MinHeight="345" MinWidth="512" Margin="0,0,0,0" Background="{StaticResource Surface}">
     <Grid Background="{StaticResource Overlay5}"></Grid>
     <Canvas Name="GHue" VerticalAlignment="Top" HorizontalAlignment="Left" Background="Gray" Width="24" Height="287" Margin="283,24,0,0" ClipToBounds="True">
-      <Image Width="24" Height="287" Name="HueSelector" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="UniformToFill" Canvas.Left="1" Canvas.Top="1" />
+      <Image Name="HueSelector" Stretch="UniformToFill" />
       <Rectangle Name="HPoint" Height="1" Width="24" Fill="White" VerticalAlignment="Top" Margin="0" IsHitTestVisible="False" />
     </Canvas>
     <Canvas Name="GSatVal" VerticalAlignment="Top" HorizontalAlignment="Left" Background="Gray" Width="256" Height="287" Margin="24,24,0,0">
-      <Image Width="256" Height="287" Name="SaturationValueSelector" Stretch="UniformToFill" />
+      <Image Name="SaturationValueSelector" Stretch="UniformToFill" />
       <Grid Name="SVPoint" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0" IsHitTestVisible="False">
         <Ellipse Width="10" Height="10" StrokeThickness="0.45" Stroke="Black" IsHitTestVisible="False" />
         <Ellipse Width="9" Height="9" StrokeThickness="0.45" Stroke="White" IsHitTestVisible="False" />

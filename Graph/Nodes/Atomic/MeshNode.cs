@@ -18,12 +18,12 @@ namespace Materia.Nodes.Atomic
         public delegate void HdriChange();
         public static event HdriChange OnHdriChanged;
 
-        public static GLTexture2D Irradiance { get; set; }
+        public static GLTextureCube Irradiance { get; set; }
 
         //we only trigger it on one of these
         //due to both usually being set at the same time
-        protected static GLTexture2D prefilter;
-        public static GLTexture2D Prefilter
+        protected static GLTextureCube prefilter;
+        public static GLTextureCube Prefilter
         {
             get
             {

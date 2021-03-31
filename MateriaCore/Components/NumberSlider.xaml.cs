@@ -42,6 +42,20 @@ namespace MateriaCore.Components
             }
         }
 
+        public bool ClampToMinMax
+        {
+            get
+            {
+                if (sliderInput == null) return false;
+                return sliderInput.ClampToMinMax;
+            }
+            set
+            {
+                if (sliderInput == null) return;
+                sliderInput.ClampToMinMax = value;
+            }
+        }
+
         public NumberSlider()
         {
             this.InitializeComponent();

@@ -16,6 +16,7 @@ namespace MateriaCore.Components
     public class GradientEditor : UserControl
     {
         const double HANDLE_HALF_WIDTH = 8;
+        const double HALF_HALF = 4;
 
         Image gradientImage;
         Canvas handleHolder;
@@ -28,8 +29,8 @@ namespace MateriaCore.Components
 
         RawBitmap bmp;
 
+        Point mousePosition;
         GradientHandle target;
-        Point mouseStart;
         int clickCount = 0;
         ulong clickTimeStamp = 0;
 
@@ -38,50 +39,47 @@ namespace MateriaCore.Components
             this.InitializeComponent();
             handles = new List<GradientHandle>();
             PointerPressed += GradientEditor_PointerPressed;
+            PointerMoved += GradientEditor_PointerMoved;
+            DoubleTapped += GradientEditor_DoubleTapped;
             PropertyChanged += GradientEditor_PropertyChanged;
             InitBase();
         }
 
         private void GradientEditor_PointerPressed(object sender, PointerPressedEventArgs e)
         {
-            if (e.Timestamp - clickTimeStamp > 500)
+            mousePosition = e.GetPosition(handleHolder);
+        }
+
+        private void GradientEditor_PointerMoved(object sender, PointerEventArgs e)
+        {
+            mousePosition = e.GetPosition(handleHolder);
+        }
+
+        private void GradientEditor_DoubleTapped(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            GradientHandle handle = null;
+            Point p = mousePosition;
+            double min = double.PositiveInfinity;
+            for (int i = 0; i < handles.Count; ++i)
             {
-                clickCount = 0;
+                double x = Canvas.GetLeft(handles[i]);
+                double dist = Math.Abs(p.X - x);
+
+                if (dist < min)
+                {
+                    min = dist;
+                    handle = handles[i];
+                }
             }
 
-            if (clickCount > 1)
-            {    
-                GradientHandle handle = null;
-                Point p = e.GetPosition(handleHolder);
-                double min = double.PositiveInfinity;
-                for (int i = 0; i < handles.Count; ++i)
-                {
-                    double x = Canvas.GetLeft(handles[i]);
-                    double dist = Math.Abs(p.X - x);
-
-                    if (dist < min)
-                    {
-                        min = dist;
-                        handle = handles[i];
-                    }
-                }
-
-                Point realPoint = new Point(p.X - HANDLE_HALF_WIDTH, p.Y);
-
-                if (handle == null)
-                {
-                    AddHandle(realPoint, new MVector(0, 0, 0, 1), true);
-                }
-                else
-                {
-                    AddHandle(realPoint, handle.SelectedColor, true);
-                }
-
-                clickCount = 0;
+            if (handle == null)
+            {
+                AddHandle(p, new MVector(0, 0, 0, 1), true);
             }
-
-            clickTimeStamp = e.Timestamp;
-            ++clickCount;
+            else
+            {
+                AddHandle(p, handle.SelectedColor, true);
+            }
         }
 
         private void GradientEditor_PropertyChanged(object sender, AvaloniaPropertyChangedEventArgs e)
@@ -115,6 +113,7 @@ namespace MateriaCore.Components
             if (target != null)
             {
                 UnsubscribeFromWindowPointer();
+                UpdatePreview(true);
             }
 
             target = null;
@@ -128,11 +127,12 @@ namespace MateriaCore.Components
             }
 
             Point p = e.GetPosition(handleHolder);
-            double delta = p.X - mouseStart.X;
-            double pos = UpdateHandlePosition(target, delta);
-            float normal = MathF.Min(1, MathF.Min(0, (float)(pos / handleHolder.Bounds.Width - HANDLE_HALF_WIDTH)));
-            target.Position = normal;
-            mouseStart = p;
+            double n = (p.X + HALF_HALF) / handleHolder.Bounds.Width;
+            n = Math.Clamp(n, 0d, 1d);
+            double real = n * handleHolder.Bounds.Width - HANDLE_HALF_WIDTH;
+            Canvas.SetLeft(target, real);
+            target.Position = (float)n;
+            UpdatePreview(false);
         }
 
         void UnsubscribeFromWindowPointer()
@@ -143,15 +143,6 @@ namespace MateriaCore.Components
                 w.PointerMoved -= W_PointerMoved;
                 w.PointerReleased -= W_PointerReleased;
             }
-        }
-
-        double UpdateHandlePosition(GradientHandle h, double dx)
-        {
-            double c = Canvas.GetLeft(h);
-            c += dx;
-            c = Math.Min(h.Bounds.Width - HANDLE_HALF_WIDTH, Math.Max(-HANDLE_HALF_WIDTH, c));
-            Canvas.SetLeft(h, c);
-            return c;
         }
 
         void InitBase()
@@ -170,9 +161,9 @@ namespace MateriaCore.Components
 
                 object obj = property?.GetValue(propertyOwner);
 
-                if (obj is Gradient)
+                if (obj is Materia.Nodes.Containers.Gradient)
                 {
-                    Gradient g = (Gradient)obj;
+                    Materia.Nodes.Containers.Gradient g = (Materia.Nodes.Containers.Gradient)obj;
 
                     if (g != null && g.positions != null && g.colors != null && g.positions.Length == g.colors.Length)
                     {
@@ -213,7 +204,7 @@ namespace MateriaCore.Components
             GradientHandle h = new GradientHandle();
             h.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
             h.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
-            h.Position = MathF.Min(1, MathF.Max(0, (float)((p.X + HANDLE_HALF_WIDTH) / handleHolder.Bounds.Width)));
+            h.Position = MathF.Min(1, MathF.Max(0, (float)((p.X + HALF_HALF) / handleHolder.Bounds.Width)));
             h.SetColor(c);
             h.PointerPressed += H_PointerPressed;
             h.OnColorChanged += H_OnColorChanged;
@@ -260,7 +251,6 @@ namespace MateriaCore.Components
             else
             {
                 target = h;
-                mouseStart = e.GetPosition(handleHolder);
                 SubscribeToWindowPointer();
             }
         }
@@ -309,12 +299,12 @@ namespace MateriaCore.Components
                         cols[i] = handles[i].SelectedColor;
                     }
 
-                    Materia.Nodes.Helpers.Utils.CreateGradient(bmp, pos, cols);
+                    Materia.Rendering.Imaging.Gradient.Fill(bmp, pos, cols);
                 }).ContinueWith(t =>
                 {
                     if (updateProperty)
                     {
-                        Gradient grad = new Gradient();
+                        Materia.Nodes.Containers.Gradient grad = new Materia.Nodes.Containers.Gradient();
                         grad.colors = cols;
                         grad.positions = pos;
 

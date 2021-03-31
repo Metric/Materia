@@ -31,6 +31,14 @@ namespace Materia.Rendering.Mathematics
         /// </summary>
         public float Bottom;
 
+        public Box2(Vector2 pos, float width, float height)
+        {
+            Left = pos.X;
+            Top = pos.X;
+            Right = pos.X + width;
+            Bottom = pos.X + height;
+        }
+
         /// <summary>
         /// Constructs a new Box2 with the specified dimensions.
         /// </summary>
@@ -164,6 +172,26 @@ namespace Materia.Rendering.Mathematics
             Right += point.X;
             Top += point.Y;
             Bottom += point.Y;
+        }
+
+        public void Encapsulate(Box2 b)
+        {
+            if (b.Left < Left)
+            {
+                Left = b.Left;
+            }
+            if (b.Right > Right)
+            {
+                Right = b.Right;
+            }
+            if (b.Top < Top)
+            {
+                Top = b.Top;
+            }
+            if (b.Bottom > Bottom)
+            {
+                Bottom = b.Bottom;
+            }
         }
 
         /// <summary>

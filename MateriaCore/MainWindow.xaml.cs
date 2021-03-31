@@ -14,9 +14,6 @@ namespace MateriaCore
         public MainWindow()
         {
             InitializeComponent();
-#if DEBUG
-            this.AttachDevTools();
-#endif
             Instance = this;
         }
 

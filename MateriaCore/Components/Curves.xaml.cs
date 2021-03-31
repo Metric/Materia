@@ -232,8 +232,20 @@ namespace MateriaCore.Components
 
         void ShowPoints(CurvesMode mode, bool show = true)
         {
-            int idx = (int)mode;
-            var pts = Points[idx];
+            int idx = 0;
+            List<CurvePoint> pts = null;
+
+            for (idx = 0; idx < Points.Count; ++idx)
+            {
+                pts = Points[idx];
+                for (int i = 0; i < pts.Count; ++i)
+                {
+                    pts[i].IsVisible = false;
+                }
+            }
+
+            idx = (int)mode;
+            pts = Points[idx];
 
             for(int i = 0; i < pts.Count; ++i)
             {
@@ -277,7 +289,6 @@ namespace MateriaCore.Components
 
                 if (target != null)
                 {
-                    mouseStart = e.GetPosition(curveView);
                     SubscribeToWindowPointer();
                 }
             }
@@ -319,20 +330,16 @@ namespace MateriaCore.Components
             if (target != null)
             {
                 Point ep = e.GetPosition(curveView);
-                double dx = ep.X - mouseStart.X;
-                double dy = ep.Y - mouseStart.Y;
-                mouseStart = ep;
 
-                PointD p = target.Position;
-                p.x += dx;
-                p.y += dy;
+                PointD p = target.Normalized;
 
-                if(p.x < 0 || p.y < 0 || p.y >= curveView.Bounds.Height || p.x >= curveView.Bounds.Width)
-                {
-                    return;
-                }
+                p.x = ep.X / curveView.Bounds.Width;
+                p.y = ep.Y / curveView.Bounds.Height;
 
-                target.Position = p;
+                p.x = Math.Clamp(p.x, 0d, 1d);
+                p.y = Math.Clamp(p.y, 0d, 1d);
+
+                target.Normalized = p;
 
                 UpdatePath();
                 UpdateProperty();

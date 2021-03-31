@@ -25,9 +25,9 @@ namespace Materia.Nodes.Atomic
         GLTexture2D colorLUT;
         FloatBitmap LUT;
 
-        protected Gradient gradient;
+        protected Containers.Gradient gradient;
         [Editable(ParameterInputType.Gradient, "Gradient")]
-        public Gradient Gradient
+        public Containers.Gradient Gradient
         {
             get
             {
@@ -47,7 +47,7 @@ namespace Materia.Nodes.Atomic
             width = w;
             height = h;
 
-            gradient = new Gradient();
+            gradient = new Containers.Gradient();
 
             tileX = tileY = 1;
 
@@ -95,7 +95,7 @@ namespace Materia.Nodes.Atomic
             }
 
             //generate gradient
-            Utils.CreateGradient(LUT, gradient.positions, gradient.colors);
+            Rendering.Imaging.Gradient.Fill(LUT, gradient.positions, gradient.colors);
         }
 
         public override void TryAndProcess()
@@ -156,7 +156,7 @@ namespace Materia.Nodes.Atomic
             GradientMapData d = JsonConvert.DeserializeObject<GradientMapData>(data);
             SetBaseNodeDate(d);
 
-            gradient = new Gradient();
+            gradient = new Containers.Gradient();
 
             if(d.colors != null)
             {

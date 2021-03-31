@@ -39,7 +39,7 @@ namespace Materia.Rendering.Imaging.Processing
 
                 Blit(output, width, height);
 
-                GLFrameBuffer.Unbind();
+                frameBuff.Unbind();
             }
 
             base.Process(width, height, output, output);

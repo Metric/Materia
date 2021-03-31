@@ -96,6 +96,8 @@ namespace MateriaCore.Components
             }
         }
 
+        public bool ClampToMinMax { get; set; } = false;
+
         bool mouseDown = false;
 
         public Slider()
@@ -181,6 +183,12 @@ namespace MateriaCore.Components
         protected void UpdateValueFromPoint(ref Point p)
         {
             double percent = p.X / sliderArea.Bounds.Width;
+            
+            if (ClampToMinMax)
+            {
+                percent = Math.Clamp(percent, 0d, 1d);
+            }
+
             if (snapToTicks && ticks != null && ticks.Length > 0)
             {
                 float temp = (float)percent * (maxValue - minValue) + minValue;

@@ -64,6 +64,21 @@ namespace Materia.Rendering.Mathematics
             this.W = w;
         }
 
+        public Vector4 ToVector4()
+        {
+            return new Vector4(X, Y, Z, W);
+        }
+
+        public Vector3 ToVector3()
+        {
+            return new Vector3(X, Y, Z);
+        }
+
+        public Vector2 ToVector2()
+        {
+            return new Vector2(X, Y);
+        }
+
         public MVector Abs()
         {
             return new MVector(Math.Abs(X), Math.Abs(Y), Math.Abs(Z), Math.Abs(W));

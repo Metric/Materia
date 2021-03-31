@@ -48,6 +48,9 @@ namespace MateriaCore.Components.Dialogs
 
         ScreenPixelGrabber pixelGrabber;
 
+        Canvas hueCanvas;
+        Canvas svCanvas;
+
         protected Color current;
         protected MVector currentVector;
 
@@ -179,12 +182,9 @@ namespace MateriaCore.Components.Dialogs
             current = original = new Color(255, 0, 0, 0);
             currentVector = new MVector(0, 0, 0, 1);
             hsv = HsvColor.FromMVector(ref currentVector);
-            InitBitmaps();
+         
             InitEvents();
             InitSliders();
-#if DEBUG
-            this.AttachDevTools();
-#endif
         }
 
         public ColorPicker(MVector p)
@@ -193,7 +193,7 @@ namespace MateriaCore.Components.Dialogs
             current = original = new Color((byte)(p.W * 255), (byte)(p.X * 255), (byte)(p.Y * 255), (byte)(p.Z * 255));
             currentVector = p.Clamp(MVector.Zero, MVector.One);
             hsv = HsvColor.FromMVector(ref currentVector);
-            InitBitmaps();
+        
             InitEvents();
             InitSliders();
         }
@@ -204,7 +204,7 @@ namespace MateriaCore.Components.Dialogs
             current = original = p;
             currentVector = new MVector(p.R / 255.0f, p.G / 255.0f, p.B / 255.0f, p.A / 255.0f).Clamp(MVector.Zero, MVector.One);
             hsv = HsvColor.FromMVector(ref currentVector);
-            InitBitmaps();
+           
             InitEvents();
             InitSliders();
         }
@@ -219,7 +219,7 @@ namespace MateriaCore.Components.Dialogs
             blue = currentVector.Z;
             alpha = currentVector.W;
 
-            hue = MathF.Min(360, MathF.Max(0, hsv.H / 359.0f));
+            hue = MathF.Min(1, MathF.Max(0, hsv.H));
             sat = hsv.S;
             value = hsv.V;
 
@@ -246,8 +246,14 @@ namespace MateriaCore.Components.Dialogs
 
         void InitBitmaps()
         {
-            svBitmap = new RawBitmap((int)svImage.Width, (int)svImage.Height);
-            hueBitmap = new RawBitmap((int)hueImage.Width, (int)hueImage.Height);
+            if (svCanvas.Bounds.Width == 0 || hueCanvas.Bounds.Width == 0 
+                || svCanvas.Bounds.Height == 0 || hueCanvas.Bounds.Height == 0)
+            {
+                return;
+            }
+
+            svBitmap = new RawBitmap((int)(svCanvas.Bounds.Width), (int)(svCanvas.Bounds.Height));
+            hueBitmap = new RawBitmap((int)(hueCanvas.Bounds.Width), (int)(hueCanvas.Bounds.Height));
 
             RedrawHue();
             RedrawSatVal();
@@ -263,6 +269,16 @@ namespace MateriaCore.Components.Dialogs
             svImage.PointerPressed += OnSatValPressed;
             Opened += ColorPicker_Opened;
             Closing += ColorPicker_Closing;
+            PropertyChanged += ColorPicker_PropertyChanged;
+        }
+
+
+        private void ColorPicker_PropertyChanged(object sender, AvaloniaPropertyChangedEventArgs e)
+        {
+            if (e.Property.Name == "Bounds")
+            {
+                InitBitmaps();
+            }
         }
 
         private void ColorPicker_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -330,7 +346,7 @@ namespace MateriaCore.Components.Dialogs
 
         protected void RebuildHsv()
         {
-            hsv.H = MathF.Min(360, MathF.Max(0, hue * 359));
+            hsv.H = MathF.Min(1, MathF.Max(0, hue));
             hsv.S = MathF.Min(1, MathF.Max(0, sat));
             hsv.V = MathF.Min(1, MathF.Max(0, value));
 
@@ -395,8 +411,8 @@ namespace MateriaCore.Components.Dialogs
 
         protected void UpdateHuePoint()
         {
-            float f = hsv.H / 359.0f;
-            double y = Math.Min(hueImage.Height, Math.Max(0, hueImage.Height * f));
+            float f = hsv.H;
+            double y = Math.Min(hueImage.Bounds.Height, Math.Max(0, hueImage.Bounds.Height * f));
             Canvas.SetTop(hPoint, y);
         }
 
@@ -405,8 +421,8 @@ namespace MateriaCore.Components.Dialogs
             float sf = MathF.Min(1, MathF.Max(0, hsv.S));
             float sv = MathF.Min(1, MathF.Max(0, 1.0f - hsv.V));
 
-            double x = (svImage.Width * sf) - 5;
-            double y = (svImage.Height * sv) - 5;
+            double x = (svCanvas.Bounds.Width * sf) - 5;
+            double y = (svCanvas.Bounds.Height * sv) - 5;
 
             Canvas.SetLeft(svPoint, x);
             Canvas.SetTop(svPoint, y);
@@ -414,10 +430,12 @@ namespace MateriaCore.Components.Dialogs
 
         protected void RedrawHue()
         {
+            if (hueBitmap == null) return;
+
             Parallel.For(0, hueBitmap.Height, y =>
             {
                 float f = y / (float)hueBitmap.Height;
-                float h = f * 359.0f;
+                float h = MathF.Min(1, MathF.Max(0, f));
                 HsvColor v = new HsvColor(h, 1, 1);
                 GLPixel pix = v.ToGLPixel(1);
                 for(int x = 0; x < hueBitmap.Width; ++x)
@@ -431,6 +449,8 @@ namespace MateriaCore.Components.Dialogs
 
         protected void RedrawSatVal()
         {
+            if (svBitmap == null) return;
+
             Parallel.For(0, svBitmap.Height, y =>
             {
                 for(int x = 0; x < svBitmap.Width; ++x)
@@ -451,7 +471,7 @@ namespace MateriaCore.Components.Dialogs
         {
             if (satMouseDown)
             {
-                Point p = e.GetPosition(svImage);
+                Point p = e.GetPosition(svCanvas);
                 PickSatVal(ref p);
             }
         }
@@ -468,7 +488,7 @@ namespace MateriaCore.Components.Dialogs
         protected void OnSatValPressed(object sender, PointerPressedEventArgs e)
         {
             satMouseDown = true;
-            Point p = e.GetPosition(svImage);
+            Point p = e.GetPosition(svCanvas);
             PickSatVal(ref p);
             SubscribeToWindowSatValPointer();
         }
@@ -477,7 +497,7 @@ namespace MateriaCore.Components.Dialogs
         {
             if (hueMouseDown)
             {
-                Point p = e.GetPosition(hueImage);
+                Point p = e.GetPosition(hueCanvas);
                 PickHue(ref p);
             }
         }
@@ -494,15 +514,17 @@ namespace MateriaCore.Components.Dialogs
         protected void OnHuePressed(object sender, PointerPressedEventArgs e)
         {
             hueMouseDown = true;
-            Point p = e.GetPosition(hueImage);
+            Point p = e.GetPosition(hueCanvas);
             PickHue(ref p);
             SubscribeToWindowHuePointer();
         }
 
         protected void PickHue(ref Point p)
         {
-            float y = (float)p.Y / hueBitmap.Height * 359.0f;
-            hsv.H = MathF.Min(360, MathF.Max(0, y));
+            if (hueBitmap == null) return;
+
+            float y = (float)p.Y / hueBitmap.Height;
+            hsv.H = MathF.Min(1, MathF.Max(0, y));
             currentVector = hsv.ToMVector(currentVector.W);
             current = new Color((byte)(currentVector.W * 255), (byte)(currentVector.X * 255), (byte)(currentVector.Y * 255), (byte)(currentVector.Z * 255));
             UpdatePreview();
@@ -512,6 +534,8 @@ namespace MateriaCore.Components.Dialogs
 
         protected void PickSatVal(ref Point p)
         {
+            if (svBitmap == null) return;
+
             float s = (float)p.X / (float)svBitmap.Width;
             float v = 1.0f - (float)p.Y / (float)svBitmap.Height;
 
@@ -552,12 +576,25 @@ namespace MateriaCore.Components.Dialogs
         {
             AvaloniaXamlLoader.Load(this);
             hueSlider = this.FindControl<NumberSlider>("HueSlider");
+            hueSlider.ClampToMinMax = true;
+
             saturationSlider = this.FindControl<NumberSlider>("SaturationSlider");
+            saturationSlider.ClampToMinMax = true;
+
             valueSlider = this.FindControl<NumberSlider>("ValueSlider");
+            valueSlider.ClampToMinMax = true;
+
             redSlider = this.FindControl<NumberSlider>("RedSlider");
+            redSlider.ClampToMinMax = true;
+
             greenSlider = this.FindControl<NumberSlider>("GreenSlider");
+            greenSlider.ClampToMinMax = true;
+
             blueSlider = this.FindControl<NumberSlider>("BlueSlider");
+            blueSlider.ClampToMinMax = true;
+
             alphaSlider = this.FindControl<NumberSlider>("AlphaSlider");
+            alphaSlider.ClampToMinMax = true;
 
             selectedColor = this.FindControl<Grid>("SelectedColor");
             previousColor = this.FindControl<Grid>("PreviousColor");
@@ -567,6 +604,10 @@ namespace MateriaCore.Components.Dialogs
 
             hueImage = this.FindControl<Image>("HueSelector");
             svImage = this.FindControl<Image>("SaturationValueSelector");
+
+            hueCanvas = this.FindControl<Canvas>("GHue");
+            svCanvas = this.FindControl<Canvas>("GSatVal");
+
 
             selectButton = this.FindControl<Button>("SelectButton");
             cancelButton = this.FindControl<Button>("CancelButton");

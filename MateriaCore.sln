@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Graph", "Graph\Graph.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rendering", "Rendering\Rendering.csproj", "{F080A41F-247A-41A8-8CE5-52DA62E5F343}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLog", "MLog\MLog.csproj", "{AEEB9DF5-3AD8-404D-A54A-5C477FE647EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MLog", "MLog\MLog.csproj", "{AEEB9DF5-3AD8-404D-A54A-5C477FE647EF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfinityUI", "..\InfinityPainter\InfinityUI\InfinityUI.csproj", "{EE084148-93A9-44B1-B8AD-13BBEC2DAF50}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,14 @@ Global
 		{AEEB9DF5-3AD8-404D-A54A-5C477FE647EF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AEEB9DF5-3AD8-404D-A54A-5C477FE647EF}.Release|x64.ActiveCfg = Release|Any CPU
 		{AEEB9DF5-3AD8-404D-A54A-5C477FE647EF}.Release|x64.Build.0 = Release|Any CPU
+		{EE084148-93A9-44B1-B8AD-13BBEC2DAF50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE084148-93A9-44B1-B8AD-13BBEC2DAF50}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE084148-93A9-44B1-B8AD-13BBEC2DAF50}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EE084148-93A9-44B1-B8AD-13BBEC2DAF50}.Debug|x64.Build.0 = Debug|Any CPU
+		{EE084148-93A9-44B1-B8AD-13BBEC2DAF50}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE084148-93A9-44B1-B8AD-13BBEC2DAF50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE084148-93A9-44B1-B8AD-13BBEC2DAF50}.Release|x64.ActiveCfg = Release|Any CPU
+		{EE084148-93A9-44B1-B8AD-13BBEC2DAF50}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

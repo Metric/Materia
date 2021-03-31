@@ -26,9 +26,6 @@ namespace MateriaCore.Components.Dialogs
         public MessageBox()
         {
             this.InitializeComponent();
-#if DEBUG
-            this.AttachDevTools();
-#endif
         }
 
         private void InitializeComponent()

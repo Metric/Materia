@@ -18,7 +18,9 @@
           </VisualBrush.Visual>
         </VisualBrush>
       </Grid.Background>
-      <Image Name="GradientImage" />
+      <Canvas>
+        <Image Name="GradientImage" Stretch="UniformToFill" />
+      </Canvas>
     </Grid>
     <Canvas Name="HandleHolder" VerticalAlignment="Bottom" Height="32">
 
