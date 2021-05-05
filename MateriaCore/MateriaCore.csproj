@@ -42,6 +42,8 @@
     <AvaloniaResource Remove="Components\MultiRangeSlider.xaml" />
     <AvaloniaResource Remove="Components\NumberInput.xaml" />
     <AvaloniaResource Remove="Components\NumberSlider.xaml" />
+    <AvaloniaResource Remove="Components\Panes\Log.xaml" />
+    <AvaloniaResource Remove="Components\Panes\Parameters.xaml" />
     <AvaloniaResource Remove="Components\ParameterEditor.xaml" />
     <AvaloniaResource Remove="Components\ParameterListItem.xaml" />
     <AvaloniaResource Remove="Components\ParameterMap.xaml" />
@@ -68,6 +70,8 @@
     <None Remove="Components\Histogram.xaml" />
     <None Remove="Components\Levels.xaml" />
     <None Remove="Components\MultiRangeSlider.xaml" />
+    <None Remove="Components\Panes\Log.xaml" />
+    <None Remove="Components\Panes\Parameters.xaml" />
     <None Remove="Components\ParameterEditor.xaml" />
     <None Remove="Components\ParameterListItem.xaml" />
     <None Remove="Components\ParameterMap.xaml" />
@@ -81,8 +85,15 @@
     <None Remove="Components\VectorSlider.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="0.10.0" />
-    <PackageReference Include="Avalonia.Desktop" Version="0.10.0" />
+    <AvaloniaXaml Include="Components\Panes\Log.xaml" />
+    <AvaloniaXaml Include="Components\Panes\Parameters.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </AvaloniaXaml>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="0.10.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.10.3" />
+    <PackageReference Include="OpenTK" Version="4.6.3" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Components\DropDown.xaml">
@@ -98,6 +109,7 @@
       <Generator>MSBuild:Compile</Generator>
     </EmbeddedResource>
     <ProjectReference Include="..\Graph\Graph.csproj" />
+    <ProjectReference Include="..\InfinityUI\InfinityUI.csproj" />
     <ProjectReference Include="..\MLog\MLog.csproj" />
     <ProjectReference Include="..\Rendering\Rendering.csproj" />
     <EmbeddedResource Include="Images\1x1.png" />
@@ -243,6 +255,12 @@
   <ItemGroup>
     <Compile Update="Components\FunctionEditor.xaml.cs">
       <DependentUpon>FunctionEditor.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="Components\Panes\Log.xaml.cs">
+      <DependentUpon>Log.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="Components\Panes\Parameters.xaml.cs">
+      <DependentUpon>Parameters.xaml</DependentUpon>
     </Compile>
     <Compile Update="Components\ParameterEditor.xaml.cs">
       <DependentUpon>ParameterEditor.xaml</DependentUpon>

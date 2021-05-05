@@ -24,12 +24,7 @@ namespace Materia.Rendering.Geometry
 
         protected static bool isSharedDisposed = false;
         protected static GLVertexArray sharedVao;
-        /// <summary>
-        /// Gets the shared vao. Make sure the Stroke is set before calling this.
-        /// </summary>
-        /// <value>
-        /// The shared vao.
-        /// </value>
+
         public static GLVertexArray SharedVao
         {
             get

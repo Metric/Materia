@@ -131,7 +131,7 @@ vec3 hsv2rgb(vec3 c)
 
 
 void main() {
-    float distance = (uv.x - selected.x) * (uv.x - selected.x) + (uv.y - selected.y) * (uv.y - selected.y);
+    float distance = (uv.x - selected.x) * (uv.x - selected.x) + ((1.0 - uv.y) - selected.y) * ((1.0 - uv.y) - selected.y);
 
     bool ring3 = (distance >= 0.0005 && distance < 0.001);
     bool ring2 = (distance >= 0.00025 && distance < 0.0005);
@@ -140,10 +140,10 @@ void main() {
     vec3 rgbhue = vec3(0);
     
     if (mode == 0) {
-        rgbhue = hsv2rgb(vec3(hue, uv.x, uv.y));
+        rgbhue = hsv2rgb(vec3(1.0 - hue, uv.x, 1.0 - uv.y));
     }
     else {
-        rgbhue = FromHSL(vec3(hue * 6.0f, uv.x, uv.y));
+        rgbhue = FromHSL(vec3((1.0 - hue) * 6.0f, uv.x, 1.0 - uv.y));
     }
 
     FragColor = (ring3 || ring1 ? vec4(0,0,0,1) : (ring2 ? vec4(1,1,1,1) : vec4(rgbhue, 1)));

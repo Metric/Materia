@@ -111,11 +111,13 @@ namespace Materia.Rendering.Fonts
                 StringFormat format = StringFormat.GenericTypographic;
                 format.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
                 format.Trimming = StringTrimming.None;
+                format.Alignment = StringAlignment.Near;
+                format.LineAlignment = StringAlignment.Near;
 
                 using (var ghelper = Graphics.FromImage(fontHelper))
                 {
                     var size = ghelper.MeasureString(text, f, 0, format);
-                    return new Vector2(size.Width, f.GetHeight());
+                    return new Vector2(size.Width, size.Height);
                 }
             }
         }
@@ -127,6 +129,8 @@ namespace Materia.Rendering.Fonts
                 StringFormat format = StringFormat.GenericTypographic;
                 format.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
                 format.Trimming = StringTrimming.None;
+                format.Alignment = StringAlignment.Near;
+                format.LineAlignment = StringAlignment.Near;
 
                 var size = ghelper.MeasureString(ch, f, 0, format);
                 data.size = new Vector2(size.Width, size.Height);

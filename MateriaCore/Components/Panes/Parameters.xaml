@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:m="clr-namespace:MateriaCore.Components"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="MateriaCore.Components.Panes.Parameters"
+        Title="Parameters" Topmost="True" CanResize="True" SystemDecorations="Full" MinWidth="256" MinHeight="450" ShowInTaskbar="False">
+  <Grid Background="{StaticResource Surface}">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Margin="2,2,2,2">
+      <m:ParameterMap x:Name="Params" />
+    </ScrollViewer>
+  </Grid>
+</Window>

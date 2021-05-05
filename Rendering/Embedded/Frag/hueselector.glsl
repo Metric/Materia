@@ -127,11 +127,11 @@ vec3 hsv2rgb(vec3 c)
 //END HSV HELPERS
 
 void main() {
-    if (abs(uv.y - selected) <= 0.005) {
+    if (abs((1.0 - uv.y) - selected) <= 0.005) {
         FragColor = vec4(0,0,0,1);
     }
     else {
-        vec3 rgbhue = hsv2rgb(vec3(uv.y, 1.0, 1.0));
+        vec3 rgbhue = hsv2rgb(vec3(1.0 - uv.y, 1.0, 1.0));
         FragColor = vec4(rgbhue, 1);
     }
 }

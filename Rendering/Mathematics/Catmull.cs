@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 
@@ -12,6 +13,67 @@ namespace Materia.Rendering.Mathematics
 {
     public static class Catmull
     {
+
+        /// <summary>
+        /// Smoothes the specified point based on the previous points
+        /// This is a differiental method as it looks
+        /// only at the current incoming + the prev num points
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="next">The next.</param>
+        /// <param name="pointsToAverage">The points to average.</param>
+        /// <param name="round">if set to <c>true</c> [round].</param>
+        public static void Smooth(List<StrokePoint> points, StrokePoint next, int iterations = 2, bool round = true)
+        {
+            if (points.Count < 2)
+            {
+                return;
+            }
+
+            float xTotal = 0;
+            float yTotal = 0;
+            int total = 0;
+
+            for (int j = 0; j < iterations; ++j)
+            {
+                xTotal += next.vertex.X;
+                yTotal += next.vertex.Y;
+                ++total;
+
+                for (int i = points.Count - 2; i < points.Count; ++i)
+                {
+                    xTotal += points[i].vertex.X;
+                    yTotal += points[i].vertex.Y;
+
+                    ++total;
+                }
+            }
+
+            if (!round)
+            {
+                next.vertex = new Vector2(xTotal / total, yTotal / total);
+            }
+            else
+            {
+                next.vertex = new Vector2(MathF.Round(xTotal / total), MathF.Round(yTotal / total));
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the point should be added to the list
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="next">The next.</param>
+        /// <param name="radiusSquared">The radius squared.</param>
+        /// <returns>
+        ///   <c>true</c> if [is radial length] [the specified points]; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool IsRadialLength(StrokePoint prev, StrokePoint next, float radiusSquared) 
+        {
+            Vector2 cpv = next.vertex;
+            Vector2 pv = prev.vertex;
+            return Vector2.DistanceSquared(ref cpv, ref pv) >= radiusSquared;
+        }
 
         /// <summary>
         /// Simplifies the point line based on a radial distance

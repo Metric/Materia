@@ -34,9 +34,9 @@ namespace Materia.Rendering.Mathematics
         public Box2(Vector2 pos, float width, float height)
         {
             Left = pos.X;
-            Top = pos.X;
+            Top = pos.Y;
             Right = pos.X + width;
-            Bottom = pos.X + height;
+            Bottom = pos.Y + height;
         }
 
         /// <summary>
@@ -119,28 +119,14 @@ namespace Materia.Rendering.Mathematics
         /// </summary>
         /// <param name="point">The point to query.</param>
         /// <returns>Whether this box contains the point.</returns>
-        public bool Contains(Vector2 point)
+        public bool Contains(Vector2 point, bool inverseY = false)
         {
-            return Contains(point, true);
-        }
+            if (inverseY)
+            {
+                return point.X >= Left && point.X <= Right && point.Y <= Top && point.Y >= Bottom;
+            }
 
-        /// <summary>
-        /// Returns whether the box contains the specified point.
-        /// </summary>
-        /// <param name="point">The point to query.</param>
-        /// <param name="closedRegion">Whether to include the box boundary in the test region.</param>
-        /// <returns>Whether this box contains the point.</returns>
-        public bool Contains(Vector2 point, bool closedRegion)
-        {
-            bool xOK = (closedRegion == Left <= Right) ?
-                (point.X >= Left != point.X > Right) :
-                (point.X > Left != point.X >= Right);
-
-            bool yOK = (closedRegion == Top <= Bottom) ?
-                (point.Y >= Top != point.Y > Bottom) :
-                (point.Y > Top != point.Y >= Bottom);
-
-            return xOK && yOK;
+            return point.X >= Left && point.X <= Right && point.Y >= Top && point.Y <= Bottom;
         }
 
         public bool Contains(Box2 b)

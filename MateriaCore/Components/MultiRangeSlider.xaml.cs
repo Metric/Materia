@@ -166,39 +166,28 @@ namespace MateriaCore.Components
                 return;
             }
 
-            //TODO: Fix this incorrect mouse input handling
-            //for the slider control
-            //Needs to be switched to something similar
-            //like Gradient Editor / Curves / Color Picker / Slider
+            Point p = e.GetPosition(this);
 
             double w = Bounds.Width;
             double bw = minHandle.Bounds.Width;
+            double percent = p.X / w;
 
-            Point p = e.GetPosition(this);
-
-            double dx = p.X - mouseStart.X;
-            double l = Canvas.GetLeft(target);
-
-            l += dx;
-
-            l = Math.Min(w - bw, Math.Max(0, l));
+            percent = Math.Clamp(percent, 0d, 1d);
 
             if (target == minHandle)
             {
-                Min = (float)Math.Max(0, l) / (float)(w - bw);
+                Min = (float)percent;
             }
             else if(target == midHandle)
             {
-                Mid = (float)(Math.Max(0, l) / (float)(w - bw));
+                Mid = (float)percent;
             }
             else
             {
-                Max = (float)Math.Max(0, l) / (float)(w - bw);
+                Max = (float)percent;
             }
 
-            Canvas.SetLeft(target, l);
-
-            mouseStart = p;
+            Canvas.SetLeft(target, (w - bw) * (float)percent);
         }
 
         private void InitializeComponent()

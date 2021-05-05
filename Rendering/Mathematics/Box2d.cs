@@ -120,28 +120,14 @@ namespace Materia.Rendering.Mathematics
         /// </summary>
         /// <param name="point">The point to query.</param>
         /// <returns>Whether this box contains the point.</returns>
-        public bool Contains(Vector2d point)
+        public bool Contains(Vector2d point, bool inverseY = false)
         {
-            return Contains(point, true);
-        }
+            if (inverseY)
+            {
+                return point.X >= Left && point.X <= Right && point.Y <= Top && point.Y >= Bottom;
+            }
 
-        /// <summary>
-        /// Returns whether the box contains the specified point.
-        /// </summary>
-        /// <param name="point">The point to query.</param>
-        /// <param name="closedRegion">Whether to include the box boundary in the test region.</param>
-        /// <returns>Whether this box contains the point.</returns>
-        public bool Contains(Vector2d point, bool closedRegion)
-        {
-            bool xOK = (closedRegion == Left <= Right) ?
-                (point.X >= Left != point.X > Right) :
-                (point.X > Left != point.X >= Right);
-
-            bool yOK = (closedRegion == Top <= Bottom) ?
-                (point.Y >= Top != point.Y > Bottom) :
-                (point.Y > Top != point.Y >= Bottom);
-
-            return xOK && yOK;
+            return point.X >= Left && point.X <= Right && point.Y >= Top && point.Y <= Bottom;
         }
 
         /// <summary>
@@ -163,7 +149,7 @@ namespace Materia.Rendering.Mathematics
             Bottom += point.Y;
         }
 
-        public void Encapsulate(Box2 b)
+        public void Encapsulate(Box2d b)
         {
             if (b.Left < Left)
             {
