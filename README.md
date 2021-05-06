@@ -34,7 +34,7 @@ If you are able to, please help localize the UI to your native language. The bas
 
 I could totally push this through google translate, but it is just horrible results sometimes. I would prefer an actual person to do the localization that knows the language they are translating to.
 
-The modifed resource file should be saved as follows: Resources.Language Tag.resx. For example Spanish Brazil would be Resources.es-BR.resx or for general Spanish would be Resources.es.resx.
+The modifed resource file should be saved as follows: Resources.Language Tag.resx. For example Portuguese Brazil would be Resources.pt-BR.resx or for general Portuguese would be Resources.pt.resx.
 
 For Language Tag to use refer to: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/a9eac961-e77d-41a6-90a5-ce1a8b0cdb9c?redirectedfrom=MSDN
 
