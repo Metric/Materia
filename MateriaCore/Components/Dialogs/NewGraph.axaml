@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:p="clr-namespace:MateriaCore.Localization"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="MateriaCore.Components.Panes.NewGraph"
+        x:Class="MateriaCore.Components.Dialogs.NewGraph"
         Title="New">
   <Grid Background="{StaticResource Surface}">
     <Grid Background="{StaticResource Overlay5}"></Grid>

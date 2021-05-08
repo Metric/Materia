@@ -44,6 +44,7 @@
     <None Remove="Embedded\Frag\invert.glsl" />
     <None Remove="Embedded\Frag\irradiance.glsl" />
     <None Remove="Embedded\Frag\levels.glsl" />
+    <None Remove="Embedded\Frag\line.glsl" />
     <None Remove="Embedded\Frag\motionblur.glsl" />
     <None Remove="Embedded\Frag\normals.glsl" />
     <None Remove="Embedded\Frag\occlusion.glsl" />
@@ -68,6 +69,7 @@
     <None Remove="Embedded\Vertex\basic.glsl" />
     <None Remove="Embedded\Vertex\fill.glsl" />
     <None Remove="Embedded\Vertex\image.glsl" />
+    <None Remove="Embedded\Vertex\line.glsl" />
     <None Remove="Embedded\Vertex\pbr.glsl" />
     <None Remove="Embedded\Vertex\pbrtes.glsl" />
     <None Remove="Embedded\Vertex\point.glsl" />
@@ -80,6 +82,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Embedded\Frag\fill.glsl" />
     <EmbeddedResource Include="Embedded\Frag\hueselector.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\line.glsl" />
     <EmbeddedResource Include="Embedded\Frag\point.glsl" />
     <EmbeddedResource Include="Embedded\Frag\pointsize.glsl" />
     <EmbeddedResource Include="Embedded\Frag\pointui.glsl" />
@@ -127,6 +130,7 @@
     <EmbeddedResource Include="Embedded\Vertex\basic.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\fill.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\image.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\line.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pbr.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pbrtes.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\point.glsl" />

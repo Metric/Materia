@@ -105,7 +105,7 @@ namespace InfinityUI.Controls
             Moved?.Invoke(this, Vector2.Zero);
         }
 
-        public virtual void Move(Vector2 delta)
+        public virtual void Move(Vector2 delta, bool invokeEvent = true)
         {
             float xSign = 1;
             float ySign = 1;
@@ -160,7 +160,10 @@ namespace InfinityUI.Controls
                     break;
             }
 
-            Moved?.Invoke(this, delta);
+            if (invokeEvent)
+            {
+                Moved?.Invoke(this, delta);
+            }
         }
 
         protected virtual void OnMouseMove(UISelectable selectable,  MouseEventArgs e)

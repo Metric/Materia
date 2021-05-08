@@ -7,7 +7,7 @@ using System;
 using Materia.Nodes.Atomic;
 using MateriaCore.Components.GL;
 
-namespace MateriaCore.Components.Panes
+namespace MateriaCore.Components.Dialogs
 {
     public class NewGraph : Window
     {

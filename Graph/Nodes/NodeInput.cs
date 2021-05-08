@@ -2,7 +2,7 @@
 
 namespace Materia.Nodes
 {
-    public class NodeInput
+    public class NodeInput : INodePoint
     {
         public delegate void InputChanged(NodeInput n);
         public event InputChanged OnInputChanged;

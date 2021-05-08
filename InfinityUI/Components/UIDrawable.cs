@@ -15,6 +15,7 @@ namespace InfinityUI.Components
 
         public UIObject Parent { get; set; }
 
+        public Vector2 Tiling { get; set; } = new Vector2(1, 1);
         public bool FlipY { get; set; } = false;
         public bool Clip { get; set; } = false;
 

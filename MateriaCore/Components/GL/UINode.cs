@@ -13,10 +13,11 @@ using Materia.Nodes.Atomic;
 using Avalonia.Controls;
 using System.Threading.Tasks;
 using Materia.Rendering.Imaging;
+using MateriaCore.Utils;
 
 namespace MateriaCore.Components.GL
 {
-    public class UINode : MovablePane
+    public class UINode : MovablePane, IGraphNode
     {
         public const int DEFAULT_HEIGHT = 50;
         public const int DEFAULT_WIDTH = 120;
@@ -32,34 +33,40 @@ namespace MateriaCore.Components.GL
         protected UIImage preview;
 
         protected UIToggleable toggleable;
+
+        protected UIObject inputsArea;
+        protected UIObject outputsArea;
+
+        protected UIContentFitter fitter;
         #endregion
 
         #region Graph Details
         public Node Node { get; protected set; }
 
-        public Graph Graph { get; protected set; }
+        public UIGraph Graph { get; protected set; }
 
         public string Id { get; protected set; } = Guid.NewGuid().ToString(); //assign a default guid to it
 
         //note add back in Input Output Nodes here
-
-        protected InfinityUI.Interfaces.KeyboardEventArgs lastKeyboardEvent;
-
+        protected List<UINodePoint> inputs = new List<UINodePoint>();
+        protected List<UINodePoint> outputs = new List<UINodePoint>();
         #endregion
 
         public UINode() : base(new Vector2(DEFAULT_WIDTH, DEFAULT_HEIGHT))
         {
+            RelativeTo = Anchor.TopLeft;
             InitializeComponents();
         }
 
-        public UINode(Node n) : base(new Vector2(DEFAULT_WIDTH, DEFAULT_HEIGHT))
+        public UINode(UIGraph g, Node n) : base(new Vector2(DEFAULT_WIDTH, DEFAULT_HEIGHT))
         {
+            RelativeTo = Anchor.TopLeft;
             Position = new Vector2((float)n.ViewOriginX, (float)n.ViewOriginY);
 
             InitializeComponents();
 
             Node = n;
-            Graph = n.ParentGraph;
+            Graph = g;
             Id = n.Id;
 
             title.Text = n.Name;
@@ -67,6 +74,22 @@ namespace MateriaCore.Components.GL
             preview.Texture = n.GetActiveBuffer();
 
             //todo add in output and inputs areas
+
+            for (int i = 0; i < n.Outputs.Count; ++i)
+            {
+                var op = n.Outputs[i];
+                UINodePoint outpoint = new UINodePoint(this, op);
+                outputs.Add(outpoint);
+                outputsArea.AddChild(outpoint);
+            }
+
+            for (int i = 0; i < n.Inputs.Count; ++i)
+            {
+                var op = n.Inputs[i];
+                UINodePoint inputpoint = new UINodePoint(this, op);
+                inputs.Add(inputpoint);
+                inputsArea.AddChild(inputpoint);
+            }
 
             //todo handle input and output node events
             //etc. they are currently commented out
@@ -79,9 +102,10 @@ namespace MateriaCore.Components.GL
             n.OnValueUpdated += N_OnValueUpdated;
             n.OnNameChanged += N_OnNameChanged;
 
-            if (Graph is Function)
+            var graph = Graph.Current;
+            if (graph is Function)
             {
-                Function f = Graph as Function;
+                Function f = graph as Function;
                 f.OnOutputSet += F_OnOutputSet;
 
                 //todo rework this area
@@ -182,64 +206,71 @@ namespace MateriaCore.Components.GL
             }*/
         }
 
+        public void LoadConnection(UINodePoint output, NodeInput inp)
+        {
+            var unode = Graph?.GetNode(inp.Node.Id);
+            UINode uinode = unode as UINode;
+            if (uinode == null) return;
+            var input = uinode.inputs.Find(m => m.NodePoint == inp);
+            if (input == null) return;
+            output?.Connect(input);
+        }
+
+        public void LoadConnections()
+        {
+            for (int i = 0; i < outputs.Count; ++i)
+            {
+                var op = outputs[i].NodePoint as NodeOutput;
+                if (op == null) continue;
+                for (int k = 0; k < op.To.Count; ++k)
+                {
+                    var inp = op.To[k];
+                    LoadConnection(outputs[i], inp);
+                }
+            }
+        }
+
         private void N_OnOutputRemovedFromNode(Node n, NodeOutput inp, NodeOutput previous = null)
         {
-            /*var uinp = OutputNodes.Find(m => m.Output == inp);
-
-            if (uinp != null)
-            {
-                //whoops forgot to dispose
-                //on the uinodepoint to remove previous connects
-                //etc
-                uinp.Dispose();
-                OutputStack.Children.Remove(uinp);
-                OutputNodes.Remove(uinp);
-            }*/
+            var uinp = outputs.Find(m => m.NodePoint == inp);
+            if (uinp == null) return;
+            outputs.Remove(uinp);
+            outputsArea.RemoveChild(uinp);
+            uinp.Dispose();
         }
 
         private void N_OnOutputAddedToNode(Node n, NodeOutput inp, NodeOutput previous = null)
         {
-            /*UINodePoint outpoint = new UINodePoint(this, Graph);
-            outpoint.Output = inp;
-            outpoint.VerticalAlignment = VerticalAlignment.Center;
-            OutputNodes.Add(outpoint);
-            OutputStack.Children.Add(outpoint);
-            outpoint.UpdateColor();
+            UINodePoint outpoint = new UINodePoint(this, inp);
+            outputs.Add(outpoint);
+            outputsArea.AddChild(outpoint);
 
-            if (previous != null)
+            if (previous == null) return;
+            foreach (var cinp in previous.To)
             {
-                foreach (var cinp in inp.To)
-                {
-                    LoadConnection(cinp.Node.Id);
-                }
-            }*/
+                //load connection
+                LoadConnection(outpoint, cinp);
+            }
+            N_OnOutputRemovedFromNode(n, previous);
         }
 
         private void N_OnInputRemovedFromNode(Node n, NodeInput inp, NodeInput previous = null)
         {
-            /*var uinp = InputNodes.Find(m => m.Input == inp);
-
-            if (uinp != null)
-            {
-                //whoops forgot to dispose
-                //on the uinodepoint to remove previous connects
-                //etc
-                uinp.Dispose();
-                InputStack.Children.Remove(uinp);
-                InputNodes.Remove(uinp);
-            }*/
+            var uinp = inputs.Find(m => m.NodePoint == inp);
+            if (uinp == null) return;
+            inputs.Remove(uinp);
+            inputsArea.RemoveChild(uinp);
+            uinp.Dispose();
         }
 
         private void N_OnInputAddedToNode(Node n, NodeInput inp, NodeInput previous = null)
         {
-            //need to take into account previous
-            //aka we are just replacing the previous one
-            /*UINodePoint previousNodePoint = null;
+            UINodePoint previousNodePoint = null;
             UINodePoint previousNodePointParent = null;
 
             if (previous != null)
             {
-                previousNodePoint = InputNodes.Find(m => m.Input == previous);
+                previousNodePoint = inputs.Find(m => m.NodePoint == previous);
             }
 
             if (previousNodePoint != null)
@@ -247,23 +278,19 @@ namespace MateriaCore.Components.GL
                 previousNodePointParent = previousNodePoint.ParentNode;
             }
 
-            UINodePoint inputpoint = new UINodePoint(this, Graph);
-            inputpoint.Input = inp;
-            inputpoint.VerticalAlignment = VerticalAlignment.Center;
-            InputStack.Children.Add(inputpoint);
-            InputNodes.Add(inputpoint);
-            inputpoint.UpdateColor();
+            UINodePoint inputpoint = new UINodePoint(this, inp);
+            inputs.Add(inputpoint);
+            inputsArea.AddChild(inputpoint);
 
-            //try and reconnect previous parent node to it graphically
             if (previousNodePointParent != null)
             {
-                previousNodePointParent.ConnectToNode(inputpoint, true);
+                previousNodePointParent.Connect(inputpoint);
             }
 
             if (previous != null)
             {
                 N_OnInputRemovedFromNode(n, previous);
-            }*/
+            }
         }
 
         private void InitializeComponents()
@@ -274,8 +301,6 @@ namespace MateriaCore.Components.GL
             toggleable = AddComponent<UIToggleable>();
 
             selectable.Click += Selectable_Click;
-            selectable.KeyDown += Selectable_KeyDown;
-            selectable.KeyUp += Selectable_KeyUp;
             selectable.PointerUp += Selectable_PointerUp;
             selectable.PointerDown += Selectable_PointerDown;
             selectable.TargetGraphic = Background;
@@ -301,9 +326,24 @@ namespace MateriaCore.Components.GL
             previewArea.Padding = new Box2(10, 20, 10, 10);
             preview = previewArea.AddComponent<UIImage>();
 
+            outputsArea = new UIObject();
+            outputsArea.RelativeTo = Anchor.CenterLeft;
+            var stack = outputsArea.AddComponent<UIStackPanel>();
+            stack.Direction = Orientation.Vertical;
+
+            inputsArea = new UIObject();
+            inputsArea.RelativeTo = Anchor.CenterRight;
+            stack = inputsArea.AddComponent<UIStackPanel>();
+            stack.Direction = Orientation.Vertical;
+
             AddChild(previewArea);
             AddChild(descArea);
             AddChild(titleArea);
+            AddChild(outputsArea);
+            AddChild(inputsArea);
+
+            fitter = AddComponent<UIContentFitter>();
+            fitter.Axis = Axis.Vertical;
         }
 
         private void Selectable_PointerDown(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs arg2)
@@ -316,19 +356,10 @@ namespace MateriaCore.Components.GL
             ZOrder = 0; //restore z order to default
         }
 
-        private void Selectable_KeyUp(UISelectable arg1, InfinityUI.Interfaces.KeyboardEventArgs arg2)
-        {
-            lastKeyboardEvent = arg2;
-        }
-
-        private void Selectable_KeyDown(UISelectable arg1, InfinityUI.Interfaces.KeyboardEventArgs arg2)
-        {
-            lastKeyboardEvent = arg2;
-        }
-
         private void UINode_DoubleClick(MovablePane obj)
         {
             //set 2d preview node
+            GlobalEvents.Emit(GlobalEvent.Preview2D, this, Node);
         }
 
         private void UINode_Moved(MovablePane obj, Vector2 delta)
@@ -336,7 +367,23 @@ namespace MateriaCore.Components.GL
             Node.ViewOriginX = Position.X;
             Node.ViewOriginY = Position.Y;
 
+            //update node point paths
+            UpdateNodePoints();
+
             //send event to other node that are multiselected for delta move
+            GlobalEvents.Emit(GlobalEvent.MoveSelected, this, delta);
+        }
+
+        private void UpdateNodePoints()
+        {
+            for (int i = 0; i < outputs.Count; ++i)
+            {
+                outputs[i]?.Update();
+            }
+            for (int i = 0; i < inputs.Count; ++i)
+            {
+                inputs[i]?.Update();
+            }
         }
 
         private void Selectable_Click(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs arg2)
@@ -353,7 +400,7 @@ namespace MateriaCore.Components.GL
 
         protected void TryAndSelect()
         {
-            if (lastKeyboardEvent != null && lastKeyboardEvent.IsCtrl)
+            if (UI.IsCtrlPressed)
             {
                 //add node to multi select
                 return;
@@ -370,7 +417,7 @@ namespace MateriaCore.Components.GL
             //clear multiselect
             //toggle graph select this
 
-            Parameters.Current?.Set(Node);
+            GlobalEvents.Emit(GlobalEvent.ViewParameters, this, Node);
         }
 
         protected void ShowContextMenu()
@@ -445,20 +492,15 @@ namespace MateriaCore.Components.GL
             Node.OnNameChanged -= N_OnNameChanged;
             Node.OnValueUpdated -= N_OnValueUpdated;
 
-            if (Graph is Function)
+            var graph = Graph.Current;
+            if (graph != null)
             {
-                Function f = Graph as Function;
-                f.OnOutputSet -= F_OnOutputSet;
+                if (graph is Function)
+                {
+                    Function f = graph as Function;
+                    f.OnOutputSet -= F_OnOutputSet;
+                }
             }
-
-            if (disposing)
-            {
-                Graph.Remove(Node);
-            }
-
-            //remove node input output node ui
-
-            //update 3d and 2d preview
         }
     }
 }

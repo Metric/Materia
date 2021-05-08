@@ -6,9 +6,10 @@ out vec4 FragColor;
 uniform vec4 color;
 uniform sampler2D MainTex;
 uniform int flipY = 1;
+uniform vec2 tiling = vec2(1, 1);
 
 void main() {
-    vec2 ruv = uv;
+    vec2 ruv = uv * tiling;
     
     if (flipY == 1) 
     {

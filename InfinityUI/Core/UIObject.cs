@@ -276,7 +276,7 @@ namespace InfinityUI.Core
 
                 if (ele == null) continue;
 
-                ele.Dispose();
+                ele.Dispose(disposing);
                 ele.Parent = null;
             }
 

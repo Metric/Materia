@@ -7,7 +7,7 @@ using System.Text;
 
 namespace InfinityUI.Components
 {
-    public class UISelectable : IComponent, IKeyboardInput, IFocusable, IMouseInput
+    public class UISelectable : IComponent, IKeyboardInput, IFocusable, IMouseInput, IMouseWheel
     {
         public event Action<UISelectable> Submit;
         public event Action<UISelectable, MouseEventArgs> PointerUp;
@@ -20,6 +20,7 @@ namespace InfinityUI.Components
         public event Action<UISelectable, KeyboardEventArgs> KeyDown;
         public event Action<UISelectable, KeyboardEventArgs> KeyUp;
         public event Action<UISelectable, bool> FocusChanged;
+        public event Action<UISelectable, MouseWheelArgs> Wheel;
 
         public bool BubbleEvents { get; set; } = true;
 
@@ -270,6 +271,14 @@ namespace InfinityUI.Components
             if (e.IsHandled) return;
             e.IsHandled = !BubbleEvents;
             TextInput?.Invoke(this, e);
+        }
+
+        public virtual void OnMouseWheel(MouseWheelArgs e)
+        {
+            if (!enabled) return;
+            if (e.IsHandled) return;
+            e.IsHandled = !BubbleEvents;
+            Wheel?.Invoke(this, e);
         }
 
         protected virtual void UpdateTargetGraphic()

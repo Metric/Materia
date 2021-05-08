@@ -33,6 +33,7 @@ namespace InfinityUI.Components
             Matrix4 m = Parent.ModelMatrix;
             Vector2 pos = Parent.AnchoredPosition;
             Vector4 color = Color;
+            Vector2 tiling = Tiling;
 
             if (Texture != null)
             {
@@ -48,6 +49,7 @@ namespace InfinityUI.Components
             Shader.SetUniform4("color", ref color);
             Shader.SetUniform("MainTex", 0);
             Shader.SetUniform("flipY", FlipY ? 1 : 0);
+            Shader.SetUniform2("tiling", ref tiling);
 
             OnBeforeDraw(this);
 

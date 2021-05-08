@@ -6,6 +6,7 @@ using Materia.Rendering.Imaging;
 using Materia.Rendering.Interfaces;
 using Materia.Rendering.Mathematics;
 using Materia.Rendering.Textures;
+using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -44,6 +45,55 @@ namespace InfinityUI.Core
         private static UIObject currentSelection = null, activeSelection = null;
         private static Vector2 mousePosition, prevMousePosition;
         private static MouseButton mouseButton = MouseButton.None;
+
+        // helpers to access last known keyboard state for modifier keys
+        public static bool IsCtrlPressed
+        {
+            get => LastKeyboardEvent != null ? LastKeyboardEvent.IsCtrl : false;
+        }
+        public static bool IsAltPressed
+        {
+            get => LastKeyboardEvent != null ? LastKeyboardEvent.IsAlt : false;
+        }
+        public static bool IsShiftPressed
+        {
+            get => LastKeyboardEvent != null ? LastKeyboardEvent.IsShift : false;
+        }
+        public static bool IsLeftCtrlPressed
+        {
+            get => LastKeyboardEvent != null ? LastKeyboardEvent.IsLeftCtrl : false;
+        }
+        public static bool IsRightCtrlPressed
+        {
+            get => LastKeyboardEvent != null ? LastKeyboardEvent.IsRightCtrl : false;
+        }
+        public static bool IsLeftAltPressed
+        {
+            get => LastKeyboardEvent != null ? LastKeyboardEvent.IsLeftAlt : false;
+        }
+        public static bool IsRightAltPressed
+        {
+            get => LastKeyboardEvent != null ? LastKeyboardEvent.IsRightAlt : false;
+        }
+        public static bool IsLeftShiftPressed
+        {
+            get => LastKeyboardEvent != null ? LastKeyboardEvent.IsLeftShift : false;
+        }
+        public static bool IsRightShiftPressed
+        {
+            get => LastKeyboardEvent != null ? LastKeyboardEvent.IsRightShift : false;
+        }
+        public static KeyboardEventArgs LastKeyboardEvent { get; private set; }
+
+        public static event Action<KeyboardEventArgs> KeyDown;
+        public static event Action<KeyboardEventArgs> KeyUp;
+        public static event Action<KeyboardEventArgs> TextInput;
+
+        public static event Action<MouseEventArgs> MouseMove;
+        public static event Action<MouseEventArgs> MouseUp;
+        public static event Action<MouseEventArgs> MouseDown;
+        public static event Action<MouseEventArgs> MouseClick;
+        public static event Action<MouseWheelArgs> MouseWheel;
 
         /// <summary>
         /// Gets or sets the mouse position.
@@ -105,6 +155,14 @@ namespace InfinityUI.Core
                 };
                 currentSelection.SendMessageUpwards("OnMouseWheel", e);
             }
+
+            {
+                MouseWheelArgs e = new MouseWheelArgs()
+                {
+                    Delta = delta
+                };
+                MouseWheel?.Invoke(e);
+            }
         }
 
         public static void OnMouseMove(float x, float y)
@@ -122,6 +180,16 @@ namespace InfinityUI.Core
                 };
 
                 currentSelection.SendMessage("OnMouseMove", false, e);
+            }
+
+            {
+                MouseEventArgs e = new MouseEventArgs()
+                {
+                    Delta = MouseDelta,
+                    Button = mouseButton,
+                    Position = MousePosition
+                };
+                MouseMove?.Invoke(e);
             }
 
             if (Pick(ref p))
@@ -180,6 +248,16 @@ namespace InfinityUI.Core
                     currentSelection.SendMessageUpwards("OnMouseDown", e);
                     activeSelection = currentSelection;
                 }
+
+                {
+                    MouseEventArgs e = new MouseEventArgs()
+                    {
+                        Delta = MouseDelta,
+                        Button = btn,
+                        Position = MousePosition
+                    };
+                    MouseDown?.Invoke(e);
+                }
             }
             else if(btn.HasFlag(MouseButton.Up))
             {
@@ -215,6 +293,26 @@ namespace InfinityUI.Core
 
                     currentSelection.SendMessageUpwards("OnMouseUp", e);
                 }
+
+                {
+                    MouseEventArgs e = new MouseEventArgs()
+                    {
+                        Delta = MouseDelta,
+                        Button = btn,
+                        Position = MousePosition
+                    };
+                    MouseClick?.Invoke(e);
+                }
+
+                {
+                    MouseEventArgs e = new MouseEventArgs()
+                    {
+                        Delta = MouseDelta,
+                        Button = btn,
+                        Position = MousePosition
+                    };
+                    MouseUp?.Invoke(e);
+                }
             }
 
             mouseButton = btn;
@@ -222,25 +320,40 @@ namespace InfinityUI.Core
 
         public static void OnKeyDown(KeyboardEventArgs e)
         {
+            LastKeyboardEvent = e;
             if (Focus != null && Focus is IKeyboardInput)
             {
                 ((IKeyboardInput)Focus).OnKeyDown(e);
             }
+
+            //reset handled
+            e.IsHandled = false;
+            KeyDown?.Invoke(e);
         }
 
         public static void OnTextInput(KeyboardEventArgs e)
         {
+            LastKeyboardEvent = e;
             if (Focus != null && Focus is IKeyboardInput)
             {
                 ((IKeyboardInput)Focus).OnTextInput(e);
             }
+
+            //reset handled
+            e.IsHandled = false;
+            TextInput?.Invoke(e);
         }
         public static void OnKeyUp(KeyboardEventArgs e)
         {
+            LastKeyboardEvent = e;
             if (Focus != null && Focus is IKeyboardInput)
             {
                 ((IKeyboardInput)Focus).OnKeyUp(e);
             }
+
+            //reset handled
+            e.IsHandled = false;
+            KeyUp?.Invoke(e);
         }
 
         public static void Init()
@@ -363,6 +476,7 @@ namespace InfinityUI.Core
 
             for (int i = 0; i < canvases.Count; ++i)
             {
+                if (!canvases[i].Visible) continue;
                 var cv = canvases[i]?.GetComponent<UICanvas>();
                 cv?.Render();
             }
@@ -377,7 +491,9 @@ namespace InfinityUI.Core
             for (int i = canvases.Count - 1; i >= 0; --i)
             {
                 UIObject obj = canvases[i];
-                Selection = obj.Pick(ref p);
+                var canvas = obj.GetComponent<UICanvas>();
+                Vector2 wp = canvas.ToCanvasSpace(p);
+                Selection = obj.Pick(ref wp);
                 if (Selection != null)
                 {
                     break;
@@ -408,6 +524,38 @@ namespace InfinityUI.Core
 
             ImageCache.Clear();
             Elements.Clear();
+        }
+
+        public static GLTexture2D GetEmbeddedImage(string path, EmbeddedFileProvider provider)
+        {
+            GLTexture2D img = null;
+            if (ImageCache.TryGetValue(path, out img))
+            {
+                return img;
+            }
+
+            try
+            {
+                using (Bitmap rbmp = (Bitmap)Bitmap.FromStream(provider.GetFileInfo(path).CreateReadStream()))
+                {
+                    RawBitmap bmp = RawBitmap.FromBitmap(rbmp);
+                    img = new GLTexture2D(PixelInternalFormat.Rgba8);
+                    img.Bind();
+                    img.SetData(bmp.Image, PixelFormat.Bgra, img.Width, img.Height, 0);
+                    img.Linear();
+                    img.Repeat();
+                    GLTexture2D.Unbind();
+
+                    ImageCache[path] = img;
+                }
+
+                return img;
+            }
+            catch
+            {
+                Debug.WriteLine("Failed to get embedded image for: " + path);
+                return null;
+            }
         }
 
         public static GLTexture2D GetImage(string path)

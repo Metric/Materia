@@ -31,25 +31,14 @@ namespace Materia.Nodes
         }
     }
 
-    public class NodeOutput
+    public class NodeOutput : INodePoint
     {
         public delegate void OutputChanged(NodeOutput output);
         public event OutputChanged OnOutputChanged;
 
         public List<NodeInput> To { get; protected set; }
 
-        protected NodeType type;
-        public NodeType Type
-        {
-            get
-            {
-                return type;
-            }
-            set
-            {
-                type = value;
-            }
-        }
+        public NodeType Type { get; set; }
 
         public Node ParentNode { get; protected set; }
 
@@ -72,7 +61,7 @@ namespace Materia.Nodes
 
         public NodeOutput(NodeType t, Node n, string name = "")
         {
-            type = t;
+            Type = t;
             Node = n;
             ParentNode = n;
             Name = name;
@@ -81,7 +70,7 @@ namespace Materia.Nodes
 
         public NodeOutput(NodeType t, Node n, Node parent, string name = "")
         {
-            type = t;
+            Type = t;
             Node = n;
             ParentNode = parent;
             Name = name;

@@ -29,6 +29,8 @@ namespace InfinityUI.Components
         }
 
         public Matrix4 Projection { get; protected set; }
+        public Matrix4 InvertedProjection { get; protected set; }
+
         public Camera Cam { get; protected set; }
 
         protected float scaleWidthBase = 3896;
@@ -76,6 +78,16 @@ namespace InfinityUI.Components
             }
         }
 
+        public Vector3 ToCanvasSpace(Vector3 p)
+        {
+            return (new Vector4(p.X, p.Y, p.Z, 1) * InvertedProjection).Xyz;
+        }
+
+        public Vector2 ToCanvasSpace(Vector2 p)
+        {
+            return (new Vector4(p.X, p.Y, 0, 1) * InvertedProjection).Xy;
+        }
+
         public void Resize(float width, float height)
         {
             Width = width;
@@ -88,7 +100,8 @@ namespace InfinityUI.Components
 
             CalculateScale();
 
-            Projection = Matrix4.CreateScale(1, -1, 1) * Matrix4.CreateTranslation(-width * scale * 0.5f, height * scale * 0.5f, 0) * Matrix4.CreateOrthographic(width * scale, height * scale, 0.0f, 1000f);
+            Projection = Matrix4.CreateScale(1, -1, 1) * Matrix4.CreateTranslation(-(width * 0.5f + Cam.LocalPosition.X) * scale, (height * 0.5f + Cam.LocalPosition.Y) * scale, 0) * Matrix4.CreateOrthographic(width * scale, height * scale, 0.0f, 1000f);
+            InvertedProjection = Projection.Inverted();
         }
 
         public void Render()

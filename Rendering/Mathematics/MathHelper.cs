@@ -279,7 +279,7 @@ namespace Materia.Rendering.Mathematics
         /// <param name="min">The minimum allowed value.</param>
         /// <param name="max">The maximum allowed value.</param>
         /// <returns>min, if n is lower than min; max, if n is higher than max; n otherwise.</returns>
-        public static int Clamp(int n, int min, int max)
+        public static int Clamp(this int n, int min, int max)
         {
             return Math.Max(Math.Min(n, max), min);
         }
@@ -291,7 +291,7 @@ namespace Materia.Rendering.Mathematics
         /// <param name="min">The minimum allowed value.</param>
         /// <param name="max">The maximum allowed value.</param>
         /// <returns>min, if n is lower than min; max, if n is higher than max; n otherwise.</returns>
-        public static float Clamp(float n, float min, float max)
+        public static float Clamp(this float n, float min, float max)
         {
             return Math.Max(Math.Min(n, max), min);
         }
@@ -303,7 +303,7 @@ namespace Materia.Rendering.Mathematics
         /// <param name="min">The minimum allowed value.</param>
         /// <param name="max">The maximum allowed value.</param>
         /// <returns>min, if n is lower than min; max, if n is higher than max; n otherwise.</returns>
-        public static double Clamp(double n, double min, double max)
+        public static double Clamp(this double n, double min, double max)
         {
             return Math.Max(Math.Min(n, max), min);
         }

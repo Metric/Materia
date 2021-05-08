@@ -20,12 +20,6 @@ using System.IO;
 
 namespace Materia.Graph
 { 
-    public enum NodePathType
-    {
-        Line = 0,
-        Bezier = 1
-    }
-
     public enum GraphPixelType
     {
         RGBA = PixelInternalFormat.Rgba8,
@@ -62,8 +56,8 @@ namespace Materia.Graph
 
         public static bool ShaderLogging { get; set; }
 
-        public static int[] GRAPH_SIZES = new int[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
-        public const int DEFAULT_SIZE = 256;
+        public static int[] GRAPH_SIZES = new int[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
+        public const int DEFAULT_SIZE = 512;
 
         public delegate void GraphUpdate(Graph g);
         public delegate void ParameterUpdate(ParameterValue p);
@@ -73,7 +67,6 @@ namespace Materia.Graph
         public event ParameterValue.GraphParameterUpdate OnGraphParameterTypeUpdate;
         public event GraphUpdate OnHdriChanged;
         public event GraphUpdate OnGraphLoaded;
-        public event GraphUpdate OnGraphLinesChanged;
         public event GraphUpdate OnUndo;
         public event GraphUpdate OnRedo;
 
@@ -281,25 +274,6 @@ namespace Materia.Graph
             }
         }
 
-        protected NodePathType graphLinesDisplay;
-        [Editable(ParameterInputType.Dropdown, "Graph Lines Display", "Display")]
-        public NodePathType GraphLinesDisplay
-        {
-            get
-            {
-                return graphLinesDisplay;
-            }
-            set
-            {
-                graphLinesDisplay = value;
-
-                if(OnGraphLinesChanged != null)
-                {
-                    OnGraphLinesChanged.Invoke(this);
-                }
-            }
-        }
-
         protected int width;
         protected int height;
 
@@ -374,7 +348,6 @@ namespace Materia.Graph
             public List<string> outputs;
             public List<string> inputs;
             public GraphPixelType defaultTextureType;
-            public NodePathType graphLinesDisplay;
 
             public double shiftX;
             public double shiftY;
@@ -464,7 +437,8 @@ namespace Materia.Graph
                 }
                 else
                 {
-                    (n as GraphInstanceNode).GraphInst?.CombineLayers();
+                    //todo: reimplement layer support later
+                    //(n as GraphInstanceNode).GraphInst?.CombineLayers();
                     n.TriggerTextureChange();
                 }
 
@@ -731,10 +705,7 @@ namespace Materia.Graph
                     GraphInstanceNode gn = n as GraphInstanceNode;
                     gn.PopulateGraphParams();
                 }
-
-                queue.Enqueue(n);
-
-                if(n is OutputNode)
+                else if (n is OutputNode)
                 {
                     OutputNode op = n as OutputNode;
                     if (op.Outputs.Count > 0)
@@ -748,45 +719,49 @@ namespace Materia.Graph
                         }
                     }
                 }
+
+                queue.Enqueue(n);
             }
         }
 
         public virtual void CombineLayers()
         {
+            //todo: reimplement layer support later
             //make sure render textures are available
-            InitializeRenderTextures();
+            //InitializeRenderTextures();
 
-            int count = Layers.Count;
-            for(int i = count - 1; i >= 0; --i)
-            {
-                Layer l = Layers[i];
-                l.Combine(Render);
-            }
+            //int count = Layers.Count;
+            //for(int i = count - 1; i >= 0; --i)
+            //{
+            //    Layer l = Layers[i];
+            //    l.Combine(Render);
+            //}
 
-            foreach(OutputNode n in Render.Values)
-            {
-                n.TriggerTextureChange();
-            }
+            //foreach(OutputNode n in Render.Values)
+            //{
+            //    n.TriggerTextureChange();
+            //}
         }
 
         public virtual void InitializeRenderTextures()
         {
-            foreach(string id in OutputNodes)
-            {
-                Node n = null;
-                if (NodeLookup.TryGetValue(id, out n))
-                {
-                    OutputNode output = n as OutputNode;
+            //todo: reimplement layer support later
+            //foreach(string id in OutputNodes)
+            //{
+            //    Node n = null;
+            //    if (NodeLookup.TryGetValue(id, out n))
+            //    {
+            //        OutputNode output = n as OutputNode;
 
-                    if (output == null) continue;
+            //        if (output == null) continue;
 
-                    //we reprocess output node here
-                    //to enusre we have latest 
-                    //data from prior node
-                    output.TryAndProcess();
-                    Render[output.OutType] = output;
-                }
-            }
+            //we reprocess output node here
+            //to enusre we have latest 
+            //data from prior node
+            //        output.TryAndProcess();
+            //        Render[output.OutType] = output;
+            //    }
+            //}
         }
 
         public virtual bool HasVar(string k)
@@ -894,16 +869,17 @@ namespace Materia.Graph
 
         public virtual void TryAndProcess()
         {    
-            int c = Layers.Count;
-            for(int i = 0; i < c; ++i)
-            {
+            //todo: reimplement layer support later
+            //int c = Layers.Count;
+            //for(int i = 0; i < c; ++i)
+            //{
                 //no need to process layers
                 //that are invisible
-                if (Layers[i].Visible)
-                {
-                    Layers[i].TryAndProcess();
-                }
-            }
+            //    if (Layers[i].Visible)
+            //    {
+            //        Layers[i].TryAndProcess();
+            //    }
+            //}
 
             
             Task.Run(() =>
@@ -1033,13 +1009,13 @@ namespace Materia.Graph
             }
 
             //resize graph layers as well
-            c = Layers.Count;
-            for (int i = 0; i < c; ++i)
-            {
-                Layer l = Layers[i];
+            //c = Layers.Count;
+            //for (int i = 0; i < c; ++i)
+            //{
+            //    Layer l = Layers[i];
 
-                l.Core?.ResizeWith(width, height);
-            }
+            //    l.Core?.ResizeWith(width, height);
+            //}
 
             Modified = true;
         }
@@ -1057,13 +1033,14 @@ namespace Materia.Graph
                 data.Add(n.GetJson());
             }
 
-            List<string> layerData = new List<string>();
-            count = Layers.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                Layer l = Layers[i];
-                layerData.Add(l.GetJson());
-            }
+            //todo: reimplement layers
+            //List<string> layerData = new List<string>();
+            //count = Layers.Count;
+            //for (int i = 0; i < count; ++i)
+            //{
+            //    Layer l = Layers[i];
+            //    layerData.Add(l.GetJson());
+            //}
 
             d.name = Name;
             d.nodes = data;
@@ -1080,8 +1057,7 @@ namespace Materia.Graph
             d.absoluteSize = AbsoluteSize;
             d.customParameters = GetJsonReadyCustomParameters();
             d.customFunctions = GetJsonReadyCustomFunctions();
-            d.graphLinesDisplay = graphLinesDisplay;
-            d.layers = layerData;
+            d.layers = new List<string>(); //todo: reimplement layers
             d.version = GRAPH_VERSION;
 
             return JsonConvert.SerializeObject(d);
@@ -1528,7 +1504,6 @@ namespace Materia.Graph
             PixelNodes.Clear();
             InstanceNodes.Clear();
 
-            graphLinesDisplay = d.graphLinesDisplay;
             hdriIndex = d.hdriIndex;
             Name = d.name;
             OutputNodes = d.outputs;
@@ -1548,11 +1523,12 @@ namespace Materia.Graph
             SetJsonReadyCustomParameters(d.customParameters);
             SetJsonReadyCustomFunctions(d.customFunctions);
 
+            //todo: reimplement layer support
             //we load layers first
             //since the graph may
             //have graph instances
             //that rely on a layer
-            LayersFromJson(d, archive);
+            //LayersFromJson(d, archive);
 
             int count = d.nodes.Count;
             //parse node data
@@ -1632,11 +1608,13 @@ namespace Materia.Graph
                             else
                             {
                                 //log we could not load graph node
+                                Log.Debug("Node type does not exist: " + type);
                             }
                         }
-                        catch
+                        catch (Exception e)
                         {
                             //log we could not load graph node
+                            Log.Error(e);
                         }
                     }
                 }
@@ -1857,7 +1835,7 @@ namespace Materia.Graph
             {
                 foreach (Layer l in Layers)
                 {
-                    l.Dispose();
+                    l?.Dispose();
                 }
             }
             catch (Exception e)

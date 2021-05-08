@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MateriaCore.Components.Panes.Log"
-        Title="Log" MinWidth="800" MinHeight="250">
+        Title="Log" MinWidth="800" MinHeight="250" ShowInTaskbar="False">
   <Grid Background="{StaticResource Surface}">
     <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
       <CheckBox Content="Info" Name="chkInfo" IsChecked="True" Foreground="{StaticResource TextLight}" HorizontalAlignment="Left" Margin="10" VerticalAlignment="Top"/>
