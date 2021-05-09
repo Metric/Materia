@@ -221,6 +221,8 @@ namespace Materia.Nodes
         public List<NodeInput> Inputs { get; protected set; }
         public List<NodeOutput> Outputs { get; protected set; }
 
+        protected List<NodeConnection> rawNodeConnections = null;
+
         public Node()
         {
             Outputs = new List<NodeOutput>();
@@ -407,6 +409,7 @@ namespace Materia.Nodes
             tileY = d.tileY;
             ViewOriginX = d.viewOriginX;
             ViewOriginY = d.viewOriginY;
+            rawNodeConnections = d.outputs;
 
             if(Inputs.Count < d.inputCount)
             {
@@ -599,6 +602,19 @@ namespace Materia.Nodes
                 //log to console the fact that we could not connect the node
                 Log.Warn("Could not restore a node connections on: " + n.name);
             }
+        }
+
+        /// <summary>
+        /// Restores the connections from the incoming rawJsonConnections
+        /// that were loaded with fromJson
+        /// </summary>
+        /// <param name="nodes">The nodes.</param>
+        /// <param name="assign">if set to <c>true</c> [assign].</param>
+        public void RestoreConnections(Dictionary<string, Node> nodes, bool assign)
+        {
+            if (rawNodeConnections == null || rawNodeConnections.Count == 0) return;
+            SetConnections(nodes, rawNodeConnections, assign);
+            rawNodeConnections = null;
         }
 
         /// <summary>

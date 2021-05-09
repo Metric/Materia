@@ -13,5 +13,6 @@ namespace MateriaCore.Components.GL
 
         void LoadConnection(UINodePoint n, NodeInput p);
         void LoadConnections();
+        void Restore();
     }
 }

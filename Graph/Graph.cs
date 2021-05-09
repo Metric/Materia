@@ -87,8 +87,6 @@ namespace Materia.Graph
         protected Dictionary<string, VariableDefinition> Variables { get; set; }
         protected Dictionary<string, PointD> OriginSizes;
 
-        protected Dictionary<string, Node.NodeData> tempData;
-
         public Archive Archive { get; protected set; }
 
         /// <summary>
@@ -392,8 +390,6 @@ namespace Materia.Graph
 
             State = GraphState.Ready;
 
-            tempData = new Dictionary<string, Node.NodeData>();
-
             Name = name;
             Zoom = 1;
             ShiftX = ShiftY = 0;
@@ -419,6 +415,22 @@ namespace Materia.Graph
             CustomParameters = new List<ParameterValue>();
             CustomFunctions = new List<Function>();
             ParameterFunctions = new Dictionary<string, Function>();
+        }
+
+        public void CopyResources(string cwd, bool setCWD = false)
+        {
+            int count = Nodes.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                var n = Nodes[i];
+                n.CopyResources(cwd);
+            }
+
+            if (setCWD)
+            {
+                //set last in case we need to copy from current graph cwd to new cwd
+                CWD = cwd;
+            }
         }
 
         public void PollScheduled()
@@ -1063,6 +1075,7 @@ namespace Materia.Graph
             return JsonConvert.SerializeObject(d);
         }
 
+        #region Custom Functions & Params
         protected virtual List<string> GetJsonReadyCustomFunctions()
         {
             List<string> funcs = new List<string>();
@@ -1343,7 +1356,9 @@ namespace Materia.Graph
                 }
             }
         }
+        #endregion
 
+        #region Node Creation
         public virtual bool Add(Node n)
         {
             if (NodeLookup.ContainsKey(n.Id)) return false;
@@ -1355,20 +1370,20 @@ namespace Materia.Graph
 
             n.AssignParentGraph(this);
 
-            if(n is OutputNode)
+            if (n is OutputNode)
             {
                 OutputNodes.Add(n.Id);
             }
-            else if(n is InputNode)
+            else if (n is InputNode)
             {
                 InputNodes.Add(n.Id);
             }
 
-            if(n is GraphInstanceNode)
+            if (n is GraphInstanceNode)
             {
                 InstanceNodes.Add(n as GraphInstanceNode);
             }
-            else if(n is PixelProcessorNode)
+            else if (n is PixelProcessorNode)
             {
                 PixelNodes.Add(n as PixelProcessorNode);
             }
@@ -1383,11 +1398,11 @@ namespace Materia.Graph
 
         public virtual void Remove(Node n)
         {
-            if(n is OutputNode)
+            if (n is OutputNode)
             {
                 OutputNodes.Remove(n.Id);
             }
-            else if(n is InputNode)
+            else if (n is InputNode)
             {
                 InputNodes.Remove(n.Id);
             }
@@ -1396,7 +1411,7 @@ namespace Materia.Graph
             {
                 InstanceNodes.Remove(n as GraphInstanceNode);
             }
-            else if(n is PixelProcessorNode)
+            else if (n is PixelProcessorNode)
             {
                 PixelNodes.Remove(n as PixelProcessorNode);
             }
@@ -1406,6 +1421,46 @@ namespace Materia.Graph
             Nodes.Remove(n);
             n.Dispose();
             Modified = true;
+        }
+
+        public virtual Node CreateNode(Type t)
+        {
+            try
+            {
+                if (t != null)
+                {
+                    if (t.Equals(typeof(OutputNode)))
+                    {
+                        var n = new OutputNode(defaultTextureType);
+                        n.AssignParentGraph(this);
+                        return n;
+                    }
+                    else if (t.Equals(typeof(InputNode)))
+                    {
+                        var n = new InputNode(defaultTextureType);
+                        n.AssignParentGraph(this);
+                        return n;
+                    }
+                    else if (t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
+                    {
+                        Node n = (Node)Activator.CreateInstance(t);
+                        n.AssignParentGraph(this);
+                        return n;
+                    }
+                    else
+                    {
+                        Node n = (Node)Activator.CreateInstance(t, width, height, defaultTextureType);
+                        n.AssignParentGraph(this);
+                        return n;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+            }
+
+            return null;
         }
 
         public virtual Node CreateNode(string type)
@@ -1425,47 +1480,18 @@ namespace Materia.Graph
             try
             {
                 Type t = Type.GetType(type);
-                if(t != null)
-                {
-                    if (t.Equals(typeof(OutputNode)))
-                    {
-                        var n  = new OutputNode(defaultTextureType);
-                        n.AssignParentGraph(this);
-                        return n;
-                    }
-                    else if(t.Equals(typeof(InputNode)))
-                    {
-                        var n = new InputNode(defaultTextureType);
-                        n.AssignParentGraph(this);
-                        return n;
-                    }
-                    else if(t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
-                    {
-                        Node n = (Node)Activator.CreateInstance(t);
-                        n.AssignParentGraph(this);
-                        return n;
-                    }
-                    else
-                    {
-                        Node n = (Node)Activator.CreateInstance(t, width, height, defaultTextureType);
-                        n.AssignParentGraph(this);
-                        return n;
-                    }
-                }
-                else
-                {
-                    var n = new GraphInstanceNode(width, height);
-                    n.AssignParentGraph(this);
-                    return n;
-                }
+                return CreateNode(t);
             }
             catch (Exception e)
             {
                 Log.Error(e);
-                return null;
             }
-        }
 
+            return null;
+        }
+        #endregion
+
+        #region Json Loading
         protected virtual void LayersFromJson(GraphData d, Archive archive = null)
         {
             if (d == null) return;
@@ -1496,7 +1522,6 @@ namespace Materia.Graph
             Archive = archive;
             Modified = true;
 
-            tempData = new Dictionary<string, Node.NodeData>();
             Dictionary<string, Node> lookup = new Dictionary<string, Node>();
 
             State = GraphState.Loading;
@@ -1556,7 +1581,6 @@ namespace Materia.Graph
                                     n.Id = nd.id;
                                     lookup[nd.id] = n;
                                     Nodes.Add(n);
-                                    tempData[nd.id] = nd;
                                     LoadNode(n, s, archive);
                                 }
                                 else if (t.Equals(typeof(InputNode)))
@@ -1566,7 +1590,6 @@ namespace Materia.Graph
                                     n.Id = nd.id;
                                     lookup[nd.id] = n;
                                     Nodes.Add(n);
-                                    tempData[nd.id] = nd;
                                     LoadNode(n, s, archive);
                                 }
                                 else if (t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
@@ -1578,7 +1601,6 @@ namespace Materia.Graph
                                         n.Id = nd.id;
                                         lookup[nd.id] = n;
                                         Nodes.Add(n);
-                                        tempData[nd.id] = nd;
                                         LoadNode(n, s, archive);
                                     }
                                 }
@@ -1591,7 +1613,6 @@ namespace Materia.Graph
                                         n.Id = nd.id;
                                         lookup[nd.id] = n;
                                         Nodes.Add(n);
-                                        tempData[nd.id] = nd;
                                         LoadNode(n, s, archive);
 
                                         if (n is GraphInstanceNode)
@@ -1631,6 +1652,94 @@ namespace Materia.Graph
             State = GraphState.Ready;
         }
 
+        public virtual void FromJson(string data, Archive archive = null)
+        {
+            List<Archive.ArchiveFile> archiveFiles = null;
+            if (string.IsNullOrEmpty(data) && archive != null)
+            {
+                archive.Open();
+                archiveFiles = archive.GetAvailableFiles();
+                //there is only ever one .mtg in an archive
+                var mtgFile = archiveFiles.Find(m => m.path.EndsWith(".mtg"));
+                if (mtgFile == null)
+                {
+                    return;
+                }
+
+                data = mtgFile.ExtractText();
+                archive.Close();
+            }
+            else if (string.IsNullOrEmpty(data) && archive == null)
+            {
+                return;
+            }
+
+            GraphData d = JsonConvert.DeserializeObject<GraphData>(data);
+
+            if (d != null)
+            {
+                FromJson(d, archive);
+            }
+        }
+
+        private void LoadNode(Node n, string data, Archive archive = null)
+        {
+            //slight optimization for function graphs
+            if (n is MathNode && this is Function)
+            {
+                MathNode mn = n as MathNode;
+                Function fg = this as Function;
+                mn.AssignParentNode(fg.parentNode);
+
+                if (n is ExecuteNode && fg.Execute == null)
+                {
+                    fg.Execute = n as ExecuteNode;
+                }
+                if (n is ArgNode)
+                {
+                    fg.Args.Add(n as ArgNode);
+                }
+                else if (n is CallNode)
+                {
+                    fg.Calls.Add(n as CallNode);
+                }
+                else if (n is SamplerNode)
+                {
+                    fg.Samplers.Add(n as SamplerNode);
+                }
+                else if (n is ForLoopNode)
+                {
+                    fg.ForLoops.Add(n as ForLoopNode);
+                }
+            }
+
+            n.FromJson(data, archive);
+
+            //origin sizes are only for graph instances
+            //not actually used in the current one being edited
+            //it is used in the ResizeWith
+            OriginSizes[n.Id] = new PointD(n.Width, n.Height);
+        }
+
+        public void SetConnections()
+        {
+            //finally after every node is populated
+            //try and connect them all!
+            int count = Nodes.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                Node n = Nodes[i];
+                n.RestoreConnections(NodeLookup, true);
+            }
+
+            if (OnGraphLoaded != null)
+            {
+                OnGraphLoaded.Invoke(this);
+            }
+        }
+        #endregion
+
+        #region Copy & Paste Param Support
         public void PasteParameters(Dictionary<string, string> cparams, Node.NodeData from, Node to)
         {
             var t = to.GetType();
@@ -1665,232 +1774,9 @@ namespace Materia.Graph
             }
             return cparams;
         }
+        #endregion
 
-        public virtual void FromJson(string data, Archive archive = null)
-        {
-            List<Archive.ArchiveFile> archiveFiles = null;
-            if (string.IsNullOrEmpty(data) && archive != null)
-            {
-                archive.Open();
-                archiveFiles = archive.GetAvailableFiles();
-                //there is only ever one .mtg in an archive
-                var mtgFile = archiveFiles.Find(m => m.path.EndsWith(".mtg"));
-                if(mtgFile == null)
-                {
-                    return;
-                }
-
-                data = mtgFile.ExtractText();
-                archive.Close();
-            }
-            else if (string.IsNullOrEmpty(data) && archive == null)
-            {
-                return;
-            }
-
-            GraphData d = JsonConvert.DeserializeObject<GraphData>(data);
-
-            if (d != null)
-            {
-                FromJson(d, archive);
-            }
-        }
-
-        private void LoadNode(Node n, string data, Archive archive = null)
-        {
-            //slight optimization for function graphs
-            if(n is MathNode && this is Function)
-            {
-                MathNode mn = n as MathNode;
-                Function fg = this as Function;
-                mn.AssignParentNode(fg.parentNode);
-
-                if(n is ExecuteNode && fg.Execute == null)
-                {
-                    fg.Execute = n as ExecuteNode;
-                }
-                if(n is ArgNode)
-                {
-                    fg.Args.Add(n as ArgNode);
-                }
-                else if(n is CallNode)
-                {
-                    fg.Calls.Add(n as CallNode);
-                }
-                else if (n is SamplerNode)
-                {
-                    fg.Samplers.Add(n as SamplerNode);
-                }
-                else if (n is ForLoopNode)
-                {
-                    fg.ForLoops.Add(n as ForLoopNode);
-                }
-            }
-
-            n.FromJson(data, archive);
-
-            //origin sizes are only for graph instances
-            //not actually used in the current one being edited
-            //it is used in the ResizeWith
-            OriginSizes[n.Id] = new PointD(n.Width, n.Height);
-        }
-
-        public void SetConnections()
-        {
-            //finally after every node is populated
-            //try and connect them all!
-            int count = Nodes.Count;
-            for(int i = 0; i < count; ++i) 
-            {
-                Node n = Nodes[i];
-                Node.NodeData nd = null;
-                //we prevent the input on change event from happening
-                if (tempData.TryGetValue(n.Id, out nd))
-                {
-                    n.SetConnections(NodeLookup, nd.outputs, true);
-                }
-            }
-
-            //release temp data
-            tempData.Clear();
-
-            if (OnGraphLoaded != null)
-            {
-                OnGraphLoaded.Invoke(this);
-            }
-        }
-
-        public void CopyResources(string cwd, bool setCWD = false)
-        {
-            int count = Nodes.Count;
-            for(int i = 0; i < count; ++i)
-            {
-                var n = Nodes[i];
-                n.CopyResources(cwd);
-            }
-
-            if (setCWD)
-            {
-                //set last in case we need to copy from current graph cwd to new cwd
-                CWD = cwd;
-            }
-        }
-
-        protected virtual void ClearParameters()
-        {
-            if(CustomParameters != null)
-            {
-                //just a quick sanity check
-                int count = CustomParameters.Count;
-                for(int i = 0; i < count; ++i) 
-                {
-                    var param = CustomParameters[i];
-                    if (param.IsFunction())
-                    {
-                        Function fn = param.Value as Function;
-                        fn.Dispose();
-                    }
-                }
-
-                CustomParameters.Clear();
-            }
-
-            if(CustomFunctions != null)
-            {
-                int count = CustomFunctions.Count;
-                for(int i = 0; i < count; ++i)
-                {
-                    var f = CustomFunctions[i];
-                    f.Dispose();
-                }
-
-                CustomFunctions.Clear();
-            }
-
-            if(Parameters != null)
-            {
-                try
-                {
-                    foreach (var param in Parameters.Values)
-                    {
-                        if (param.IsFunction())
-                        {
-                            Function fn = param.Value as Function;
-                            fn.Dispose();
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-
-                }
-
-                Parameters.Clear();
-            }
-        }
-
-        protected void DisposeLayers()
-        {
-            try
-            {
-                foreach (Layer l in Layers)
-                {
-                    l?.Dispose();
-                }
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            Layers.Clear();
-        }
-
-        public virtual void Dispose()
-        {
-            if (Nodes != null)
-            {
-                int count = Nodes.Count;
-                for(int i = 0; i < count; ++i)
-                {
-                    var n = Nodes[i];
-                    n.Dispose();
-                }
-
-                Nodes.Clear();
-            }
-
-            DisposeLayers();
-
-            if (NodeLookup != null)
-            {
-                NodeLookup.Clear();
-            }
-
-            if (OutputNodes != null)
-            {
-                OutputNodes.Clear();
-            }
-
-            if (InputNodes != null)
-            {
-                InputNodes.Clear();
-            }
-
-            PixelNodes.Clear();
-            InstanceNodes.Clear();
-
-            ClearParameters();
-        }
-
-        protected virtual void Updated()
-        {
-            if(OnGraphUpdated != null)
-            {
-                OnGraphUpdated.Invoke(this);
-            }
-        }
-
+        #region Parameters Add / Remove / Access / Clear
         public bool IsParameterValueFunction(string id, string parameter)
         {
             string cid = id + "." + parameter;
@@ -2130,6 +2016,61 @@ namespace Materia.Graph
             Updated();
         }
 
+        protected virtual void ClearParameters()
+        {
+            if (CustomParameters != null)
+            {
+                //just a quick sanity check
+                int count = CustomParameters.Count;
+                for (int i = 0; i < count; ++i)
+                {
+                    var param = CustomParameters[i];
+                    if (param.IsFunction())
+                    {
+                        Function fn = param.Value as Function;
+                        fn.Dispose();
+                    }
+                }
+
+                CustomParameters.Clear();
+            }
+
+            if (CustomFunctions != null)
+            {
+                int count = CustomFunctions.Count;
+                for (int i = 0; i < count; ++i)
+                {
+                    var f = CustomFunctions[i];
+                    f.Dispose();
+                }
+
+                CustomFunctions.Clear();
+            }
+
+            if (Parameters != null)
+            {
+                try
+                {
+                    foreach (var param in Parameters.Values)
+                    {
+                        if (param.IsFunction())
+                        {
+                            Function fn = param.Value as Function;
+                            fn.Dispose();
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+
+                }
+
+                Parameters.Clear();
+            }
+        }
+        #endregion
+
+        #region Undo / Redo
         public void Undo()
         {
             string jsonData = null;
@@ -2279,7 +2220,9 @@ namespace Materia.Graph
                 previousByteData = newData;
             });
         }
+        #endregion
 
+        #region Sub Events
         private void Graph_OnGraphParameterUpdate(ParameterValue param)
         {
             if(OnGraphParameterUpdate != null)
@@ -2295,5 +2238,70 @@ namespace Materia.Graph
                 OnGraphParameterTypeUpdate.Invoke(param);
             }
         }
+
+        protected virtual void Updated()
+        {
+            if (OnGraphUpdated != null)
+            {
+                OnGraphUpdated.Invoke(this);
+            }
+        }
+        #endregion
+
+        #region Disposal
+        protected void DisposeLayers()
+        {
+            try
+            {
+                foreach (Layer l in Layers)
+                {
+                    l?.Dispose();
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            Layers.Clear();
+        }
+
+        public virtual void Dispose()
+        {
+            if (Nodes != null)
+            {
+                int count = Nodes.Count;
+                for (int i = 0; i < count; ++i)
+                {
+                    var n = Nodes[i];
+                    n.Dispose();
+                }
+
+                Nodes.Clear();
+            }
+
+            DisposeLayers();
+
+            if (NodeLookup != null)
+            {
+                NodeLookup.Clear();
+            }
+
+            if (OutputNodes != null)
+            {
+                OutputNodes.Clear();
+            }
+
+            if (InputNodes != null)
+            {
+                InputNodes.Clear();
+            }
+
+            PixelNodes.Clear();
+            InstanceNodes.Clear();
+
+            ClearParameters();
+        }
+        #endregion
     }
 }

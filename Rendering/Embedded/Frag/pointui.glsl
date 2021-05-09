@@ -9,12 +9,14 @@ uniform int flipY = 1;
 uniform vec2 tiling = vec2(1, 1);
 
 void main() {
-    vec2 ruv = uv * tiling;
+    vec2 ruv = uv;
     
     if (flipY == 1) 
     {
         ruv = vec2(uv.x, 1.0 - uv.y);
     }
+
+    ruv *= tiling;
 
     vec4 c = texture(MainTex, ruv);
 

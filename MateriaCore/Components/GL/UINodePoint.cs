@@ -149,22 +149,22 @@ namespace MateriaCore.Components.GL
             obj.Color = Color;
         }
 
-        private void Selectable_PointerExit(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs arg2)
+        private void Selectable_PointerExit(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs e)
         {
             //update mouse cursor
             if (Node.Graph.ReadOnly) return;
         }
 
-        private void Selectable_PointerEnter(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs arg2)
+        private void Selectable_PointerEnter(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs e)
         {
             //update mouse cursor
             if (Node.Graph.ReadOnly) return;
         }
 
-        private void Selectable_PointerDown(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs arg2)
+        private void Selectable_PointerDown(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs e)
         {
             if (Node.Graph.ReadOnly) return;
-            if (arg2.Button.HasFlag(InfinityUI.Interfaces.MouseButton.Left) && !UI.IsAltPressed)
+            if (e.Button.HasFlag(InfinityUI.Interfaces.MouseButton.Left) && !UI.IsAltPressed)
             {
                 if (SelectedOrigin == this)
                 {
@@ -180,7 +180,7 @@ namespace MateriaCore.Components.GL
                     SelectedOrigin = this;
                 }
             }
-            else if(arg2.Button.HasFlag(InfinityUI.Interfaces.MouseButton.Left) && UI.IsAltPressed)
+            else if(e.Button.HasFlag(InfinityUI.Interfaces.MouseButton.Left) && UI.IsAltPressed)
             {
                 Disconnect();
             }
@@ -198,7 +198,7 @@ namespace MateriaCore.Components.GL
             return p.Node == Node;
         }
 
-        protected void Disconnect(bool removeFromGraph = true)
+        public void Disconnect(bool removeFromGraph = true)
         {
             ParentNode?.Disconnect(this, removeFromGraph);
             for (int i = 0; i < to.Count; ++i)

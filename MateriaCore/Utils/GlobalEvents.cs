@@ -17,7 +17,8 @@ namespace MateriaCore.Utils
         Preview3DRoughness,
         Preview3DOcclusion,
         MoveSelected,
-        ViewParameters
+        ViewParameters,
+        ClearViewParameters
     }
 
     public static class GlobalEvents

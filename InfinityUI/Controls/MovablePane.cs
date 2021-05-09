@@ -17,6 +17,7 @@ namespace InfinityUI.Controls
     {
         public event Action<MovablePane> DoubleClick;
         public event Action<MovablePane, Vector2> Moved;
+        public event Action<MovablePane, Vector2> MovedTo;
 
         public Axis MoveAxis { get; set; } = Axis.Both;
 
@@ -163,6 +164,67 @@ namespace InfinityUI.Controls
             if (invokeEvent)
             {
                 Moved?.Invoke(this, delta);
+            }
+        }
+
+        public virtual void MoveTo(Vector2 pos, bool invokeEvent = true)
+        {
+            float xSign = 1;
+            float ySign = 1;
+
+            switch (RelativeTo)
+            {
+                case Anchor.BottomRight:
+                case Anchor.BottomLeft:
+                case Anchor.BottomHorizFill:
+                case Anchor.Bottom:
+                    ySign = -1;
+                    break;
+            }
+
+            switch (RelativeTo)
+            {
+                case Anchor.CenterRight:
+                case Anchor.BottomRight:
+                case Anchor.TopRight:
+                    xSign = -1;
+                    break;
+            }
+
+            switch (MoveAxis)
+            {
+                case Axis.Both:
+                    Position = pos;
+                    break;
+                case Axis.Horizontal:
+                    Position = new Vector2(pos.X, 0);
+                    break;
+                case Axis.Vertical:
+                    Position = new Vector2(0, pos.Y);
+                    break;
+            }
+
+            switch (SnapMode)
+            {
+                case MovablePaneSnapMode.Panes:
+                    if (Parent == null) break;
+                    for (int i = 0; i < Parent.Children.Count; ++i)
+                    {
+                        UIObject el = Parent.Children[i];
+                        if (el == this || !el.Visible) continue;
+                        if (!el.Rect.Intersects(Rect) || el.Rect.Contains(Rect)) continue;
+                        UI.SnapToElement(this, el, SnapTolerance, xSign, ySign);
+                    }
+
+                    break;
+                case MovablePaneSnapMode.Grid:
+                    UI.SnapToGrid(this, (int)SnapTolerance);
+                    break;
+            }
+
+            if (invokeEvent)
+            {
+                MovedTo?.Invoke(this, pos);
             }
         }
 

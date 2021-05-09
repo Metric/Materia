@@ -1,11 +1,13 @@
 ﻿using InfinityUI.Components;
 using InfinityUI.Controls;
 using InfinityUI.Core;
+using InfinityUI.Interfaces;
 using Materia.Graph;
 using Materia.Nodes;
 using Materia.Nodes.Atomic;
 using Materia.Nodes.Items;
 using Materia.Rendering.Mathematics;
+using Materia.Rendering.Spatial;
 using MateriaCore.Utils;
 using Newtonsoft.Json;
 using System;
@@ -165,10 +167,11 @@ namespace MateriaCore.Components.GL
         protected Stack<GraphStackItem> graphStack = new Stack<GraphStackItem>();
         #endregion
 
-        #region Pins
+        #region Pins & Comments
         protected int pinIndex = 0;
         //todo: replace IGraphNode with UIPinNode once implemented
         protected List<IGraphNode> pins = new List<IGraphNode>();
+        protected List<IGraphNode> comments = new List<IGraphNode>();
         #endregion
 
         #region Archive Details
@@ -190,6 +193,12 @@ namespace MateriaCore.Components.GL
 
             //handle bread crumbs init here sort of
             //hide mouse connection preview
+
+            if (!string.IsNullOrEmpty(RawRoot))
+            {
+                Load(RawRoot, "");
+                RawRoot = null;
+            }
         }
 
         protected void AddGlobalEvents()
@@ -263,12 +272,7 @@ namespace MateriaCore.Components.GL
 
             pinIndex = 0;
 
-            if (Current != null)
-            {
-                Current.OnGraphUpdated -= Current_OnGraphUpdated;
-                Current.OnGraphNameChanged -= Current_OnGraphNameChanged;
-                Current.OnHdriChanged -= Current_OnHdriChanged;
-            }
+            RemoveCurrentEvents();
 
             Clear();
 
@@ -284,15 +288,353 @@ namespace MateriaCore.Components.GL
 
             //todo: reimplement HdriManager
             //Current.HdriImages = HdriManager.Available.ToArray();
-            
-            Current.OnGraphUpdated += Current_OnGraphUpdated;
-            Current.OnGraphNameChanged += Current_OnGraphNameChanged;
-            Current.OnHdriChanged += Current_OnHdriChanged;
+
+            AddCurrentEvents();
 
             //clear crumbs etc
 
             InitializeNodes();
             Current.TryAndProcess();
+        }
+
+        #endregion
+
+        #region Input Commands
+        public void TryAndPin()
+        {
+            if (Current == null) return;
+
+            Vector2 m = UI.MousePosition;
+            Vector2 wp = canvas.ToCanvasSpace(m);
+
+            Node n = Current.CreateNode(typeof(PinNode));
+            if (n == null) return;
+
+            n.ViewOriginX = wp.X - 32; //todo: make this a constant
+            n.ViewOriginY = wp.Y - 32;
+
+            if (!Current.Add(n))
+            {
+                n?.Dispose();
+                return;
+            }
+
+            IGraphNode unode = CreateUINode(n);
+            pins.Add(unode);
+            Current.Snapshot();
+        }
+
+        public void TryAndComment()
+        {
+            if (Current == null) return;
+            Box2 bounds = GetSelectedBounds();
+            if (bounds.Width <= 0 || bounds.Height <= 0)
+            {
+                Vector2 m = UI.MousePosition;
+                Vector2 wp = canvas.ToCanvasSpace(m);
+                bounds = new Box2(wp, 256, 256); //todo: make comment constant size accessors
+            }
+
+            Node n = Current.CreateNode(typeof(CommentNode));
+            if (n == null) return;
+
+            n.Width = (int)(bounds.Width + 64); //todo: make a constant
+            n.Height = (int)(bounds.Height + 64);
+            n.ViewOriginX = bounds.Left - 32; //todo: make a constant
+            n.ViewOriginY = bounds.Top - 52;
+
+            if (!Current.Add(n))
+            {
+                n.Dispose();
+                return;
+            }
+
+            IGraphNode unode = CreateUINode(n);
+            comments.Add(unode);
+            Current.Snapshot();
+        }
+
+        public void TryAndDelete()
+        {
+            if (Current == null) return;
+
+            for (int i= 0; i < Selected.Count; ++i)
+            {
+                var n = Selected[i];
+
+                GlobalEvents.Emit(GlobalEvent.ClearViewParameters, this, n.Node);
+
+                Current.Remove(n.Node);
+                var unode = n as UIObject;
+                RemoveChild(unode);
+                unode?.Dispose();
+            }
+
+            Current.Snapshot();
+
+            Selected.Clear();
+            SelectedIds.Clear();
+        }
+
+        public string TryAndCopy()
+        {
+            if (Current == null) return null;
+            if (Selected.Count == 0) return null;
+
+            List<string> nodeData = new List<string>();
+            List<IGraphNode> selectedComments = new List<IGraphNode>();
+            List<IGraphNode> selectedNormal = new List<IGraphNode>();
+            Dictionary<string, string> copiedParams = new Dictionary<string, string>();
+            HashSet<string> copied = new HashSet<string>();
+
+            for (int i = 0; i < Selected.Count; ++i)
+            {
+                var n = Selected[i];
+                if (n.Node is CommentNode)
+                {
+                    selectedComments.Add(n);
+                }
+                else
+                {
+                    selectedNormal.Add(n);
+                }
+            }
+
+            for (int i = 0; i < selectedComments.Count; ++i)
+            {
+                var n = selectedComments[i];
+                nodeData.Add(n.Node.GetJson());
+                copied.Add(n.Id);
+
+                var internalNodes = GetNodesIn((n as UIObject).Rect);
+                for (int k = 0; k < internalNodes.Count; ++k)
+                {
+                    var inode = internalNodes[k];
+                    if (copied.Contains(inode.Id)) continue;
+                    var cparams = Current.CopyParameters(inode.Node);
+                    foreach (string key in cparams.Keys)
+                    {
+                        copiedParams[key] = cparams[key];
+                    }
+                    copied.Add(inode.Id);
+                    nodeData.Add(inode.Node.GetJson());
+                }
+            }
+
+            for (int i = 0; i < selectedNormal.Count; ++i)
+            {
+                var n = selectedNormal[i];
+                if (copied.Contains(n.Id)) continue;
+                copied.Add(n.Id);
+                nodeData.Add(n.Node.GetJson());
+                var cparams = Current.CopyParameters(n.Node);
+                foreach(string key in cparams.Keys)
+                {
+                    copiedParams[key] = cparams[key];
+                }
+            }
+
+            if (nodeData.Count == 0) return null;
+
+            UIGraphCopyData copyData = new UIGraphCopyData()
+            {
+                nodes = nodeData,
+                parameters = copiedParams
+            };
+
+            return JsonConvert.SerializeObject(copyData);
+        }
+
+        public void TryAndPaste(string data)
+        {
+            try
+            {
+                if (Current == null) return;
+                if (string.IsNullOrEmpty(data)) return;
+                if (ReadOnly) return;
+
+                Vector2 m = UI.MousePosition;
+                Vector2 wp = canvas.ToCanvasSpace(m);
+                UIGraphCopyData cd;
+                try
+                {
+                   cd = JsonConvert.DeserializeObject<UIGraphCopyData>(data);
+                }
+                catch
+                {
+                    return;
+                }
+
+                if (cd.nodes == null || cd.nodes.Count == 0) return;
+
+                List<Node> addedNodes = new List<Node>();
+                List<IGraphNode> addedUINodes = new List<IGraphNode>();
+                Dictionary<string, Node> lookup = new Dictionary<string, Node>();
+                for (int i = 0; i < cd.nodes.Count; ++i)
+                {
+                    var nodeData = cd.nodes[i];
+                    var node = CreateNodeFromData(nodeData, out string oldId, cd.parameters);
+                    if (node == null) continue;
+                    if (string.IsNullOrEmpty(oldId))
+                    {
+                        Current.Remove(node);
+                        node.Dispose();
+                        continue;
+                    }
+                    lookup[oldId] = node; //map old id to new node
+                    addedNodes.Add(node);
+                }
+
+                float minX = float.MaxValue;
+                float minY = float.MaxValue;
+
+                //restore previous connections and get minX and minY
+                for (int i = 0; i < addedNodes.Count; ++i)
+                {
+                    var n = addedNodes[i];
+                    minX = MathF.Min((float)n.ViewOriginX, minX);
+                    minY = MathF.Min((float)n.ViewOriginY, minY);
+                    n.RestoreConnections(lookup, true); //restore old connections to new node lookup
+                }
+
+                //reset node view origin to new paste location
+                //and create ui
+                for (int i = 0; i < addedNodes.Count; ++i)
+                {
+                    var n = addedNodes[i];
+                    float dx = (float)n.ViewOriginX - minX;
+                    float dy = (float)n.ViewOriginY - minY;
+                    n.ViewOriginX = wp.X + dx;
+                    n.ViewOriginY = wp.Y + dy;
+                    var unode = CreateUINode(n);
+                    addedUINodes.Add(unode);
+                }
+
+                //load ui connections
+                for (int i = 0; i < addedUINodes.Count; ++i)
+                {
+                    addedUINodes[i]?.LoadConnections();
+                }
+
+                Current.Snapshot();
+
+                //try and process graph
+                Current.TryAndProcess();
+            }
+            catch (Exception e)
+            {
+                MLog.Log.Error(e);
+            }
+        }
+
+        public void TryAndInsertNode(string type)
+        {
+            if (Current == null) return;
+            Vector2 m = UI.MousePosition;
+            Vector2 wp = canvas.ToCanvasSpace(m);
+            Node n = CreateNode(type);
+            if (n == null) return;
+            
+            n.ViewOriginX = wp.X;
+            n.ViewOriginY = wp.Y;
+
+            IGraphNode unode;
+
+            if (n is PinNode || n is CommentNode)
+            {
+                CreateUINode(n);
+                Current.Snapshot();
+                return;
+            }
+
+            //connect up internally first at the data level
+            if (UINodePoint.SelectedOrigin != null)
+            {
+                var p = UINodePoint.SelectedOrigin;
+                var nodePoint = p.NodePoint;
+
+                if (nodePoint is NodeOutput && n.Inputs.Count > 0)
+                {
+                    var nout = nodePoint as NodeOutput;
+                    var inp = n.Inputs.Find(m => (m.Type & nout.Type) != 0);
+                    if (inp != null)
+                    {
+                        nout.Add(inp);
+                        UINodePoint.SelectedOrigin = null;
+                    }
+                }
+                else if(nodePoint is NodeInput && n.Outputs.Count > 0)
+                {
+                    var inp = nodePoint as NodeInput;
+                    var nout = n.Outputs.Find(m => (m.Type & inp.Type) != 0);
+                    if (nout != null)
+                    {
+                        nout.Add(inp);
+                        UINodePoint.SelectedOrigin = null;
+                    }
+                }
+            }
+
+            unode = CreateUINode(n);
+            unode.LoadConnections();
+            Current.Snapshot();
+        }
+
+        public void GotoNextPin()
+        {
+            if (pins.Count == 0) return;
+            if (pinIndex >= pins.Count)
+            {
+                pinIndex = 0;
+            }
+            IGraphNode n = pins[pinIndex++];
+            UIObject unode = n as UIObject;
+            canvas.Cam.LocalPosition = new Vector3(unode.AnchoredPosition.X, unode.AnchoredPosition.Y, 0);
+            UI.Focus = unode.GetComponent<UISelectable>();
+        }
+
+        public void TryAndCopyResources(string cwd)
+        {
+            Root?.CopyResources(cwd);
+        }
+        #endregion
+
+        #region Node Bound Helpers
+        protected List<IGraphNode> GetNodesIn(Box2 r)
+        {
+            List<IGraphNode> found = new List<IGraphNode>();
+            List<IGraphNode> allNodes = nodes.Values.ToList();
+            for (int i = 0; i < allNodes.Count; ++i)
+            {
+                UIObject unode = allNodes[i] as UIObject;
+                if (r.Intersects(unode.Rect))
+                {
+                    found.Add(allNodes[i]);
+                }
+            }
+            return found;
+        }
+
+        protected Box2 GetNodeBounds()
+        {
+            Box2 bounds = new Box2(0, 0, 0, 0);
+            List<IGraphNode> allNodes = nodes.Values.ToList();
+            for (int i = 0; i < allNodes.Count; ++i)
+            {
+                UIObject unode = allNodes[i] as UIObject;
+                bounds.Encapsulate(unode.Rect);
+            }
+            return bounds;
+        }
+
+        protected Box2 GetSelectedBounds()
+        {
+            Box2 bounds = new Box2(0, 0, 0, 0);
+            for (int i = 0; i < Selected.Count; ++i)
+            {
+                bounds.Encapsulate((Selected[i] as UIObject).Rect);
+            }
+            return bounds;
         }
         #endregion
 
@@ -326,39 +668,7 @@ namespace MateriaCore.Components.GL
             for (int i = 0; i < Current.Nodes.Count; ++i)
             {
                 Node n = Current.Nodes[i];
-                IGraphNode unode = null;
-
-                //handle node type
-                //comment etc
-                //otherwise just do
-                if (n is CommentNode)
-                {
-
-                }
-                else if (n is PinNode)
-                {
-
-                }
-                else
-                {
-                    unode = new UINode(this, n);
-                    if (graphState == UIGraphState.LoadingWithTemplate)
-                    {
-                        (unode as MovablePane)?.Move(Size * 0.5f);
-                    }
-                }
-
-                nodes[n.Id] = unode;
-
-                //handle output preview linking
-
-                if (unode is UINode)
-                {
-                    TryAndLinkOutputPreview(unode as UINode);
-                }
-
-                //add to view
-                AddChild(unode as UIObject);
+                CreateUINode(n);
             }
 
             graphState = UIGraphState.None;
@@ -371,9 +681,159 @@ namespace MateriaCore.Components.GL
             }
         }
 
+        protected Node CreateNode(string type)
+        {
+            try
+            {
+                if (Current == null) return null;
+                Node n = Current.CreateNode(type);
+                if (n == null) return null;
+                
+                if (!Current.Add(n))
+                {
+                    n.Dispose();
+                    return null;
+                }
+
+                if (n is GraphInstanceNode)
+                {
+                    GraphInstanceNode gn = n as GraphInstanceNode;
+                    gn.Load(type);
+                }
+                else if(n is CommentNode)
+                {
+                    n.Width = 256 + 16; //todo: setup constanst for comment node size
+                    n.Height = 256 + 38;
+                }
+
+                return n;
+            }
+            catch (Exception e)
+            {
+                MLog.Log.Error(e);
+            }
+
+            return null;
+        }
+
+        protected Node CreateNodeFromData(string data, out string oldId, Dictionary<string, string> cparams = null)
+        {
+            oldId = null;
+
+            try
+            {
+                if (Current == null) return null;
+
+                Node.NodeData nd = JsonConvert.DeserializeObject<Node.NodeData>(data);
+                if (nd == null) return null;
+
+                oldId = nd.id;
+
+                Node n = Current.CreateNode(nd.type);
+                if (n == null) return null;
+
+                string newId = n.Id;
+
+                if (!Current.Add(n))
+                {
+                    n.Dispose();
+                    return null;
+                }
+
+                n.FromJson(data);
+
+                //restore new id
+                //since n.FromJson restores the old id
+                n.Id = newId;
+
+                if (cparams == null) return n;
+
+                Current.PasteParameters(cparams, nd, n);
+
+                return n;
+            }
+            catch (Exception e)
+            {
+                MLog.Log.Error(e);
+            }
+
+            return null;
+        }
+
+        protected IGraphNode CreateUINode(Node n)
+        {
+            IGraphNode unode = null;
+
+            //handle node type
+            //comment etc
+            //otherwise just do
+            if (n is CommentNode)
+            {
+
+            }
+            else if (n is PinNode)
+            {
+
+            }
+            else
+            {
+                if (graphState == UIGraphState.LoadingWithTemplate)
+                {
+                    n.ViewOriginX = Size.X * 0.5f;
+                    n.ViewOriginY = Size.Y * 0.5f;
+                }
+
+                unode = new UINode(this, n);
+            }
+
+            nodes[unode.Id] = unode;
+
+            //handle output preview linking
+
+            if (unode is UINode)
+            {
+                TryAndLinkOutputPreview(unode as UINode);
+            }
+
+            //add to view
+            AddChild(unode as UIObject);
+            return unode;
+        }
         #endregion
 
         #region Graph Events
+        protected void AddCurrentEvents()
+        {
+            if (Current == null) return;
+            Current.OnUndo += Current_OnUndo;
+            Current.OnRedo += Current_OnRedo;
+            Current.OnGraphUpdated += Current_OnGraphUpdated;
+            Current.OnHdriChanged += Current_OnHdriChanged;
+            Current.OnGraphNameChanged += Current_OnGraphNameChanged;
+        }
+
+        protected void RemoveCurrentEvents()
+        {
+            if (Current == null) return;
+            Current.OnUndo -= Current_OnUndo;
+            Current.OnRedo -= Current_OnRedo;
+            Current.OnGraphUpdated -= Current_OnGraphUpdated;
+            Current.OnHdriChanged -= Current_OnHdriChanged;
+            Current.OnGraphNameChanged -= Current_OnGraphNameChanged;
+        }
+
+        private void Current_OnRedo(Graph g)
+        {
+            if (g != Current) return;
+            MergeUndoRedo();
+        }
+
+        private void Current_OnUndo(Graph g)
+        {
+            if (g != Current) return;
+            MergeUndoRedo();
+        }
+
         private void Current_OnHdriChanged(Graph g)
         {
             //HdriManager.Selected = g.HdriIndex;
@@ -620,7 +1080,124 @@ namespace MateriaCore.Components.GL
         }
         #endregion
 
+        #region Multiselect
+        public bool IsSelected(string id)
+        {
+            return SelectedIds.Contains(id);
+        } 
+        public bool IsSelected(IGraphNode n)
+        {
+            return SelectedIds.Contains(n.Id);
+        }
+
+        public void Select(IGraphNode n)
+        {
+            if (SelectedIds.Contains(n.Id)) return;
+
+            //todo: add in set toggle for nodes
+
+            Selected.Add(n);
+            SelectedIds.Add(n.Id);
+        }
+        public void Unselect(IGraphNode n)
+        {
+            //todo: add in clear toggle for nodes
+            Selected.Remove(n);
+            SelectedIds.Remove(n.Id);
+        }
+        public void ToggleSelect(IGraphNode n)
+        {
+            if (SelectedIds.Contains(n.Id))
+            {
+                //todo: add in clear toggle for nodes
+
+                Selected.Remove(n);
+                SelectedIds.Remove(n.Id);
+            }
+            else
+            {
+                //todo: add in set toggle for nodes
+
+                Selected.Add(n);
+                SelectedIds.Add(n.Id);
+            }
+        }
+
+        public void ClearSelection()
+        {
+            //todo: add back in clear toggle for nodes
+
+            SelectedIds.Clear();
+            Selected.Clear();
+        }
+        #endregion
+
         #region Helpers
+
+        /// <summary>
+        /// Merges the undo redo changes for the UI
+        /// It determines removed nodes and missing nodes
+        /// also clears previous UI connections
+        /// </summary>
+        protected void MergeUndoRedo()
+        {
+            List<IGraphNode> toDispose = new List<IGraphNode>();
+            List<IGraphNode> toRestore = new List<IGraphNode>();
+
+            //find removed nodes
+            //and prepare to remove the ui for them
+            //otherwise prepare to restore the node
+            //to the new node from grpah data
+            foreach(string k in nodes.Keys)
+            {
+                if (!Current.NodeLookup.TryGetValue(k, out Node n))
+                { 
+                    toDispose.Add(nodes[k]);
+                }
+                else
+                {
+                    nodes[k]?.Restore();
+                    toRestore.Add(nodes[k]);
+                }
+            }
+
+            //create missing ui nodes and schedule for restore
+            for(int i = 0; i < Current.Nodes.Count; ++i)
+            {
+                Node n = Current.Nodes[i];
+                if(!nodes.TryGetValue(n.Id, out IGraphNode unode))
+                {
+                    unode = CreateUINode(n);
+                    toRestore.Add(unode);
+                }
+            }
+
+            for (int i = 0; i < toDispose.Count; ++i)
+            {
+                var n = toDispose[i];
+                if (n == null) continue;
+
+                Selected.Remove(n);
+                SelectedIds.Remove(n.Id);
+                pins.Remove(n);
+                comments.Remove(n);
+                nodes.Remove(n.Id);
+
+                UIObject unode = n as UIObject;
+                RemoveChild(unode);
+                unode?.Dispose();
+            }
+
+            for (int i = 0; i < toRestore.Count; ++i)
+            {
+                toRestore[i]?.LoadConnections();
+            }
+        }
+
+        /// <summary>
+        /// Clears the view of all nodes.
+        /// Resets zoom and camera position
+        /// </summary>
         public void Clear()
         {
             //send parameter view reset
@@ -629,9 +1206,14 @@ namespace MateriaCore.Components.GL
             Selected.Clear();
             SelectedIds.Clear();
             pins.Clear();
+            comments.Clear();
+
+            //reset zoom
+            zoom = invZoom = 1.0f;
 
             //reset camera origin
             canvas.Cam.LocalPosition = new Vector3(0, 0, 0);
+            canvas.Scale = zoom;
 
             var allNodes = nodes.Values.ToList();
             for (int i = 0; i < allNodes.Count; ++i)
@@ -646,19 +1228,15 @@ namespace MateriaCore.Components.GL
 
         protected void InternalDispose()
         {
+
+            RemoveCurrentEvents();
+
             Clear();
 
             //dispose layers here
 
-            if (Current != null)
-            {
-                Current.OnGraphUpdated -= Current_OnGraphUpdated;
-                Current.OnHdriChanged -= Current_OnHdriChanged;
-                Current.OnGraphNameChanged -= Current_OnGraphNameChanged;
-
-                Current.Dispose();
-                Current = null;
-            }
+            Current?.Dispose();
+            Current = null;
 
             Root?.Dispose();
             Root = null;
