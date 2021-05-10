@@ -431,7 +431,7 @@ namespace InfinityUI.Core
 
         public static Vector2 ToWorld(ref Vector2 p, UIObject e)
         {
-            Vector4 rot = new Vector4(p.X, p.Y, 0, 1) * e.LocalMatrix;
+            Vector4 rot = new Vector4(p.X, p.Y, 0, 1) * e.LocalMatrix; //todo: test with e.ModelMatrix instead
             return rot.Xy;
         }
 
@@ -526,7 +526,7 @@ namespace InfinityUI.Core
             Elements.Clear();
         }
 
-        public static GLTexture2D GetEmbeddedImage(string path, EmbeddedFileProvider provider)
+        public static GLTexture2D GetEmbeddedImage(string path, Type t)
         {
             GLTexture2D img = null;
             if (ImageCache.TryGetValue(path, out img))
@@ -536,6 +536,7 @@ namespace InfinityUI.Core
 
             try
             {
+                EmbeddedFileProvider provider = new EmbeddedFileProvider(t.Assembly);
                 using (Bitmap rbmp = (Bitmap)Bitmap.FromStream(provider.GetFileInfo(path).CreateReadStream()))
                 {
                     RawBitmap bmp = RawBitmap.FromBitmap(rbmp);

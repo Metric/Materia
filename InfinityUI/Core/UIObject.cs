@@ -36,6 +36,8 @@ namespace InfinityUI.Core
 
         public Vector2 MinSize { get; set; } = Vector2.Zero;
 
+        public SizeMode Sizing { get; set; } = SizeMode.Pixel;
+
         protected int zOrder = 0;
         public int ZOrder
         {
@@ -78,6 +80,13 @@ namespace InfinityUI.Core
             set { scale = value; }
         }
 
+        /// <summary>
+        /// Gets the rect.
+        /// This does not include scaling
+        /// </summary>
+        /// <value>
+        /// The rect.
+        /// </value>
         public Box2 Rect
         {
             get
@@ -86,11 +95,18 @@ namespace InfinityUI.Core
             }
         }
 
+        /// <summary>
+        /// Gets the local rect.
+        /// This does not include scaling
+        /// </summary>
+        /// <value>
+        /// The local rect.
+        /// </value>
         public Box2 LocalRect
         {
             get
             {
-                return new Box2(Position, Size.X, Size.Y);
+                return new Box2(Position, AnchoredSize.X, AnchoredSize.Y);
             }
         }
 
@@ -102,7 +118,7 @@ namespace InfinityUI.Core
         {
             get
             {
-                return Matrix4.CreateTranslation(-Origin.X * Size.X, -Origin.Y * Size.Y, 0) * Matrix4.CreateScale(scale.X, scale.Y, 1) * Matrix4.CreateTranslation(Origin.X * Size.X, Origin.Y * Size.Y, 0);
+                return Matrix4.CreateTranslation(-Origin.X * AnchoredSize.X, -Origin.Y * AnchoredSize.Y, 0) * Matrix4.CreateScale(scale.X, scale.Y, 1) * Matrix4.CreateTranslation(Origin.X * AnchoredSize.X, Origin.Y * AnchoredSize.Y, 0);
             }
         }
 
@@ -110,7 +126,7 @@ namespace InfinityUI.Core
         {
             get
             {
-                return Matrix4.CreateTranslation(-Origin.X * Size.X, -Origin.Y * Size.Y, 0) * Matrix4.CreateRotationZ(Rotation * MathHelper.Deg2Rad) * Matrix4.CreateTranslation(Origin.X * Size.X, Origin.Y * Size.Y, 0);
+                return Matrix4.CreateTranslation(-Origin.X * AnchoredSize.X, -Origin.Y * AnchoredSize.Y, 0) * Matrix4.CreateRotationZ(Rotation * MathHelper.Deg2Rad) * Matrix4.CreateTranslation(Origin.X * AnchoredSize.X, Origin.Y * AnchoredSize.Y, 0);
             }
         }
 
@@ -135,33 +151,46 @@ namespace InfinityUI.Core
         {
             get
             {
+                Vector2 size = Size;
+
+                switch (Sizing)
+                {
+                    //if we are percent mode
+                    //then size is 0-1 only for percent
+                    //thus we need to calculate size based
+                    //on parent if there is one
+                    case SizeMode.Percent:
+                        size = Parent == null ? size : new Vector2(size.X * Parent.AnchoredSize.X, size.Y * Parent.AnchoredSize.Y);
+                        break;
+                }
+
                 if (Parent == null) return Position + new Vector2(Padding.Left, Padding.Top);
 
                 switch (RelativeTo)
                 {
                     case Anchor.Top:
-                        return new Vector2(Parent.Size.X / 2 - Size.X / 2 + Position.X + Padding.Left, Position.Y + Padding.Top) + Parent.AnchoredPosition;
+                        return new Vector2(Parent.AnchoredSize.X / 2 - size.X / 2 + Position.X + Padding.Left, Position.Y + Padding.Top) + Parent.AnchoredPosition;
                     case Anchor.Bottom:
-                        return new Vector2(Parent.Size.X / 2 - Size.X / 2 + Position.X + Padding.Left, Parent.Size.Y - Position.Y - Padding.Bottom - Size.Y) + Parent.AnchoredPosition;
+                        return new Vector2(Parent.AnchoredSize.X / 2 - size.X / 2 + Position.X + Padding.Left, Parent.AnchoredSize.Y - Position.Y - Padding.Bottom - size.Y) + Parent.AnchoredPosition;
                     case Anchor.BottomLeft:
                     case Anchor.BottomHorizFill:
-                        return new Vector2(Position.X + Padding.Left, Parent.Size.Y - Position.Y - Padding.Bottom - Size.Y) + Parent.AnchoredPosition;
+                        return new Vector2(Position.X + Padding.Left, Parent.AnchoredSize.Y - Position.Y - Padding.Bottom - size.Y) + Parent.AnchoredPosition;
                     case Anchor.TopLeft:
                     case Anchor.TopHorizFill:
                         return Position + new Vector2(Padding.Left, Padding.Top) + Parent.AnchoredPosition;
                     case Anchor.BottomRight:
-                        return new Vector2(Parent.Size.X - Position.X - Padding.Right - Size.X, Parent.Size.Y - Position.Y - Padding.Bottom - Size.Y) + Parent.AnchoredPosition;
+                        return new Vector2(Parent.AnchoredSize.X - Position.X - Padding.Right - size.X, Parent.Size.Y - Position.Y - Padding.Bottom - Size.Y) + Parent.AnchoredPosition;
                     case Anchor.TopRight:
-                        return new Vector2(Parent.Size.X - Position.X - Padding.Right - Size.X, Position.Y + Padding.Top) + Parent.AnchoredPosition;
+                        return new Vector2(Parent.AnchoredSize.X - Position.X - Padding.Right - size.X, Position.Y + Padding.Top) + Parent.AnchoredPosition;
                     case Anchor.Fill:
                         return new Vector2(Padding.Left, Padding.Top) + Parent.AnchoredPosition;
                     case Anchor.Center:
-                        return new Vector2(Parent.Size.X / 2 - Size.X / 2 + Position.X + Padding.Left, Parent.Size.Y / 2 - Size.Y / 2 + Position.Y + Padding.Top) + Parent.AnchoredPosition;
+                        return new Vector2(Parent.AnchoredSize.X / 2 - size.X / 2 + Position.X + Padding.Left, Parent.AnchoredSize.Y / 2 - size.Y / 2 + Position.Y + Padding.Top) + Parent.AnchoredPosition;
                     case Anchor.CenterHorizFill:
                     case Anchor.CenterLeft:
-                        return new Vector2(Position.X + Padding.Left, Parent.Size.Y / 2 - Size.Y / 2 + Position.Y + Padding.Top) + Parent.AnchoredPosition;
+                        return new Vector2(Position.X + Padding.Left, Parent.AnchoredSize.Y / 2 - size.Y / 2 + Position.Y + Padding.Top) + Parent.AnchoredPosition;
                     case Anchor.CenterRight:
-                        return new Vector2(Parent.Size.X - Position.X - Padding.Right - Size.X, Parent.Size.Y / 2 - Size.Y / 2 + Position.Y + Padding.Top) + Parent.AnchoredPosition;
+                        return new Vector2(Parent.AnchoredSize.X - Position.X - Padding.Right - size.X, Parent.AnchoredSize.Y / 2 - size.Y / 2 + Position.Y + Padding.Top) + Parent.AnchoredPosition;
                 }
 
                 return Position + new Vector2(Padding.Left, Padding.Top) + Parent.AnchoredPosition;
@@ -172,15 +201,28 @@ namespace InfinityUI.Core
         {
             get
             {
+                Vector2 size = Size;
+
+                switch (Sizing)
+                {
+                    //if we are percent mode
+                    //then size is 0-1 only for percent
+                    //thus we need to calculate size based
+                    //on parent if there is one
+                    case SizeMode.Percent:
+                        size = Parent == null ? size : new Vector2(size.X * Parent.AnchoredSize.X, size.Y * Parent.AnchoredSize.Y);
+                        break;
+                }
+
                 if (Parent == null) return size + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
                 switch (RelativeTo)
                 {
                     case Anchor.BottomHorizFill:
                     case Anchor.CenterHorizFill:
                     case Anchor.TopHorizFill:
-                        return new Vector2(Parent.Size.X, size.Y) + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
+                        return new Vector2(Parent.AnchoredSize.X, size.Y) + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
                     case Anchor.Fill:
-                        return Parent.Size + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
+                        return Parent.AnchoredSize + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
                 }
 
                 return size + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
@@ -315,7 +357,7 @@ namespace InfinityUI.Core
 
         public virtual Vector2 ToWorld(ref Vector2 p)
         {
-            Vector4 rot = new Vector4(p.X, p.Y, 0, 1) * LocalMatrix;
+            Vector4 rot = new Vector4(p.X, p.Y, 0, 1) * LocalMatrix; //todo: test with ModelMatrix
             return rot.Xy;
         }
 

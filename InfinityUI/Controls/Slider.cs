@@ -236,7 +236,7 @@ namespace InfinityUI.Controls
             }
         }
 
-        protected override void Dispose(bool disposing)
+        public override void Dispose(bool disposing = true)
         {
             base.Dispose(disposing);
 

@@ -14,15 +14,11 @@ namespace Materia.Rendering.Passes
         GLRenderBuffer depth;
         GLFrameBuffer frame;
 
-        MeshRenderer[] Meshes { get; set; }
-
         int width;
         int height;
 
-        public BasePass(MeshRenderer[] m, int w, int h)
+        public BasePass(int w, int h)
         {
-            Meshes = m;
-
             color = new GLTexture2D[2];
 
             width = w;
@@ -56,10 +52,8 @@ namespace Materia.Rendering.Passes
             frame.Unbind();
         }
 
-        public void Update(MeshRenderer[] m, int w, int h)
+        public void Update(int w, int h)
         {
-            Meshes = m;
-
             width = w;
             height = h;
 
@@ -73,19 +67,21 @@ namespace Materia.Rendering.Passes
                 }
             }
 
-            if(depth != null)
-            {
-                depth.Bind();
-                depth.SetBufferStorageAsDepth(w, h);
-                depth.Unbind();
-            }
+            depth?.Dispose();
+
+            depth = new GLRenderBuffer();
+            depth.Bind();
+            depth.SetBufferStorageAsDepth(w, h);
+            depth.Unbind();
+
+            frame?.Bind();
+            frame?.AttachDepth(depth);
+            frame?.Unbind();
         }
 
-        public override void Render(GLTexture2D[] inputs, out GLTexture2D[] outputs)
+        public override void Render(GLTexture2D[] inputs, out GLTexture2D[] outputs, Action renderScene = null)
         {
             outputs = color;
-
-            if (Meshes == null) return;
 
             frame.Bind();
             IGL.Primary.DrawBuffers(new int[] { (int)DrawBuffersEnum.ColorAttachment0, (int)DrawBuffersEnum.ColorAttachment1 });
@@ -93,14 +89,7 @@ namespace Materia.Rendering.Passes
             IGL.Primary.ClearColor(0, 0, 0, 0);
             IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit);
 
-            MeshRenderer.SharedVao?.Bind();
-
-            for (int i = 0; i < Meshes.Length; ++i)
-            {
-                Meshes[i].Draw();
-            }
-
-            MeshRenderer.SharedVao?.Unbind();
+            renderScene?.Invoke();
 
             frame.Unbind();
         }

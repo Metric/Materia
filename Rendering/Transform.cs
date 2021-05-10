@@ -14,7 +14,7 @@ namespace Materia.Rendering
         {
             get
             {
-                return children.ToList();
+                return children;
             }
         }
 
@@ -24,7 +24,7 @@ namespace Materia.Rendering
             {
                 if (Parent != null)
                 {
-                    return Parent.Rotation * LocalRotation;
+                    return LocalRotation * Parent.Rotation;
                 }
 
                 return LocalRotation;
@@ -51,7 +51,7 @@ namespace Materia.Rendering
             set
             {
                 localEulerAngles = value;
-                Vector3 angles = value * ((float)Math.PI / 180.0f);
+                Vector3 angles = value * MathHelper.Deg2Rad;
                 LocalRotation = Quaternion.FromEulerAngles(angles);
             }
         }
@@ -64,7 +64,7 @@ namespace Materia.Rendering
             {
                 if (Parent != null)
                 {
-                    return Parent.Scale * LocalScale;
+                    return LocalScale * Parent.Scale;
                 }
 
                 return LocalScale;
@@ -124,6 +124,26 @@ namespace Materia.Rendering
             }
         }
 
+        public Vector3 Back
+        {
+            get
+            {
+                Quaternion rot = Rotation;
+                rot.Conjugate();
+                return rot * -Vector3.UnitZ;
+            }
+        }
+
+        public Vector3 Left
+        {
+            get
+            {
+                Quaternion rot = Rotation;
+                rot.Conjugate();
+                return rot * -Vector3.UnitX;
+            }
+        }
+
         public Vector3 Right
         {
             get
@@ -141,6 +161,16 @@ namespace Materia.Rendering
                 Quaternion rot = Rotation;
                 rot.Conjugate();
                 return rot * Vector3.UnitY;
+            }
+        }
+
+        public Vector3 Down
+        {
+            get
+            {
+                Quaternion rot = Rotation;
+                rot.Conjugate();
+                return rot * -Vector3.UnitY;
             }
         }
 

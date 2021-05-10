@@ -94,11 +94,11 @@ namespace InfinityUI.Controls
             scrollBar?.Assign(obj.NormalizedOffset.Y);
         }
 
-        private void ToggleGroup_ToggleChanged(ToggleGroup arg1, ToggleButton arg2, int arg3)
+        private void ToggleGroup_ToggleChanged(ToggleGroup arg1, UIToggleable arg2, int arg3)
         {
             selectedIndex = arg3;
-            SelectedItem = arg2;
-            SelectionChanged?.Invoke(this, arg2, arg3);
+            SelectedItem = arg2.Parent as Button;
+            SelectionChanged?.Invoke(this, arg2.Parent as Button, arg3);
         }
 
         public virtual void Remove(ToggleButton b, bool dispose = false)

@@ -4,5 +4,5 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="MateriaCore.MainWindow"
-        Title="Materia" Height="720" Width="1280" Focusable="True" WindowState="Maximized" Background="{StaticResource Surface}">
+        Title="Materia" Height="720" Width="1280" Focusable="True" WindowState="Normal" Background="{StaticResource Surface}">
 </Window>

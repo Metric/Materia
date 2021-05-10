@@ -23,12 +23,12 @@ namespace Materia.Rendering.Passes
             renderers.Remove(r);
         }
 
-        public void Process()
+        public void Process(Action renderScene = null)
         {
             GLTexture2D[] lastOuputs = null;
             for(int i = 0; i < renderers.Count; ++i)
             {
-                renderers[i].Render(lastOuputs, out lastOuputs);
+                renderers[i].Render(lastOuputs, out lastOuputs, renderScene);
             }
         }
 

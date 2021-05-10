@@ -11,7 +11,7 @@
     <StackPanel Margin="10,10,10,10">
       <StackPanel Orientation="Horizontal">
         <StackPanel Orientation="Vertical">
-          <TextBlock Text="{p:DefaultSize}" Foreground="{StaticResource TextLight}" Margin="5"/>
+          <TextBlock Text="{p:Local DefaultSize}" Foreground="{StaticResource TextLight}" Margin="5"/>
           <ComboBox Foreground="{StaticResource TextLight}" SelectedIndex="5" HorizontalAlignment="Left" Name="DefaultNodeSize" Width="100"  Margin="4,4,4,4">
             <ComboBox.Items>
               <ComboBoxItem Foreground="{StaticResource TextLight}" Content="8" />
@@ -29,26 +29,26 @@
           </ComboBox>
         </StackPanel>
         <StackPanel>
-          <TextBlock Text="{p:DefaultFormat}" Foreground="{StaticResource TextLight}" Margin="5" />
+          <TextBlock Text="{p:Local DefaultFormat}" Foreground="{StaticResource TextLight}" Margin="5" />
           <ComboBox Foreground="{StaticResource TextLight}" SelectedIndex="0" HorizontalAlignment="Left" Name="DefaultFormat" Width="125"  Margin="4,4,4,4">
           </ComboBox>
         </StackPanel>
       </StackPanel>
       <StackPanel>
-        <TextBlock Text="{p:Template}" Foreground="{StaticResource TextLight}" Margin="5" />
+        <TextBlock Text="{p:Local Template}" Foreground="{StaticResource TextLight}" Margin="5" />
         <ComboBox Foreground="{StaticResource TextLight}" SelectedIndex="0" HorizontalAlignment="Stretch" Name="TemplateType"  Margin="4,4,4,4">
           <ComboBox.Items>
-            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:PBRFull}" />
-            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:PBRNoHeight}" />
-            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:PBRNoHeightAO}" />
-            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:PBRNoHeightAONormal}" />
-            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:Blank}" />
+            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:Local PBRFull}" />
+            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:Local PBRNoHeight}" />
+            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:Local PBRNoHeightAO}" />
+            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:Local PBRNoHeightAONormal}" />
+            <ComboBoxItem Foreground="{StaticResource TextLight}" Content="{p:Local Blank}" />
           </ComboBox.Items>
         </ComboBox>
       </StackPanel>
       <Grid HorizontalAlignment="Stretch" Margin="5,10,5,0">
-        <Button x:Name="CancelButton" HorizontalAlignment="Left" Background="{StaticResource Overlay5}" Foreground="{StaticResource TextLight}" Margin="0" Content="{p:Cancel}" FontSize="10" Width="57" Height="24" BorderThickness="0" />
-        <Button x:Name="CreateButton" IsDefault="True" HorizontalAlignment="Right" Content="{p:Create}" FontSize="10" Width="57" Height="24" BorderThickness="0" />
+        <Button x:Name="CancelButton" HorizontalAlignment="Left" Background="{StaticResource Overlay5}" Foreground="{StaticResource TextLight}" Margin="0" Content="{p:Local Cancel}" FontSize="10" Width="57" Height="24" BorderThickness="0" />
+        <Button x:Name="CreateButton" IsDefault="True" HorizontalAlignment="Right" Content="{p:Local Create}" FontSize="10" Width="57" Height="24" BorderThickness="0" />
       </Grid>
     </StackPanel>
   </Grid>

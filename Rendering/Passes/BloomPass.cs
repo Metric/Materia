@@ -4,6 +4,7 @@ using Materia.Rendering.Geometry;
 using Materia.Rendering.Interfaces;
 using Materia.Rendering.Mathematics;
 using Materia.Rendering.Shaders;
+using System;
 
 namespace Materia.Rendering.Passes
 {
@@ -46,7 +47,7 @@ namespace Materia.Rendering.Passes
             quad = null;
         }
 
-        public override void Render(GLTexture2D[] inputs, out GLTexture2D[] outputs)
+        public override void Render(GLTexture2D[] inputs, out GLTexture2D[] outputs, Action renderScene = null)
         {
             outputs = null;
 

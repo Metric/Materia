@@ -627,7 +627,7 @@ namespace InfinityUI.Controls
             selectable.OnFocus(new FocusEvent());
         }
 
-        protected override void Dispose(bool disposing)
+        public override void Dispose(bool disposing = true)
         {
             base.Dispose(disposing);
             if (selectable == null) return;

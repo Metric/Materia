@@ -156,25 +156,16 @@ namespace Materia.Rendering.Fonts
             }
         }
 
-        public static void Release()
+        public static void Dispose()
         {
-            if(fontHelper != null)
-            {
-                fontHelper.Dispose();
-                fontHelper = null;
-            }
+            fontHelper?.Dispose();
+            fontHelper = null;
 
-            if(WhiteColor != null)
-            {
-                WhiteColor.Dispose();
-                WhiteColor = null;
-            }
+            WhiteColor?.Dispose();
+            WhiteColor = null;
 
-            if (cache != null)
-            {
-                cache.Clear();
-                cache = null;
-            }
+            cache?.Clear();
+            cache = null;
         }
     }
 }

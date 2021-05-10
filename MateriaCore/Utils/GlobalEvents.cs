@@ -16,6 +16,7 @@ namespace MateriaCore.Utils
         Preview3DMetallic,
         Preview3DRoughness,
         Preview3DOcclusion,
+        Preview3DEmission,
         MoveSelected,
         ViewParameters,
         ClearViewParameters

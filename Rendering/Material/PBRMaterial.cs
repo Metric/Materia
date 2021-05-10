@@ -57,46 +57,7 @@ namespace Materia.Rendering.Material
 
         public virtual void Dispose()
         {
-            if (Albedo != null)
-            {
-                Albedo.Dispose();
-                Albedo = null;
-            }
-            if (Height != null)
-            {
-                Height.Dispose();
-                Height = null;
-            }
-            if (Normal != null)
-            {
-                Normal.Dispose();
-                Normal = null;
-            }
-            if (Metallic != null)
-            {
-                Metallic.Dispose();
-                Metallic = null;
-            }
-            if (Roughness != null)
-            {
-                Roughness.Dispose();
-                Roughness = null;
-            }
-            if (Occlusion != null)
-            {
-                Occlusion.Dispose();
-                Occlusion = null;
-            }
-            if(Thickness != null)
-            {
-                Thickness.Dispose();
-                Thickness = null;
-            }
-            if(Emission != null)
-            {
-                Emission.Dispose();
-                Emission = null;
-            }
+            
         }
     }
 }

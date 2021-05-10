@@ -12,6 +12,9 @@ namespace MateriaCore.Components.GL
 {
     public class UINodePoint : UIObject
     {
+        public const float DEFAULT_SIZE = 18;
+        public const float DEFAULT_PADDING = 5;
+
         public static UINodePoint SelectedOrigin { get; set; } = null;
 
         protected static Vector4 White = new Vector4(1, 1, 1, 1);
@@ -100,7 +103,8 @@ namespace MateriaCore.Components.GL
 
         public UINodePoint() : base()
         {
-
+            Size = new Vector2(DEFAULT_SIZE, DEFAULT_SIZE);
+            Padding = new Box2(0, 0, 0, DEFAULT_PADDING);
         }
 
         public UINodePoint(UINode n, INodePoint point)
@@ -108,6 +112,9 @@ namespace MateriaCore.Components.GL
             Name = "NodePoint" + nodeCount++;
             Node = n;
             NodePoint = point;
+
+            Size = new Vector2(DEFAULT_SIZE, DEFAULT_SIZE);
+            Padding = new Box2(0, 0, 0, DEFAULT_PADDING);
 
             InitializeComponents();
         }

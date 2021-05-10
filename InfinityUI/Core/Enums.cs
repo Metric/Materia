@@ -4,6 +4,12 @@ using System.Text;
 
 namespace InfinityUI.Core
 {
+    public enum SizeMode
+    {
+        Pixel,
+        Percent
+    }
+
     public enum SnapMode
     {
         None,

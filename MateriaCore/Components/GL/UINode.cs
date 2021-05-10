@@ -15,11 +15,15 @@ using System.Threading.Tasks;
 using Materia.Rendering.Imaging;
 using MateriaCore.Utils;
 using InfinityUI.Interfaces;
+using Materia.Rendering.Textures;
 
 namespace MateriaCore.Components.GL
 {
     public class UINode : MovablePane, IGraphNode
     {
+        public event Action<UINode> Restored;
+        public event Action<UINode> PreviewUpdated;
+
         public const int DEFAULT_HEIGHT = 50;
         public const int DEFAULT_WIDTH = 120;
 
@@ -81,50 +85,15 @@ namespace MateriaCore.Components.GL
             if (graph is Function)
             {
                 Function f = graph as Function;
-                f.OnOutputSet += F_OnOutputSet;
-
-                //todo rework this area
-                /*
-                if (n == f.OutputNode)
-                {
-                    OutputIcon.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    OutputIcon.Visibility = Visibility.Collapsed;
-                }
-
-                if (n == f.Execute)
-                {
-                    InputIcon.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    InputIcon.Visibility = Visibility.Collapsed;
-                }*/
+                f.OnOutputSet += F_OnOutputSet;        
             }
-            else
-            {
-                //todo rework this area
-                /*
-                if (n is OutputNode)
-                {
-                    OutputIcon.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    OutputIcon.Visibility = Visibility.Collapsed;
-                }
 
-                if (n is InputNode)
-                {
-                    InputIcon.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    InputIcon.Visibility = Visibility.Collapsed;
-                }*/
-            }
+            //todo: add in output / input icons
+        }
+
+        public GLTexture2D GetActiveBuffer()
+        {
+            return Node?.GetActiveBuffer();
         }
 
         #region Events
@@ -139,6 +108,7 @@ namespace MateriaCore.Components.GL
             n.OnTextureChanged += N_OnTextureChanged;
             n.OnValueUpdated += N_OnValueUpdated;
             n.OnNameChanged += N_OnNameChanged;
+            n.OnTextureRebuilt += N_OnTextureRebuilt;
         }
 
         private void RemoveNodeEvents()
@@ -152,11 +122,19 @@ namespace MateriaCore.Components.GL
             n.OnTextureChanged -= N_OnTextureChanged;
             n.OnValueUpdated -= N_OnValueUpdated;
             n.OnNameChanged -= N_OnNameChanged;
+            n.OnTextureRebuilt -= N_OnTextureRebuilt;
+        }
+
+        private void N_OnTextureRebuilt(Node n)
+        {
+            preview.Texture = n.GetActiveBuffer();
+            PreviewUpdated?.Invoke(this);
         }
 
         private void N_OnTextureChanged(Node n)
         {
             preview.Texture = n.GetActiveBuffer();
+            PreviewUpdated?.Invoke(this);
         }
 
         private void N_OnNameChanged(Node n)
@@ -187,14 +165,7 @@ namespace MateriaCore.Components.GL
 
         private void F_OnOutputSet(Node n)
         {
-            /*if (n == Node)
-            {
-                OutputIcon.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                OutputIcon.Visibility = Visibility.Collapsed;
-            }*/
+            //todo: add in output icon
         }
 
         private void N_OnOutputRemovedFromNode(Node n, NodeOutput inp, NodeOutput previous = null)
@@ -311,6 +282,8 @@ namespace MateriaCore.Components.GL
             N_OnValueUpdated(Node);
             N_OnNameChanged(Node);
             N_OnTextureChanged(Node);
+
+            Restored?.Invoke(this);
         }
 
         #region Node Point Setup, Removal, Updates
@@ -455,11 +428,11 @@ namespace MateriaCore.Components.GL
 
         private void Selectable_Click(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs e)
         {
-            if (e.Button.HasFlag(InfinityUI.Interfaces.MouseButton.Left))
+            if (e.Button.HasFlag(MouseButton.Left))
             {
                 TryAndSelect();
             }
-            else if (e.Button.HasFlag(InfinityUI.Interfaces.MouseButton.Right))
+            else if (e.Button.HasFlag(MouseButton.Right))
             {
                 ShowContextMenu();
             }
@@ -477,8 +450,6 @@ namespace MateriaCore.Components.GL
             }
 
             bool selected = Graph.IsSelected(Id);
-
-            //try and see if ui node is already in graph select
             if (selected)
             {
                 return;

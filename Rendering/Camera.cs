@@ -6,8 +6,7 @@ namespace Materia.Rendering
 {
     public class Camera : Transform
     {
-        public delegate void CameraChange(Camera sender);
-        public event CameraChange OnCameraChanged;
+        public event Action<Camera> Update;
 
         public float Aspect { get; set; }
 
@@ -23,10 +22,7 @@ namespace Materia.Rendering
             {
                 fov = value;
                 if (fov < 1) fov = 1;
-                if (OnCameraChanged != null)
-                {
-                    OnCameraChanged.Invoke(this);
-                }
+                Update?.Invoke(this);
             }
         }
 
@@ -42,10 +38,7 @@ namespace Materia.Rendering
             {
                 near = value;
                 if (near == 0) near = 0.0001f;
-                if (OnCameraChanged != null)
-                {
-                    OnCameraChanged.Invoke(this);
-                }
+                Update?.Invoke(this);
             }
         }
 
@@ -61,10 +54,7 @@ namespace Materia.Rendering
             {
                 far = value;
                 if (far == 0) far = 0.0001f;
-                if(OnCameraChanged != null)
-                {
-                    OnCameraChanged.Invoke(this);
-                }
+                Update?.Invoke(this);
             }
         }
 

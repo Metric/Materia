@@ -134,6 +134,11 @@ namespace InfinityUI.Components
         {
             //register canvas for picking
             UI.RegisterCanvas(this);
+
+            if (Parent != null)
+            {
+                Parent.Canvas = this;
+            }
         }
 
         private void CalculateScale()
@@ -146,6 +151,11 @@ namespace InfinityUI.Components
 
         public virtual void Dispose()
         {
+            if (Parent != null)
+            {
+                Parent.Canvas = null;
+            }
+
             //unregister canvas for picking
             UI.UnregisterCanvas(this);
         }

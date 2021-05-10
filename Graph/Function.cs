@@ -1900,7 +1900,7 @@ namespace Materia.Graph
             }
         }
 
-        public static void ReleaseShaderBuffer()
+        public static void DisposeCache()
         {
             if(shaderBuffer != null)
             {

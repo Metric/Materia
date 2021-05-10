@@ -92,14 +92,15 @@ namespace MateriaCore.Components.GL
         protected const float ZOOM_SPEED = 1.0f / 10f;
 
         #region Subviews
+
         #endregion
 
         #region Components
-        protected UICanvas canvas;
-        protected UIImage background;
+   
         #endregion
 
         #region General
+        //do we really need this?
         protected UIGraphMouseMode mouseMode = UIGraphMouseMode.Normal;
 
         public string Id { get; protected set; } = Guid.NewGuid().ToString();
@@ -220,11 +221,7 @@ namespace MateriaCore.Components.GL
             MoveAxis = Axis.None;
             SnapMode = MovablePaneSnapMode.None;
 
-            canvas = AddComponent<UICanvas>();
-            canvas.Resize(Size.X, Size.Y);
-
-            background = AddComponent<UIImage>();
-            background.Color = new Vector4(0.25f, 0.25f, 0.25f, 1);
+            Background.Color = new Vector4(0.25f, 0.25f, 0.25f, 1);
 
             selectable.Wheel += Selectable_Wheel;
 
@@ -281,8 +278,11 @@ namespace MateriaCore.Components.GL
             zoom = g.Zoom;
             invZoom = 1.0f / zoom;
 
-            canvas.Cam.LocalPosition = new Vector3((float)g.ShiftX, (float)g.ShiftY, 0);
-            canvas.Scale = zoom;
+            if (Canvas != null)
+            {
+                Canvas.Cam.LocalPosition = new Vector3((float)g.ShiftX, (float)g.ShiftY, 0);
+                Canvas.Scale = zoom;
+            }
 
             //update zoom text etc
 
@@ -302,10 +302,10 @@ namespace MateriaCore.Components.GL
         #region Input Commands
         public void TryAndPin()
         {
-            if (Current == null) return;
+            if (Current == null || Canvas == null) return;
 
             Vector2 m = UI.MousePosition;
-            Vector2 wp = canvas.ToCanvasSpace(m);
+            Vector2 wp = Canvas.ToCanvasSpace(m);
 
             Node n = Current.CreateNode(typeof(PinNode));
             if (n == null) return;
@@ -326,12 +326,12 @@ namespace MateriaCore.Components.GL
 
         public void TryAndComment()
         {
-            if (Current == null) return;
+            if (Current == null || Canvas == null) return;
             Box2 bounds = GetSelectedBounds();
             if (bounds.Width <= 0 || bounds.Height <= 0)
             {
                 Vector2 m = UI.MousePosition;
-                Vector2 wp = canvas.ToCanvasSpace(m);
+                Vector2 wp = Canvas.ToCanvasSpace(m);
                 bounds = new Box2(wp, 256, 256); //todo: make comment constant size accessors
             }
 
@@ -449,12 +449,12 @@ namespace MateriaCore.Components.GL
         {
             try
             {
-                if (Current == null) return;
+                if (Current == null || Canvas == null) return;
                 if (string.IsNullOrEmpty(data)) return;
                 if (ReadOnly) return;
 
                 Vector2 m = UI.MousePosition;
-                Vector2 wp = canvas.ToCanvasSpace(m);
+                Vector2 wp = Canvas.ToCanvasSpace(m);
                 UIGraphCopyData cd;
                 try
                 {
@@ -529,9 +529,9 @@ namespace MateriaCore.Components.GL
 
         public void TryAndInsertNode(string type)
         {
-            if (Current == null) return;
+            if (Current == null || Canvas == null) return;
             Vector2 m = UI.MousePosition;
-            Vector2 wp = canvas.ToCanvasSpace(m);
+            Vector2 wp = Canvas.ToCanvasSpace(m);
             Node n = CreateNode(type);
             if (n == null) return;
             
@@ -589,7 +589,10 @@ namespace MateriaCore.Components.GL
             }
             IGraphNode n = pins[pinIndex++];
             UIObject unode = n as UIObject;
-            canvas.Cam.LocalPosition = new Vector3(unode.AnchoredPosition.X, unode.AnchoredPosition.Y, 0);
+            if (Canvas != null)
+            {
+                Canvas.Cam.LocalPosition = new Vector3(unode.AnchoredPosition.X, unode.AnchoredPosition.Y, 0);
+            }
             UI.Focus = unode.GetComponent<UISelectable>();
         }
 
@@ -884,6 +887,11 @@ namespace MateriaCore.Components.GL
             Load(RawRoot, RawRootCWD, false);
             RawRoot = null;
             RestoreStack();
+
+            if (Canvas != null && Current != null)
+            {
+                Canvas.Cam.LocalPosition = new Vector3((float)Current.ShiftX, (float)Current.ShiftY, 0);
+            }
         }
 
         public void TryAndLoadGraphStack(string[] stack)
@@ -1212,8 +1220,11 @@ namespace MateriaCore.Components.GL
             zoom = invZoom = 1.0f;
 
             //reset camera origin
-            canvas.Cam.LocalPosition = new Vector3(0, 0, 0);
-            canvas.Scale = zoom;
+            if (Canvas != null)
+            {
+                Canvas.Cam.LocalPosition = new Vector3(0, 0, 0);
+                Canvas.Scale = zoom;
+            }
 
             var allNodes = nodes.Values.ToList();
             for (int i = 0; i < allNodes.Count; ++i)
@@ -1248,33 +1259,32 @@ namespace MateriaCore.Components.GL
             {
                 OutputNode n = node.Node as OutputNode;
 
-                if (n.OutType == OutputType.basecolor)
+                switch(n.OutType)
                 {
-                    GlobalEvents.Emit(GlobalEvent.Preview3DColor, this, n);
-                }
-                else if (n.OutType == OutputType.metallic)
-                {
-                    GlobalEvents.Emit(GlobalEvent.Preview3DMetallic, this, n);
-                }
-                else if (n.OutType == OutputType.roughness)
-                {
-                    GlobalEvents.Emit(GlobalEvent.Preview3DRoughness, this, n);
-                }
-                else if (n.OutType == OutputType.normal)
-                {
-                    GlobalEvents.Emit(GlobalEvent.Preview3DNormal, this, n);
-                }
-                else if (n.OutType == OutputType.occlusion)
-                {
-                    GlobalEvents.Emit(GlobalEvent.Preview3DOcclusion, this, n);
-                }
-                else if (n.OutType == OutputType.height)
-                {
-                    GlobalEvents.Emit(GlobalEvent.Preview3DHeight, this, n);
-                }
-                else if (n.OutType == OutputType.thickness)
-                {
-                    GlobalEvents.Emit(GlobalEvent.Preview3DThickness, this, n);
+                    case OutputType.basecolor:
+                        GlobalEvents.Emit(GlobalEvent.Preview3DColor, this, node);
+                        break;
+                    case OutputType.metallic:
+                        GlobalEvents.Emit(GlobalEvent.Preview3DMetallic, this, node);
+                        break;
+                    case OutputType.roughness:
+                        GlobalEvents.Emit(GlobalEvent.Preview3DRoughness, this, node);
+                        break;
+                    case OutputType.normal:
+                        GlobalEvents.Emit(GlobalEvent.Preview3DNormal, this, node);
+                        break;
+                    case OutputType.occlusion:
+                        GlobalEvents.Emit(GlobalEvent.Preview3DOcclusion, this, node);
+                        break;
+                    case OutputType.height:
+                        GlobalEvents.Emit(GlobalEvent.Preview3DHeight, this, node);
+                        break;
+                    case OutputType.thickness:
+                        GlobalEvents.Emit(GlobalEvent.Preview3DThickness, this, node);
+                        break;
+                    case OutputType.emission:
+                        GlobalEvents.Emit(GlobalEvent.Preview3DEmission, this, node);
+                        break;
                 }
             }
         }
@@ -1293,7 +1303,11 @@ namespace MateriaCore.Components.GL
             zoom = zoom.Clamp(0.03f, 3f);
 
             invZoom = 1.0f / zoom;
-            canvas.Scale = zoom;
+
+            if (Canvas != null)
+            {
+                Canvas.Scale = zoom;
+            }
         }
 
         private void UIGraph_Moved(MovablePane arg1, Vector2 delta)
@@ -1301,9 +1315,9 @@ namespace MateriaCore.Components.GL
             switch (mouseMode) 
             {
                 case UIGraphMouseMode.Normal:
-                    if (canvas != null)
+                    if (Canvas != null)
                     {
-                        canvas.Cam.LocalPosition += new Vector3(delta * invZoom); 
+                        Canvas.Cam.LocalPosition += new Vector3(delta * invZoom); 
                     }
                     if (Current != null)
                     {
