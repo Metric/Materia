@@ -388,6 +388,22 @@ namespace Materia.Rendering.Imaging
             });
         }
 
+        public void FillRect(int x, int y, int w, int h, GLPixel pixel)
+        {
+            int sx = x.Clamp(0, Width - 1);
+            int sy = y.Clamp(0, Height - 1);
+            w = w.Clamp(1, Width);
+            h = h.Clamp(1, Height);
+
+            Parallel.For(sy, sy + h, y =>
+            {
+                for (int x = sx; x < sx + w; ++x)
+                {
+                    SetPixel(x, y, ref pixel);
+                }
+            });
+        }
+
         public void Clear()
         {
             Clear(BLANK);

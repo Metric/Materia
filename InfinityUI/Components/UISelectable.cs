@@ -21,6 +21,7 @@ namespace InfinityUI.Components
         public event Action<UISelectable, KeyboardEventArgs> KeyUp;
         public event Action<UISelectable, bool> FocusChanged;
         public event Action<UISelectable, MouseWheelArgs> Wheel;
+        public event Action<UISelectable> BeforeUpdateTarget;
 
         public bool BubbleEvents { get; set; } = true;
 

@@ -15,12 +15,12 @@ namespace InfinityUI.Components
 
         public UIObject Parent { get; set; }
 
-        public Vector2 Tiling { get; set; } = new Vector2(1, 1);
+        public Vector2 Tiling { get; set; } = Vector2.One;
         public bool FlipY { get; set; } = false;
         public bool Clip { get; set; } = false;
 
         public IGLProgram Shader { get; set; } = GLShaderCache.GetShader("pointui.glsl", "pointui.glsl", "pointui.glsl");
-        public Vector4 Color { get; set; } = new Vector4(1, 1, 1, 1);
+        public Vector4 Color { get; set; } = Vector4.One;
 
         public virtual void Awake()
         {

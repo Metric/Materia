@@ -9,6 +9,7 @@ using System.Diagnostics;
 
 namespace Materia.Rendering.Fonts
 {
+    //todo: rework this class to generate font atlas
     public class FontManager
     {
         public class CharData
@@ -102,6 +103,15 @@ namespace Materia.Rendering.Fonts
             }
 
             return map;
+        }
+
+        public static Vector2 MeasureString(string text, Font f, StringFormat format)
+        {
+            using (var ghelper = Graphics.FromImage(fontHelper))
+            {
+                var size = ghelper.MeasureString(text, f, 0, format);
+                return new Vector2(size.Width, size.Height);
+            }
         }
 
         public static Vector2 MeasureString(string fontFamily, float fontSize, string text, FontStyle style)

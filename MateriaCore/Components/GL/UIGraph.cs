@@ -96,7 +96,8 @@ namespace MateriaCore.Components.GL
         #endregion
 
         #region Components
-   
+        protected UIObject gridArea;
+        protected UIImage grid;
         #endregion
 
         #region General
@@ -182,24 +183,11 @@ namespace MateriaCore.Components.GL
 
         protected Dictionary<string, IGraphNode> nodes = new Dictionary<string, IGraphNode>();
 
-        public UIGraph(Vector2 size, Graph template = null) : base(size) 
+        public UIGraph(Vector2 size) : base(size) 
         {
+            RelativeTo = Anchor.Fill;
+
             InitializeComponents();
-
-            if (template != null)
-            {
-                graphState = UIGraphState.LoadingWithTemplate;
-                RawRoot = template.GetJson();
-            }
-
-            //handle bread crumbs init here sort of
-            //hide mouse connection preview
-
-            if (!string.IsNullOrEmpty(RawRoot))
-            {
-                Load(RawRoot, "");
-                RawRoot = null;
-            }
         }
 
         protected void AddGlobalEvents()
@@ -221,11 +209,31 @@ namespace MateriaCore.Components.GL
             MoveAxis = Axis.None;
             SnapMode = MovablePaneSnapMode.None;
 
-            Background.Color = new Vector4(0.25f, 0.25f, 0.25f, 1);
+            Background.Color = new Vector4(0.1f, 0.1f, 0.1f, 1);
+            gridArea = new UIObject
+            {
+                RelativeTo = Anchor.Fill
+            };
+
+            //disable raycastTarget for grid area
+            gridArea.RaycastTarget = false;
+            grid = gridArea.AddComponent<UIImage>();
+            grid.Texture = GridGenerator.CreateBasic(64,64);
+            grid.Color = Vector4.One;
+            grid.Tiling = new Vector2(16, 16);
+            grid.BeforeDraw += Grid_BeforeDraw;
 
             selectable.Wheel += Selectable_Wheel;
 
             Moved += UIGraph_Moved;
+
+            AddChild(gridArea);
+        }
+
+        private void Grid_BeforeDraw(UIDrawable obj)
+        {
+            float aspect = AnchoredSize.X / AnchoredSize.Y;
+            grid.Tiling = new Vector2(16, 16 / aspect);
         }
 
         #region Loading Handlers
@@ -278,13 +286,17 @@ namespace MateriaCore.Components.GL
             zoom = g.Zoom;
             invZoom = 1.0f / zoom;
 
+            UpdateZoomDetails();
+
             if (Canvas != null)
             {
                 Canvas.Cam.LocalPosition = new Vector3((float)g.ShiftX, (float)g.ShiftY, 0);
-                Canvas.Scale = zoom;
             }
 
-            //update zoom text etc
+            if (gridArea != null)
+            {
+                gridArea.Position = new Vector2((float)g.ShiftX, (float)g.ShiftY);
+            }
 
             //todo: reimplement HdriManager
             //Current.HdriImages = HdriManager.Available.ToArray();
@@ -1202,6 +1214,16 @@ namespace MateriaCore.Components.GL
             }
         }
 
+        private void UpdateZoomDetails()
+        {
+            //update zoom text etc here
+
+            if (Canvas != null)
+            {
+                Canvas.Scale = zoom;
+            }
+        }
+
         /// <summary>
         /// Clears the view of all nodes.
         /// Resets zoom and camera position
@@ -1219,11 +1241,17 @@ namespace MateriaCore.Components.GL
             //reset zoom
             zoom = invZoom = 1.0f;
 
+            UpdateZoomDetails();
+
             //reset camera origin
             if (Canvas != null)
             {
-                Canvas.Cam.LocalPosition = new Vector3(0, 0, 0);
-                Canvas.Scale = zoom;
+                Canvas.Cam.LocalPosition = Vector3.Zero;
+            }
+
+            if (gridArea != null)
+            {
+                gridArea.Position = Vector2.Zero;
             }
 
             var allNodes = nodes.Values.ToList();
@@ -1297,32 +1325,33 @@ namespace MateriaCore.Components.GL
             return n;
         }
 
-        private void Selectable_Wheel(UISelectable arg1, InfinityUI.Interfaces.MouseWheelArgs e)
+        private void Selectable_Wheel(UISelectable arg1, MouseWheelArgs e)
         {
-            zoom += e.Delta.Y * ZOOM_SPEED; //change speedd by division here
+            zoom += e.Delta.Y * ZOOM_SPEED;
             zoom = zoom.Clamp(0.03f, 3f);
 
             invZoom = 1.0f / zoom;
 
-            if (Canvas != null)
-            {
-                Canvas.Scale = zoom;
-            }
+            UpdateZoomDetails();
         }
 
         private void UIGraph_Moved(MovablePane arg1, Vector2 delta)
         {
+            //must reverse the delta as
+            //otherwise camera pans in opposite direction
+            Vector2 scaledDelta = -delta * invZoom;
+
             switch (mouseMode) 
             {
                 case UIGraphMouseMode.Normal:
                     if (Canvas != null)
                     {
-                        Canvas.Cam.LocalPosition += new Vector3(delta * invZoom); 
+                        Canvas.Cam.LocalPosition += new Vector3(scaledDelta); 
                     }
                     if (Current != null)
                     {
-                        Current.ShiftX += delta.X * invZoom;
-                        Current.ShiftY += delta.Y * invZoom;
+                        Current.ShiftX += scaledDelta.X;
+                        Current.ShiftY += scaledDelta.Y;
                     }
                     break;
             }

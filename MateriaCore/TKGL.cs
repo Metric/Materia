@@ -7,7 +7,7 @@ using Materia.Rendering.Interfaces;
 using Materia.Rendering.Mathematics;
 using OpenTK.Graphics.OpenGL;
 
-namespace InfinityPainter
+namespace MateriaCore
 {
     public class TKGL : IGL
     {

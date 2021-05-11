@@ -117,6 +117,20 @@ namespace MateriaCore.Components.GL
             Padding = new Box2(0, 0, 0, DEFAULT_PADDING);
 
             InitializeComponents();
+
+            if (point is NodeOutput)
+            {
+                var nout = point as NodeOutput;
+                nout.OnOutputChanged += Nout_OnOutputChanged;
+            }
+        }
+
+        private void Nout_OnOutputChanged(NodeOutput output)
+        {
+            if (selectable != null)
+            {
+                selectable.NormalColor = Color;
+            }
         }
 
         public int GetOutIndex(UINodePoint p2)
@@ -129,16 +143,14 @@ namespace MateriaCore.Components.GL
             //todo: assign background image from embedded resource
 
             Background = AddComponent<UIImage>();
-
-            Background.BeforeDraw += Background_BeforeDraw;
-
             selectable = AddComponent<UISelectable>();
             selectable.TargetGraphic = Background;
+            selectable.NormalColor = Color;
             selectable.PointerDown += Selectable_PointerDown;
             selectable.PointerEnter += Selectable_PointerEnter;
             selectable.PointerExit += Selectable_PointerExit;
-
-            //todo: update node background based on INodePoint type
+            selectable.BeforeUpdateTarget += Selectable_BeforeUpdateTarget;
+            selectable.BubbleEvents = false;
 
             nodeNameArea = new UIObject();
             nodeNameArea.RelativeTo = NodePoint is NodeInput ? Anchor.CenterLeft : Anchor.CenterRight; //this can change based on if input or output
@@ -150,10 +162,9 @@ namespace MateriaCore.Components.GL
             AddChild(nodeNameArea);
         }
 
-        //ensure proper node color
-        private void Background_BeforeDraw(UIDrawable obj)
+        private void Selectable_BeforeUpdateTarget(UISelectable obj)
         {
-            obj.Color = Color;
+            selectable.NormalColor = Color;
         }
 
         private void Selectable_PointerExit(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs e)
@@ -292,6 +303,12 @@ namespace MateriaCore.Components.GL
 
         public override void Dispose(bool disposing = true)
         {
+            if (NodePoint is NodeOutput)
+            {
+                var nout = NodePoint as NodeOutput;
+                nout.OnOutputChanged -= Nout_OnOutputChanged;
+            }
+
             Disconnect(false);
             base.Dispose(disposing);
         }

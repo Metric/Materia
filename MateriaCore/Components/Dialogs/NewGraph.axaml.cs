@@ -6,6 +6,7 @@ using Materia.Graph;
 using System;
 using Materia.Nodes.Atomic;
 using MateriaCore.Components.GL;
+using MateriaCore.Utils;
 
 namespace MateriaCore.Components.Dialogs
 {
@@ -59,26 +60,26 @@ namespace MateriaCore.Components.Dialogs
 
             Materia.Graph.Image g = new Materia.Graph.Image("Untitled", size, size);
             g.DefaultTextureType = px;
-            Result = g;
 
             switch (templateType.SelectedIndex)
             {
                 case 0:
-                    PBRFullTemplate();
+                    GraphTemplate.PBRFull(g);
                     break;
                 case 1:
-                    PBRNoHeightTemplate();
+                    GraphTemplate.PBRNoHeight(g);
                     break;
                 case 2:
-                    PBRNoHeightAOTemplate();
+                    GraphTemplate.PBRNoHeightAO(g);
                     break;
                 case 3:
-                    PBRNoHeightAONormalTemplate();
+                    GraphTemplate.PBRNoHeightAONormal(g);
                     break;
                 default:
                     break;
             }
 
+            Result = g;
             Close(Result);
         }
 
@@ -106,169 +107,6 @@ namespace MateriaCore.Components.Dialogs
             defaultFormat = this.FindControl<ComboBox>("DefaultFormat");
             defaultNodeSize = this.FindControl<ComboBox>("DefaultNodeSize");
             templateType = this.FindControl<ComboBox>("TemplateType");
-        }
-
-        private void PBRFullTemplate()
-        {
-            OutputNode baseColor = new OutputNode(Result.DefaultTextureType);
-            baseColor.Name = "Base Color";
-            baseColor.ViewOriginY = -(UINode.DEFAULT_HEIGHT + 5) * 3;
-
-            Result.Add(baseColor);
-
-            OutputNode metallic = new OutputNode(Result.DefaultTextureType);
-            metallic.Name = "Metallic";
-            metallic.OutType = OutputType.metallic;
-            metallic.ViewOriginY = -(UINode.DEFAULT_HEIGHT + 5) * 2;
-
-            Result.Add(metallic);
-
-            OutputNode roughness = new OutputNode(Result.DefaultTextureType);
-            roughness.Name = "Roughness";
-            roughness.OutType = OutputType.roughness;
-            roughness.ViewOriginY = -(UINode.DEFAULT_HEIGHT + 5);
-
-            Result.Add(roughness);
-
-            OutputNode normal = new OutputNode(Result.DefaultTextureType);
-            normal.Name = "Normal";
-            normal.OutType = OutputType.normal;
-            normal.ViewOriginY = 5;
-
-            Result.Add(normal);
-
-            OutputNode ao = new OutputNode(Result.DefaultTextureType);
-            ao.Name = "Occlusion";
-            ao.OutType = OutputType.occlusion;
-            ao.ViewOriginY = (UINode.DEFAULT_HEIGHT + 5);
-
-            Result.Add(ao);
-
-            OutputNode height = new OutputNode(Result.DefaultTextureType);
-            height.Name = "Height";
-            height.OutType = OutputType.height;
-            height.ViewOriginY = (UINode.DEFAULT_HEIGHT + 5) * 2;
-
-            Result.Add(height);
-
-            OutputNode emission = new OutputNode(Result.DefaultTextureType);
-            emission.Name = "Emission";
-            emission.OutType = OutputType.emission;
-            emission.ViewOriginY = (UINode.DEFAULT_HEIGHT + 5) * 3;
-
-            Result.Add(emission);
-
-            OutputNode thickness = new OutputNode(Result.DefaultTextureType);
-            thickness.Name = "Thickness";
-            thickness.OutType = OutputType.thickness;
-            thickness.ViewOriginY = (UINode.DEFAULT_HEIGHT + 5) * 4;
-
-            Result.Add(thickness);
-        }
-
-        private void PBRNoHeightTemplate()
-        {
-            OutputNode baseColor = new OutputNode(Result.DefaultTextureType);
-            baseColor.Name = "Base Color";
-            baseColor.ViewOriginY = -(UINode.DEFAULT_HEIGHT + 5) * 3;
-
-            Result.Add(baseColor);
-
-            OutputNode metallic = new OutputNode(Result.DefaultTextureType);
-            metallic.Name = "Metallic";
-            metallic.OutType = OutputType.metallic;
-            metallic.ViewOriginY = -(UINode.DEFAULT_HEIGHT + 5) * 2;
-
-            Result.Add(metallic);
-
-            OutputNode roughness = new OutputNode(Result.DefaultTextureType);
-            roughness.Name = "Roughness";
-            roughness.OutType = OutputType.roughness;
-            roughness.ViewOriginY = -(UINode.DEFAULT_HEIGHT + 5);
-
-            Result.Add(roughness);
-
-            OutputNode normal = new OutputNode(Result.DefaultTextureType);
-            normal.Name = "Normal";
-            normal.OutType = OutputType.normal;
-            normal.ViewOriginY = 5;
-
-            Result.Add(normal);
-
-            OutputNode ao = new OutputNode(Result.DefaultTextureType);
-            ao.Name = "Occlusion";
-            ao.OutType = OutputType.occlusion;
-            ao.ViewOriginY = (UINode.DEFAULT_HEIGHT + 5);
-
-            Result.Add(ao);
-
-            OutputNode emission = new OutputNode(Result.DefaultTextureType);
-            emission.Name = "Emission";
-            emission.OutType = OutputType.emission;
-            emission.ViewOriginY = (UINode.DEFAULT_HEIGHT + 5) * 2;
-
-            Result.Add(emission);
-
-            OutputNode thickness = new OutputNode(Result.DefaultTextureType);
-            thickness.Name = "Thickness";
-            thickness.OutType = OutputType.thickness;
-            thickness.ViewOriginY = (UINode.DEFAULT_HEIGHT + 5) * 3;
-
-            Result.Add(thickness);
-        }
-
-        private void PBRNoHeightAOTemplate()
-        {
-            OutputNode baseColor = new OutputNode(Result.DefaultTextureType);
-            baseColor.Name = "Base Color";
-            baseColor.ViewOriginY = -(UINode.DEFAULT_HEIGHT + 5) * 2;
-
-            Result.Add(baseColor);
-
-            OutputNode metallic = new OutputNode(Result.DefaultTextureType);
-            metallic.Name = "Metallic";
-            metallic.OutType = OutputType.metallic;
-            metallic.ViewOriginY = -(UINode.DEFAULT_HEIGHT + 5);
-
-            Result.Add(metallic);
-
-            OutputNode roughness = new OutputNode(Result.DefaultTextureType);
-            roughness.Name = "Roughness";
-            roughness.OutType = OutputType.roughness;
-            roughness.ViewOriginY = 5;
-
-            Result.Add(roughness);
-
-            OutputNode normal = new OutputNode(Result.DefaultTextureType);
-            normal.Name = "Normal";
-            normal.OutType = OutputType.normal;
-            normal.ViewOriginY = (UINode.DEFAULT_HEIGHT + 5) * 2;
-
-            Result.Add(normal);
-        }
-
-
-        private void PBRNoHeightAONormalTemplate()
-        {
-            OutputNode baseColor = new OutputNode(Result.DefaultTextureType);
-            baseColor.Name = "Base Color";
-            baseColor.ViewOriginY = -(UINode.DEFAULT_HEIGHT + 5);
-
-            Result.Add(baseColor);
-
-            OutputNode metallic = new OutputNode(Result.DefaultTextureType);
-            metallic.Name = "Metallic";
-            metallic.OutType = OutputType.metallic;
-            metallic.ViewOriginY = 5;
-
-            Result.Add(metallic);
-
-            OutputNode roughness = new OutputNode(Result.DefaultTextureType);
-            roughness.Name = "Roughness";
-            roughness.OutType = OutputType.roughness;
-            roughness.ViewOriginY = (UINode.DEFAULT_HEIGHT + 5);
-
-            Result.Add(roughness);
         }
     }
 }

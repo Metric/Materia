@@ -30,6 +30,8 @@ namespace InfinityUI.Components
 
             if (size.X <= float.Epsilon || size.Y <= float.Epsilon) return;
 
+            OnBeforeDraw(this);
+
             Matrix4 m = Parent.ModelMatrix;
             Vector2 pos = Parent.AnchoredPosition;
             Vector4 color = Color;
@@ -50,8 +52,6 @@ namespace InfinityUI.Components
             Shader.SetUniform("MainTex", 0);
             Shader.SetUniform("flipY", FlipY ? 1 : 0);
             Shader.SetUniform2("tiling", ref tiling);
-
-            OnBeforeDraw(this);
 
             if (!Clip)
             {

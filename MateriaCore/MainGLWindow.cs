@@ -40,6 +40,7 @@ namespace MateriaCore
         protected Scene scene;
         #endregion
 
+        protected UIGraph activeDocument;
         protected Graph activeGraph;
 
         private Keys currentKey;
@@ -248,6 +249,17 @@ namespace MateriaCore
             graphCanvas = graphArea.AddComponent<UICanvas>();
             rootCanvas = rootArea.AddComponent<UICanvas>();
 
+            activeDocument = new UIGraph(graphArea.Size);
+            
+            activeGraph = new Graph("Untitled", 512, 512); //testing
+            activeGraph.DefaultTextureType = GraphPixelType.RGBA; //testing
+
+            graphArea.AddChild(activeDocument);
+
+            GraphTemplate.PBRFull(activeGraph);
+            activeDocument.Load(activeGraph.GetJson(), "");
+            activeGraph = activeDocument.Current;
+
             MLog.Log.Info("GL Version: " + OpenTK.Graphics.OpenGL.GL.GetString(OpenTK.Graphics.OpenGL.StringName.Version));
         }
 
@@ -266,15 +278,12 @@ namespace MateriaCore
             
             IGL.Primary.Enable((int)EnableCap.DepthTest);
             IGL.Primary.DepthFunc((int)DepthFunction.Lequal);
-
-            IGL.Primary.Enable((int)EnableCap.CullFace);
-            IGL.Primary.CullFace((int)CullFaceMode.Back);
         }
 
         private void InitializeViewport()
         {
             IGL.Primary.Viewport(0, 0, Size.X, Size.Y);
-            IGL.Primary.ClearColor(1, 1, 1, 1);
+            IGL.Primary.ClearColor(0, 0, 0, 1);
             IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit | (int)ClearBufferMask.StencilBufferBit);
         }
 
@@ -318,9 +327,15 @@ namespace MateriaCore
             UI.Draw();
         }
 
-        public virtual void Invalidate()
+        public virtual void Process()
         {
-            if (lastTick == 0)
+            ProcessEvents();
+            Invalidate();
+        }
+
+        protected virtual void Invalidate()
+        {
+            /*if (lastTick == 0)
             {
                 lastTick = System.DateTime.Now.Ticks;
                 return;
@@ -342,7 +357,10 @@ namespace MateriaCore
                 deltaTime %= fpsTick;
             }
 
-            lastTick = DateTime.Now.Ticks;
+            lastTick = DateTime.Now.Ticks;*/
+
+            Render();
+            SwapBuffers();
         }
 
         public virtual void Show()
@@ -366,8 +384,11 @@ namespace MateriaCore
 
         private void InternalDispose()
         {
+            GridGenerator.Dispose();
+
             sceneRenderer?.Dispose();
             scene?.Dispose();
+
             UI.Dispose();
 
             Function.DisposeCache();

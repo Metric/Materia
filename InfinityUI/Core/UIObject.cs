@@ -386,6 +386,7 @@ namespace InfinityUI.Core
 
             for (int i = Children.Count - 1; i >= 0; --i)
             {
+                if (!Children[i].RaycastTarget) continue;
                 if (Children[i].Contains(ref p))
                 {
                     var c = Children[i].Pick(ref p);

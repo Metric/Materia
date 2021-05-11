@@ -147,6 +147,8 @@ namespace InfinityUI.Core
 
         public static void OnMouseWheel(Vector2 delta)
         {
+            delta.Y *= -1;
+
             if(currentSelection != null)
             {
                 MouseWheelArgs e = new MouseWheelArgs()
@@ -468,6 +470,7 @@ namespace InfinityUI.Core
 
         public static void Draw()
         {
+            IGL.Primary.Disable((int)EnableCap.CullFace);
             IGL.Primary.Enable((int)EnableCap.StencilTest);
             IGL.Primary.Clear((int)ClearBufferMask.StencilBufferBit);
             IGL.Primary.StencilMask(0xFF);
@@ -491,7 +494,7 @@ namespace InfinityUI.Core
             for (int i = canvases.Count - 1; i >= 0; --i)
             {
                 UIObject obj = canvases[i];
-                var canvas = obj.GetComponent<UICanvas>();
+                UICanvas canvas = obj.GetComponent<UICanvas>();
                 Vector2 wp = canvas.ToCanvasSpace(p);
                 Selection = obj.Pick(ref wp);
                 if (Selection != null)
@@ -593,8 +596,12 @@ namespace InfinityUI.Core
 
         public static void SnapToGrid(UIObject ele, int gridSize)
         {
-            ele.Position = new Vector2(MathF.Floor(ele.Position.X / gridSize) * gridSize, 
-                                        MathF.Floor(ele.Position.Y / gridSize) * gridSize);
+            ele.Position = new Vector2(
+                            MathF.Round(ele.Position.X / gridSize), 
+                            MathF.Round(ele.Position.Y / gridSize)
+                           );
+
+            ele.Position *= gridSize;
         }
 
         public static void SnapToElement(UIObject a, UIObject b, 

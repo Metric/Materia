@@ -342,8 +342,9 @@ namespace MateriaCore.Components.GL
             SnapMode = MovablePaneSnapMode.Grid;
             SnapTolerance = 32;
 
-            toggleable = AddComponent<UIToggleable>();
+            selectable.BubbleEvents = false;
 
+            selectable.NormalColor = new Vector4(0.35f, 0.35f, 0.35f, 1);
             selectable.Click += Selectable_Click;
             selectable.PointerUp += Selectable_PointerUp;
             selectable.PointerDown += Selectable_PointerDown;
@@ -353,6 +354,14 @@ namespace MateriaCore.Components.GL
 
             Moved += UINode_Moved;
             MovedTo += UINode_MovedTo;
+
+            //todo: make a container area for the center part
+            //the container area will hold the following
+            //preview, desc, inputs, outputs
+            //the container area will be a contentSizeFitter
+            //the node itself will become a stackpanel
+            //with the title area first
+            //followed by the container
 
             titleArea = new UIObject();
             titleArea.RelativeTo = Anchor.TopHorizFill;
@@ -367,17 +376,21 @@ namespace MateriaCore.Components.GL
             desc.Alignment = InfinityUI.Components.TextAlignment.Center;
 
             previewArea = new UIObject();
-            previewArea.RelativeTo = Anchor.Fill;
+            previewArea.Size = new Vector2(Size.X, Size.X);
+            previewArea.RelativeTo = Anchor.Center;
             previewArea.Padding = new Box2(10, 20, 10, 10);
+            previewArea.RaycastTarget = false;
             preview = previewArea.AddComponent<UIImage>();
 
             outputsArea = new UIObject();
-            outputsArea.RelativeTo = Anchor.CenterLeft;
+            outputsArea.RaycastTarget = true;
+            outputsArea.RelativeTo = Anchor.CenterRight;
             var stack = outputsArea.AddComponent<UIStackPanel>();
             stack.Direction = Orientation.Vertical;
 
             inputsArea = new UIObject();
-            inputsArea.RelativeTo = Anchor.CenterRight;
+            inputsArea.RaycastTarget = true;
+            inputsArea.RelativeTo = Anchor.CenterLeft;
             stack = inputsArea.AddComponent<UIStackPanel>();
             stack.Direction = Orientation.Vertical;
 
@@ -386,9 +399,6 @@ namespace MateriaCore.Components.GL
             AddChild(titleArea);
             AddChild(outputsArea);
             AddChild(inputsArea);
-
-            fitter = AddComponent<UIContentFitter>();
-            fitter.Axis = Axis.Vertical;
         }
 
         #region User Input Events

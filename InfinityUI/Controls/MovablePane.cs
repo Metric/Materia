@@ -111,6 +111,13 @@ namespace InfinityUI.Controls
             float xSign = 1;
             float ySign = 1;
 
+            Vector2 scaledDelta = delta;
+
+            if (Canvas != null)
+            {
+                scaledDelta = delta * Canvas.Scale;
+            }
+
             switch (RelativeTo)
             {
                 case Anchor.BottomRight:
@@ -130,18 +137,22 @@ namespace InfinityUI.Controls
                     break;
             }
 
+            Vector2 movementDelta = Vector2.Zero;
+
             switch (MoveAxis)
             {
                 case Axis.Both:
-                    Position += new Vector2(delta.X / Scale.X * xSign, delta.Y / Scale.Y * ySign);
+                    movementDelta = new Vector2(scaledDelta.X / Scale.X * xSign, scaledDelta.Y / Scale.Y * ySign);
                     break;
                 case Axis.Horizontal:
-                    Position += new Vector2(delta.X / Scale.X * xSign, 0);
+                    movementDelta = new Vector2(scaledDelta.X / Scale.X * xSign, 0);
                     break;
                 case Axis.Vertical:
-                    Position += new Vector2(0, delta.Y / Scale.Y * ySign);
+                    movementDelta = new Vector2(0, scaledDelta.Y / Scale.Y * ySign);
                     break;
             }
+
+            Position += movementDelta;
 
             switch (SnapMode)
             {
@@ -154,10 +165,6 @@ namespace InfinityUI.Controls
                         if (!el.Rect.Intersects(Rect) || el.Rect.Contains(Rect)) continue;
                         UI.SnapToElement(this, el, SnapTolerance, xSign, ySign);
                     }
-
-                    break;
-                case MovablePaneSnapMode.Grid:
-                    UI.SnapToGrid(this, (int)SnapTolerance);
                     break;
             }
 
@@ -238,6 +245,11 @@ namespace InfinityUI.Controls
         {
             if (e.Button.HasFlag(MouseButton.Left))
             {
+                if (SnapMode == MovablePaneSnapMode.Grid) 
+                {
+                    UI.SnapToGrid(this, (int)SnapTolerance);
+                }
+
                 isMouseDown = false;
             }
         }

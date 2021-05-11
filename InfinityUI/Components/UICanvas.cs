@@ -18,6 +18,9 @@ namespace InfinityUI.Components
         public float Width { get; protected set; }
         public float Height { get; protected set; }
 
+        protected Vector2 inverseSize;
+        protected Vector2 halfSize;
+
         public Vector2 Size 
         { 
             get { return new Vector2(Width, Height); } 
@@ -31,7 +34,7 @@ namespace InfinityUI.Components
         public Matrix4 Projection { get; protected set; }
         public Matrix4 InvertedProjection { get; protected set; }
 
-        public Camera Cam { get; protected set; }
+        public Camera Cam { get; protected set; } = new Camera();
 
         protected float scaleWidthBase = 3896;
         public float ScaleWidthBase
@@ -80,18 +83,27 @@ namespace InfinityUI.Components
 
         public Vector3 ToCanvasSpace(Vector3 p)
         {
-            return (new Vector4(p.X, p.Y, p.Z, 1) * InvertedProjection).Xyz;
+            Vector2 pos = new Vector2(p.X * inverseSize.X * 2f - 1f, p.Y * inverseSize.Y * 2f - 1f);
+            Vector4 transformed = InvertedProjection * new Vector4(pos.X, -pos.Y, 0, 1);
+            pos = transformed.Xy + (halfSize + Cam.LocalPosition.Xy) * scale;
+            return new Vector3(pos.X, pos.Y, p.Z);
         }
 
         public Vector2 ToCanvasSpace(Vector2 p)
         {
-            return (new Vector4(p.X, p.Y, 0, 1) * InvertedProjection).Xy;
+            Vector2 pos = new Vector2(p.X * inverseSize.X * 2f - 1f, p.Y * inverseSize.Y * 2f - 1f);
+            Vector4 transformed = InvertedProjection * new Vector4(pos.X, -pos.Y, 0, 1);
+            pos = transformed.Xy + (halfSize + Cam.LocalPosition.Xy) * scale;
+            return pos;
         }
 
         public void Resize(float width, float height)
         {
             Width = width;
             Height = height;
+
+            inverseSize = new Vector2(1.0f / Width, 1.0f / Height);
+            halfSize = new Vector2(Width * 0.5f, Height * 0.5f);
 
             if (Parent != null)
             {
@@ -100,7 +112,7 @@ namespace InfinityUI.Components
 
             CalculateScale();
 
-            Projection = Matrix4.CreateScale(1, -1, 1) * Matrix4.CreateTranslation(-(width * 0.5f + Cam.LocalPosition.X) * scale, (height * 0.5f + Cam.LocalPosition.Y) * scale, 0) * Matrix4.CreateOrthographic(width * scale, height * scale, 0.0f, 1000f);
+            Projection = Matrix4.CreateScale(1, -1, 1) * Matrix4.CreateTranslation(-(halfSize.X + Cam.LocalPosition.X) * scale, (halfSize.Y + Cam.LocalPosition.Y) * scale, 0) * Matrix4.CreateOrthographic(width * scale, height * scale, 0.0f, 1000f);
             InvertedProjection = Projection.Inverted();
         }
 
