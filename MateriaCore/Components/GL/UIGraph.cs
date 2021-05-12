@@ -202,6 +202,10 @@ namespace MateriaCore.Components.GL
 
         protected void InitializeComponents()
         {
+            //set it so children can always be raycast to
+            //even outside bounds
+            RaycastAlways = true;
+
             //don't actually allow drag / snapping
             //we just want to be able to accept the Moved Event
             //for delta stuff

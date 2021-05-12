@@ -132,8 +132,8 @@ namespace Materia.Rendering.Geometry
             }
 
             vbo?.Bind();
-            IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-            IGL.Primary.VertexAttribPointer(0, 4, (int)VertexAttribPointerType.Float, false, 4 * sizeof(float), 3 * sizeof(float));
+            IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, 7 * sizeof(float), 0);
+            IGL.Primary.VertexAttribPointer(1, 4, (int)VertexAttribPointerType.Float, false, 7 * sizeof(float), 3 * 4);
             IGL.Primary.EnableVertexAttribArray(0);
             IGL.Primary.EnableVertexAttribArray(1);
             IGL.Primary.DrawArrays((int)PrimitiveType.Lines, 0, Lines.Count);

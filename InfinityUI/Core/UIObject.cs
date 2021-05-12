@@ -27,6 +27,15 @@ namespace InfinityUI.Core
 
         public bool RaycastTarget { get; set; } = false;
 
+        /// <summary>
+        /// determines if the children should always be raycast
+        /// even if the point is outside the parent bounds
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [raycast always]; otherwise, <c>false</c>.
+        /// </value>
+        public bool RaycastAlways { get; set; } = false;
+
         public UIObject Parent { get; protected set; }
 
         public Box2 Padding { get; set; } = new Box2(0, 0, 0, 0);
@@ -382,12 +391,12 @@ namespace InfinityUI.Core
 
         public UIObject Pick(ref Vector2 p)
         {
-            if (!Contains(ref p)) return null;
+            if (!RaycastAlways && !Contains(ref p)) return null;
 
             for (int i = Children.Count - 1; i >= 0; --i)
             {
                 if (!Children[i].RaycastTarget) continue;
-                if (Children[i].Contains(ref p))
+                if (Children[i].RaycastAlways || Children[i].Contains(ref p))
                 {
                     var c = Children[i].Pick(ref p);
                     if (c == null)

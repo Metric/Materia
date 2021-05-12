@@ -39,6 +39,9 @@ namespace MateriaCore
             glWindow = new MainGLWindow(settings);
             glWindow?.Show();
 
+            //load fontmanager fonts here
+            Materia.Rendering.Fonts.FontManager.GetAvailableFonts();
+
             updateTimer = new DispatcherTimer(DispatcherPriority.Render)
             {
                 Interval = new TimeSpan(0, 0, 0, 0, 16)

@@ -20,6 +20,8 @@ namespace Materia.Nodes.Atomic
         Right = 2
     }
 
+    //todo: fix this node since we changed font manager
+    //to a atlas based approach
     public class TextNode : ImageNode
     {
         NodeOutput Output;
@@ -214,7 +216,7 @@ namespace Materia.Nodes.Atomic
             fontSize = 32;
             fontFamily = "Arial";
             text = "";
-            fonts = FontManager.GetAvailableFonts();
+            fonts = FontManager.FamilyNames;
             position = new MVector();
             rotation = 0;
             scale = new MVector(1, 1);
@@ -309,7 +311,7 @@ namespace Materia.Nodes.Atomic
         void TryAndGenerateCharacters()
         {
             if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(fontFamily) || pfontSize <= 0) return;
-            map = FontManager.Generate(fontFamily, fontSize, text, style);
+            //map = FontManager.Generate(fontFamily, fontSize, text, style);
         }
 
         private void GetParams()
@@ -350,7 +352,7 @@ namespace Materia.Nodes.Atomic
 
         private void GetTransforms()
         {
-            transforms.Clear();
+            /*transforms.Clear();
             if (map == null || map.Count == 0) return;
 
             adjustments.Clear();
@@ -434,7 +436,7 @@ namespace Materia.Nodes.Atomic
                 }
 
                 adjustments.Add(alignmentAdjustment);
-            }
+            }*/
         }
 
         public override void TryAndProcess()
@@ -488,7 +490,7 @@ namespace Materia.Nodes.Atomic
                         if (tindex >= transforms.Count) continue;
 
                         string ch = line.Substring(j, 1);
-                        FontManager.CharData data = null;
+                        /*FontManager.CharData data = null;
                         if (map.TryGetValue(ch, out data))
                         {
                             if (data.texture == null)
@@ -511,7 +513,7 @@ namespace Materia.Nodes.Atomic
                             processor.Pivot = pivot;
                             processor.Scale = ct.scale * (new MVector(data.size.X, data.size.Y) * 0.5f);
                             processor.ProcessCharacter(width, height, character, buffer);
-                        }
+                        }*/
 
                         ++tindex;
                     }

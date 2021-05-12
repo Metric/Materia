@@ -107,6 +107,12 @@ namespace MateriaCore.Components.GL
         protected override void OnMouseMove(UISelectable selectable, MouseEventArgs e)
         {
             Vector2 p = e.Position;
+            
+            if (Canvas != null)
+            {
+                p = Canvas.ToCanvasSpace(p);
+            }
+
             if (titleBackgroundArea.Contains(ref p))
             {
                 base.OnMouseMove(selectable, e);

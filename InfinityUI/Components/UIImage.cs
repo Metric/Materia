@@ -37,11 +37,8 @@ namespace InfinityUI.Components
             Vector4 color = Color;
             Vector2 tiling = Tiling;
 
-            if (Texture != null)
-            {
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-                Texture.Bind();
-            }
+            IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
+            Texture.Bind();
 
             Shader.Use();
             Shader.SetUniformMatrix4("projectionMatrix", ref projection);

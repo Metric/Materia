@@ -149,6 +149,9 @@ namespace InfinityUI.Components
 
             if (Parent != null)
             {
+                //the canvas should always try
+                //and raycast down to children
+                Parent.RaycastAlways = true;
                 Parent.Canvas = this;
             }
         }

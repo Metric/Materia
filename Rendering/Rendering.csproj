@@ -66,6 +66,7 @@
     <None Remove="Embedded\Frag\warpdirectional.glsl" />
     <None Remove="Embedded\Geom\point.glsl" />
     <None Remove="Embedded\Geom\pointui.glsl" />
+    <None Remove="Embedded\Geom\pointuiuv.glsl" />
     <None Remove="Embedded\Tess\tcs.glsl" />
     <None Remove="Embedded\Tess\tes.glsl" />
     <None Remove="Embedded\Vertex\basic.glsl" />
@@ -76,9 +77,14 @@
     <None Remove="Embedded\Vertex\pbrtes.glsl" />
     <None Remove="Embedded\Vertex\point.glsl" />
     <None Remove="Embedded\Vertex\pointui.glsl" />
+    <None Remove="Embedded\Vertex\pointuiuv.glsl" />
     <None Remove="Embedded\Vertex\preview.glsl" />
     <None Remove="Embedded\Vertex\skybox.glsl" />
     <None Remove="Embedded\Vertex\uv.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Embedded\Geom\pointuiuv.glsl" />
   </ItemGroup>
 
   <ItemGroup>
@@ -137,6 +143,7 @@
     <EmbeddedResource Include="Embedded\Vertex\pbrtes.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\point.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pointui.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\pointuiuv.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\preview.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\skybox.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\uv.glsl" />

@@ -45,7 +45,11 @@ namespace MateriaCore.Components.GL
             Shader.SetUniformMatrix4("projectionMatrix", ref projection);
             Shader.SetUniformMatrix4("modelMatrix", ref model);
 
+            LineRenderer.SharedVao.Bind();
+
             renderer?.Draw();
+
+            UIRenderer.Bind();
         }
 
         public override void Invalidate()

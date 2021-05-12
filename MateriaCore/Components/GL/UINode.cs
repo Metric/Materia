@@ -24,8 +24,8 @@ namespace MateriaCore.Components.GL
         public event Action<UINode> Restored;
         public event Action<UINode> PreviewUpdated;
 
-        public const int DEFAULT_HEIGHT = 50;
-        public const int DEFAULT_WIDTH = 120;
+        public const int DEFAULT_HEIGHT = 64;
+        public const int DEFAULT_WIDTH = 128;
 
         #region UI Components  
         protected UIObject titleArea;
@@ -364,7 +364,7 @@ namespace MateriaCore.Components.GL
             //followed by the container
 
             titleArea = new UIObject();
-            titleArea.RelativeTo = Anchor.TopHorizFill;
+            titleArea.RelativeTo = Anchor.Top;
             title = titleArea.AddComponent<UIText>();
             title.Alignment = InfinityUI.Components.TextAlignment.Center;
 
