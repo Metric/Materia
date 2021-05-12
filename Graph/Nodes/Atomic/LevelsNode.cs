@@ -44,7 +44,6 @@ namespace Materia.Nodes.Atomic
 
             range = new MultiRange();
 
-            previewProcessor = new BasicImageRenderer();
             processor = new LevelsProcessor();
 
             internalPixelType = p;
@@ -61,11 +60,8 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
         }
 
         private void GetParams()
@@ -114,6 +110,7 @@ namespace Materia.Nodes.Atomic
         MultiRange prange;
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -123,14 +120,15 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
             processor.Min = new Vector3(prange.min[0], prange.min[1], prange.min[2]);
             processor.Max = new Vector3(prange.max[0], prange.max[1], prange.max[2]);
             processor.Mid = new Vector3(prange.mid[0], prange.mid[1], prange.mid[2]);
             processor.Value = new Vector2(prange.min[3], prange.max[3]);
 
-            processor.Process(width, height, i1, buffer);
+            processor.Process(i1);
             processor.Complete();
 
             Output.Data = buffer;

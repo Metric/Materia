@@ -51,7 +51,6 @@ namespace Materia.Nodes.Atomic
 
             tileX = tileY = 1;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new GradientMapProcessor();
 
             internalPixelType = p;
@@ -70,17 +69,11 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if (processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
 
-            if(colorLUT != null)
-            {
-                colorLUT.Dispose();
-                colorLUT = null;
-            }
+            colorLUT?.Dispose();
+            colorLUT = null;
 
             LUT = null;
         }
@@ -106,6 +99,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -119,8 +113,6 @@ namespace Materia.Nodes.Atomic
             if (i1 == null) return;
             if (i1.Id == 0) return;
 
-            if (processor == null) return;
-
             if(colorLUT == null || colorLUT.Id == 0)
             {
                 colorLUT = new GLTexture2D(PixelInternalFormat.Rgba8);
@@ -133,12 +125,13 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
 
             processor.ColorLUT = colorLUT;
             processor.Mask = i2;
-            processor.Process(width, height, i1, buffer);
+            processor.Process(i1);
             processor.Complete();
 
             Output.Data = buffer;

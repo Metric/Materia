@@ -344,7 +344,10 @@ namespace MateriaCore.Components.GL
 
             selectable.BubbleEvents = false;
 
-            selectable.NormalColor = new Vector4(0.35f, 0.35f, 0.35f, 1);
+            selectable.NormalColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+            selectable.HoverColor = new Vector4(0.95f, 0.95f, 0.95f, 1);
+            selectable.PressedColor = new Vector4(0.9f, 0.9f, 0.9f, 1);
+           
             selectable.Click += Selectable_Click;
             selectable.PointerUp += Selectable_PointerUp;
             selectable.PointerDown += Selectable_PointerDown;
@@ -363,34 +366,42 @@ namespace MateriaCore.Components.GL
             //with the title area first
             //followed by the container
 
-            titleArea = new UIObject();
-            titleArea.RelativeTo = Anchor.Top;
+            titleArea = new UIObject
+            {
+                RelativeTo = Anchor.Top
+            };
             title = titleArea.AddComponent<UIText>();
             title.Alignment = InfinityUI.Components.TextAlignment.Center;
 
-            descArea = new UIObject();
-            descArea.RelativeTo = Anchor.Fill;
-            descArea.Padding = new Box2(10, 20, 10, 10);
-            descArea.Visible = false;
+            descArea = new UIObject
+            {
+                RelativeTo = Anchor.Center,
+                Visible = false
+            };
             desc = descArea.AddComponent<UIText>();
             desc.Alignment = InfinityUI.Components.TextAlignment.Center;
 
-            previewArea = new UIObject();
-            previewArea.Size = new Vector2(Size.X, Size.X);
-            previewArea.RelativeTo = Anchor.Center;
-            previewArea.Padding = new Box2(10, 20, 10, 10);
-            previewArea.RaycastTarget = false;
+            previewArea = new UIObject
+            {
+                Size = new Vector2(Size.X, Size.X),
+                RelativeTo = Anchor.Center,
+                RaycastTarget = false
+            };
             preview = previewArea.AddComponent<UIImage>();
 
-            outputsArea = new UIObject();
-            outputsArea.RaycastTarget = true;
-            outputsArea.RelativeTo = Anchor.CenterRight;
+            outputsArea = new UIObject
+            {
+                RaycastTarget = true,
+                RelativeTo = Anchor.CenterRight
+            };
             var stack = outputsArea.AddComponent<UIStackPanel>();
             stack.Direction = Orientation.Vertical;
 
-            inputsArea = new UIObject();
-            inputsArea.RaycastTarget = true;
-            inputsArea.RelativeTo = Anchor.CenterLeft;
+            inputsArea = new UIObject
+            {
+                RaycastTarget = true,
+                RelativeTo = Anchor.CenterLeft
+            };
             stack = inputsArea.AddComponent<UIStackPanel>();
             stack.Direction = Orientation.Vertical;
 

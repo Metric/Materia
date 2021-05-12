@@ -92,7 +92,6 @@ namespace Materia.Nodes.Atomic
 
             tileX = tileY = 1;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new GrayscaleConvProcessor();
 
             internalPixelType = p;
@@ -111,6 +110,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -120,10 +120,11 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
             processor.Weight = new Vector4(r, g, b, a);
-            processor.Process(width, height, i1, buffer);
+            processor.Process(i1);
             processor.Complete();
 
             Output.Data = buffer;
@@ -164,11 +165,8 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
         }
     }
 }

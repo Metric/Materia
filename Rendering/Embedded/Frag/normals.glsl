@@ -9,6 +9,8 @@ uniform float intensity;
 uniform int directx = 0;
 uniform float reduce = 0.004;
 
+uniform float luminosity = 1;
+
 uniform sampler2D MainTex;
 
 void main() {

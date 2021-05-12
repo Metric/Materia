@@ -5,6 +5,8 @@ in vec2 UV;
 uniform sampler2D MainTex;
 uniform sampler2D Original;
 
+uniform float luminosity = 1;
+
 //this is part two of the final occlusion pass
 //occlusion pass requires two passes
 //one for blur and the other for the inversion of blur

@@ -6,6 +6,8 @@ uniform sampler2D MainTex;
 
 uniform vec4 weight;
 
+uniform float luminosity = 1;
+
 void main() {
     vec4 c = texture(MainTex, UV);
 

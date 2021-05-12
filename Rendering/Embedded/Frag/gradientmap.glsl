@@ -9,6 +9,8 @@ uniform sampler2D Mask;
 uniform int useMask = 0;
 uniform int horizontal = 1;
 
+uniform float luminosity = 1;
+
 void main() {
     vec2 msize = textureSize(MainTex, 0);
     vec4 rgba = texture(MainTex, UV);

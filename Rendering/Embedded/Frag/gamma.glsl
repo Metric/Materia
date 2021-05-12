@@ -6,6 +6,8 @@ uniform sampler2D MainTex;
 
 uniform float gamma;
 
+uniform float luminosity = 1;
+
 void main() {
     vec4 c = texture(MainTex, UV);
     FragColor.rgb = pow(c.rgb, vec3(1.0 / gamma));

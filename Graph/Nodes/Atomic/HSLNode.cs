@@ -5,6 +5,7 @@ using Materia.Rendering.Textures;
 using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Atomic
 {
@@ -72,7 +73,6 @@ namespace Materia.Nodes.Atomic
 
             tileX = tileY = 1;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new HSLProcessor();
 
             hue = 0;
@@ -92,11 +92,8 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if (processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
         }
 
 
@@ -133,6 +130,7 @@ namespace Materia.Nodes.Atomic
         float l;
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -144,14 +142,15 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
 
             processor.Hue = h * 6.0f;
             processor.Saturation = s;
             processor.Lightness = l;
 
-            processor.Process(width, height, i1, buffer);
+            processor.Process(i1);
             processor.Complete();
 
             Output.Data = buffer;

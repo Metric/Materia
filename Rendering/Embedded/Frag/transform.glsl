@@ -7,6 +7,8 @@ uniform mat3 rotation;
 uniform mat3 scale;
 uniform vec3 translation;
 
+uniform float luminosity = 1;
+
 void main() {
     vec2 size = textureSize(MainTex, 0);
     vec3 runits = vec3(size * (UV - 0.5), 0);

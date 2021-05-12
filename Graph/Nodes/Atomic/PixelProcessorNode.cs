@@ -43,7 +43,6 @@ namespace Materia.Nodes.Atomic
 
             function.ExpectedOutput = NodeType.Float4 | NodeType.Float;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new PixelShaderProcessor();
 
             internalPixelType = p;
@@ -112,6 +111,8 @@ namespace Materia.Nodes.Atomic
         bool shaderBuilt;
         void Process()
         {
+            if (processor == null) return;
+
             GLTexture2D i1 = null;
             GLTexture2D i2 = null;
             GLTexture2D i3 = null;
@@ -144,15 +145,11 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            buffer.Bind();
-
-            IGL.Primary.ClearTexImage(buffer.Id, (int)PixelFormat.Rgba, (int)PixelType.Float);
-
-            GLTexture2D.Unbind();      
+            processor.PrepareView(buffer);
             processor.Shader = function.Shader;
-            processor.Prepare(width, height, i1, i2, i3, i4, buffer);
+            processor.Prepare(i1, i2, i3, i4);
             function.PrepareUniforms();
-            processor.Complete();
+            processor.Process();
 
             output.Data = buffer;
             TriggerTextureChange();
@@ -188,11 +185,11 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(function != null)
-            {
-                function.Dispose();
-                function = null;
-            }
+            processor?.Dispose();
+            processor = null;
+
+            function?.Dispose();
+            function = null;
         }
     }
 }

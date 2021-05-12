@@ -285,8 +285,6 @@ namespace Materia.Nodes.Atomic
 
             blending = FXBlend.Blend;
 
-            previewProcessor = new BasicImageRenderer();
-
             q1 = new NodeInput(NodeType.Color | NodeType.Gray, this, "Quadrant");
             q2 = new NodeInput(NodeType.Color | NodeType.Gray, this, "Quadrant");
             q3 = new NodeInput(NodeType.Color | NodeType.Gray, this, "Quadrant");

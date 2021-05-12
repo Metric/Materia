@@ -11,28 +11,20 @@ namespace Materia.Rendering.Imaging.Processing
         public float Angle { get; set; }
         public MVector Pivot { get; set; }
 
-        public void Prepare(int width, int height, GLTexture2D tex, GLTexture2D output)
+        public void Process(GLTexture2D input, Vector4 uv)
         {
-            base.Process(width, height, tex, output);
-
-            //renable blending!
-            IGL.Primary.Enable((int)EnableCap.Blend);
+            Transform(Translation, Scale, Angle, Pivot);
+            Bind();
+            SetTextures(input);
+            renderQuad?.SetUV(ref uv);
+            renderQuad?.Draw();
+            Unbind();
         }
 
         public override void Complete()
         {
+            renderQuad?.DefaultUV();
             base.Complete();
-
-            IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.FuncAdd, (int)BlendEquationMode.FuncAdd);
-            IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
-        }
-
-        public void ProcessCharacter(int width, int height, GLTexture2D tex, GLTexture2D output)
-        {
-            IGL.Primary.BlendEquationSeparate((int)BlendEquationMode.FuncAdd, (int)BlendEquationMode.FuncAdd);
-            IGL.Primary.BlendFunc((int)BlendingFactor.SrcAlpha, (int)BlendingFactor.OneMinusSrcAlpha);
-
-            ApplyTransformNoAuto(tex, output, width, height, Translation, Scale, Angle, Pivot);
         }
     }
 }

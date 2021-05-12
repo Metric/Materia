@@ -81,7 +81,6 @@ namespace Materia.Nodes.Atomic
             width = w;
             height = h;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new TransformProcessor();
 
             internalPixelType = p;
@@ -158,6 +157,7 @@ namespace Materia.Nodes.Atomic
         float pangle;
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -167,17 +167,18 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            processor.PrepareView(buffer);
+
             Matrix3 rot = Matrix3.CreateRotationZ(pangle * (float)(Math.PI / 180.0));
             Matrix3 scale = Matrix3.CreateScale(1.0f / pscaleX, 1.0f / pscaleY, 1);
             Vector3 trans = new Vector3(pxoffset * width, pyoffset * height, 0);
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
+            processor.Tiling = new Vector2(TileX, TileY);
             processor.Rotation = rot;
             processor.Scale = scale;
             processor.Translation = trans;
 
-            processor.Process(width, height, i1, buffer);
+            processor.Process(i1);
             processor.Complete();
 
             Output.Data = buffer;
@@ -190,11 +191,8 @@ namespace Materia.Nodes.Atomic
 
             //we always release just in case
             //we ever add anything to it
-            if(processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
         }
 
         public class TransformData : NodeData

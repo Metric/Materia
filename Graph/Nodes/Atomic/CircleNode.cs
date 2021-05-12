@@ -5,6 +5,8 @@ using Newtonsoft.Json;
 using Materia.Rendering.Imaging.Processing;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
+using Materia.Rendering.Mathematics;
+using Materia.Rendering.Textures;
 
 namespace Materia.Nodes.Atomic
 {
@@ -12,6 +14,7 @@ namespace Materia.Nodes.Atomic
     {
         protected float radius;
         CircleProcessor processor;
+        protected GLTexture2D buffer2;
 
         NodeOutput Output;
 
@@ -57,8 +60,6 @@ namespace Materia.Nodes.Atomic
 
             tileX = tileY = 1;
 
-            previewProcessor = new BasicImageRenderer();
-
             processor = new CircleProcessor();
 
             outline = 0;
@@ -97,29 +98,35 @@ namespace Materia.Nodes.Atomic
             Process();
         }
 
+        //will probably need to do this
+        //so we can do tiling properly
+        /*protected override void CreateBufferIfNeeded()
+        {
+            base.CreateBufferIfNeeded();
+            buffer2?.Dispose();
+            buffer2 = buffer.Copy();
+        }*/
+
         float pradius;
         float poutline;
         void Process()
         {
+            if (processor == null) return;
+
             CreateBufferIfNeeded();
 
-            processor.TileX = 1;
-            processor.TileY = 1;
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
             processor.Radius = pradius;
             processor.Outline = poutline;
 
-            processor.Process(width, height, null, buffer);
+            processor.Process();
             processor.Complete();
 
-            //have to do this to tile properly
-            previewProcessor.TileX = tileX;
-            previewProcessor.TileY = tileY;
-
-            previewProcessor.Process(width, height, buffer, buffer);
-            previewProcessor.Complete();
-
-            previewProcessor.TileX = 1;
-            previewProcessor.TileY = 1;
+            //note might need to add back in
+            //another processor here
+            //for tiling
 
             Output.Data = buffer;
             TriggerTextureChange();
@@ -129,11 +136,11 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            buffer2?.Dispose();
+            buffer2 = null;
+
+            processor?.Dispose();
+            processor = null;
         }
 
         public class CircleData : NodeData

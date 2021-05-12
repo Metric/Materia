@@ -5,6 +5,7 @@ using Materia.Rendering.Textures;
 using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Atomic
 {
@@ -40,7 +41,6 @@ namespace Materia.Nodes.Atomic
 
             tileX = tileY = 1;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new SharpenProcessor();
 
             intensity = 1;
@@ -58,11 +58,8 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if (processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
         }
 
         private void GetParams()
@@ -86,6 +83,7 @@ namespace Materia.Nodes.Atomic
         float pintensity;
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -93,16 +91,14 @@ namespace Materia.Nodes.Atomic
             if (i1 == null) return;
             if (i1.Id == 0) return;
 
-            if (processor == null) return;
-
             CreateBufferIfNeeded();
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
+            processor.PrepareView(buffer);
 
+            processor.Tiling = new Vector2(TileX, TileY);
             processor.Intensity = pintensity;
 
-            processor.Process(width, height, i1, buffer);
+            processor.Process(i1);
             processor.Complete();
 
             Output.Data = buffer;

@@ -5,6 +5,7 @@ using Materia.Rendering.Textures;
 using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Atomic
 {
@@ -58,7 +59,6 @@ namespace Materia.Nodes.Atomic
 
             internalPixelType = p;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new MotionBlurProcessor();
 
             tileX = tileY = 1;
@@ -100,6 +100,7 @@ namespace Materia.Nodes.Atomic
         float pdirection;
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -108,19 +109,13 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.TileX = 1;
-            processor.TileY = 1;
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
             processor.Direction = (float)pdirection * (float)(Math.PI / 180.0f);
             processor.Magnitude = pintensity;
-            processor.Process(width, height, i1, buffer);
+            processor.Process(i1);
             processor.Complete();
-
-            previewProcessor.TileX = tileX;
-            previewProcessor.TileY = tileY;
-            previewProcessor.Process(width, height, buffer, buffer);
-            previewProcessor.Complete();
-            previewProcessor.TileX = 1;
-            previewProcessor.TileY = 1;
 
             output.Data = buffer;
             TriggerTextureChange();
@@ -154,10 +149,8 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(processor != null)
-            {
-                processor.Dispose();
-            }
+            processor?.Dispose();
+            processor = null;
         }
     }
 }

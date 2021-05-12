@@ -72,8 +72,6 @@ namespace Materia.Nodes.Atomic
             height = 16;
             tileX = tileY = 1;
 
-            previewProcessor = new BasicImageRenderer();
-
             //only an output is present
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
             Outputs.Add(Output);
@@ -96,10 +94,9 @@ namespace Materia.Nodes.Atomic
             if (active == null) return null;
             if (active.Id == 0) return null;
 
-            previewProcessor.Process(width, height, active);
-            byte[] bits = previewProcessor.ReadByte(width, height);
-            previewProcessor.Complete();
-            return bits;
+            //todo: do we even need this getpreview anymore?
+
+            return null;
         }
 
         public override void TryAndProcess()

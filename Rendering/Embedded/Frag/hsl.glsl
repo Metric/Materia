@@ -7,6 +7,8 @@ uniform float hue;
 uniform float saturation;
 uniform float lightness;
 
+uniform float luminosity = 1;
+
 ///HSL HELPERS
 vec3 ToHSL(vec3 c) {
     float r = c.r;

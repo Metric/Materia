@@ -191,6 +191,14 @@ namespace Materia.Rendering.Mathematics
             }
         }
 
+        public Vector2 Frac()
+        {
+            Vector2 v = this;
+            v.X -= MathF.Round(v.X);
+            v.Y -= MathF.Round(v.Y);
+            return v;
+        }
+
         /// <summary>
         /// Returns a copy of the Vector2 scaled to unit length.
         /// </summary>

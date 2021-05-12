@@ -6,8 +6,6 @@ namespace Materia.Rendering.Imaging.Processing
 {
     public class EmbossProcessor : ImageProcessor
     {
-        IGLProgram shader;
-
         public float Azimuth { get; set; }
         public float Elevation { get; set; }
 
@@ -16,39 +14,26 @@ namespace Materia.Rendering.Imaging.Processing
             shader = GetShader("image.glsl", "emboss.glsl");
         }
 
-        public override void Process(int width, int height, GLTexture2D tex, GLTexture2D output)
+        protected override void SetUniqueUniforms()
         {
-            base.Process(width, height, tex, output);
+            base.SetUniqueUniforms();
 
-            if (shader != null)
-            {
-                ResizeViewTo(tex, output, tex.Width, tex.Height, width, height);
-                tex = output;
-                IGL.Primary.Clear((int)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+            float width = outputBuff.Width;
+            float height = outputBuff.Height;
 
-                Vector2 tiling = new Vector2(TileX, TileY);
+            shader?.SetUniform("width", width);
+            shader?.SetUniform("height", height);
+            shader?.SetUniform("azimuth", Azimuth);
+            shader?.SetUniform("elevation", Elevation);
+        }
 
-                shader.Use();
-                shader.SetUniform2("tiling", ref tiling);
-                shader.SetUniform("MainTex", 0);
-                shader.SetUniform("width", (float)width);
-                shader.SetUniform("height", (float)height);
-                shader.SetUniform("azimuth", Azimuth);
-                shader.SetUniform("elevation", Elevation);
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-                tex.Bind();
-
-                if(renderQuad != null)
-                {
-                    renderQuad.Draw();
-                }
-
-                GLTexture2D.Unbind();
-                // output.Bind();
-                // output.CopyFromFrameBuffer(width, height);
-                // GLTexture2D.Unbind();
-                Blit(output, width, height);
-            }
+        public void Process(GLTexture2D input)
+        {
+            Identity();
+            Bind();
+            SetTextures(input);
+            renderQuad?.Draw();
+            Unbind();
         }
     }
 }

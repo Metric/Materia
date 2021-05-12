@@ -10,6 +10,8 @@ uniform float elevation;
 
 uniform sampler2D MainTex;
 
+uniform float luminosity = 1;
+
 void main() {
     //azimuth and elevation are in radians already
     vec3 ldir = normalize(vec3(cos(azimuth),sin(azimuth),sin(elevation)));

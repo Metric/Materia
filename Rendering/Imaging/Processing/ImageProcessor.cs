@@ -10,135 +10,111 @@ using MLog;
 
 namespace Materia.Rendering.Imaging.Processing
 {
-    public class ImageProcessor : IDisposable
+    public class ImageProcessor : ViewProcessor
     {
         protected static FullScreenQuad renderQuad;
         protected static GLRenderBuffer renderBuff;
         protected static GLFrameBuffer frameBuff;
+        
+        //do we really need this now?
         protected static GLFrameBuffer temp;
+
+        protected static GLTexture2D outputBuff;
         protected static GLTexture2D colorBuff;
 
-        protected static PreviewProcessor resizeProcessor;
+        protected static readonly Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
 
         protected int Width { get; set; }
         protected int Height { get; set; }
 
         public bool Stretch { get; set; }
 
-        public float TileX { get; set; }
-        public float TileY { get; set; }
-
-        public float Luminosity { get; set; }
-
-        public ImageProcessor()
+        public ImageProcessor() : base()
         {
             Luminosity = 1.0f;
             Stretch = true;
-            TileX = 1;
-            TileY = 1;
         }
 
-        protected void ApplyTransformNoAuto(GLTexture2D inc, GLTexture2D o, int owidth, int oheight, MVector translation, MVector scale, float angle, MVector pivot)
+        protected void Transform(MVector translation, MVector scale, float angle, MVector pivot)
         {
-            Matrix4 proj = Matrix4.CreateOrthographic(owidth, oheight, 0.03f, 1000f);
+            int owidth = outputBuff.Width;
+            int oheight = outputBuff.Height;
+
+            Matrix4 proj = Matrix4.CreateOrthographic(owidth, oheight, 0f, 1000f);
             Matrix4 pTrans = Matrix4.CreateTranslation(-pivot.X, -pivot.Y, 0);
             Matrix4 iPTrans = Matrix4.CreateTranslation(pivot.X, pivot.Y, 0);
             Matrix4 trans = Matrix4.CreateTranslation(translation.X, translation.Y, 0);
-            Matrix4 sm = Matrix4.CreateScale(scale.X, scale.Y, 1);
-            Matrix4 rot = Matrix4.CreateRotationZ(angle);
-            Matrix4 model = pTrans * sm * rot * iPTrans * trans;
-            
-            Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
 
-            IGL.Primary.Viewport(0, 0, owidth, oheight);
+            Matrix4 sm = pTrans * Matrix4.CreateScale(scale.X, scale.Y, 1) * iPTrans;
+            Matrix4 rot = pTrans * Matrix4.CreateRotationZ(angle) * iPTrans;
 
-            resizeProcessor.Model = model;
-            resizeProcessor.View = view;
-            resizeProcessor.Projection = proj;
-            resizeProcessor.Luminosity = Luminosity;
+            //note old method
+            //Matrix4 model = pTrans * sm * rot * iPTrans * trans;
 
-            resizeProcessor.Bind(inc);
+            Matrix4 model = sm * rot * trans;
 
-            inc.ClampToEdge();
-
-            renderQuad?.Draw();
-            
-            inc.Repeat();
-            resizeProcessor.Unbind();
-
-            o.Bind();
-            o.Repeat();
-            GLTexture2D.Unbind();
-
-            Blit(o, owidth, oheight);
+            Model = model;
+            View = view;
+            Projection = proj;
         }
 
-        protected void ApplyTransform(GLTexture2D inc, GLTexture2D o, int owidth, int oheight, MVector translation, MVector scale, float angle, MVector pivot)
+        protected void TransformAutoSize(GLTexture2D inc, MVector translation, MVector scale, float angle, MVector pivot)
         {
-            Matrix4 proj = Matrix4.CreateOrthographic(owidth, oheight, 0.03f, 1000f);
+            int owidth = outputBuff.Width;
+            int oheight = outputBuff.Height;
+
+            Matrix4 proj = Matrix4.CreateOrthographic(owidth, oheight, 0f, 1000f);
             Matrix4 pTrans = Matrix4.CreateTranslation(-pivot.X, -pivot.Y, 0);
             Matrix4 iPTrans = Matrix4.CreateTranslation(pivot.X, pivot.Y, 0);
             Matrix4 trans = Matrix4.CreateTranslation(translation.X * inc.Width, translation.Y * inc.Height, 0);
-            Matrix4 sm = Matrix4.CreateScale(((float)inc.Width * 0.5f) * scale.X, ((float)inc.Height * 0.5f) * scale.Y, 1);
-            Matrix4 rot = Matrix4.CreateRotationZ(angle);
-            Matrix4 model = pTrans * sm * rot * iPTrans * trans;
-            Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
+            
+            Matrix4 sm = pTrans * Matrix4.CreateScale(((float)inc.Width * 0.5f) * scale.X, ((float)inc.Height * 0.5f) * scale.Y, 1) * iPTrans;
+            Matrix4 rot = pTrans * Matrix4.CreateRotationZ(angle) * iPTrans;
 
-            IGL.Primary.Viewport(0, 0, owidth, oheight);
+            //note old method
+            //Matrix4 model = pTrans * sm * rot * iPTrans * trans;
 
-            resizeProcessor.Model = model;
-            resizeProcessor.View = view;
-            resizeProcessor.Projection = proj;
-            resizeProcessor.Luminosity = Luminosity;
+            Matrix4 model = sm * rot * trans;
 
-            resizeProcessor.Bind(inc);
-
-            inc.ClampToEdge();
-
-            renderQuad?.Draw();
-
-            inc.Repeat();
-            resizeProcessor.Unbind();
-
-            o.Bind();
-            o.Repeat();
-            GLTexture2D.Unbind();
-
-            Blit(o, owidth, oheight);
+            Model = model;
+            View = view;
+            Projection = proj;
         } 
 
-        protected void ResizeViewTo(GLTexture2D inc, GLTexture2D o, int owidth, int oheight, int nwidth, int nheight)
+        protected void Resize(GLTexture2D inc)
         {
+            int nwidth = outputBuff.Width;
+            int nheight = outputBuff.Height;
+
+            int owidth = inc.Width;
+            int oheight = inc.Height;
+
             float wp = (float)nwidth / (float)owidth;
             float hp = (float)nheight / (float)oheight;
 
             float fp = wp < hp ? wp : hp;
 
-            Matrix4 proj = Matrix4.CreateOrthographic(nwidth, nheight, 0.03f, 1000f);
+            Matrix4 proj = Matrix4.CreateOrthographic(nwidth, nheight, 0f, 1000f);
             //half width/height for scale as it is centered based
             Matrix4 sm = Matrix4.CreateScale(fp * (float)(owidth * 0.5f), fp * (float)(oheight * 0.5f), 1);
-            Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
 
-            resizeProcessor.Model = sm;
-            resizeProcessor.View = view;
-            resizeProcessor.Projection = proj;
-            resizeProcessor.Luminosity = Luminosity;
+            Model = sm;
+            View = view;
+            Projection = proj;
+        }
 
-            resizeProcessor.Bind(inc);
-            
-            renderQuad?.Draw();
+        protected void Identity()
+        {
+            int nwidth = outputBuff.Width;
+            int nheight = outputBuff.Height;
 
-            resizeProcessor.Unbind();
-
-            Blit(o, nwidth, nheight);
+            Projection = Matrix4.CreateOrthographic(nwidth, nheight, 0f, 1000f);
+            View = view;
+            Model = Matrix4.Identity;
         }
 
         protected void CreateBuffersIfNeeded()
         {
-            if(resizeProcessor == null)
-            {
-                resizeProcessor = new PreviewProcessor();
-            }
             if (renderBuff == null)
             {
                 renderBuff = new GLRenderBuffer();
@@ -146,44 +122,39 @@ namespace Materia.Rendering.Imaging.Processing
                 renderBuff.SetBufferStorageAsDepth(4096, 4096);
                 renderBuff.Unbind();
             }
+
             if (colorBuff == null)
             {
-                //colorbuff part of the framebuffer is always Rgba32f to support all texture formats
-                //that could be rendered into it
                 colorBuff = new GLTexture2D(PixelInternalFormat.Rgba32f);
                 colorBuff.Bind();
-                colorBuff.SetData(IntPtr.Zero, PixelFormat.Rgba, 4096, 4096);
+                colorBuff.SetData(IntPtr.Zero, PixelFormat.Bgra, 4096, 4096);
                 colorBuff.Linear();
+                colorBuff.ClampToEdge();
                 GLTexture2D.Unbind();
             }
+
             if (frameBuff == null)
             {
                 frameBuff = new GLFrameBuffer();
                 frameBuff.Bind();
                 frameBuff.AttachColor(colorBuff);
                 frameBuff.AttachDepth(renderBuff);
+
                 IGL.Primary.DrawBuffers(new int[] { (int)DrawBufferMode.ColorAttachment0 });
                 IGL.Primary.ReadBuffer((int)ReadBufferMode.ColorAttachment0);
-
-                if (!frameBuff.IsValid)
-                {
-                    var status = IGL.Primary.CheckFramebufferStatus((int)FramebufferTarget.Framebuffer);  
-                    frameBuff.Unbind();
-                    return;
-                }
 
                 frameBuff.Unbind();
             }
         }
 
-        public virtual void Process(int width, int height, GLTexture2D tex, GLTexture2D output)
+        public virtual void PrepareView(GLTexture2D output = null)
         {
-            IGL.Primary.Enable((int)EnableCap.Dither);
-
-            Width = width;
-            Height = height;
-
             CreateBuffersIfNeeded();
+
+            outputBuff = output == null ? colorBuff : output;
+
+            Width = outputBuff.Width;
+            Height = outputBuff.Height;
 
             if(renderQuad == null)
             {
@@ -195,13 +166,15 @@ namespace Materia.Rendering.Imaging.Processing
             IGL.Primary.Disable((int)EnableCap.DepthTest);
 
             frameBuff.Bind();
+            frameBuff.AttachColor(outputBuff);
 
-            IGL.Primary.Viewport(0, 0, width, height);
+            IGL.Primary.Viewport(0, 0, Width, Height);
             IGL.Primary.ClearColor(0, 0, 0, 0);
 
             IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit);
         }
 
+        /*
         protected void Blit(GLTexture2D output, int width, int height)
         {
             if (temp == null)
@@ -225,6 +198,7 @@ namespace Materia.Rendering.Imaging.Processing
             temp.Unbind();
             frameBuff?.Bind();
         }
+        */
 
         protected IGLProgram GetShader(string vertFile, string fragFile)
         {
@@ -274,22 +248,16 @@ namespace Materia.Rendering.Imaging.Processing
         public virtual void Complete()
         {
             frameBuff?.Unbind();
-
             IGL.Primary.Enable((int)EnableCap.DepthTest);
-        }
-
-        public virtual void Dispose()
-        {
-
         }
 
         public static void DisposeCache()
         {
-            temp?.Dispose();
-            temp = null;
-
             colorBuff?.Dispose();
             colorBuff = null;
+
+            temp?.Dispose();
+            temp = null;
 
             renderQuad?.Dispose();
             renderQuad = null;

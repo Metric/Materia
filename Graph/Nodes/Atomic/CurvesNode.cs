@@ -89,8 +89,6 @@ namespace Materia.Nodes.Atomic
 
             points = new Dictionary<int, List<PointD>>();
 
-            previewProcessor = new BasicImageRenderer();
-
             tileX = tileY = 1;
 
             lutBrush = new FloatBitmap(256, 2);
@@ -261,6 +259,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -274,9 +273,10 @@ namespace Materia.Nodes.Atomic
             curveLUT.SetData(lutBrush.Image, PixelFormat.Rgba, 256, 2);
             GLTexture2D.Unbind();
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
-            processor.Process(width, height, i1, buffer);
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
+            processor.Process(i1);
             processor.Complete();
 
             Output.Data = buffer;
@@ -287,17 +287,11 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
 
-            if(curveLUT != null)
-            {
-                curveLUT.Dispose();
-                curveLUT = null;
-            }
+            curveLUT?.Dispose();
+            curveLUT = null;
         }
 
         public class CurvesData : NodeData

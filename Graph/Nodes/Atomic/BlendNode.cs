@@ -5,6 +5,7 @@ using Materia.Rendering.Attributes;
 using Materia.Rendering.Extensions;
 using Materia.Rendering.Textures;
 using Materia.Graph;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Atomic
 {
@@ -119,7 +120,6 @@ namespace Materia.Nodes.Atomic
             alphaMode = AlphaModeType.Add;
             mode = BlendType.Copy;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new BlendProcessor();
 
             internalPixelType = p;
@@ -172,6 +172,7 @@ namespace Materia.Nodes.Atomic
         int amode;
         void Process()
         {
+            if (processor == null) return;
             if (!first.HasInput || !second.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)first.Reference.Data;
@@ -189,12 +190,13 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
             processor.Alpha = palpha;
             processor.BlendMode = pmode;
             processor.AlphaMode = amode;
-            processor.Process(width, height, i1, i2, i3, buffer);
+            processor.Process(i1, i2, i3);
             processor.Complete();
 
             Output.Data = buffer;
@@ -205,11 +207,8 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
         }
 
         public class BlendData : NodeData

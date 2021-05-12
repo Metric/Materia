@@ -8,6 +8,8 @@ uniform vec3 maxValues;
 uniform vec3 midValues;
 uniform vec2 value;
 
+uniform float luminosity = 1;
+
 float Gamma(float mid) {
     float gamma = 1;
 

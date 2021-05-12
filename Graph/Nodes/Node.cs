@@ -15,8 +15,6 @@ namespace Materia.Nodes
 {
     public abstract class Node : IDisposable, ISchedulable
     {
-        
-
         public static TaskScheduler Context { get; set; }
         public static SynchronizationContext SyncContext { get; set; }
 
@@ -41,7 +39,6 @@ namespace Materia.Nodes
         public double ViewOriginX = 0;
         public double ViewOriginY = 0;
 
-        protected BasicImageRenderer previewProcessor;
 
         protected GLTexture2D buffer;
         public GLTexture2D Buffer
@@ -305,18 +302,10 @@ namespace Materia.Nodes
 
             ParentGraph = null;
 
-            if(buffer != null)
-            {
-                buffer.Dispose();
-                buffer = null;
-            }
-
-            if(previewProcessor != null)
-            {
-                previewProcessor.Dispose();
-                previewProcessor = null;
-            }
+            buffer?.Dispose();
+            buffer = null;
         }
+
         public abstract string GetJson();
         public abstract void FromJson(string data, Archive archive = null);
 
@@ -502,7 +491,7 @@ namespace Materia.Nodes
             {
                 buffer = new GLTexture2D((PixelInternalFormat)((int)internalPixelType));
                 buffer.Bind();
-                buffer.SetData(IntPtr.Zero, PixelFormat.Rgba, width, height);
+                buffer.SetData(IntPtr.Zero, PixelFormat.Bgra, width, height);
                 buffer.Linear();
                 buffer.Repeat();
                 
@@ -522,11 +511,8 @@ namespace Materia.Nodes
 
         public virtual void ReleaseBuffer()
         {
-            if(buffer != null)
-            {
-                buffer.Dispose();
-                buffer = null;
-            }
+            buffer?.Dispose();
+            buffer = null;
         }
 
         public List<NodeConnection> GetConnections()

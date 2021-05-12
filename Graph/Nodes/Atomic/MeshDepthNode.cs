@@ -130,7 +130,6 @@ namespace Materia.Nodes.Atomic
             rotation = new MVector(0, 0, 0);
             cameraZoom = 3;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new MeshDepthProcessor();
 
             internalPixelType = p;
@@ -209,6 +208,7 @@ namespace Materia.Nodes.Atomic
         List<Mesh> meshes;
         void Process()
         {
+            if (processor == null) return;
             if (mesh == null) return;
 
             CreateBufferIfNeeded();
@@ -239,10 +239,9 @@ namespace Materia.Nodes.Atomic
             mesh.LightPosition = new Vector3(0, 0, 0);
             mesh.LightColor = new Vector3(1, 1, 1);
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
+            processor.Tiling = new Vector2(TileX, TileY);
             processor.Mesh = mesh;
-            processor.Process(width, height, buffer);
+            processor.Process(buffer);
             processor.Complete();
 
             Output.Data = buffer;
@@ -329,16 +328,11 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if (mesh != null)
-            {
-                mesh.Dispose();
-                mesh = null;
-            }
+            mesh?.Dispose();
+            mesh = null;
 
-            if(processor != null)
-            {
-                processor.Dispose();
-            }
+            processor?.Dispose();
+            processor = null;
         }
     }
 }

@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Textures;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Atomic
 {
@@ -13,6 +14,7 @@ namespace Materia.Nodes.Atomic
     {
         BlurProcessor blur;
         OcclusionProcessor processor;
+        protected GLTexture2D buffer2;
 
         NodeInput input;
 
@@ -49,7 +51,6 @@ namespace Materia.Nodes.Atomic
 
             internalPixelType = p;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new OcclusionProcessor();
             blur = new BlurProcessor();
 
@@ -88,17 +89,14 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            buffer2?.Dispose();
+            buffer2 = null;
 
-            if(blur != null)
-            {
-                blur.Dispose();
-                blur = null;
-            }
+            processor?.Dispose();
+            processor = null;
+
+            blur?.Dispose();
+            blur = null;
         }
 
         public override void TryAndProcess()
@@ -119,9 +117,25 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        public override void ReleaseBuffer()
+        {
+            base.ReleaseBuffer();
+            buffer2?.Dispose();
+        }
+
+        protected override void CreateBufferIfNeeded()
+        {
+            base.CreateBufferIfNeeded();
+            if (buffer2 == null || buffer2.Id == 0)
+            {
+                buffer2 = buffer.Copy();
+            }
+        }
+
         float prays;
         void Process()
         {
+            if (processor == null || blur == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -131,17 +145,18 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            blur.TileX = 1;
-            blur.TileY = 1;
+            blur.PrepareView(buffer2);
+            blur.Tiling = new Vector2(TileX, TileY);
             blur.Intensity = (int)prays;
             
-            blur.Process(width, height, i1, buffer);
+            blur.Process(i1);
             blur.Complete();
+
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
             
-            processor.TileX = tileX;
-            processor.TileY = tileY;
-            
-            processor.Process(width, height, buffer, i1, buffer);
+            processor.Process(buffer2, i1);
             processor.Complete();
 
             Output.Data = buffer;

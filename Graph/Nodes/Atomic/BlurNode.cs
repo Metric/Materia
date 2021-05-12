@@ -5,6 +5,7 @@ using Materia.Rendering.Textures;
 using Materia.Rendering.Attributes;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Atomic
 {
@@ -48,7 +49,6 @@ namespace Materia.Nodes.Atomic
 
             internalPixelType = p;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new BlurProcessor();
 
             input = new NodeInput(NodeType.Color | NodeType.Gray, this, "Image Input");
@@ -79,6 +79,7 @@ namespace Materia.Nodes.Atomic
         float pintensity;
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -88,21 +89,15 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.TileX = 1;
-            processor.TileY = 1;
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
 
             processor.Intensity = pintensity;
-            processor.Process(width, height, i1, buffer);
+            processor.Process(i1);
             processor.Complete();
 
-            previewProcessor.TileX = tileX;
-            previewProcessor.TileY = tileY;
-
-            previewProcessor.Process(width, height, buffer, buffer);
-            previewProcessor.Complete();
-
-            previewProcessor.TileY = 1;
-            previewProcessor.TileX = 1;
+            //todo: might need another tile processor here
 
             Output.Data = buffer;
             TriggerTextureChange();
@@ -112,11 +107,8 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
         }
 
         public class BlurData : NodeData

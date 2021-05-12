@@ -12,6 +12,7 @@ using MateriaCore.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -237,7 +238,12 @@ namespace MateriaCore.Components.GL
         private void Grid_BeforeDraw(UIDrawable obj)
         {
             float aspect = AnchoredSize.X / AnchoredSize.Y;
-            grid.Tiling = new Vector2(16, 16 / aspect);
+            grid.Tiling = new Vector2(16, 16 / aspect) * zoom;
+
+            //calculate grid offset
+            Vector2 gpos = gridArea.Position;
+            Vector2 fpos = new Vector2(gpos.X / AnchoredSize.X, gpos.Y / AnchoredSize.Y);
+            grid.Offset = fpos;
         }
 
         #region Loading Handlers
@@ -1226,6 +1232,8 @@ namespace MateriaCore.Components.GL
             {
                 Canvas.Scale = zoom;
             }
+
+            gridArea.Scale = new Vector2(zoom);
         }
 
         /// <summary>
@@ -1357,6 +1365,7 @@ namespace MateriaCore.Components.GL
                         Current.ShiftX += scaledDelta.X;
                         Current.ShiftY += scaledDelta.Y;
                     }
+                    gridArea.Position += scaledDelta;
                     break;
             }
         }

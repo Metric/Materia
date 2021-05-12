@@ -122,8 +122,6 @@ namespace Materia.Nodes.Atomic
 
             internalPixelType = p;
 
-            previewProcessor = new BasicImageRenderer();
-
             input = new NodeInput(NodeType.Gray | NodeType.Color, this, "Input 0");
             input2 = new NodeInput(NodeType.Gray | NodeType.Color, this, "Input 1");
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
@@ -169,10 +167,10 @@ namespace Materia.Nodes.Atomic
             if (active == null) return null;
             if (active.Id == 0) return null;
 
-            previewProcessor.Process(width, height, active);
-            byte[] bits = previewProcessor.ReadByte(width, height);
-            previewProcessor.Complete();
-            return bits;
+            //todo: correct this GetPreview 
+            //we may or may not need it anymore
+
+            return null;
         }
 
         public override GLTexture2D GetActiveBuffer()

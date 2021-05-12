@@ -12,31 +12,23 @@ namespace Materia.Rendering.Passes
     {
         BlurProcessor blur;
         FullScreenQuad quad;
-        IGLProgram shader;
+        GLTexture2D buffer;
 
-        int width;
-        int height;
+        IGLProgram shader;
 
         public float Intensity
         {
             get; set;
         }
 
-        public BloomPass(int w, int h)
+        public BloomPass()
         {
             Intensity = 8;
-            width = w;
-            height = h;
             quad = new FullScreenQuad();
             blur = new BlurProcessor();
             shader = GLShaderCache.GetShader("image.glsl", "bloom.glsl");
         }
 
-        public void Update(int w, int h)
-        {
-            width = w;
-            height = h;
-        }
 
         public override void Dispose()
         {
@@ -59,8 +51,12 @@ namespace Materia.Rendering.Passes
 
             FullScreenQuad.SharedVao?.Bind();
 
+            buffer?.Dispose();
+            buffer = inputs[1].Copy();
+
+            blur.PrepareView(buffer);
             blur.Intensity = Intensity;
-            blur.Process(width, height, inputs[1], inputs[1]);
+            blur.Process(inputs[1]);
             blur.Complete();
 
             Vector2 tiling = new Vector2(1);
@@ -74,7 +70,7 @@ namespace Materia.Rendering.Passes
             inputs[0].Bind();
 
             IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
-            inputs[1].Bind();
+            buffer.Bind();
 
             //ensure polygon is actually rendered instead of wireframe during this step
             IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);

@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Attributes;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Atomic
 {
@@ -17,6 +18,8 @@ namespace Materia.Nodes.Atomic
         protected NodeInput input1;
 
         protected NodeOutput output;
+
+        protected GLTexture2D buffer2;
 
         protected float intensity;
         [Promote(NodeType.Float)]
@@ -62,7 +65,6 @@ namespace Materia.Nodes.Atomic
 
             tileX = tileY = 1;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new WarpProcessor();
             blur = new BlurProcessor();
 
@@ -101,11 +103,26 @@ namespace Materia.Nodes.Atomic
             GetParams();
             Process();
         }
+        public override void ReleaseBuffer()
+        {
+            base.ReleaseBuffer();
+            buffer2?.Dispose();
+        }
+
+        protected override void CreateBufferIfNeeded()
+        {
+            base.CreateBufferIfNeeded();
+            if (buffer2 == null || buffer2.Id == 0)
+            {
+                buffer2 = buffer.Copy();
+            }
+        }
 
         float bintensity;
         float pintensity;
         void Process()
         {
+            if (processor == null || blur == null) return;
             if (!input.HasInput || !input1.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -119,16 +136,17 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            if (processor == null || blur == null) return;
+            processor.PrepareView(buffer2);
 
-            processor.TileX = tileX;
-            processor.TileY = TileY;
+            processor.Tiling = new Vector2(TileX, TileY);
             processor.Intensity = pintensity;
-            processor.Process(width, height, i1, i2, buffer);
+            processor.Process(i1, i2);
             processor.Complete();
 
+            blur.PrepareView(buffer);
+
             blur.Intensity = Math.Max(0, bintensity);
-            blur.Process(width, height, buffer, buffer);
+            blur.Process(buffer2);
             blur.Complete();
 
             output.Data = buffer;
@@ -163,17 +181,14 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            buffer2?.Dispose();
+            buffer2 = null;
 
-            if(blur != null)
-            {
-                blur.Dispose();
-                blur = null;
-            }
+            processor?.Dispose();
+            processor = null;
+
+            blur?.Dispose();
+            blur = null;
         }
     }
 }

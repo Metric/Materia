@@ -9,6 +9,8 @@ uniform int invertGreen = 1;
 uniform int invertBlue = 1;
 uniform int invertAlpha = 0;
 
+uniform float luminosity = 1;
+
 void main() {
     vec4 c = texture(MainTex, UV);
     float r = c.r;

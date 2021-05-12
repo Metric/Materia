@@ -186,13 +186,12 @@ namespace InfinityUI.Core
                         return new Vector2(Position.X + Padding.Left, Parent.AnchoredSize.Y - Position.Y - Padding.Bottom - size.Y) + Parent.AnchoredPosition;
                     case Anchor.TopLeft:
                     case Anchor.TopHorizFill:
+                    case Anchor.Fill:
                         return Position + new Vector2(Padding.Left, Padding.Top) + Parent.AnchoredPosition;
                     case Anchor.BottomRight:
                         return new Vector2(Parent.AnchoredSize.X - Position.X - Padding.Right - size.X, Parent.Size.Y - Position.Y - Padding.Bottom - Size.Y) + Parent.AnchoredPosition;
                     case Anchor.TopRight:
                         return new Vector2(Parent.AnchoredSize.X - Position.X - Padding.Right - size.X, Position.Y + Padding.Top) + Parent.AnchoredPosition;
-                    case Anchor.Fill:
-                        return new Vector2(Padding.Left, Padding.Top) + Parent.AnchoredPosition;
                     case Anchor.Center:
                         return new Vector2(Parent.AnchoredSize.X / 2 - size.X / 2 + Position.X + Padding.Left, Parent.AnchoredSize.Y / 2 - size.Y / 2 + Position.Y + Padding.Top) + Parent.AnchoredPosition;
                     case Anchor.CenterHorizFill:

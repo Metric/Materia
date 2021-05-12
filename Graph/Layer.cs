@@ -285,7 +285,8 @@ namespace Materia.Graph
                 }
             }
 
-            Node renderLayer = null;
+            //todo: rework Layer to support the new image processor structure
+            /*Node renderLayer = null;
             render.TryGetValue(type, out renderLayer);
 
             if (node != null && renderLayer != null && renderLayer.GetActiveBuffer() != null && renderLayer.GetActiveBuffer().Id != 0 && node.GetActiveBuffer() != null && node.GetActiveBuffer().Id != 0)
@@ -297,7 +298,7 @@ namespace Materia.Graph
                 processor.Process(node.Width, node.Height, node.GetActiveBuffer(), renderLayer.GetActiveBuffer(), mask?.GetActiveBuffer(), renderLayer.GetActiveBuffer());
                 processor.Complete();
                 return true;
-            }
+            }*/
 
             return false;
         }
@@ -423,22 +424,16 @@ namespace Materia.Graph
 
         public void Dispose()
         {
-            if (processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
 
             if (Mask != null)
             {
                 Mask = null;
             }
 
-            if (Core != null)
-            {
-                Core.Dispose();
-                Core = null;
-            }
+            Core?.Dispose();
+            Core = null;
         }
     }
 }

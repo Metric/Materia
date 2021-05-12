@@ -4,6 +4,9 @@ in vec2 UV;
 
 uniform sampler2D MainTex;
 uniform float intensity;
+
+uniform float luminosity = 1;
+
 float kernel[9];
 
 void initKernel() {

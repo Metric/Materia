@@ -5,6 +5,7 @@ using Materia.Rendering.Attributes;
 using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Atomic
 {
@@ -42,7 +43,6 @@ namespace Materia.Nodes.Atomic
 
             tileX = tileY = 1;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new GradientMapProcessor();
 
             internalPixelType = p;
@@ -64,11 +64,8 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if (processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
         }
 
         private void GetParams()
@@ -92,6 +89,7 @@ namespace Materia.Nodes.Atomic
         bool horiz;
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput || !input2.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -111,18 +109,17 @@ namespace Materia.Nodes.Atomic
             if (i2 == null) return;
             if (i2.Id == 0) return;
 
-            if (processor == null) return;
-
             CreateBufferIfNeeded();
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
+            processor.PrepareView(buffer);
+
+            processor.Tiling = new Vector2(TileX, TileY);
 
             processor.Horizontal = horiz;
 
             processor.ColorLUT = i2;
             processor.Mask = i3;
-            processor.Process(width, height, i1, buffer);
+            processor.Process(i1);
             processor.Complete();
 
             Output.Data = buffer;

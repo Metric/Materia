@@ -10,6 +10,7 @@ using Materia.Rendering.Extensions;
 using Materia.Rendering.Interfaces;
 using Materia.Rendering.Fonts;
 using Materia.Graph;
+using static Materia.Rendering.Fonts.FontManager;
 
 namespace Materia.Nodes.Atomic
 {
@@ -26,7 +27,17 @@ namespace Materia.Nodes.Atomic
     {
         NodeOutput Output;
 
-        GLTexture2D character;
+        #region Internal Value Holders
+        List<CharacterTransform> transforms = new List<CharacterTransform>();
+        float pfontSize;
+        float pspacing;
+        string[] lines;
+        TextAlignment palignment;
+        FontStyle pstyle;
+        List<float> adjustments = new List<float>();
+        GLTexture2D characters;
+        CharAtlas map;
+        #endregion
 
         TextProcessor processor;
 
@@ -222,21 +233,11 @@ namespace Materia.Nodes.Atomic
             scale = new MVector(1, 1);
             style = FontStyle.Regular;
             alignment = TextAlignment.Center;
-            spacing = 1;
-            
+            spacing = 1;       
 
             processor = new TextProcessor();
 
-            //establish character holder texture
-            character = new GLTexture2D(PixelInternalFormat.Rgba);
-            character.Bind();
-            character.Linear();
-            character.ClampToEdge();
-            GLTexture2D.Unbind();
-
             internalPixelType = p;
-
-            previewProcessor = new BasicImageRenderer();
 
             Output = new NodeOutput(NodeType.Gray, this);
             Outputs.Add(Output);
@@ -295,23 +296,24 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if(character != null)
-            {
-                character.Dispose();
-                character = null;
-            }
-
-            if(processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
         }
 
         void TryAndGenerateCharacters()
         {
-            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(fontFamily) || pfontSize <= 0) return;
-            //map = FontManager.Generate(fontFamily, fontSize, text, style);
+            if (string.IsNullOrEmpty(text)
+                || string.IsNullOrEmpty(fontFamily)
+                || pfontSize <= 0)
+            {
+                return;
+            }
+
+            map = FontManager.GetAtlas(fontFamily, pfontSize, pstyle);
+            if (map != null)
+            {
+                characters = map.atlas;
+            }
         }
 
         private void GetParams()
@@ -352,9 +354,9 @@ namespace Materia.Nodes.Atomic
 
         private void GetTransforms()
         {
-            /*transforms.Clear();
-            if (map == null || map.Count == 0) return;
+            if (map == null) return;
 
+            transforms.Clear();
             adjustments.Clear();
 
             for (int i = 0; i < lines.Length; ++i)
@@ -363,9 +365,7 @@ namespace Materia.Nodes.Atomic
                 float alignmentAdjustment = 0;
                 for (int j = 0; j < line.Length; ++j)
                 {
-                    string ch = line.Substring(j, 1);
-                    FontManager.CharData data = null;
-
+                    char ch = line[j];
                     MVector pPos = position;
                     float pcharRotation = rotation;
                     MVector pScale = scale;
@@ -412,7 +412,7 @@ namespace Materia.Nodes.Atomic
                         pPos = ParentGraph.GetParameterValue<MVector>(Id, "Position");
                     }
 
-                    CharacterTransform ct = new CharacterTransform(pcharRotation * (float)(Math.PI / 180.0f), pPos, pScale);
+                    CharacterTransform ct = new CharacterTransform(pcharRotation * MathHelper.Deg2Rad, pPos, pScale);
                     transforms.Add(ct);
 
                     //for these two alignments we need to calculate the 
@@ -422,10 +422,11 @@ namespace Materia.Nodes.Atomic
                     //for right alignment all we need is the total
                     //for center we need the halfway point
                     if (palignment == TextAlignment.Center || palignment == TextAlignment.Right)
-                    {  
-                        if (map.TryGetValue(ch, out data))
+                    {
+                        var data = map.Get(ch);
+                        if (data != null)
                         {
-                            alignmentAdjustment += data.size.X + pspacing;
+                            alignmentAdjustment += data.info.size.Width + pspacing;
                         }
                     }
                 }
@@ -436,7 +437,7 @@ namespace Materia.Nodes.Atomic
                 }
 
                 adjustments.Add(alignmentAdjustment);
-            }*/
+            }
         }
 
         public override void TryAndProcess()
@@ -447,36 +448,21 @@ namespace Materia.Nodes.Atomic
             Process();
         }
 
-        List<CharacterTransform> transforms = new List<CharacterTransform>();
-        Dictionary<string, FontManager.CharData> map = new Dictionary<string, FontManager.CharData>();
-        float pfontSize;
-        float pspacing;
-        string[] lines;
-        TextAlignment palignment;
-        FontStyle pstyle;
-        List<float> adjustments = new List<float>();
         void Process()
         {
-            //need a clean buffer
-            //when drawing
-            if(buffer != null)
-            {
-                buffer.Dispose();
-                buffer = null;
-            }
-
-            if (processor == null || lines == null) return;
+            if (processor == null || lines == null 
+                || characters == null || map == null) return;
 
             CreateBufferIfNeeded();
 
-            processor.Prepare(width, height, character, buffer);
+            processor.PrepareView(buffer);
 
             float px = 1.0f / width;
             float py = 1.0f / height;
 
             MVector pivot = new MVector(-1, 0);
 
-            if (map != null && map.Count > 0 && transforms.Count > 0)
+            if (transforms.Count > 0)
             {
                 int tindex = 0;
                 for (int i = 0; i < lines.Length; ++i)
@@ -489,31 +475,25 @@ namespace Materia.Nodes.Atomic
                     {
                         if (tindex >= transforms.Count) continue;
 
-                        string ch = line.Substring(j, 1);
-                        /*FontManager.CharData data = null;
-                        if (map.TryGetValue(ch, out data))
+                        char ch = line[j];
+                        var cdat = map.Get(ch);
+
+                        if (cdat == null)
                         {
-                            if (data.texture == null)
-                            {
-                                ++tindex;
-                                continue;
-                            }
+                            ++tindex;
+                            continue;
+                        }
 
-                            CharacterTransform ct = transforms[tindex];
-                            MVector finalPos = new MVector((ct.position.X + left * ct.scale.X) * width - alignmentAdjustment, (ct.position.Y + (i * data.bearing) * py * ct.scale.Y) * height);
+                        CharacterTransform ct = transforms[tindex];
+                        MVector finalPos = new MVector((ct.position.X + left * ct.scale.X) * width - alignmentAdjustment, (ct.position.Y + (i * cdat.info.lineHeight) * py * ct.scale.Y) * height);
+                        left += (cdat.info.size.Width + pspacing) * px;
 
-                            left += (data.size.X + pspacing) * px;
+                        processor.Translation = finalPos;
+                        processor.Angle = ct.angle;
+                        processor.Pivot = pivot;
+                        processor.Scale = ct.scale * (new MVector(cdat.info.size.Width, cdat.info.size.Height) * 0.5f);
 
-                            character.Bind();
-                            character.SetData(data.texture.Image, PixelFormat.Bgra, (int)Math.Ceiling(data.size.X), (int)Math.Ceiling(data.size.Y));
-                            GLTexture2D.Unbind();
-
-                            processor.Translation = finalPos;
-                            processor.Angle = ct.angle;
-                            processor.Pivot = pivot;
-                            processor.Scale = ct.scale * (new MVector(data.size.X, data.size.Y) * 0.5f);
-                            processor.ProcessCharacter(width, height, character, buffer);
-                        }*/
+                        processor.Process(map.atlas, cdat.uv);
 
                         ++tindex;
                     }

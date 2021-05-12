@@ -6,7 +6,6 @@ namespace Materia.Rendering.Imaging.Processing
 {
     public class CurvesProcessor : ImageProcessor
     {
-        IGLProgram shader;
         GLTexture2D CurveLUT;
         public CurvesProcessor(GLTexture2D lut) : base()
         {
@@ -14,38 +13,19 @@ namespace Materia.Rendering.Imaging.Processing
             CurveLUT = lut;
         }
 
-        public override void Process(int width, int height, GLTexture2D tex, GLTexture2D output)
+        protected override void SetTexturePositions()
         {
-            base.Process(width, height, tex, output);
+            base.SetTexturePositions();
+            shader?.SetUniform("CurveLUT", 1);
+        }
 
-            if (shader != null)
-            {
-                ResizeViewTo(tex, output, tex.Width, tex.Height, width, height);
-                tex = output;
-                IGL.Primary.Clear((int)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
-
-                Vector2 tiling = new Vector2(TileX, TileY);
-
-                shader.Use();
-                shader.SetUniform2("tiling", ref tiling);
-                shader.SetUniform("MainTex", 0);
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-                tex.Bind();
-                shader.SetUniform("CurveLUT", 1);
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
-                CurveLUT.Bind();
-
-                if (renderQuad != null)
-                {
-                    renderQuad.Draw();
-                }
-
-                GLTexture2D.Unbind();
-                //output.Bind();
-                //output.CopyFromFrameBuffer(width, height);
-                //GLTexture2D.Unbind();
-                Blit(output, width, height);
-            }
+        public void Process(GLTexture2D input)
+        {
+            Identity();
+            Bind();
+            SetTextures(input, CurveLUT);
+            renderQuad?.Draw();
+            Unbind();
         }
     }
 }

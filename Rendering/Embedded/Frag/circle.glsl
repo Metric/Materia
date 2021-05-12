@@ -8,6 +8,8 @@ uniform float height;
 uniform float radius;
 uniform float outline;
 
+uniform float luminosity = 1;
+
 void main() {
     vec2 rpos = vec2((UV.x - 0.5) * width, (UV.y - 0.5) * height);
     float sqr = rpos.x * rpos.x + rpos.y * rpos.y;

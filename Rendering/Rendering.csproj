@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <None Remove="Embedded\brdf.png" />
+    <None Remove="Embedded\Frag\basic.glsl" />
     <None Remove="Embedded\Frag\blend.glsl" />
     <None Remove="Embedded\Frag\bloom.glsl" />
     <None Remove="Embedded\Frag\blur.glsl" />
@@ -36,13 +37,12 @@
     <None Remove="Embedded\Frag\distanceprecalc.glsl" />
     <None Remove="Embedded\Frag\emboss.glsl" />
     <None Remove="Embedded\Frag\fill.glsl" />
-    <None Remove="Embedded\Frag\fx.glsl" />
     <None Remove="Embedded\Frag\gamma.glsl" />
     <None Remove="Embedded\Frag\gradientmap.glsl" />
     <None Remove="Embedded\Frag\grayscaleconv.glsl" />
     <None Remove="Embedded\Frag\hsl.glsl" />
     <None Remove="Embedded\Frag\hueselector.glsl" />
-    <None Remove="Embedded\Frag\image-basic.glsl" />
+    <None Remove="Embedded\Frag\image.glsl" />
     <None Remove="Embedded\Frag\invert.glsl" />
     <None Remove="Embedded\Frag\irradiance.glsl" />
     <None Remove="Embedded\Frag\levels.glsl" />
@@ -54,7 +54,6 @@
     <None Remove="Embedded\Frag\point.glsl" />
     <None Remove="Embedded\Frag\pointsize.glsl" />
     <None Remove="Embedded\Frag\pointui.glsl" />
-    <None Remove="Embedded\Frag\preview.glsl" />
     <None Remove="Embedded\Frag\satvalselector.glsl" />
     <None Remove="Embedded\Frag\sharpen.glsl" />
     <None Remove="Embedded\Frag\skybox.glsl" />
@@ -78,7 +77,6 @@
     <None Remove="Embedded\Vertex\point.glsl" />
     <None Remove="Embedded\Vertex\pointui.glsl" />
     <None Remove="Embedded\Vertex\pointuiuv.glsl" />
-    <None Remove="Embedded\Vertex\preview.glsl" />
     <None Remove="Embedded\Vertex\skybox.glsl" />
     <None Remove="Embedded\Vertex\uv.glsl" />
   </ItemGroup>
@@ -111,12 +109,11 @@
     <EmbeddedResource Include="Embedded\Frag\distance.glsl" />
     <EmbeddedResource Include="Embedded\Frag\distanceprecalc.glsl" />
     <EmbeddedResource Include="Embedded\Frag\emboss.glsl" />
-    <EmbeddedResource Include="Embedded\Frag\fx.glsl" />
     <EmbeddedResource Include="Embedded\Frag\gamma.glsl" />
     <EmbeddedResource Include="Embedded\Frag\gradientmap.glsl" />
     <EmbeddedResource Include="Embedded\Frag\grayscaleconv.glsl" />
     <EmbeddedResource Include="Embedded\Frag\hsl.glsl" />
-    <EmbeddedResource Include="Embedded\Frag\image-basic.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\basic.glsl" />
     <EmbeddedResource Include="Embedded\Frag\invert.glsl" />
     <EmbeddedResource Include="Embedded\Frag\irradiance.glsl" />
     <EmbeddedResource Include="Embedded\Frag\levels.glsl" />
@@ -124,7 +121,7 @@
     <EmbeddedResource Include="Embedded\Frag\normals.glsl" />
     <EmbeddedResource Include="Embedded\Frag\occlusion.glsl" />
     <EmbeddedResource Include="Embedded\Frag\pbr.glsl" />
-    <EmbeddedResource Include="Embedded\Frag\preview.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\image.glsl" />
     <EmbeddedResource Include="Embedded\Frag\sharpen.glsl" />
     <EmbeddedResource Include="Embedded\Frag\transform.glsl" />
     <EmbeddedResource Include="Embedded\Frag\uniformcolor.glsl" />
@@ -137,14 +134,13 @@
     <EmbeddedResource Include="Embedded\Tess\tes.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\basic.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\fill.glsl" />
-    <EmbeddedResource Include="Embedded\Vertex\image.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\line.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pbr.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pbrtes.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\point.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pointui.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pointuiuv.glsl" />
-    <EmbeddedResource Include="Embedded\Vertex\preview.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\image.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\skybox.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\uv.glsl" />
   </ItemGroup>

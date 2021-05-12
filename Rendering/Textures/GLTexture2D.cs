@@ -20,6 +20,12 @@ namespace Materia.Rendering.Textures
             }
         }
 
+        protected bool isLinear = false;
+        protected bool isNear = false;
+        protected bool isRGBSwizzled = false;
+        protected bool isLumSwizzled = false;
+        protected PixelFormat lastFormat;
+
         PixelInternalFormat iformat;
 
         public GLTexture2D(PixelInternalFormat format)
@@ -170,6 +176,7 @@ namespace Materia.Rendering.Textures
         {
             Width = width;
             Height = height;
+            lastFormat = format;
             IGL.Primary.TexImage2D((int)TextureTarget.Texture2D, mipLevel, (int)iformat, width, height, 0, (int)format, (int)PixelType.UnsignedByte, data);
         }
 
@@ -177,6 +184,7 @@ namespace Materia.Rendering.Textures
         {
             Width = width;
             Height = height;
+            lastFormat = format;
             IGL.Primary.TexImage2D((int)TextureTarget.Texture2D, mipLevel, (int)iformat, width, height, 0, (int)format, (int)PixelType.UnsignedByte, data);
         }
 
@@ -184,6 +192,7 @@ namespace Materia.Rendering.Textures
         {
             Width = width;
             Height = height;
+            lastFormat = format;
             IGL.Primary.TexImage2D((int)TextureTarget.Texture2D, mipLevel, (int)iformat, width, height, 0, (int)format, (int)PixelType.Float, data);
         }
 
@@ -191,17 +200,22 @@ namespace Materia.Rendering.Textures
         {
             Width = width;
             Height = height;
+            lastFormat = format;
             IGL.Primary.TexImage2D((int)TextureTarget.Texture2D, mipLevel, (int)iformat, width, height, 0, (int)format, (int)PixelType.Float, data);
         }
 
         public void SetSwizzleRGB()
         {
             IGL.Primary.TexParameterI((int)TextureTarget.Texture2D, (int)TextureParameterName.TextureSwizzleRgba, new int[] { (int)All.Red, (int)All.Green, (int)All.Blue, (int)All.One });
+            isRGBSwizzled = true;
+            isLumSwizzled = false;
         }
 
         public void SetSwizzleLuminance()
         {
             IGL.Primary.TexParameterI((int)TextureTarget.Texture2D, (int)TextureParameterName.TextureSwizzleRgba, new int[] { (int)All.Red, (int)All.Red, (int)All.Red, (int)All.One });
+            isLumSwizzled = true;
+            isRGBSwizzled = false;
         }
 
         public void SetMaxMipLevel(int max)
@@ -219,11 +233,15 @@ namespace Materia.Rendering.Textures
         public void Nearest()
         {
             SetFilter((int)TextureMinFilter.Nearest, (int)TextureMagFilter.Nearest);
+            isLinear = false;
+            isNear = true;
         }
 
         public void Linear()
         {
             SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
+            isLinear = true;
+            isNear = false;
         }
 
         public void ClampToEdge()
@@ -240,6 +258,37 @@ namespace Materia.Rendering.Textures
         {
             IGL.Primary.TexParameter((int)TextureTarget.Texture2D, (int)TextureParameterName.TextureWrapS, wrap);
             IGL.Primary.TexParameter((int)TextureTarget.Texture2D, (int)TextureParameterName.TextureWrapT, wrap);
+        }
+
+        /// <summary>
+        /// Copies this instance settings to a new texture
+        /// that is completely blank
+        /// It does not copy the underling video card data
+        /// </summary>
+        /// <returns></returns>
+        public GLTexture2D Copy()
+        {
+            GLTexture2D c = new GLTexture2D(InternalFormat);
+            c.Bind();
+            c.SetData(IntPtr.Zero, lastFormat, Width, Height);
+            if (isLinear)
+            {
+                c.Linear();
+            }
+            else if(isNear)
+            {
+                c.Nearest();
+            }
+            if (isLumSwizzled)
+            {
+                c.SetSwizzleLuminance();
+            }
+            else if(isRGBSwizzled)
+            {
+                c.SetSwizzleRGB();
+            }
+            GLTexture2D.Unbind();
+            return c;
         }
     }
 }

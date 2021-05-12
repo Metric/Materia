@@ -6,6 +6,8 @@ uniform sampler2D MainTex;
 uniform sampler2D Warp;
 uniform float intensity = 1.0;
 
+uniform float luminosity = 1;
+
 vec3 createNormal(vec2 uv) {
     ivec2 size = textureSize(Warp, 0);
     

@@ -7,6 +7,7 @@ using Materia.Rendering.Interfaces;
 using Materia.Rendering.Extensions;
 using Materia.Rendering.Shaders;
 using Materia.Graph;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Atomic
 {
@@ -78,7 +79,6 @@ namespace Materia.Nodes.Atomic
             tileX = tileY = 1;
             distance = 0.2f;
 
-            previewProcessor = new BasicImageRenderer();
             processor = new DistanceProcessor();
 
             //distance node requires RGBA32F to compute properly
@@ -97,23 +97,16 @@ namespace Materia.Nodes.Atomic
         {
             base.Dispose();
 
-            if (processor != null)
-            {
-                processor.Dispose();
-                processor = null;
-            }
+            processor?.Dispose();
+            processor = null;
 
-            if(shader != null)
-            {
-                shader.Dispose();
-                shader = null;
-            }
 
-            if(preshader != null)
-            {
-                preshader.Dispose();
-                preshader = null;
-            }
+            shader?.Dispose();
+            shader = null;
+
+
+            preshader?.Dispose();
+            preshader = null;
         }
         
         void GetParams()
@@ -195,6 +188,7 @@ namespace Materia.Nodes.Atomic
         bool psourceonly;
         void Process()
         {
+            if (processor == null) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -214,18 +208,15 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            buffer.Bind();
-            IGL.Primary.ClearTexImage(buffer.Id, (int)PixelFormat.Rgba, (int)PixelType.Float);
-            GLTexture2D.Unbind();
+            processor.PrepareView(buffer);
 
-            processor.TileX = tileX;
-            processor.TileY = tileY;
+            processor.Tiling = new Vector2(TileX, TileY);
 
             processor.Shader = shader;
             processor.PreShader = preshader;
             processor.SourceOnly = psourceonly;
             processor.Distance = pmaxDistance;
-            processor.Process(width, height, i1, i2, buffer);
+            processor.Process(i1, i2);
             processor.Complete();
 
             Output.Data = buffer;

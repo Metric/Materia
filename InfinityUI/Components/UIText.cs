@@ -292,9 +292,6 @@ namespace InfinityUI.Components
             Vector2 tiling = Tiling;
             Vector2 pos = Parent.AnchoredPosition;
 
-            IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-            characters.Bind();
-
             Shader.Use();
             Shader.SetUniformMatrix4("projectionMatrix", ref projection);
             Shader.SetUniformMatrix4("modelMatrix", ref m);
@@ -303,6 +300,9 @@ namespace InfinityUI.Components
             Shader.SetUniform("MainTex", 0);
             Shader.SetUniform("flipY", FlipY ? 1 : 0);
             Shader.SetUniform2("tiling", ref tiling);
+
+            IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
+            characters.Bind();
 
             TextRenderer.SharedVao.Bind();
 

@@ -9,49 +9,32 @@ namespace Materia.Rendering.Imaging.Processing
         public float Angle { get; set; }
         public float Intensity { get; set; }
 
-        IGLProgram shader;
-
         public DirectionalWarpProcessor() : base()
         {
             shader = GetShader("image.glsl", "warpdirectional.glsl");
             Intensity = 1;
         }
 
-        public void Process(int width, int height, GLTexture2D tex, GLTexture2D warp, GLTexture2D output)
+        protected override void SetUniqueUniforms()
         {
-            base.Process(width, height, tex, output);
+            base.SetUniqueUniforms();
+            shader?.SetUniform("angle", Angle);
+            shader?.SetUniform("intensity", Intensity);
+        }
 
-            if (shader != null)
-            {
-                ResizeViewTo(tex, output, tex.Width, tex.Height, width, height);
-                tex = output;
-                IGL.Primary.Clear((int)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+        protected override void SetTexturePositions()
+        {
+            base.SetTexturePositions();
+            shader?.SetUniform("Warp", 1);
+        }
 
-                Vector2 tiling = new Vector2(TileX, TileY);
-
-                shader.Use();
-                shader.SetUniform2("tiling", ref tiling);
-                shader.SetUniform("MainTex", 0);
-                shader.SetUniform("angle", Angle);
-                shader.SetUniform("intensity", Intensity);
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-                tex.Bind();
-                tex.Repeat();
-                shader.SetUniform("Warp", 1);
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
-                warp.Bind();
-
-                if (renderQuad != null)
-                {
-                    renderQuad.Draw();
-                }
-
-                GLTexture2D.Unbind();
-                //output.Bind();
-                //output.CopyFromFrameBuffer(width, height);
-                //GLTexture2D.Unbind();
-                Blit(output, width, height);
-            }
+        public void Process(GLTexture2D input, GLTexture2D warp)
+        {
+            Identity();
+            Bind();
+            SetTextures(input, warp);
+            renderQuad?.Draw();
+            Unbind();
         }
     }
 }

@@ -5,6 +5,8 @@ in vec2 UV;
 uniform sampler2D MainTex;
 uniform sampler2D CurveLUT;
 
+uniform float luminosity = 1;
+
 void main() {
     vec4 c = texture(MainTex, UV);
 

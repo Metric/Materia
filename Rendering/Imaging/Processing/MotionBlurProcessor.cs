@@ -10,77 +10,68 @@ namespace Materia.Rendering.Imaging.Processing
         public float Direction { get; set; }
         public float Magnitude { get; set; }
 
-        IGLProgram shader;
         public MotionBlurProcessor() : base()
         {
             shader = GetShader("image.glsl", "motionblur.glsl");
         }
 
-        public override void Process(int width, int height, GLTexture2D tex, GLTexture2D output)
+        protected override void SetUniqueUniforms()
         {
-            base.Process(width, height, tex, output);
+            base.SetUniqueUniforms();
 
-            if (shader != null)
-            {
-                ResizeViewTo(tex, output, tex.Width, tex.Height, width, height);
-                tex = output;
-                IGL.Primary.Clear((int)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+            float width = outputBuff.Width;
+            float height = outputBuff.Height;
 
-                Vector2 tiling = new Vector2(TileX, TileY);
+            shader?.SetUniform("width", (float)width);
+            shader?.SetUniform("height", (float)height);
 
-                //by using the boxes for gaussian we can produce a more realisitc motion blur
-                //then simply using a standard box blur alone (aka a non linear motion blur)
-                float[] boxes = Blur.BoxesForGaussian(Magnitude, 3);
+            //the direction to blur in
+            shader?.SetUniform("tx", (float)Math.Cos(Direction));
+            shader?.SetUniform("ty", -(float)Math.Sin(Direction));
+        }
 
-                shader.Use();
-                shader.SetUniform2("tiling", ref tiling);
-                shader.SetUniform("width", (float)width);
-                shader.SetUniform("height", (float)height);
+        protected void SetPass(float mag)
+        {
+            shader?.SetUniform("magnitude", mag);
+        }
 
-                //the direction to blur in
-                shader.SetUniform("tx", (float)Math.Cos(Direction));
-                shader.SetUniform("ty", -(float)Math.Sin(Direction));
+        public void Process(GLTexture2D input)
+        {
+            float[] boxes = Blur.BoxesForGaussian(Magnitude, 3);
 
-                //intensity / magnitude of motion blur
-                shader.SetUniform("magnitude", (boxes[0] - 1.0f) / 2.0f);
-                shader.SetUniform("MainTex", 0);
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-                tex.Bind();
+            float pass1 = (boxes[0] - 1.0f) / 2.0f;
+            float pass2 = (boxes[1] - 1.0f) / 2.0f;
+            float pass3 = (boxes[2] - 1.0f) / 2.0f;
 
-                if (renderQuad != null)
-                {
-                    renderQuad.Draw();
-                }
+            //clamp output buff to edge
+            outputBuff.Bind();
+            outputBuff.ClampToEdge();
 
-                GLTexture2D.Unbind();
-                //output.Bind();
-                //output.CopyFromFrameBuffer(width, height);
-                //GLTexture2D.Unbind();
+            Identity();
+            Bind();
 
-                Blit(output, width, height);
+            //pass 1
+            SetPass(pass1);
+            SetTextures(input);
 
-                for(int i = 1; i < 3; ++i)
-                {
-                    shader.SetUniform("magnitude", (boxes[i] - 1.0f) / 2.0f);
-                    IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-                    output.Bind();
+            renderQuad?.Draw();
 
-                    IGL.Primary.Clear((int)ClearBufferMask.DepthBufferBit);
-                    IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit);
+            //pass 2
+            SetPass(pass2);
+            SetTextures(outputBuff);
 
-                    if (renderQuad != null)
-                    {
-                        renderQuad.Draw();
-                    }
+            renderQuad?.Draw();
 
-                    GLTexture2D.Unbind();
+            //pass 3
+            SetPass(pass3);
 
-                    //output.Bind();
-                    //output.CopyFromFrameBuffer(width, height);
-                    //GLTexture2D.Unbind();
-                    Blit(output, width, height);
-                }
-            }
+            renderQuad?.Draw();
+
+            //restore output to repeat
+            outputBuff.Bind();
+            outputBuff.Repeat();
+
+            Unbind();
         }
     }
 }

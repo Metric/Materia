@@ -110,8 +110,6 @@ namespace Materia.Nodes.Atomic
 
             internalPixelType = p;
 
-            previewProcessor = new BasicImageRenderer();
-
             input = new NodeInput(NodeType.Color | NodeType.Gray, this);
             Inputs.Add(input);
 
@@ -121,6 +119,11 @@ namespace Materia.Nodes.Atomic
         public override void TryAndProcess()
         {
             Process();
+        }
+
+        public override GLTexture2D GetActiveBuffer()
+        {
+            return input.HasInput ? (GLTexture2D)input.Reference.Data : null;
         }
 
         void Process()
@@ -135,15 +138,12 @@ namespace Materia.Nodes.Atomic
             height = i1.Height;
             width = i1.Width;
 
-            CreateBufferIfNeeded();
-
-            previewProcessor.Process(width, height, i1, buffer);
-            previewProcessor.Complete();
-
-            if (Outputs.Count > 0)
+            for (int i = 0; i < Outputs.Count; ++i)
             {
-                Outputs[0].Data = buffer;
+                Outputs[i].Data = i1;
             }
+
+            TriggerTextureChange();
         }
 
 

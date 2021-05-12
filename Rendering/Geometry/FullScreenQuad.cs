@@ -1,6 +1,7 @@
 ﻿using System;
 using Materia.Rendering.Buffers;
 using Materia.Rendering.Interfaces;
+using Materia.Rendering.Mathematics;
 using Materia.Rendering.Utils;
 
 namespace Materia.Rendering.Geometry
@@ -14,6 +15,8 @@ namespace Materia.Rendering.Geometry
             1,-1,0,  1,0,
             -1,-1,0, 0,0
         };
+
+        static readonly Vector4 DEFAULT_UV = new Vector4(0, 0, 1, 1);
 
         static uint[] indices =
         {
@@ -50,6 +53,31 @@ namespace Materia.Rendering.Geometry
             ebo = new GLElementBuffer(BufferUsageHint.StaticDraw);
             vbo = new GLArrayBuffer(BufferUsageHint.StaticDraw);
             Setup();
+        }
+
+        public void DefaultUV()
+        {
+            Vector4 uv = DEFAULT_UV;
+            SetUV(ref uv);
+        }
+
+        public void SetUV(ref Vector4 uv)
+        {
+            buffer[3] = uv.Z;
+            buffer[4] = uv.W;
+
+            buffer[8] = uv.X;
+            buffer[9] = uv.W;
+
+            buffer[13] = uv.Z;
+            buffer[14] = uv.Y;
+
+            buffer[18] = uv.X;
+            buffer[19] = uv.Y;
+
+            vbo?.Bind();
+            vbo?.SetData(buffer);
+            vbo?.Unbind();
         }
 
         public void Update()

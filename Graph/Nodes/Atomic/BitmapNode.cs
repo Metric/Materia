@@ -105,8 +105,6 @@ namespace Materia.Nodes.Atomic
 
             Id = Guid.NewGuid().ToString();
 
-            previewProcessor = new BasicImageRenderer();
-
             internalPixelType = p;
 
             tileX = tileY = 1;

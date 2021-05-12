@@ -10,6 +10,8 @@ uniform int greenChannel = 1;
 uniform int blueChannel = 2;
 uniform int alphaChannel = 3;
 
+uniform float luminosity = 1;
+
 void main() {
     vec4 c = texture(MainTex, UV);
     vec4 c2 = texture(Other, UV);

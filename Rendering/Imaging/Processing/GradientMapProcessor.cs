@@ -11,8 +11,6 @@ namespace Materia.Rendering.Imaging.Processing
         public bool UseMask { get; set; }
         public bool Horizontal { get; set; }
 
-        IGLProgram shader;
-
         public GradientMapProcessor()
         {
             Horizontal = true;
@@ -20,56 +18,28 @@ namespace Materia.Rendering.Imaging.Processing
             UseMask = false;
         }
 
-        public override void Process(int width, int height, GLTexture2D tex, GLTexture2D output)
+        protected override void SetUniqueUniforms()
         {
-            base.Process(width, height, tex, output);
+            base.SetUniqueUniforms();
+            shader?.SetUniform("horizontal", Horizontal);
+            shader?.SetUniform("useMask", UseMask);
+        }
 
-            if (shader != null)
-            {
-                ResizeViewTo(tex, output, tex.Width, tex.Height, width, height);
-                tex = output;
-                IGL.Primary.Clear((int)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+        protected override void SetTexturePositions()
+        {
+            base.SetTexturePositions();
+            shader?.SetUniform("ColorLUT", 1);
+            shader?.SetUniform("Mask", 2);
+        }
 
-                Vector2 tiling = new Vector2(TileX, TileY);
-
-                shader.Use();
-
-                shader.SetUniform("MainTex", 0);
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-                tex.Bind();
-
-                shader.SetUniform("ColorLUT", 1);
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
-                ColorLUT.Bind();
-
-                shader.SetUniform("horizontal", Horizontal);
-                shader.SetUniform2("tiling", ref tiling);
-                shader.SetUniform("Mask", 2);
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture2);
-
-                if (Mask != null)
-                {
-                    UseMask = true;
-                    Mask.Bind();
-                }
-                else
-                {
-                    UseMask = false;
-                }
-
-                shader.SetUniform("useMask", UseMask);
-
-                if (renderQuad != null)
-                {
-                    renderQuad.Draw();
-                }
-
-                GLTexture2D.Unbind();
-                //output.Bind();
-                //output.CopyFromFrameBuffer(width, height);
-                //GLTexture2D.Unbind();
-                Blit(output, width, height);
-            }
+        public void Process(GLTexture2D input)
+        {
+            UseMask = Mask != null;
+            Identity();
+            Bind();
+            SetTextures(input, ColorLUT, Mask);
+            renderQuad?.Draw();
+            Unbind();
         }
     }
 }

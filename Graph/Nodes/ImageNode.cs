@@ -28,7 +28,7 @@ namespace Materia.Nodes
         //intensive time wise
         public override byte[] GetPreview(int width, int height)
         {
-            if (previewProcessor != null && buffer != null)
+            /*if (previewProcessor != null && buffer != null)
             {
                 previewProcessor.Process(width, height, buffer);
                 byte[] data = previewProcessor.ReadByte(width, height);
@@ -36,6 +36,7 @@ namespace Materia.Nodes
 
                 return data;
             }
+            */
 
             return null;
         }

@@ -8,6 +8,6 @@ uniform int flipY = 0;
 
 void main() {
     vec4 c = texture(MainTex, UV);
-    c.rgb *= luminosity;
+    c.rgb *= luminosity * c.a;
     FragColor = c;
 }

@@ -49,6 +49,7 @@ uniform int hasMask = 0;
 //Add = 5
 
 uniform int alphaMode = 5;
+uniform float luminosity = 1;
 
 ///HSL HELPERS
 vec3 ToHSL(vec3 c) {

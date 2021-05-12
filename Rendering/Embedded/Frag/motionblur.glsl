@@ -9,6 +9,8 @@ uniform float tx;
 uniform float ty;
 uniform float magnitude;
 
+uniform float luminosity = 1;
+
 uniform sampler2D MainTex;
 
 void main() {

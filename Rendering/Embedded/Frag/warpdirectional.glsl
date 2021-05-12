@@ -7,6 +7,8 @@ uniform sampler2D Warp;
 uniform float intensity = 1.0;
 uniform float angle = 0;
 
+uniform float luminosity = 1;
+
 void main() {
     vec2 uv = UV;
     float cs = cos(angle);

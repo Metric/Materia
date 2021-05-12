@@ -68,7 +68,6 @@ namespace Materia.Nodes.Atomic
             color = new MVector(0, 0, 0, 1);
 
             processor = new UniformColorProcessor();
-            previewProcessor = new BasicImageRenderer();
 
             internalPixelType = p;
 
@@ -112,10 +111,12 @@ namespace Materia.Nodes.Atomic
         Vector4 pcolor;
         void Process()
         {
+            if (processor == null) return;
+
             CreateBufferIfNeeded();
 
             processor.Color = pcolor;
-            processor.Process(width, height, null, buffer);
+            processor.Process();
             processor.Complete();
 
             output.Data = buffer;
@@ -148,11 +149,8 @@ namespace Materia.Nodes.Atomic
         public override void Dispose()
         {
             base.Dispose();
-
-            if(processor != null)
-            {
-                processor.Dispose();
-            }
+            processor?.Dispose();
+            processor = null;
         }
     }
 }

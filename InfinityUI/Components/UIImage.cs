@@ -36,9 +36,7 @@ namespace InfinityUI.Components
             Vector2 pos = Parent.AnchoredPosition;
             Vector4 color = Color;
             Vector2 tiling = Tiling;
-
-            IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
-            Texture.Bind();
+            Vector2 offset = Offset;
 
             Shader.Use();
             Shader.SetUniformMatrix4("projectionMatrix", ref projection);
@@ -49,6 +47,10 @@ namespace InfinityUI.Components
             Shader.SetUniform("MainTex", 0);
             Shader.SetUniform("flipY", FlipY ? 1 : 0);
             Shader.SetUniform2("tiling", ref tiling);
+            Shader.SetUniform2("uvoffset", ref offset);
+
+            IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
+            Texture.Bind();
 
             if (!Clip)
             {

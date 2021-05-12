@@ -26,6 +26,8 @@ namespace MateriaCore.Components.Panes
             if (n == null) return;
             if (n == node) return;
 
+            node = n;
+
             map?.Clear();
 
             if (n is Node)
