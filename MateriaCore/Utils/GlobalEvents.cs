@@ -18,6 +18,7 @@ namespace MateriaCore.Utils
         Preview3DOcclusion,
         Preview3DEmission,
         MoveSelected,
+        MoveComplete,
         ViewParameters,
         ClearViewParameters
     }

@@ -50,8 +50,7 @@ namespace MateriaCore.Components.GL
         {
             titleArea = new UIObject
             {
-                Padding = new Box2(0,10,0,0),
-                RelativeTo = Anchor.TopHorizFill,
+                RelativeTo = Anchor.Center,
                 RaycastTarget = false
             };
             title = titleArea.AddComponent<UIText>();
@@ -62,10 +61,10 @@ namespace MateriaCore.Components.GL
             {
                 Size = new Vector2(1, 32),
                 RelativeTo = Anchor.TopHorizFill,
-                RaycastTarget = false
             };
             titleBackground = titleBackgroundArea.AddComponent<UIImage>();
             titleBackground.Color = new Vector4(0.1f, 0.1f, 0.1f, 1); //todo: add in a theme system
+            titleBackgroundArea.AddChild(titleArea);
 
             content = new UIObject
             {
@@ -75,7 +74,8 @@ namespace MateriaCore.Components.GL
 
             closeButton = new Button("", new Vector2(32, 32))
             {
-                RelativeTo = Anchor.TopRight
+                RelativeTo = Anchor.TopRight,
+                Padding = new Box2(2, 2, 2, 2)
             };
 
             //todo: load close button icon here
@@ -86,7 +86,6 @@ namespace MateriaCore.Components.GL
 
             //specific add order
             AddChild(titleBackgroundArea);
-            AddChild(titleArea);
             AddChild(closeButton);
             AddChild(content);
         }

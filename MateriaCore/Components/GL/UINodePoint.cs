@@ -3,6 +3,7 @@ using InfinityUI.Core;
 using Materia.Nodes;
 using Materia.Rendering.Attributes;
 using Materia.Rendering.Mathematics;
+using MateriaCore.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -149,6 +150,7 @@ namespace MateriaCore.Components.GL
             //todo: assign background image from embedded resource
 
             Background = AddComponent<UIImage>();
+            Background.Texture = UI.GetEmbeddedImage(Icons.CIRCLE, typeof(UINodePoint));
             selectable = AddComponent<UISelectable>();
             selectable.TargetGraphic = Background;
             selectable.NormalColor = Color;

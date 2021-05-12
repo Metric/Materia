@@ -132,6 +132,7 @@ namespace InfinityUI.Components
                 IGL.Primary.StencilMask(0xFF);
 
                 var child = Parent.Children[i];
+                if (child == null || !child.Visible) continue;
                 child.SendMessage("Draw", true, projection);
             }
 

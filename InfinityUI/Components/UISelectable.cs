@@ -58,7 +58,7 @@ namespace InfinityUI.Components
             }
         }
 
-        protected Vector4 normalColor = new Vector4(0, 0.5f, 0.75f, 1);
+        protected Vector4 normalColor = new Vector4(0.3f, 0.3f, 0.3f, 1);
         public Vector4 NormalColor
         {
             get => normalColor;

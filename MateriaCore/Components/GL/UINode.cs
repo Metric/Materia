@@ -42,6 +42,9 @@ namespace MateriaCore.Components.GL
         protected UIObject inputsArea;
         protected UIObject outputsArea;
 
+        protected UIObject iconsArea;
+        protected UIObject inputOutputIcon;
+
         protected UIContentFitter fitter;
         #endregion
 
@@ -55,6 +58,10 @@ namespace MateriaCore.Components.GL
         //note add back in Input Output Nodes here
         protected List<UINodePoint> inputs = new List<UINodePoint>();
         protected List<UINodePoint> outputs = new List<UINodePoint>();
+        #endregion
+
+        #region States
+        protected bool isMoving = false;
         #endregion
 
         public UINode() : base(new Vector2(DEFAULT_WIDTH, DEFAULT_HEIGHT))
@@ -89,6 +96,18 @@ namespace MateriaCore.Components.GL
             }
 
             //todo: add in output / input icons
+            if (Node is OutputNode)
+            {
+                inputOutputIcon.Scale = Vector2.One;
+            }
+            else if (Node is InputNode)
+            {
+                inputOutputIcon.Scale = new Vector2(-1, 0);
+            }
+            else
+            {
+                inputOutputIcon.Visible = false;
+            }
         }
 
         public GLTexture2D GetActiveBuffer()
@@ -405,22 +424,62 @@ namespace MateriaCore.Components.GL
             stack = inputsArea.AddComponent<UIStackPanel>();
             stack.Direction = Orientation.Vertical;
 
+            iconsArea = new UIObject
+            {
+                Size = new Vector2(128,32),
+                Position = new Vector2(0,-32),
+                RaycastTarget = false,
+                RelativeTo = Anchor.TopLeft
+            };
+            var iconStack = iconsArea.AddComponent<UIStackPanel>();
+            iconStack.Direction = Orientation.Horizontal;
+
+            inputOutputIcon = new UIObject
+            {
+                Size = new Vector2(32, 32),
+                RaycastTarget = false
+            };
+            var ioimg = inputOutputIcon.AddComponent<UIImage>();
+            ioimg.Texture = UI.GetEmbeddedImage(Icons.OUTPUT, typeof(UINode));
+
+            iconsArea.AddChild(inputOutputIcon);
+
             AddChild(previewArea);
             AddChild(descArea);
             AddChild(titleArea);
             AddChild(outputsArea);
             AddChild(inputsArea);
+            AddChild(iconsArea);
         }
 
         #region User Input Events
-        private void Selectable_PointerDown(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs arg2)
+        private void Selectable_PointerDown(UISelectable arg1, MouseEventArgs e)
         {
+            if (e.Button.HasFlag(MouseButton.Left))
+            {
+                TryAndSelect();
+            }
+
             ZOrder = -1; //put on top of other nodes
         }
 
-        private void Selectable_PointerUp(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs arg2)
+        private void Selectable_PointerUp(UISelectable arg1, MouseEventArgs e)
         {
+            if (isMoving)
+            {
+                GlobalEvents.Emit(GlobalEvent.MoveComplete, this, this);
+                isMoving = false;
+            }
+
             ZOrder = 0; //restore z order to default
+        }
+
+        private void Selectable_Click(UISelectable arg1, MouseEventArgs e)
+        {
+            if (e.Button.HasFlag(MouseButton.Right))
+            {
+                ShowContextMenu();
+            }
         }
 
         private void UINode_DoubleClick(MovablePane obj)
@@ -430,6 +489,8 @@ namespace MateriaCore.Components.GL
         }
         private void UINode_Moved(MovablePane obj, Vector2 delta)
         {
+            isMoving = true;
+
             Node.ViewOriginX = Position.X;
             Node.ViewOriginY = Position.Y;
 
@@ -445,18 +506,6 @@ namespace MateriaCore.Components.GL
             Node.ViewOriginY = Position.Y;
 
             UpdateNodePoints();
-        }
-
-        private void Selectable_Click(UISelectable arg1, InfinityUI.Interfaces.MouseEventArgs e)
-        {
-            if (e.Button.HasFlag(MouseButton.Left))
-            {
-                TryAndSelect();
-            }
-            else if (e.Button.HasFlag(MouseButton.Right))
-            {
-                ShowContextMenu();
-            }
         }
 
         protected void TryAndSelect()
@@ -480,7 +529,7 @@ namespace MateriaCore.Components.GL
             Graph.ClearSelection();
 
             //toggle graph select this
-            Graph.ToggleSelect(this);
+            Graph.Select(this);
 
             GlobalEvents.Emit(GlobalEvent.ViewParameters, this, Node);
         }

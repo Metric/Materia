@@ -14,7 +14,7 @@ namespace MateriaCore.Components.GL
     public class UI2DPreview : UIWindow
     {
         public const float DEFAULT_WIDTH_PERCENT = 0.25f;
-        public const float DEFAULT_HEIGHT_PERCENT = 0.1f;
+        public const float DEFAULT_HEIGHT_PERCENT = 0.25f;
 
         protected Node activeNode;
 
@@ -69,7 +69,7 @@ namespace MateriaCore.Components.GL
                 RelativeTo = Anchor.Fill,
             };
             internalBackground = internalContainer.AddComponent<UIImage>();
-            internalBackground.Color = new Vector4(0.25f, 0.25f, 0.25f, 1); //todo: use theme class
+            internalBackground.Color = new Vector4(0.05f, 0.05f, 0.05f, 1); //todo: use theme class
             internalBackground.Clip = true;
 
             uvArea = new MovablePane(new Vector2(512, 512))

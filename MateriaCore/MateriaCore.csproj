@@ -90,6 +90,7 @@
     <None Remove="Geometry\cylinder.obj" />
     <None Remove="Geometry\plane.obj" />
     <None Remove="Geometry\sphere-standard.obj" />
+    <None Remove="Images\circle.png" />
   </ItemGroup>
   <ItemGroup>
     <AvaloniaXaml Include="Components\Panes\Log.xaml" />
@@ -121,6 +122,7 @@
     <EmbeddedResource Include="Geometry\cylinder.obj" />
     <EmbeddedResource Include="Geometry\plane.obj" />
     <EmbeddedResource Include="Geometry\sphere-standard.obj" />
+    <EmbeddedResource Include="Images\circle.png" />
     <ProjectReference Include="..\Graph\Graph.csproj" />
     <ProjectReference Include="..\InfinityUI\InfinityUI.csproj" />
     <ProjectReference Include="..\MLog\MLog.csproj" />

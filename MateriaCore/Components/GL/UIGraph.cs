@@ -194,11 +194,13 @@ namespace MateriaCore.Components.GL
         protected void AddGlobalEvents()
         {
             GlobalEvents.On(GlobalEvent.MoveSelected, OnMoveSelected);
+            GlobalEvents.On(GlobalEvent.MoveComplete, OnMoveComplete);
         }
 
         protected void RemoveGlobalEvents()
         {
             GlobalEvents.Off(GlobalEvent.MoveSelected, OnMoveSelected);
+            GlobalEvents.Off(GlobalEvent.MoveComplete, OnMoveComplete);
         }
 
         protected void InitializeComponents()
@@ -229,20 +231,29 @@ namespace MateriaCore.Components.GL
             grid.BeforeDraw += Grid_BeforeDraw;
 
             selectable.Wheel += Selectable_Wheel;
+            selectable.PointerUp += Selectable_PointerUp;
 
             Moved += UIGraph_Moved;
 
             AddChild(gridArea);
         }
 
+        private void Selectable_PointerUp(UISelectable arg1, MouseEventArgs arg2)
+        {
+            ClearSelection();
+        }
+
         private void Grid_BeforeDraw(UIDrawable obj)
         {
-            float aspect = AnchoredSize.X / AnchoredSize.Y;
-            grid.Tiling = new Vector2(16, 16 / aspect) * zoom;
+            //cache size so we don't keep calculating it
+            Vector2 size = AnchoredSize; 
+            float newSize = MathF.Max(size.X, size.Y) / 64;
+            float aspect = size.X / size.Y;
+            grid.Tiling = new Vector2(newSize, newSize / aspect) * zoom;
 
             //calculate grid offset
             Vector2 gpos = gridArea.Position;
-            Vector2 fpos = new Vector2(gpos.X / AnchoredSize.X, gpos.Y / AnchoredSize.Y);
+            Vector2 fpos = new Vector2(gpos.X / size.X, gpos.Y / size.Y);
             grid.Offset = fpos;
         }
 
@@ -260,6 +271,8 @@ namespace MateriaCore.Components.GL
         public void Load(string data, string cwd, bool readOnly = false)
         {
             InternalDispose();
+
+            AddGlobalEvents();
 
             Graph g = new Image("Untitled", 256, 256);
             if (string.IsNullOrEmpty(data))
@@ -613,7 +626,8 @@ namespace MateriaCore.Components.GL
             UIObject unode = n as UIObject;
             if (Canvas != null)
             {
-                Canvas.Cam.LocalPosition = new Vector3(unode.AnchoredPosition.X, unode.AnchoredPosition.Y, 0);
+                Vector2 pos = unode.AnchoredPosition;
+                Canvas.Cam.LocalPosition = new Vector3(pos.X, pos.Y, 0);
             }
             UI.Focus = unode.GetComponent<UISelectable>();
         }
@@ -872,6 +886,23 @@ namespace MateriaCore.Components.GL
         private void Current_OnGraphUpdated(Graph g)
         {
             
+        }
+
+        private void OnMoveComplete(object sender, object arg)
+        {
+            if (sender is IGraphNode)
+            {
+                IGraphNode unode = sender as IGraphNode;
+                if (!nodes.ContainsKey(unode.Id)) return;
+                for (int i = 0; i < Selected.Count; ++i)
+                {
+                    var n = Selected[i];
+                    if (n == unode) continue;
+                    var pane = n as MovablePane;
+                    if (pane == null) continue;
+                    UI.SnapToGrid(pane, (int)pane.SnapTolerance);
+                }
+            }
         }
 
         private void OnMoveSelected(object sender, object arg)
@@ -1279,7 +1310,7 @@ namespace MateriaCore.Components.GL
 
         protected void InternalDispose()
         {
-
+            RemoveGlobalEvents();
             RemoveCurrentEvents();
 
             Clear();

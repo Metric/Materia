@@ -42,6 +42,7 @@ namespace MateriaCore
 
         protected UIGraph activeDocument;
         protected Graph activeGraph;
+        protected UI2DPreview preview2D;
 
         private Keys currentKey;
         private string currentTextInput;
@@ -54,6 +55,7 @@ namespace MateriaCore
         #region Window Events
         private void MainGLWindow_Closing(System.ComponentModel.CancelEventArgs obj)
         {
+            IsVisible = false;
             InternalDispose();
         }
 
@@ -250,11 +252,15 @@ namespace MateriaCore
             rootCanvas = rootArea.AddComponent<UICanvas>();
 
             activeDocument = new UIGraph(graphArea.Size);
-            
+
             activeGraph = new Graph("Untitled", 512, 512); //testing
             activeGraph.DefaultTextureType = GraphPixelType.RGBA; //testing
 
             graphArea.AddChild(activeDocument);
+
+            //test 2d window
+            preview2D = new UI2DPreview();
+            rootArea.AddChild(preview2D);
 
             GraphTemplate.PBRFull(activeGraph);
             activeDocument.Load(activeGraph.GetJson(), "");

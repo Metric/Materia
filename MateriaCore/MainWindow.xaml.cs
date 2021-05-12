@@ -33,7 +33,7 @@ namespace MateriaCore
             NativeWindowSettings settings = NativeWindowSettings.Default;
             settings.APIVersion = new Version(4, 6);
             settings.Title = "Materia";
-            settings.WindowState = OpenTK.Windowing.Common.WindowState.Normal;
+            settings.WindowState = OpenTK.Windowing.Common.WindowState.Maximized;
             settings.Size = new OpenTK.Mathematics.Vector2i(1024, 768);
 
             glWindow = new MainGLWindow(settings);
@@ -52,11 +52,7 @@ namespace MateriaCore
 
         private void UpdateTimer_Tick(object sender, EventArgs e)
         {
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (glWindow == null || glWindow.IsExiting) return;
-                glWindow.Process();
-            });
+            glWindow?.Process();
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)

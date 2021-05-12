@@ -412,21 +412,26 @@ namespace InfinityUI.Core
 
         public static bool IsPointIn(ref Vector2 p, UIObject e)
         {
-            Vector2 topLeft = e.AnchoredPosition;
-            Vector2 topRight = e.AnchoredPosition + new Vector2(e.AnchoredSize.X, 0);
-            Vector2 bottomLeft = e.AnchoredPosition + new Vector2(0, e.AnchoredSize.Y);
-            Vector2 bottomRight = e.AnchoredPosition + e.AnchoredSize;
+            Vector2 pos = e.AnchoredPosition;
+            Vector2 size = e.AnchoredSize;
+
+            Vector2 topLeft = pos;
+            Vector2 topRight = pos + new Vector2(size.X, 0);
+            Vector2 bottomLeft = pos + new Vector2(0, size.Y);
+            Vector2 bottomRight = pos + size;
 
             topLeft = ToWorld(ref topLeft, e);
             topRight = ToWorld(ref topRight, e);
             bottomLeft = ToWorld(ref bottomLeft, e);
             bottomRight = ToWorld(ref bottomRight, e);
 
-            List<Vector2> pts = new List<Vector2>();
-            pts.Add(bottomLeft);
-            pts.Add(topLeft);
-            pts.Add(topRight);
-            pts.Add(bottomRight);
+            List<Vector2> pts = new List<Vector2>
+            {
+                bottomLeft,
+                topLeft,
+                topRight,
+                bottomRight
+            };
 
             return PointInPolygon(pts, ref p);
         }
@@ -545,9 +550,10 @@ namespace InfinityUI.Core
                     RawBitmap bmp = RawBitmap.FromBitmap(rbmp);
                     img = new GLTexture2D(PixelInternalFormat.Rgba8);
                     img.Bind();
-                    img.SetData(bmp.Image, PixelFormat.Bgra, img.Width, img.Height, 0);
+                    img.SetData(bmp.Image, PixelFormat.Bgra, bmp.Width, bmp.Height);
                     img.Linear();
                     img.Repeat();
+                    img.GenerateMipMaps();
                     GLTexture2D.Unbind();
 
                     ImageCache[path] = img;
@@ -577,9 +583,10 @@ namespace InfinityUI.Core
                     RawBitmap bmp = RawBitmap.FromBitmap(rbmp);
                     img = new GLTexture2D(PixelInternalFormat.Rgba8);
                     img.Bind();
-                    img.SetData(bmp.Image, PixelFormat.Bgra, img.Width, img.Height, 0);
+                    img.SetData(bmp.Image, PixelFormat.Bgra, bmp.Width, bmp.Height);
                     img.Linear();
                     img.Repeat();
+                    img.GenerateMipMaps();
                     GLTexture2D.Unbind();
 
                     ImageCache[path] = img;
