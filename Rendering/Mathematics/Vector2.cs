@@ -911,6 +911,26 @@ namespace Materia.Rendering.Mathematics
             return vec;
         }
 
+        public static Vector2 operator /(float scale, Vector2 vec)
+        {
+            vec.X = scale / vec.X;
+            vec.Y = scale / vec.Y;
+            return vec;
+        }
+
+        /// <summary>
+        /// Divides the specified instance by a vector.
+        /// </summary>
+        /// <param name="vec">Left operand</param>
+        /// <param name="scale">Right operand</param>
+        /// <returns>Result of the division.</returns>
+        public static Vector2 operator /(Vector2 vec, Vector2 scale)
+        {
+            vec.X /= scale.X;
+            vec.Y /= scale.Y;
+            return vec;
+        }
+
         /// <summary>
         /// Compares the specified instances for equality.
         /// </summary>

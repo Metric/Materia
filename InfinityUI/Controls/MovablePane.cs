@@ -3,6 +3,7 @@ using InfinityUI.Core;
 using InfinityUI.Interfaces;
 using Materia.Rendering.Mathematics;
 using System;
+using System.Diagnostics;
 
 namespace InfinityUI.Controls
 {
@@ -16,7 +17,7 @@ namespace InfinityUI.Controls
     public class MovablePane : UIObject
     {
         public event Action<MovablePane> DoubleClick;
-        public event Action<MovablePane, Vector2> Moved;
+        public event Action<MovablePane, Vector2, MouseEventArgs> Moved;
         public event Action<MovablePane, Vector2> MovedTo;
 
         public Axis MoveAxis { get; set; } = Axis.Both;
@@ -29,7 +30,7 @@ namespace InfinityUI.Controls
         private int clickCount = 0;
 
         public bool Collaspable { get; set; } = false;
-        protected float CollapseToHeight { get; set; } = 48;
+        protected float CollapseToHeight { get; set; } = 32;
         private Vector2 originSize;
 
         protected UISelectable selectable;
@@ -90,10 +91,8 @@ namespace InfinityUI.Controls
 
         protected virtual void OnMouseDown(UISelectable selectable,  MouseEventArgs e)
         {
-            if (e.Button.HasFlag(MouseButton.Left))
-            {
-                isMouseDown = true;
-            }
+            ZOrder = -1;
+            isMouseDown = true;
         }
 
         protected virtual void OnMouseLeave(UISelectable selectable,  MouseEventArgs e)
@@ -101,12 +100,7 @@ namespace InfinityUI.Controls
             isMouseDown = false;
         }
 
-        protected virtual void InvokeMoved()
-        {
-            Moved?.Invoke(this, Vector2.Zero);
-        }
-
-        public virtual void Move(Vector2 delta, bool invokeEvent = true)
+        public virtual void Move(Vector2 delta, bool invokeEvent = true, MouseEventArgs e = null)
         {
             float xSign = 1;
             float ySign = 1;
@@ -115,7 +109,7 @@ namespace InfinityUI.Controls
 
             if (Canvas != null)
             {
-                scaledDelta = delta * Canvas.Scale;
+                scaledDelta *= Canvas.Scale;
             }
 
             switch (RelativeTo)
@@ -152,12 +146,21 @@ namespace InfinityUI.Controls
                     break;
             }
 
+            if (RelativeMode == SizeMode.Percent && Parent != null)
+            {
+                Vector2 psize = Parent.WorldSize;
+                movementDelta = new Vector2(movementDelta.X / psize.X, movementDelta.Y / psize.Y);
+            }
+
             Position += movementDelta;
 
             switch (SnapMode)
             {
                 case MovablePaneSnapMode.Panes:
-                    if (Parent == null) break;
+                    //todo: fix snap to element for Relative Mode = Percent
+                    //break for the moment on RelativeMode == Percent
+                    //as we have not taken that into account in snap to element yet
+                    if (Parent == null || RelativeMode == SizeMode.Percent) break;
                     for (int i = 0; i < Parent.Children.Count; ++i)
                     {
                         UIObject el = Parent.Children[i];
@@ -170,7 +173,7 @@ namespace InfinityUI.Controls
 
             if (invokeEvent)
             {
-                Moved?.Invoke(this, delta);
+                Moved?.Invoke(this, delta, e);
             }
         }
 
@@ -214,7 +217,7 @@ namespace InfinityUI.Controls
             switch (SnapMode)
             {
                 case MovablePaneSnapMode.Panes:
-                    if (Parent == null) break;
+                    if (Parent == null || RelativeMode == SizeMode.Percent) break;
                     for (int i = 0; i < Parent.Children.Count; ++i)
                     {
                         UIObject el = Parent.Children[i];
@@ -225,6 +228,7 @@ namespace InfinityUI.Controls
 
                     break;
                 case MovablePaneSnapMode.Grid:
+                    if (RelativeMode == SizeMode.Percent) break;
                     UI.SnapToGrid(this, (int)SnapTolerance);
                     break;
             }
@@ -238,20 +242,20 @@ namespace InfinityUI.Controls
         protected virtual void OnMouseMove(UISelectable selectable,  MouseEventArgs e)
         {
             if (!isMouseDown) return;
-            Move(e.Delta);
+            Move(e.Delta, true, e);
         }
 
         protected virtual void OnMouseUp(UISelectable selectable,  MouseEventArgs e)
         {
-            if (e.Button.HasFlag(MouseButton.Left))
-            {
-                if (SnapMode == MovablePaneSnapMode.Grid) 
-                {
-                    UI.SnapToGrid(this, (int)SnapTolerance);
-                }
+            ZOrder = 0;
 
-                isMouseDown = false;
+            //todo: handle Relate Mode = Percent for Snap To Grid
+            if (SnapMode == MovablePaneSnapMode.Grid && RelativeMode == SizeMode.Pixel)
+            {
+                UI.SnapToGrid(this, (int)SnapTolerance);
             }
+
+            isMouseDown = false;
         }
 
         public override void Dispose(bool disposing = true)

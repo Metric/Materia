@@ -412,8 +412,8 @@ namespace InfinityUI.Core
 
         public static bool IsPointIn(ref Vector2 p, UIObject e)
         {
-            Vector2 pos = e.AnchoredPosition;
-            Vector2 size = e.AnchoredSize;
+            Vector2 pos = e.WorldPosition;
+            Vector2 size = e.WorldSize;
 
             Vector2 topLeft = pos;
             Vector2 topRight = pos + new Vector2(size.X, 0);
@@ -438,7 +438,7 @@ namespace InfinityUI.Core
 
         public static Vector2 ToWorld(ref Vector2 p, UIObject e)
         {
-            Vector4 rot = new Vector4(p.X, p.Y, 0, 1) * e.LocalMatrix; //todo: test with e.ModelMatrix instead
+            Vector4 rot = new Vector4(p.X, p.Y, 0, 1) * e.WorldMatrix;
             return rot.Xy;
         }
 
@@ -499,9 +499,12 @@ namespace InfinityUI.Core
             for (int i = canvases.Count - 1; i >= 0; --i)
             {
                 UIObject obj = canvases[i];
+                if (!obj.Visible) continue;
+
                 UICanvas canvas = obj.GetComponent<UICanvas>();
                 Vector2 wp = canvas.ToCanvasSpace(p);
                 Selection = obj.Pick(ref wp);
+
                 if (Selection != null)
                 {
                     break;
@@ -609,55 +612,75 @@ namespace InfinityUI.Core
                            );
 
             ele.Position *= gridSize;
+
+            if (ele.RelativeMode == SizeMode.Percent && ele.Parent != null)
+            {
+                Vector2 pSize = ele.Parent.WorldSize;
+                Vector2 p = ele.Position;
+                ele.Position = new Vector2(p.X / pSize.X, p.Y / pSize.y);
+            }
         }
 
         public static void SnapToElement(UIObject a, UIObject b, 
             float tolerance = 4, float xSign = 1, float ySign = 1)
         {
+            Box2 aRect = a.Rect;
+            Box2 bRect = b.Rect;
+
+            Vector2 aSize = new Vector2(aRect.Width, aRect.Height);
+            Vector2 bSize = new Vector2(bRect.Width, bRect.Height);
+
             if (xSign > 0)
             {
-                if (MathF.Abs(a.Rect.Left - b.Rect.Right) <= tolerance)
+                if (MathF.Abs(aRect.Left - bRect.Right) <= tolerance)
                 {
-                    a.Position = new Vector2(b.Position.X + b.Size.X, a.Position.Y);
+                    a.Position = new Vector2(b.Position.X + bSize.X, a.Position.Y);
                 }
-                else if (MathF.Abs(a.Rect.Right - b.Rect.Left) <= tolerance)
+                else if (MathF.Abs(aRect.Right - bRect.Left) <= tolerance)
                 {
-                    a.Position = new Vector2(b.Position.X - a.Size.X, a.Position.Y);
+                    a.Position = new Vector2(b.Position.X - aSize.X, a.Position.Y);
                 }
             }
             else
             {
-                if (MathF.Abs(a.Rect.Left - b.Rect.Right) <= tolerance)
+                if (MathF.Abs(aRect.Left - bRect.Right) <= tolerance)
                 {
                     a.Position = new Vector2(b.Position.X, a.Position.Y);
                 }
-                else if (MathF.Abs(a.Rect.Right - b.Rect.Left) <= tolerance)
+                else if (MathF.Abs(aRect.Right - bRect.Left) <= tolerance)
                 {
-                    a.Position = new Vector2(b.Position.X + b.Size.X + a.Size.X, a.Position.Y);
+                    a.Position = new Vector2(b.Position.X + bSize.X + aSize.X, a.Position.Y);
                 }
             }
 
             if (ySign > 0)
             {
-                if (MathF.Abs(a.Rect.Top - b.Rect.Bottom) <= tolerance)
+                if (MathF.Abs(aRect.Top - bRect.Bottom) <= tolerance)
                 {
-                    a.Position = new Vector2(a.Position.X, b.Position.Y + b.Size.Y);
+                    a.Position = new Vector2(a.Position.X, b.Position.Y + bSize.Y);
                 }
-                else if (MathF.Abs(a.Rect.Bottom - b.Rect.Top) <= tolerance)
+                else if (MathF.Abs(aRect.Bottom - bRect.Top) <= tolerance)
                 {
-                    a.Position = new Vector2(a.Position.X, b.Position.Y - a.Size.Y);
+                    a.Position = new Vector2(a.Position.X, b.Position.Y - aSize.Y);
                 }
             }
             else
             {
-                if (MathF.Abs(a.Rect.Top - b.Rect.Bottom) <= tolerance)
+                if (MathF.Abs(aRect.Top - bRect.Bottom) <= tolerance)
                 {
                     a.Position = new Vector2(a.Position.X, b.Position.Y);
                 }
-                else if (MathF.Abs(a.Rect.Bottom - b.Rect.Top) <= tolerance)
+                else if (MathF.Abs(aRect.Bottom - bRect.Top) <= tolerance)
                 {
-                    a.Position = new Vector2(a.Position.X, b.Position.Y + b.Size.Y + a.Size.Y);
+                    a.Position = new Vector2(a.Position.X, b.Position.Y + bSize.Y + aSize.Y);
                 }
+            }
+
+            if (a.RelativeMode == SizeMode.Percent && a.Parent != null)
+            {
+                Vector2 pSize = a.Parent.WorldSize;
+                Vector2 p = a.Position;
+                a.Position = new Vector2(p.X / pSize.X, p.Y / pSize.y);
             }
         }
     }

@@ -36,6 +36,7 @@
     <None Remove="Embedded\Frag\distance.glsl" />
     <None Remove="Embedded\Frag\distanceprecalc.glsl" />
     <None Remove="Embedded\Frag\emboss.glsl" />
+    <None Remove="Embedded\Frag\equisky.glsl" />
     <None Remove="Embedded\Frag\fill.glsl" />
     <None Remove="Embedded\Frag\gamma.glsl" />
     <None Remove="Embedded\Frag\gradientmap.glsl" />
@@ -77,11 +78,13 @@
     <None Remove="Embedded\Vertex\point.glsl" />
     <None Remove="Embedded\Vertex\pointui.glsl" />
     <None Remove="Embedded\Vertex\pointuiuv.glsl" />
+    <None Remove="Embedded\Vertex\raw.glsl" />
     <None Remove="Embedded\Vertex\skybox.glsl" />
     <None Remove="Embedded\Vertex\uv.glsl" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Embedded\Frag\equisky.glsl" />
     <EmbeddedResource Include="Embedded\Geom\pointuiuv.glsl" />
   </ItemGroup>
 
@@ -141,6 +144,7 @@
     <EmbeddedResource Include="Embedded\Vertex\pointui.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pointuiuv.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\image.glsl" />
+    <EmbeddedResource Include="Embedded\Vertex\raw.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\skybox.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\uv.glsl" />
   </ItemGroup>

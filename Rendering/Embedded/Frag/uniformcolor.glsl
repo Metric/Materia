@@ -11,14 +11,15 @@ float lengthSqr(vec3 v) {
 }
 
 void main() {
+    vec4 c = color;
     Brightness = vec4(0);
 
     //ensure premult
-    color.rgb *= color.a;
+    c.rgb *= c.a;
 
-    if(lengthSqr(color.rgb) > 3) {
-        Brightness = vec4(color.rgb, 1.0);
+    if(lengthSqr(c.rgb) > 3) {
+        Brightness = vec4(c.rgb, 1.0);
     }
 
-    FragColor = color;
+    FragColor = c;
 }

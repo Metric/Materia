@@ -6,6 +6,8 @@ namespace Materia.Rendering.Passes
 {
     public class RenderStack : IDisposable
     {
+        public GLTexture2D[] Output { get; protected set; }
+
         public List<RenderStackItem> renderers;
 
         public RenderStack()
@@ -30,6 +32,7 @@ namespace Materia.Rendering.Passes
             {
                 renderers[i].Render(lastOuputs, out lastOuputs, renderScene);
             }
+            Output = lastOuputs;
         }
 
         public void Dispose()

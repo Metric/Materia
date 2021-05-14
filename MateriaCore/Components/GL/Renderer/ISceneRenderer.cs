@@ -9,6 +9,6 @@ namespace MateriaCore.Components.GL.Renderer
     {
         GLTexture2D Image { get; }
 
-        void Render(Scene scene);
+        void Render();
     }
 }

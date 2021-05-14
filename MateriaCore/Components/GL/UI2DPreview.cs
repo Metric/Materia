@@ -1,12 +1,14 @@
 ﻿using InfinityUI.Components;
 using InfinityUI.Controls;
 using InfinityUI.Core;
+using InfinityUI.Interfaces;
 using Materia.Nodes;
 using Materia.Rendering.Mathematics;
 using Materia.Rendering.Textures;
 using MateriaCore.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace MateriaCore.Components.GL
@@ -27,7 +29,7 @@ namespace MateriaCore.Components.GL
 
         #endregion
 
-        protected const float ZOOM_SPEED = 1.0f / 10.0f;
+        protected const float ZOOM_SPEED = 1.0f / 60.0f;
 
         public UI2DPreview() : base(new Vector2(DEFAULT_WIDTH_PERCENT, DEFAULT_HEIGHT_PERCENT), "2D Preview")
         {
@@ -40,8 +42,8 @@ namespace MateriaCore.Components.GL
         private void OnPreviewUV(object sender, object t)
         {
             GLTexture2D tex = t as GLTexture2D;
-            uvArea.Visible = tex != null;
-            uvArea.Background.Texture = tex == null ? UI.DefaultWhite : tex;
+            //uvArea.Visible = tex != null;
+            //uvArea.Background.Texture = tex == null ? UI.DefaultWhite : tex;
         }
 
         private void OnPreview(object sender, object n)
@@ -50,16 +52,16 @@ namespace MateriaCore.Components.GL
             imageArea.Visible = activeNode != null;
             imageArea.Background.Texture = activeNode == null ? UI.DefaultWhite : activeNode.GetActiveBuffer();
             imageArea.Size = activeNode == null ? new Vector2(512, 512) : new Vector2(activeNode.Width, activeNode.Height);
-            uvArea.Size = activeNode == null ? new Vector2(512, 512) : new Vector2(activeNode.Width, activeNode.Height);
+            //uvArea.Size = activeNode == null ? new Vector2(512, 512) : new Vector2(activeNode.Width, activeNode.Height);
             ResetView();
         }
 
         private void ResetView()
         {
             imageArea.Scale = Vector2.One;
-            uvArea.Scale = Vector2.One;
-            imageArea?.MoveTo(Vector2.Zero);
-            uvArea?.MoveTo(Vector2.Zero);
+            //uvArea.Scale = Vector2.One;
+            imageArea.MoveTo(Vector2.Zero);
+            //uvArea?.MoveTo(Vector2.Zero);
         }
 
         private void InitializeComponents()
@@ -67,50 +69,60 @@ namespace MateriaCore.Components.GL
             internalContainer = new UIObject
             {
                 RelativeTo = Anchor.Fill,
+                RaycastTarget = true
             };
             internalBackground = internalContainer.AddComponent<UIImage>();
             internalBackground.Color = new Vector4(0.05f, 0.05f, 0.05f, 1); //todo: use theme class
             internalBackground.Clip = true;
 
-            uvArea = new MovablePane(new Vector2(512, 512))
-            {
-                RelativeTo = Anchor.Center,
-                SnapMode = MovablePaneSnapMode.Grid,
-                SnapTolerance = 5,
-                Visible = false
-            };
-            uvArea.Moved += UvArea_Moved;
+            //uvArea = new MovablePane(new Vector2(512, 512))
+            //{
+            //    RelativeTo = Anchor.Center,
+            //    RelativeMode = SizeMode.Pixel,
+            //    Sizing = SizeMode.Pixel,
+            //    SnapMode = MovablePaneSnapMode.None,
+            //    Visible = false,
+            //    Origin = new Vector2(0.5f, 0.5f)
+            //};
+            //uvArea.Moved += UvArea_Moved;
 
             imageArea = new MovablePane(new Vector2(512,512))
             {
                 RelativeTo = Anchor.Center,
-                SnapMode = MovablePaneSnapMode.Grid,
-                SnapTolerance = 5,
-                Visible = false
+                RelativeMode = SizeMode.Pixel,
+                Sizing = SizeMode.Pixel,
+                SnapMode = MovablePaneSnapMode.None,
+                Origin = new Vector2(0.5f, 0.5f)
             };
+
+            imageArea.Background.Color = new Vector4(1, 1, 1, 1);
             imageArea.Moved += ImageArea_Moved;
+
+            selectable.BubbleEvents = false;
             selectable.Wheel += Selectable_Wheel;
 
-            content.AddChild(internalContainer);
-
             internalContainer.AddChild(imageArea);
-            internalContainer.AddChild(uvArea);
+            content.AddChild(internalContainer);
+            //internalContainer.AddChild(uvArea);
         }
 
-        private void ImageArea_Moved(MovablePane arg1, Vector2 delta)
+        private void ImageArea_Moved(MovablePane arg1, Vector2 delta, MouseEventArgs e)
         {
-            uvArea?.Move(delta, false);
+            Debug.WriteLine("preview 2d image area moved: " + delta.ToString());
+            //uvArea?.Move(delta, false, e);
         }
 
-        private void UvArea_Moved(MovablePane arg1, Vector2 delta)
+        private void UvArea_Moved(MovablePane arg1, Vector2 delta, MouseEventArgs e)
         {
-            imageArea?.Move(delta, false);
+            Debug.WriteLine("preview 2d image uv area moved: " + delta.ToString());
+            imageArea?.Move(delta, false, e);
         }
 
-        private void Selectable_Wheel(UISelectable arg1, InfinityUI.Interfaces.MouseWheelArgs e)
+        private void Selectable_Wheel(UISelectable arg1, MouseWheelArgs e)
         {
-            imageArea.Scale += new Vector2(e.Delta.Y * ZOOM_SPEED);
-            uvArea.Scale += new Vector2(e.Delta.Y * ZOOM_SPEED);
+            Vector2 delta = new Vector2(-e.Delta.Y * ZOOM_SPEED);
+            imageArea.Scale += delta;
+            //uvArea.Scale += new Vector2(e.Delta.Y * ZOOM_SPEED);
         }
 
         public override void Dispose(bool disposing = true)

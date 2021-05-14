@@ -11,15 +11,21 @@ namespace Materia.Rendering.Passes
     public class BasePass : RenderStackItem
     {
         GLTexture2D[] color;
-        GLRenderBuffer depth;
         GLFrameBuffer frame;
 
         int width;
         int height;
 
-        public BasePass(int w, int h)
+        public BasePass(GLFrameBuffer frameBuffer, int w, int h)
         {
-            color = new GLTexture2D[2];
+            frame = frameBuffer;
+
+            //we create 4 colors buffs
+            //0 = base color
+            //1 = bloom color
+            //2 = for intermediate output
+            //3 = final output
+            color = new GLTexture2D[4];
 
             width = w;
             height = h;
@@ -28,28 +34,11 @@ namespace Materia.Rendering.Passes
             {
                 color[i] = new GLTexture2D(PixelInternalFormat.Rgba32f);
                 color[i].Bind();
-                color[i].SetData(IntPtr.Zero, PixelFormat.Rgba, w, h);
+                color[i].SetData(IntPtr.Zero, PixelFormat.Bgra, w, h);
                 color[i].Linear();
+                color[i].ClampToEdge();
                 GLTexture2D.Unbind();
             }
-
-            depth = new GLRenderBuffer();
-            depth.Bind();
-            depth.SetBufferStorageAsDepth(w, h);
-            depth.Unbind();
-
-            frame = new GLFrameBuffer();
-            frame.Bind();
-            frame.AttachColor(color[0], 0);
-            frame.AttachColor(color[1], 1);
-            frame.AttachDepth(depth);
-
-            if(!frame.IsValid)
-            {
-                Log.Error("Invalid frame buffer");
-            }
-
-            frame.Unbind();
         }
 
         public void Update(int w, int h)
@@ -62,28 +51,27 @@ namespace Materia.Rendering.Passes
                 for(int i = 0; i < color.Length; ++i)
                 {
                     color[i].Bind();
-                    color[i].SetData(IntPtr.Zero, PixelFormat.Rgba, w, h);
+                    color[i].SetData(IntPtr.Zero, PixelFormat.Bgra, w, h);
                     GLTexture2D.Unbind();
                 }
             }
-
-            depth?.Dispose();
-
-            depth = new GLRenderBuffer();
-            depth.Bind();
-            depth.SetBufferStorageAsDepth(w, h);
-            depth.Unbind();
-
-            frame?.Bind();
-            frame?.AttachDepth(depth);
-            frame?.Unbind();
         }
 
         public override void Render(GLTexture2D[] inputs, out GLTexture2D[] outputs, Action renderScene = null)
         {
             outputs = color;
 
+            if (frame == null) return;
+
             frame.Bind();
+            frame.AttachColor(color[0], 0);
+            frame.AttachColor(color[1], 1);
+            
+            if (!frame.IsValid)
+            {
+                Log.Error("Invalid frame buffer");
+            }
+
             IGL.Primary.DrawBuffers(new int[] { (int)DrawBuffersEnum.ColorAttachment0, (int)DrawBuffersEnum.ColorAttachment1 });
             IGL.Primary.Viewport(0, 0, width, height);
             IGL.Primary.ClearColor(0, 0, 0, 0);
@@ -96,12 +84,6 @@ namespace Materia.Rendering.Passes
 
         public override void Dispose()
         {
-            frame?.Dispose();
-            frame = null;
-
-            depth?.Dispose();
-            depth = null;
-
             if(color != null)
             {
                 for(int i = 0; i < color.Length; ++i)

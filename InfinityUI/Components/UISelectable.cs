@@ -69,7 +69,7 @@ namespace InfinityUI.Components
             }
         }
 
-        protected Vector4 hoverColor = new Vector4(0.75f, 0.75f, 0.75f, 1);
+        protected Vector4 hoverColor = new Vector4(1.05f, 1.05f, 1.05f, 1);
         public Vector4 HoverColor
         {
             get => hoverColor;
@@ -80,7 +80,7 @@ namespace InfinityUI.Components
             }
         }
 
-        protected Vector4 pressedColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+        protected Vector4 pressedColor = new Vector4(0.9f, 0.9f, 0.9f, 1);
         public Vector4 PressedColor
         {
             get => pressedColor;

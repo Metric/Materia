@@ -26,14 +26,14 @@ namespace InfinityUI.Components
             if (!Parent.Visible) return;
             if (Shader == null) return;
 
-            Vector2 size = Parent.AnchoredSize;
+            Vector2 size = Parent.WorldSize;
 
             if (size.X <= float.Epsilon || size.Y <= float.Epsilon) return;
 
             OnBeforeDraw(this);
 
-            Matrix4 m = Parent.ModelMatrix;
-            Vector2 pos = Parent.AnchoredPosition;
+            Matrix4 m = Parent.WorldMatrix;
+            Vector2 pos = Parent.WorldPosition;
             Vector4 color = Color;
             Vector2 tiling = Tiling;
             Vector2 offset = Offset;

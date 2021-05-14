@@ -2,6 +2,7 @@
 using Materia.Rendering.Shaders;
 using MLog;
 using Materia.Rendering.Interfaces;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Rendering.Material
 {
@@ -9,6 +10,8 @@ namespace Materia.Rendering.Material
     {
         public string Name { get; set; }
         public IGLProgram Shader { get; set; }
+
+        public Vector3 Tint { get; set; } = Vector3.One;
 
         public GLTexture2D Albedo { get; set; }
         public GLTexture2D Normal { get; set; }

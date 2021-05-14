@@ -363,8 +363,8 @@ namespace MateriaCore.Components.GL
 
             selectable.BubbleEvents = false;
 
-            selectable.NormalColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
-            selectable.HoverColor = new Vector4(0.95f, 0.95f, 0.95f, 1);
+            selectable.NormalColor = new Vector4(0.15f, 0.15f, 0.15f, 1);
+            selectable.HoverColor = new Vector4(1.05f, 1.05f, 1.05f, 1);
             selectable.PressedColor = new Vector4(0.9f, 0.9f, 0.9f, 1);
            
             selectable.Click += Selectable_Click;
@@ -459,8 +459,6 @@ namespace MateriaCore.Components.GL
             {
                 TryAndSelect();
             }
-
-            ZOrder = -1; //put on top of other nodes
         }
 
         private void Selectable_PointerUp(UISelectable arg1, MouseEventArgs e)
@@ -470,8 +468,6 @@ namespace MateriaCore.Components.GL
                 GlobalEvents.Emit(GlobalEvent.MoveComplete, this, this);
                 isMoving = false;
             }
-
-            ZOrder = 0; //restore z order to default
         }
 
         private void Selectable_Click(UISelectable arg1, MouseEventArgs e)
@@ -487,7 +483,7 @@ namespace MateriaCore.Components.GL
             //set 2d preview node
             GlobalEvents.Emit(GlobalEvent.Preview2D, this, Node);
         }
-        private void UINode_Moved(MovablePane obj, Vector2 delta)
+        private void UINode_Moved(MovablePane obj, Vector2 delta, MouseEventArgs e)
         {
             isMoving = true;
 

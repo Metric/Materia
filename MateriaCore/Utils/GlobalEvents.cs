@@ -8,7 +8,6 @@ namespace MateriaCore.Utils
     {
         Preview2D,
         Preview2DUV,
-        Preview3D,
         Preview3DColor,
         Preview3DNormal,
         Preview3DHeight,
@@ -20,7 +19,9 @@ namespace MateriaCore.Utils
         MoveSelected,
         MoveComplete,
         ViewParameters,
-        ClearViewParameters
+        ClearViewParameters,
+        HdriUpdate,
+        SkyboxUpdate
     }
 
     public static class GlobalEvents

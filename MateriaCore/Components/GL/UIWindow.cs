@@ -42,6 +42,7 @@ namespace MateriaCore.Components.GL
         public UIWindow(Vector2 size, string titleText = "") : base(size)
         {
             Sizing = SizeMode.Percent;
+            RelativeMode = SizeMode.Percent;
             InitializeComponents();
             title.Text = titleText;
         }
@@ -69,7 +70,8 @@ namespace MateriaCore.Components.GL
             content = new UIObject
             {
                 RelativeTo = Anchor.Fill,
-                Padding = new Box2(0, 32, 0, 0)
+                Padding = new Box2(0, 32, 0, 0),
+                RaycastTarget = true
             };
 
             closeButton = new Button("", new Vector2(32, 32))
@@ -94,28 +96,6 @@ namespace MateriaCore.Components.GL
         {
             Closing?.Invoke(this);
             Visible = false;
-        }
-
-        /// <summary>
-        /// We override this here to
-        /// only test for if we are in the title
-        /// background area for window dragging
-        /// </summary>
-        /// <param name="selectable">The selectable.</param>
-        /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        protected override void OnMouseMove(UISelectable selectable, MouseEventArgs e)
-        {
-            Vector2 p = e.Position;
-            
-            if (Canvas != null)
-            {
-                p = Canvas.ToCanvasSpace(p);
-            }
-
-            if (titleBackgroundArea.Contains(ref p))
-            {
-                base.OnMouseMove(selectable, e);
-            }
         }
     }
 }

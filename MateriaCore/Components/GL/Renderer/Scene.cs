@@ -13,6 +13,7 @@ using MateriaCore.Utils;
 using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -31,6 +32,8 @@ namespace MateriaCore.Components.GL.Renderer
         public PBRTess DefaultTessMaterial { get; protected set; }
         public PBRLight DefaultLightMaterial { get; protected set; }
 
+        public PBRSkybox DefaultSkyboxMaterial { get; protected set; }
+
         public Settings.Material SceneMaterialSettings { get; protected set; }
         public Settings.Lighting SceneLightingSettings { get; protected set; }
 
@@ -38,12 +41,26 @@ namespace MateriaCore.Components.GL.Renderer
         public GLTextureCube ActiveIrradiance { get; set; }
         public GLTextureCube ActivePrefilter { get; set; }
 
-        public Vector2 ViewSize = new Vector2(512, 256);
+        protected Vector2 viewSize = new Vector2(512, 512);
+        public Vector2 ViewSize 
+        { 
+            get => viewSize;
+            set
+            {
+                if (value != viewSize)
+                {
+                    viewSize = value;
+                    IsModified = true;
+                    Debug.WriteLine(viewSize.ToString());
+                }
+            }
+        }
         public PreviewCameraMode CameraMode { get; set; } = PreviewCameraMode.Perspective;
 
         public Matrix4 ActiveProjection { get; protected set; }
 
-        public List<MeshSceneObject> ActiveMeshes { get => meshSceneObjects.FindAll(m => m.Visible); }
+        public List<MeshSceneObject> ActiveMeshes { get => meshSceneObjects.FindAll(m => m.Visible && m.Renderer.RenderMode != MeshRenderType.Skybox); }
+        public MeshSceneObject ActiveSkybox { get => meshSceneObjects.Find(m => m.Visible && m.Renderer.RenderMode == MeshRenderType.Skybox); }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance is modified.
@@ -79,21 +96,19 @@ namespace MateriaCore.Components.GL.Renderer
         public SceneObject Root { get; set; }
         #endregion
 
-        public Scene(Vector2 view)
+        public Scene()
         {
-            ViewSize = view;
             CreateDefaults();
             AddEvents();
         }
 
-        public void UpdateViewSize(Vector2 view)
-        {
-            ViewSize = view;
-        }
-
         protected virtual void CreateProjection()
         {
-            Cam.Aspect = ViewSize.X / ViewSize.Y;
+            if (viewSize.LengthSquared <= float.Epsilon) return;
+
+            float aspect = viewSize.X / viewSize.Y;
+            if (aspect <= float.Epsilon) aspect = 1;
+            Cam.Aspect = aspect;
 
             switch (CameraMode)
             {
@@ -139,6 +154,11 @@ namespace MateriaCore.Components.GL.Renderer
             DefaultLightMaterial = new PBRLight();
             DefaultTessMaterial = new PBRTess();
 
+            DefaultSkyboxMaterial = new PBRSkybox
+            {
+                Albedo = DefaultWhite
+            };
+
             ActiveMaterial = DefaultMaterial;
 
             //Setup material defaults via
@@ -163,10 +183,10 @@ namespace MateriaCore.Components.GL.Renderer
             bmp.Clear(GLPixel.FromRGBA(0f, 0f, 0f, 1f));
             DefaultBlack = new GLTexture2D(PixelInternalFormat.Rgba8);
             DefaultBlack.Bind();
-            DefaultBlack.SetData(bmp.Image, PixelFormat.Rgba, 16, 16);
+            DefaultBlack.SetData(bmp.Image, PixelFormat.Bgra, 16, 16);
+            DefaultBlack.Linear();
+            DefaultBlack.Repeat();
             DefaultBlack.GenerateMipMaps();
-            DefaultBlack.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
-            DefaultBlack.SetWrap((int)TextureWrapMode.Repeat);
             GLTexture2D.Unbind();
             MeshNode.DefaultBlack = DefaultBlack;
 
@@ -174,30 +194,33 @@ namespace MateriaCore.Components.GL.Renderer
             bmp.Clear(GLPixel.FromRGBA(1f, 1f, 1f, 1f));
             DefaultWhite = new GLTexture2D(PixelInternalFormat.Rgba8);
             DefaultWhite.Bind();
-            DefaultWhite.SetData(bmp.Image, PixelFormat.Rgba, 16, 16);
+            DefaultWhite.SetData(bmp.Image, PixelFormat.Bgra, 16, 16);
+            DefaultWhite.Linear();
+            DefaultWhite.Repeat();
             DefaultWhite.GenerateMipMaps();
-            DefaultWhite.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
-            DefaultWhite.SetWrap((int)TextureWrapMode.Repeat);
+            GLTexture2D.Unbind();
             MeshNode.DefaultWhite = DefaultWhite;
 
             //gray
             bmp.Clear(GLPixel.FromRGBA(0.5f, 0.5f, 0.5f, 1f));
             DefaultGray = new GLTexture2D(PixelInternalFormat.Rgba8);
             DefaultGray.Bind();
-            DefaultGray.SetData(bmp.Image, PixelFormat.Rgba, 16, 16);
+            DefaultGray.SetData(bmp.Image, PixelFormat.Bgra, 16, 16);
+            DefaultGray.Linear();
+            DefaultGray.Repeat();
             DefaultGray.GenerateMipMaps();
-            DefaultGray.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
-            DefaultGray.SetWrap((int)TextureWrapMode.Repeat);
+            GLTexture2D.Unbind();
 
             //dark gray
             bmp.Clear(GLPixel.FromRGBA(0.25f, 0.25f, 0.25f, 1f));
             DefaultDarkGray = new GLTexture2D(PixelInternalFormat.Rgba8);
             DefaultDarkGray.Bind();
-            DefaultDarkGray.SetData(bmp.Image, PixelFormat.Rgba, 16, 16);
+            DefaultDarkGray.SetData(bmp.Image, PixelFormat.Bgra, 16, 16);
+            DefaultDarkGray.Linear();
+            DefaultDarkGray.Repeat();
             DefaultDarkGray.GenerateMipMaps();
-            DefaultDarkGray.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
-            DefaultDarkGray.SetWrap((int)TextureWrapMode.Repeat);
             MeshNode.DefaultDarkGray = DefaultDarkGray;
+            GLTexture2D.Unbind();
         }
 
         #region General Events
@@ -320,6 +343,8 @@ namespace MateriaCore.Components.GL.Renderer
             GlobalEvents.On(GlobalEvent.Preview3DHeight, OnPreviewHeight);
             GlobalEvents.On(GlobalEvent.Preview3DThickness, OnPreviewThickness);
             GlobalEvents.On(GlobalEvent.Preview3DEmission, OnPreviewEmission);
+            GlobalEvents.On(GlobalEvent.HdriUpdate, OnHdriUpdate);
+            GlobalEvents.On(GlobalEvent.SkyboxUpdate, OnSkyboxUpdate);
         }
 
         protected virtual void RemoveEvents()
@@ -332,6 +357,35 @@ namespace MateriaCore.Components.GL.Renderer
             GlobalEvents.Off(GlobalEvent.Preview3DHeight, OnPreviewHeight);
             GlobalEvents.Off(GlobalEvent.Preview3DThickness, OnPreviewThickness);
             GlobalEvents.Off(GlobalEvent.Preview3DEmission, OnPreviewEmission);
+            GlobalEvents.Off(GlobalEvent.HdriUpdate, OnHdriUpdate);
+            GlobalEvents.Off(GlobalEvent.SkyboxUpdate, OnSkyboxUpdate);
+        }
+
+        protected virtual void OnSkyboxUpdate(object sender, object texture)
+        {
+            if (texture is GLTexture2D)
+            {
+                if (DefaultSkyboxMaterial != null)
+                {
+                    DefaultSkyboxMaterial.Albedo = texture as GLTexture2D;
+                }
+
+                IsModified = true;
+            }
+        }
+
+        protected virtual void OnHdriUpdate(object irradiance, object prefilter)
+        {
+            if (irradiance is GLTextureCube && prefilter is GLTextureCube)
+            {
+                ActiveIrradiance = irradiance as GLTextureCube;
+                ActivePrefilter = prefilter as GLTextureCube;
+
+                MeshNode.Irradiance = ActiveIrradiance;
+                MeshNode.Prefilter = ActivePrefilter;
+
+                IsModified = true;
+            }
         }
 
         protected virtual void OnPreviewColor(object sender, object n)
@@ -345,7 +399,9 @@ namespace MateriaCore.Components.GL.Renderer
 
         protected virtual void SetColor(UINode node)
         {
-            DefaultMaterial.Albedo = DefaultTessMaterial.Albedo = node == null ? DefaultDarkGray : node.GetActiveBuffer();
+            GLTexture2D buffer = node?.GetActiveBuffer();
+            DefaultMaterial.Albedo = DefaultTessMaterial.Albedo = buffer ?? DefaultWhite;
+            IsModified = true;
         }
 
         protected virtual void OnPreviewNormal(object sender, object n)
@@ -359,7 +415,9 @@ namespace MateriaCore.Components.GL.Renderer
 
         protected virtual void SetNormal(UINode node)
         {
-            DefaultMaterial.Normal = DefaultTessMaterial.Normal = node == null ? DefaultGray : node.GetActiveBuffer();
+            GLTexture2D buffer = node?.GetActiveBuffer();
+            DefaultMaterial.Normal = DefaultTessMaterial.Normal = buffer ?? DefaultGray;
+            IsModified = true;
         }
 
         protected virtual void OnPreviewMetallic(object sender, object n)
@@ -373,7 +431,9 @@ namespace MateriaCore.Components.GL.Renderer
 
         protected virtual void SetMetallic(UINode node)
         {
-            DefaultMaterial.Metallic = DefaultTessMaterial.Metallic = node == null ? DefaultBlack : node.GetActiveBuffer();
+            GLTexture2D buffer = node?.GetActiveBuffer();
+            DefaultMaterial.Metallic = DefaultTessMaterial.Metallic = buffer ?? DefaultGray;
+            IsModified = true;
         }
 
         protected virtual void OnPreviewOcclusion(object sender, object n)
@@ -387,7 +447,9 @@ namespace MateriaCore.Components.GL.Renderer
 
         protected virtual void SetOcclusion(UINode node)
         {
-            DefaultMaterial.Occlusion = DefaultTessMaterial.Occlusion = node == null ? DefaultWhite : node.GetActiveBuffer();
+            GLTexture2D buffer = node?.GetActiveBuffer();
+            DefaultMaterial.Occlusion = DefaultTessMaterial.Occlusion = buffer ?? DefaultWhite;
+            IsModified = true;
         }
 
         protected virtual void OnPreviewRoughness(object sender, object n)
@@ -401,7 +463,9 @@ namespace MateriaCore.Components.GL.Renderer
 
         protected virtual void SetRoughness(UINode node)
         {
-            DefaultMaterial.Roughness = DefaultTessMaterial.Roughness = node == null ? DefaultBlack : node.GetActiveBuffer();
+            GLTexture2D buffer = node?.GetActiveBuffer();
+            DefaultMaterial.Roughness = DefaultTessMaterial.Roughness = buffer ?? DefaultBlack;
+            IsModified = true;
         }
 
         protected virtual void OnPreviewHeight(object sender, object n)
@@ -415,7 +479,9 @@ namespace MateriaCore.Components.GL.Renderer
 
         protected virtual void SetHeight(UINode node)
         {
-            DefaultMaterial.Height = DefaultTessMaterial.Height = node == null ? DefaultWhite : node.GetActiveBuffer();
+            GLTexture2D buffer = node?.GetActiveBuffer();
+            DefaultMaterial.Height = DefaultTessMaterial.Height = buffer ?? DefaultWhite;
+            IsModified = true;
         }
 
         protected virtual void OnPreviewThickness(object sender, object n)
@@ -429,7 +495,9 @@ namespace MateriaCore.Components.GL.Renderer
 
         protected virtual void SetThickness(UINode node)
         {
-            DefaultMaterial.Thickness = DefaultTessMaterial.Thickness = node == null ? DefaultBlack : node.GetActiveBuffer();
+            GLTexture2D buffer = node?.GetActiveBuffer();
+            DefaultMaterial.Thickness = DefaultTessMaterial.Thickness = buffer ?? DefaultBlack;
+            IsModified = true;
         }
 
         protected virtual void OnPreviewEmission(object sender, object n)
@@ -443,17 +511,19 @@ namespace MateriaCore.Components.GL.Renderer
 
         protected virtual void SetEmission(UINode node)
         {
-            DefaultMaterial.Emission = DefaultTessMaterial.Emission = node == null ? DefaultBlack : node.GetActiveBuffer();
+            GLTexture2D buffer = node?.GetActiveBuffer();
+            DefaultMaterial.Emission = DefaultTessMaterial.Emission = buffer ?? DefaultBlack;
+            IsModified = true;
         }
         #endregion
 
 
-        public SceneObject CreateMeshFromEmbeddedFile(string path, Type t)
+        public SceneObject CreateMeshFromEmbeddedFile(string path, Type t, MeshRenderType mode = MeshRenderType.PBR)
         {
             try
             {
                 EmbeddedFileProvider provider = new EmbeddedFileProvider(t.Assembly);
-                return CreateMeshFromStream(provider.GetFileInfo(path).CreateReadStream());
+                return CreateMeshFromStream(provider.GetFileInfo(path).CreateReadStream(), mode);
             }
             catch (Exception e)
             {
@@ -463,14 +533,14 @@ namespace MateriaCore.Components.GL.Renderer
             return null;
         }
 
-        public SceneObject CreateMeshFromFile(string path)
+        public SceneObject CreateMeshFromFile(string path, MeshRenderType mode = MeshRenderType.PBR)
         {
             try
             {
                 if (!File.Exists(path)) return null;
                 using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
-                    return CreateMeshFromStream(fs);
+                    return CreateMeshFromStream(fs, mode);
                 }
             }
             catch (Exception e)
@@ -481,7 +551,7 @@ namespace MateriaCore.Components.GL.Renderer
             return null;
         }
 
-        protected SceneObject CreateMeshFromStream(Stream stream)
+        protected SceneObject CreateMeshFromStream(Stream stream, MeshRenderType mode)
         {
             Importer importer = new Importer();
             var meshes = importer.Parse(stream);
@@ -493,20 +563,34 @@ namespace MateriaCore.Components.GL.Renderer
                 MeshSceneObject ms = new MeshSceneObject
                 {
                     RawMesh = meshes[i],
-                    Renderer = new MeshRenderer(meshes[i]),
+                    Renderer = new MeshRenderer(meshes[i])
+                    {
+                        RenderMode = mode
+                    },
                     GetActiveFar = () => Cam.Far,
                     GetActiveNear = () => Cam.Near,
                     GetActiveEyePosition = () => Cam.EyePosition,
                     GetActiveLight = () => Light,
-                    GetActiveMaterial = () => ActiveMaterial,
+                    GetActiveMaterial = () =>
+                    {
+                        switch(mode)
+                        {
+                            case MeshRenderType.Light:
+                                return DefaultLightMaterial;
+                            case MeshRenderType.Skybox:
+                                return DefaultSkyboxMaterial;
+                            default:
+                                return ActiveMaterial;
+                        }
+                    },
                     GetActiveIrradianceMap = () => ActiveIrradiance,
                     GetActivePrefilterMap = () => ActivePrefilter,
-                    GetActiveView = () => Cam.View,
+                    GetActiveView = () => Cam.InvertedView,
                     GetActiveProjection = () => ActiveProjection
                 };
                 meshSceneObjects.Add(ms);
                 registeredSceneObjects[ms.Id] = ms;
-                group.Children.Add(ms);
+                group.Add(ms);
             }
 
             registeredSceneObjects[group.Id] = group;
@@ -524,6 +608,7 @@ namespace MateriaCore.Components.GL.Renderer
             DefaultMaterial?.Dispose();
             DefaultLightMaterial?.Dispose();
             DefaultTessMaterial?.Dispose();
+            DefaultSkyboxMaterial?.Dispose();
 
             RemoveEvents();
 

@@ -19,17 +19,19 @@ in AppData data;
 uniform vec3 cameraPosition;
 
 //Texture Data
-uniform sampler2D albedo;
+uniform sampler2D albedoMap;
 uniform sampler2D metallicMap;
 uniform sampler2D roughnessMap;
 uniform sampler2D occlusionMap;
 uniform sampler2D normalMap;
 uniform sampler2D heightMap;
 uniform sampler2D brdfLUT;
-uniform samplerCube irradianceMap;
-uniform samplerCube prefilterMap;
 uniform sampler2D thicknessMap;
 uniform sampler2D emissionMap;
+uniform samplerCube irradianceMap;
+uniform samplerCube prefilterMap;
+
+uniform vec3 tint = vec3(1, 1, 1);
 
 //Light Data
 uniform vec3 lightPosition = vec3(0,1,1);
@@ -299,7 +301,9 @@ void main()
 
     float NdotV = max(dot(N,V), 0.001);
 
-    vec4 color = texture(albedo, uv);
+    vec4 color = texture(albedoMap, uv);
+    color.rgb *= tint;
+
     vec3 ldiffuse = shading.diffuse = pow(color.rgb, vec3(2.2));
 
     float roughness = shading.roughness = texture(roughnessMap, uv).r;
@@ -330,6 +334,7 @@ void main()
     vec3 iKd = vec3(1.0) - iKs;
     iKd *= 1.0 - metallic;
 	
+    //ignoring this temporarily for testing purposes
 	//normal for irradiance map must be reversed
     vec3 irradiance = texture(irradianceMap, -N).rgb;
     vec3 diffuseIBL = irradiance * ldiffuse;
@@ -340,6 +345,7 @@ void main()
     vec3 specularIBL = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
     vec3 ambient = (iKd * diffuseIBL + specularIBL) * ao;
+    //vec3 ambient = (iKd + specularIBL) * ao;
     //add ambient + light + emission
     final += (ambient + Lo) + texture(emissionMap, uv).rgb;
 
@@ -354,11 +360,10 @@ void main()
     }
 
     //HDR
-    //final = final / (final + vec3(1.0)); 
+    final = final / (final + vec3(1.0)); 
 
     //GAMMA
-    //final = pow(final, vec3(1.0/2.2));
+    final = pow(final, vec3(1.0/2.2));
 
-    FragColor = vec4(final, color.a);
-    
+    FragColor = vec4(clamp(final, vec3(0), vec3(1)), color.a);  
 }

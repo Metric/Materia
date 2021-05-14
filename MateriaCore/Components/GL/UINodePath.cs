@@ -106,8 +106,8 @@ namespace MateriaCore.Components.GL
 
             if (point1 == null || point2 == null) return;
 
-            Vector2 r1 = point1.AnchoredPosition;
-            Vector2 r2 = point2.AnchoredPosition;
+            Vector2 r1 = point1.WorldPosition;
+            Vector2 r2 = point2.WorldPosition;
 
             float midy = (r2.Y + r1.Y) * 0.5f;
             float midx = (r2.X + r1.X) * 0.5f;

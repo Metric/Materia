@@ -8,7 +8,7 @@ namespace Materia.Rendering
     {
         public event Action<Camera> Update;
 
-        public float Aspect { get; set; }
+        public float Aspect { get; set; } = 1;
 
         protected float fov;
         [Editable(ParameterInputType.FloatInput, "Fov")]
@@ -75,7 +75,7 @@ namespace Materia.Rendering
         {
             get
             {
-                return Matrix4.CreatePerspectiveFieldOfView(Fov * ((float)Math.PI / 180.0f), Aspect, Near, Far);
+                return Matrix4.CreatePerspectiveFieldOfView(Fov * MathHelper.Deg2Rad, Aspect, Near, Far);
             }
         }
 
@@ -84,6 +84,14 @@ namespace Materia.Rendering
             get
             {
                 return (Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position)).Inverted();
+            }
+        }
+
+        public Matrix4 InvertedView
+        {
+            get
+            {
+                return (Matrix4.CreateTranslation(Position) * Matrix4.CreateFromQuaternion(Rotation)).Inverted();
             }
         }
 

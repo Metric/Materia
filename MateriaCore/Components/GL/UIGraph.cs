@@ -246,7 +246,7 @@ namespace MateriaCore.Components.GL
         private void Grid_BeforeDraw(UIDrawable obj)
         {
             //cache size so we don't keep calculating it
-            Vector2 size = AnchoredSize; 
+            Vector2 size = WorldSize; 
             float newSize = MathF.Max(size.X, size.Y) / 64;
             float aspect = size.X / size.Y;
             grid.Tiling = new Vector2(newSize, newSize / aspect) * zoom;
@@ -626,7 +626,7 @@ namespace MateriaCore.Components.GL
             UIObject unode = n as UIObject;
             if (Canvas != null)
             {
-                Vector2 pos = unode.AnchoredPosition;
+                Vector2 pos = unode.WorldPosition;
                 Canvas.Cam.LocalPosition = new Vector3(pos.X, pos.Y, 0);
             }
             UI.Focus = unode.GetComponent<UISelectable>();
@@ -1378,7 +1378,7 @@ namespace MateriaCore.Components.GL
             UpdateZoomDetails();
         }
 
-        private void UIGraph_Moved(MovablePane arg1, Vector2 delta)
+        private void UIGraph_Moved(MovablePane arg1, Vector2 delta, MouseEventArgs e)
         {
             //must reverse the delta as
             //otherwise camera pans in opposite direction

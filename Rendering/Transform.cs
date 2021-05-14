@@ -40,7 +40,7 @@ namespace Materia.Rendering
             }
         }
 
-        private Vector3 localEulerAngles;
+        private Vector3 localEulerAngles = Vector3.Zero;
 
         public Vector3 LocalEulerAngles
         {
@@ -56,7 +56,7 @@ namespace Materia.Rendering
             }
         }
 
-        public Quaternion LocalRotation { get; set; }
+        public Quaternion LocalRotation { get; set; } = Quaternion.Identity;
 
         public Vector3 Scale
         {
@@ -71,7 +71,7 @@ namespace Materia.Rendering
             }
         }
 
-        public Vector3 LocalScale { get; set; }
+        public Vector3 LocalScale { get; set; } = Vector3.One;
 
         public Vector3 Position
         {
@@ -96,13 +96,14 @@ namespace Materia.Rendering
             }
         }
 
-        public Vector3 LocalPosition { get; set; }
+        public Vector3 LocalPosition { get; set; } = Vector3.Zero;
 
         public Matrix4 WorldMatrix
         {
             get
             {
-                return Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
+                if (Parent == null) return LocalMatrix;
+                return LocalMatrix * Parent.WorldMatrix;
             }
         }
 
@@ -119,7 +120,6 @@ namespace Materia.Rendering
             get
             {
                 Quaternion rot = Rotation;
-                rot.Conjugate();
                 return rot * Vector3.UnitZ;
             }
         }
@@ -129,7 +129,6 @@ namespace Materia.Rendering
             get
             {
                 Quaternion rot = Rotation;
-                rot.Conjugate();
                 return rot * -Vector3.UnitZ;
             }
         }
@@ -139,7 +138,6 @@ namespace Materia.Rendering
             get
             {
                 Quaternion rot = Rotation;
-                rot.Conjugate();
                 return rot * -Vector3.UnitX;
             }
         }
@@ -149,7 +147,6 @@ namespace Materia.Rendering
             get
             {
                 Quaternion rot = Rotation;
-                rot.Conjugate();
                 return rot * Vector3.UnitX;
             }
         }
@@ -159,7 +156,6 @@ namespace Materia.Rendering
             get
             {
                 Quaternion rot = Rotation;
-                rot.Conjugate();
                 return rot * Vector3.UnitY;
             }
         }
@@ -169,7 +165,6 @@ namespace Materia.Rendering
             get
             {
                 Quaternion rot = Rotation;
-                rot.Conjugate();
                 return rot * -Vector3.UnitY;
             }
         }
@@ -185,10 +180,7 @@ namespace Materia.Rendering
 
         public void Add(Transform c)
         {
-            if(c.Parent != null)
-            {
-                c.Parent.Remove(c);
-            }
+            c.Parent?.Remove(c);
             c.Parent = this;
             children.Add(c);
         }

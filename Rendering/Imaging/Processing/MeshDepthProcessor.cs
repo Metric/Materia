@@ -30,7 +30,7 @@ namespace Materia.Rendering.Imaging.Processing
                 IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit);
 
                 //draw in depth
-                Mesh.DrawForDepth();
+                Mesh.DrawAsDepth();
 
                 //restore to default depth info
                 IGL.Primary.Disable((int)EnableCap.DepthTest);

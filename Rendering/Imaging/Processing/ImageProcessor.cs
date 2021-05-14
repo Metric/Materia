@@ -22,7 +22,7 @@ namespace Materia.Rendering.Imaging.Processing
         protected static GLTexture2D outputBuff;
         protected static GLTexture2D colorBuff;
 
-        protected static readonly Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
+        public static readonly Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
 
         protected int Width { get; set; }
         protected int Height { get; set; }

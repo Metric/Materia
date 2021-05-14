@@ -24,7 +24,7 @@ void main() {
     final.rgb = final.rgb / (final.rgb + vec3(1.0)); 
 
     //GAMMA + premult
-    final.rgb = pow(final.rgb, vec3(1.0/2.2)) * final.a;
+    final.rgb = pow(final.rgb, vec3(1.0 / 2.2)); // * final.a;
 
     FragColor = clamp(final, vec4(0), vec4(1));
 }

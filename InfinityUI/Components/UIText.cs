@@ -281,16 +281,16 @@ namespace InfinityUI.Components
             if (!Parent.Visible) return;
             if (string.IsNullOrEmpty(text)) return;
 
-            Vector2 size = Parent.AnchoredSize;
+            Vector2 size = Parent.WorldSize;
 
             if (size.X <= float.Epsilon || size.Y <= float.Epsilon) return;
 
             OnBeforeDraw(this);
 
-            Matrix4 m = Parent.ModelMatrix;
+            Matrix4 m = Parent.WorldMatrix;
             Vector4 color = Color;
             Vector2 tiling = Tiling;
-            Vector2 pos = Parent.AnchoredPosition;
+            Vector2 pos = Parent.WorldPosition;
 
             Shader.Use();
             Shader.SetUniformMatrix4("projectionMatrix", ref projection);

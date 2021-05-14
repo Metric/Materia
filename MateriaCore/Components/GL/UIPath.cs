@@ -37,8 +37,8 @@ namespace MateriaCore.Components.GL
 
             OnBeforeDraw(this);
 
-            Matrix4 model = Parent.ModelMatrix;
-            Vector2 offset = Parent.AnchoredPosition;
+            Matrix4 model = Parent.WorldMatrix;
+            Vector2 offset = Parent.WorldPosition;
           
             Shader.Use();
             Shader.SetUniform2("offset", ref offset);

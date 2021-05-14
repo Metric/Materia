@@ -46,6 +46,9 @@ namespace InfinityUI.Core
         public Vector2 MinSize { get; set; } = Vector2.Zero;
 
         public SizeMode Sizing { get; set; } = SizeMode.Pixel;
+        public SizeMode RelativeMode { get; set; } = SizeMode.Pixel;
+
+        public Vector2 Origin { get; set; } = Vector2.Zero;
 
         protected int zOrder = 0;
         public int ZOrder
@@ -90,8 +93,7 @@ namespace InfinityUI.Core
         }
 
         /// <summary>
-        /// Gets the rect.
-        /// This does not include scaling
+        /// Gets the rect
         /// </summary>
         /// <value>
         /// The rect.
@@ -100,8 +102,8 @@ namespace InfinityUI.Core
         {
             get
             {
-                Vector2 size = AnchoredSize;
-                return new Box2(AnchoredPosition, size.X, size.Y);
+                Vector2 size = WorldSize;
+                return new Box2(WorldPosition, size.X, size.Y);
             }
         }
 
@@ -117,46 +119,54 @@ namespace InfinityUI.Core
             get
             {
                 Vector2 size = AnchoredSize;
-                return new Box2(Position, size.X, size.Y);
+                return new Box2(AnchoredPosition, size.X, size.Y);
             }
         }
 
         public float Rotation { get; set; }
 
-        public Vector2 Origin { get; set; } = new Vector2(0f, 0f);
-
-        public Matrix4 LocalScaleMatrix
-        {
-            get
-            {
-                Vector2 size = AnchoredSize;
-                return Matrix4.CreateTranslation(-Origin.X * size.X, -Origin.Y * size.Y, 0) * Matrix4.CreateScale(scale.X, scale.Y, 1) * Matrix4.CreateTranslation(Origin.X * size.X, Origin.Y * size.Y, 0);
-            }
-        }
-
-        public Matrix4 LocalRotationMatrix
-        {
-            get
-            {
-                Vector2 size = AnchoredSize;
-                return Matrix4.CreateTranslation(-Origin.X * size.X, -Origin.Y * size.Y, 0) * Matrix4.CreateRotationZ(Rotation * MathHelper.Deg2Rad) * Matrix4.CreateTranslation(Origin.X * size.X, Origin.Y * size.Y, 0);
-            }
-        }
-
         public Matrix4 LocalMatrix
         {
             get
             {
-                return LocalScaleMatrix * LocalRotationMatrix;
+                Vector2 size = AnchoredSize;
+                Vector3 offset = new Vector3(size.X * Origin.X, size.Y * Origin.Y, 0);
+                return Matrix4.CreateTranslation(-offset) * Matrix4.CreateRotationZ(Rotation * MathHelper.Deg2Rad) * Matrix4.CreateTranslation(offset);
             }
         }
 
-        public Matrix4 ModelMatrix
+        public Matrix4 WorldMatrix
         {
             get
             {
                 if (Parent == null) return LocalMatrix;
-                return LocalMatrix * Parent.ModelMatrix;
+                return LocalMatrix * Parent.WorldMatrix;
+            }
+        }
+
+        public virtual Vector2 WorldScale
+        {
+            get
+            {
+                if (Parent == null) return Scale;
+                return Scale * Parent.WorldScale;
+            }
+        }
+
+        public virtual Vector2 WorldPosition
+        {
+            get
+            {
+                if (Parent == null) return AnchoredPosition;
+                return AnchoredPosition + Parent.WorldPosition;
+            }
+        }
+
+        public virtual Vector2 WorldSize
+        {
+            get
+            {
+                return AnchoredSize * WorldScale;
             }
         }
 
@@ -170,33 +180,42 @@ namespace InfinityUI.Core
 
                 Vector2 pSize = Parent.AnchoredSize;
 
+                //if RelativeMode is Percent we set local pos as a percent of parent size
+                Vector2 pos = RelativeMode == SizeMode.Percent ? pSize * Position : Position;
+                Vector2 offset = size * Origin;
+
+                //calculate scale first
+                pos -= offset;
+                pos *= Scale;
+                pos += offset;
+
                 switch (RelativeTo)
                 {
                     case Anchor.Top:
-                        return new Vector2(pSize.X / 2 - size.X / 2 + Position.X + Padding.Left, Position.Y + Padding.Top) + Parent.AnchoredPosition;
+                        return new Vector2(pSize.X / 2 - size.X / 2 + pos.X + Padding.Left, pos.Y + Padding.Top);
                     case Anchor.Bottom:
-                        return new Vector2(pSize.X / 2 - size.X / 2 + Position.X + Padding.Left, pSize.Y - Position.Y - Padding.Bottom - size.Y) + Parent.AnchoredPosition;
+                        return new Vector2(pSize.X / 2 - size.X / 2 + pos.X + Padding.Left, pSize.Y - pos.Y - Padding.Bottom - size.Y);
                     case Anchor.BottomLeft:
                     case Anchor.BottomHorizFill:
-                        return new Vector2(Position.X + Padding.Left, pSize.Y - Position.Y - Padding.Bottom - size.Y) + Parent.AnchoredPosition;
+                        return new Vector2(pos.X + Padding.Left, pSize.Y - pos.Y - Padding.Bottom - size.Y);
                     case Anchor.TopLeft:
                     case Anchor.TopHorizFill:
                     case Anchor.Fill:
-                        return Position + new Vector2(Padding.Left, Padding.Top) + Parent.AnchoredPosition;
+                        return pos + new Vector2(Padding.Left, Padding.Top);
                     case Anchor.BottomRight:
-                        return new Vector2(pSize.X - Position.X - Padding.Right - size.X, pSize.Y - Position.Y - Padding.Bottom - size.Y) + Parent.AnchoredPosition;
+                        return new Vector2(pSize.X - pos.X - Padding.Right - size.X, pSize.Y - pos.Y - Padding.Bottom - size.Y);
                     case Anchor.TopRight:
-                        return new Vector2(pSize.X - Position.X - Padding.Right - size.X, Position.Y + Padding.Top) + Parent.AnchoredPosition;
+                        return new Vector2(pSize.X - pos.X - Padding.Right - size.X, pos.Y + Padding.Top);
                     case Anchor.Center:
-                        return new Vector2(pSize.X / 2 - size.X / 2 + Position.X + Padding.Left, pSize.Y / 2 - size.Y / 2 + Position.Y + Padding.Top) + Parent.AnchoredPosition;
+                        return new Vector2(pSize.X / 2 - size.X / 2 + pos.X + Padding.Left, pSize.Y / 2 - size.Y / 2 + pos.Y + Padding.Top);
                     case Anchor.CenterHorizFill:
                     case Anchor.CenterLeft:
-                        return new Vector2(Position.X + Padding.Left, pSize.Y / 2 - size.Y / 2 + Position.Y + Padding.Top) + Parent.AnchoredPosition;
+                        return new Vector2(pos.X + Padding.Left, pSize.Y / 2 - size.Y / 2 + pos.Y + Padding.Top);
                     case Anchor.CenterRight:
-                        return new Vector2(pSize.X - Position.X - Padding.Right - size.X, pSize.Y / 2 - size.Y / 2 + Position.Y + Padding.Top) + Parent.AnchoredPosition;
+                        return new Vector2(pSize.X - pos.X - Padding.Right - size.X, pSize.Y / 2 - size.Y / 2 + pos.Y + Padding.Top);
                 }
 
-                return Position + new Vector2(Padding.Left, Padding.Top) + Parent.AnchoredPosition;
+                return pos + new Vector2(Padding.Left, Padding.Top);
             }
         }
 
@@ -207,16 +226,11 @@ namespace InfinityUI.Core
                 Vector2 size = Size;
                 Vector2 pSize = Parent == null ? Vector2.One : Parent.AnchoredSize;
 
-                switch (Sizing)
-                {
-                    //if we are percent mode
-                    //then size is 0-1 only for percent
-                    //thus we need to calculate size based
-                    //on parent if there is one
-                    case SizeMode.Percent:
-                        size = Parent == null ? size : new Vector2(size.X * pSize.X, size.Y * pSize.Y);
-                        break;
-                }
+                //if we are percent mode
+                //then size is 0-1 only for percent
+                //thus we need to calculate size based
+                //on parent if there is one
+                size = Parent == null || Sizing == SizeMode.Pixel ? size : new Vector2(size.X * pSize.X, size.Y * pSize.Y);
 
                 if (Parent == null) return size + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
                 switch (RelativeTo)
@@ -340,8 +354,8 @@ namespace InfinityUI.Core
 
         protected bool IsPointInPolygon(ref Vector2 p)
         {
-            Vector2 pos = AnchoredPosition;
-            Vector2 size = AnchoredSize;
+            Vector2 pos = WorldPosition;
+            Vector2 size = WorldSize;
 
             Vector2 topLeft = pos;
             Vector2 topRight = pos + new Vector2(size.X, 0);
@@ -366,7 +380,7 @@ namespace InfinityUI.Core
 
         public virtual Vector2 ToWorld(ref Vector2 p)
         {
-            Vector4 rot = new Vector4(p.X, p.Y, 0, 1) * LocalMatrix; //todo: test with ModelMatrix
+            Vector4 rot = new Vector4(p.X, p.Y, 0, 1) * WorldMatrix;
             return rot.Xy;
         }
 
@@ -374,9 +388,10 @@ namespace InfinityUI.Core
         {
             if (!Visible) return false;
 
-            if (Rotation > 0 || Rotation < 0 
-                || MathF.Abs(scale.X - 1) > float.Epsilon  
-                || MathF.Abs(scale.Y - 1) > float.Epsilon)
+            float s = Scale.LengthSquared;
+
+            if (Rotation > 0 || Rotation < 0
+                || s < 1 || s > 1)
             {
                 return IsPointInPolygon(ref p);
             }
@@ -391,11 +406,11 @@ namespace InfinityUI.Core
 
         public UIObject Pick(ref Vector2 p)
         {
-            if (!RaycastAlways && !Contains(ref p)) return null;
+            if (!Visible || (!RaycastAlways && !Contains(ref p))) return null;
 
             for (int i = Children.Count - 1; i >= 0; --i)
             {
-                if (!Children[i].RaycastTarget) continue;
+                if (!Children[i].RaycastTarget || !Children[i].Visible) continue;
                 if (Children[i].RaycastAlways || Children[i].Contains(ref p))
                 {
                     var c = Children[i].Pick(ref p);

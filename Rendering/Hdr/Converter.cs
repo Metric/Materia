@@ -41,7 +41,7 @@ namespace Materia.Rendering.Hdr
 
         static Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(90f.ToRadians(), 1.0f, 0.1f, 10f);
 
-        static Matrix4[] views = new Matrix4[]
+        static readonly Matrix4[] views = new Matrix4[]
         {
             Matrix4.LookAt(Vector3.Zero, new Vector3(1,0,0), new Vector3(0,-1,0)),
             Matrix4.LookAt(Vector3.Zero, new Vector3(-1,0,0), new Vector3(0,-1,0)),
@@ -93,11 +93,15 @@ namespace Materia.Rendering.Hdr
             {
                 cubeMap.SetData(i, IntPtr.Zero, PixelFormat.Rgb, 32, 32);
             }
+            cubeMap.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
             cubeMap.SetWrap((int)TextureWrapMode.ClampToEdge);
-            cubeMap.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
             GLTextureCube.Unbind();
 
             IGLProgram shader = irradianceShader;
+
+            if (shader == null) return cubeMap;
+
+            frameBuffer.Bind();
 
             //use shader
             shader.Use();
@@ -108,8 +112,13 @@ namespace Materia.Rendering.Hdr
 
             Matrix4 proj = projection;
 
+            MeshRenderer.SharedVao?.Bind();
+
             shader.SetUniformMatrix4("projectionMatrix", ref proj);
             IGL.Primary.Viewport(0, 0, 32, 32);
+            IGL.Primary.ClearColor(0, 0, 0, 1);
+            IGL.Primary.Disable((int)EnableCap.CullFace);
+            IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
             for (int i = 0; i < 6; ++i)
             {
                 Matrix4 view = views[i];
@@ -120,7 +129,15 @@ namespace Materia.Rendering.Hdr
             }
             GLTextureCube.Unbind();
             frameBuffer.Unbind();
-            
+
+            cubeMap.Bind();
+            cubeMap.GenerateMipMaps();
+            GLTextureCube.Unbind();
+
+            MeshRenderer.SharedVao?.Unbind();
+
+            IGL.Primary.Enable((int)EnableCap.CullFace);
+
             return cubeMap;
         }
 
@@ -158,11 +175,15 @@ namespace Materia.Rendering.Hdr
             {
                 cubeMap.SetData(i, IntPtr.Zero, PixelFormat.Rgb, 512, 512);
             }
-            cubeMap.SetWrap((int)TextureWrapMode.ClampToEdge);
             cubeMap.SetFilter((int)TextureMinFilter.LinearMipmapLinear, (int)TextureMagFilter.Linear);
+            cubeMap.SetWrap((int)TextureWrapMode.ClampToEdge);
             GLTextureCube.Unbind();
 
             IGLProgram shader = sphericalShader;
+
+            if (shader == null) return cubeMap;
+            
+            frameBuffer.Bind();
 
             //use shader
             shader.Use();
@@ -173,9 +194,12 @@ namespace Materia.Rendering.Hdr
 
             Matrix4 proj = projection;
 
+            MeshRenderer.SharedVao?.Bind();
+
             shader.SetUniformMatrix4("projectionMatrix", ref proj);
             IGL.Primary.Viewport(0, 0, 512, 512);
-            frameBuffer.Bind();
+            IGL.Primary.Disable((int)EnableCap.CullFace);
+            IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
             for (int i = 0; i < 6; ++i)
             {
                 Matrix4 view = views[i];
@@ -190,6 +214,10 @@ namespace Materia.Rendering.Hdr
             cubeMap.Bind();
             cubeMap.GenerateMipMaps();
             GLTextureCube.Unbind();
+
+            IGL.Primary.Enable((int)EnableCap.CullFace);
+
+            MeshRenderer.SharedVao?.Unbind();
 
             return cubeMap;
         }

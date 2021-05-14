@@ -3,19 +3,22 @@ using InfinityUI.Core;
 using Materia.Graph;
 using Materia.Rendering.Fonts;
 using Materia.Rendering.Geometry;
+using Materia.Rendering.Hdr;
 using Materia.Rendering.Imaging.Processing;
 using Materia.Rendering.Interfaces;
 using Materia.Rendering.Material;
 using Materia.Rendering.Mathematics;
 using Materia.Rendering.Shaders;
+using Materia.Rendering.Textures;
 using MateriaCore.Components.GL;
-using MateriaCore.Components.GL.Renderer;
 using MateriaCore.Utils;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MateriaCore
 {
@@ -34,15 +37,17 @@ namespace MateriaCore
         protected UICanvas rootCanvas;
         protected UICanvas graphCanvas;
 
-        #region 3D Stuff
-        protected UIWindow scenePreview;
-        protected ISceneRenderer sceneRenderer;
-        protected Scene scene;
-        #endregion
-
         protected UIGraph activeDocument;
         protected Graph activeGraph;
+
         protected UI2DPreview preview2D;
+        protected UI3DPreview preview3D;
+
+        protected HdrFile hdrToLoad;
+        protected HdrMap hdrMap;
+
+        //for testing only at the momement
+        protected GLTexture2D envMap;
 
         private Keys currentKey;
         private string currentTextInput;
@@ -235,7 +240,14 @@ namespace MateriaCore
             MouseUp += MainGLWindow_MouseUp;
             KeyDown += MainGLWindow_KeyDown;
             KeyUp += MainGLWindow_KeyUp;
-            Closing += MainGLWindow_Closing;
+            Closing += MainGLWindow_Closing;  
+        }
+
+        private void UpdateSize()
+        {
+            //ensure ui canvases are resized appropriately
+            graphCanvas?.Resize(Size.X, Size.Y);
+            rootCanvas?.Resize(Size.X, Size.Y);
         }
         #endregion
 
@@ -262,11 +274,17 @@ namespace MateriaCore
             preview2D = new UI2DPreview();
             rootArea.AddChild(preview2D);
 
+            //test 3d window
+            preview3D = new UI3DPreview();
+            rootArea.AddChild(preview3D);
+
             GraphTemplate.PBRFull(activeGraph);
             activeDocument.Load(activeGraph.GetJson(), "");
             activeGraph = activeDocument.Current;
 
             MLog.Log.Info("GL Version: " + OpenTK.Graphics.OpenGL.GL.GetString(OpenTK.Graphics.OpenGL.StringName.Version));
+
+            TestHdrLoad();
         }
 
         private void InitializeGL()
@@ -304,33 +322,65 @@ namespace MateriaCore
             MakeCurrent();
 
             InitializeGL();
-            InitializeViewport();
             InitializeUI();
+
+            UpdateSize();
+
+            //process hdr load
+            ProcessHdr();
 
             //poll graph updates if any
             //and let them render first before anything else
             activeGraph?.PollScheduled();
 
-            //update scene view area
-            if (scenePreview != null) 
-            {
-                scene?.UpdateViewSize(scenePreview.AnchoredSize);
-            }
+            //next render 3d preview
+            preview3D?.Render();
 
-            //render 3d scene to buffer
-            sceneRenderer?.Render(scene);
-            //send out event update of rendered image
-            if (sceneRenderer != null)
-            {
-                GlobalEvents.Emit(GlobalEvent.Preview3D, this, sceneRenderer.Image);
-            }
-
-            //ensure ui canvases are resized appropriately
-            graphCanvas?.Resize(Size.X, Size.Y);
-            rootCanvas?.Resize(Size.X, Size.Y);
-
+            InitializeViewport();
             //draw UI last
             UI.Draw();
+        }
+
+        private void ProcessHdr()
+        {
+            if (hdrToLoad == null) return;
+
+            /*hdrMap.irradiance?.Dispose();
+            hdrMap.prefilter?.Dispose();
+            
+            hdrMap = HdriManager.Process(hdrToLoad);
+            hdrToLoad = null;
+            
+            GlobalEvents.Emit(GlobalEvent.HdriUpdate, hdrMap.irradiance, hdrMap.prefilter);*/
+
+            //testing some stuff
+            envMap?.Dispose();
+            envMap = hdrToLoad.GetTexture();
+            hdrToLoad = null;
+
+            GlobalEvents.Emit(GlobalEvent.SkyboxUpdate, this, envMap);
+        }
+
+        //hdr test load
+        private void TestHdrLoad()
+        {
+            string dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hdr");
+            HdrFile f = null;
+            Task.Run(() =>
+            {
+                HdriManager.Scan(dir);
+                var available = HdriManager.Available;
+                Debug.WriteLine("found hdrs: " + available.Count);
+                if (available.Count == 0)
+                {
+                    return;
+                }
+                f = HdriManager.Load(available[0]);
+            }).ContinueWith(t =>
+            {
+                if (f == null) return;
+                hdrToLoad = f;
+            }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         public virtual void Process()
@@ -341,6 +391,8 @@ namespace MateriaCore
 
         protected virtual void Invalidate()
         {
+            if (IsExiting || !IsVisible) return;
+
             /*if (lastTick == 0)
             {
                 lastTick = System.DateTime.Now.Ticks;
@@ -365,8 +417,15 @@ namespace MateriaCore
 
             lastTick = DateTime.Now.Ticks;*/
 
-            Render();
-            SwapBuffers();
+            try
+            {
+                Render();
+                SwapBuffers();
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.StackTrace);
+            }
         }
 
         public virtual void Show()
@@ -382,6 +441,8 @@ namespace MateriaCore
 
         public virtual void SwapBuffers()
         {
+            if (IsExiting || !IsVisible) return;
+
             unsafe
             {
                 GLFW.SwapBuffers(WindowPtr);
@@ -390,10 +451,14 @@ namespace MateriaCore
 
         private void InternalDispose()
         {
-            GridGenerator.Dispose();
+            //testing only
+            envMap?.Dispose();
 
-            sceneRenderer?.Dispose();
-            scene?.Dispose();
+            //testing here only
+            hdrMap.irradiance?.Dispose();
+            hdrMap.prefilter?.Dispose();
+
+            GridGenerator.Dispose();
 
             UI.Dispose();
 

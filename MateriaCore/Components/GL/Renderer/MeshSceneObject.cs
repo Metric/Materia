@@ -74,6 +74,7 @@ namespace MateriaCore.Components.GL.Renderer
                 }
 
                 Renderer.Model = WorldMatrix;
+                Renderer.Draw();
             }
         }
     }

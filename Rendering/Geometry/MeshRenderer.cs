@@ -8,12 +8,12 @@ using Materia.Rendering.Utils;
 
 namespace Materia.Rendering.Geometry
 {
-    public enum MeshRendererType
+    public enum MeshRenderType
     {
-        Light,
         PBR,
-        Spherical,
-        SkyBox
+        Light,
+        Depth,
+        Skybox
     }
 
     public class MeshRenderer : IGeometry, IDisposeShared
@@ -43,6 +43,8 @@ namespace Materia.Rendering.Geometry
         public float Far { get; set; }
 
         protected InternalRenderType renderType;
+
+        public MeshRenderType RenderMode { get; set; } = MeshRenderType.PBR;
 
         protected static bool isSharedDisposed = false;
         protected static GLVertexArray sharedVao;
@@ -78,13 +80,10 @@ namespace Materia.Rendering.Geometry
             }
         }
 
-        public bool IsLight { get; set; }
-
         public MeshRenderer(float[] verts, int[] indices)
         {
             GeometryCache.RegisterForDispose(this);
 
-            IsLight = false;
             Tiling = new Vector2(1, 1);
 
             renderType = InternalRenderType.Basic;
@@ -99,7 +98,6 @@ namespace Materia.Rendering.Geometry
             ebo.SetData(indices);
             indicesCount = indices.Length;
 
-
             vbo.Unbind();
             ebo.Unbind();
         }
@@ -107,8 +105,6 @@ namespace Materia.Rendering.Geometry
         public MeshRenderer(Mesh model)
         {
             GeometryCache.RegisterForDispose(this);
-
-            IsLight = false;
 
             renderType = InternalRenderType.Advanced;
 
@@ -137,8 +133,13 @@ namespace Materia.Rendering.Geometry
             vbo?.Bind();
             ebo?.Bind();
 
-            IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, 12 * sizeof(float), 0);
+            int dataSize = renderType == InternalRenderType.Advanced ? 12 : 3;       
+
+            IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, dataSize * sizeof(float), 0);
             IGL.Primary.EnableVertexAttribArray(0);
+            IGL.Primary.DisableVertexAttribArray(1);
+            IGL.Primary.DisableVertexAttribArray(2);
+            IGL.Primary.DisableVertexAttribArray(3);
 
             IGL.Primary.DrawElements((int)BeginMode.Triangles, indicesCount, (int)DrawElementsType.UnsignedInt, 0);
 
@@ -146,7 +147,31 @@ namespace Materia.Rendering.Geometry
             ebo?.Unbind();
         }
 
-        public virtual void DrawForDepth()
+        public virtual void DrawAsSkybox()
+        {
+            if (Mat != null && Mat.Shader != null)
+            {
+                IGLProgram shader = Mat.Shader;
+                shader.Use();
+
+                IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
+                Mat.Albedo?.Bind();
+
+                shader.SetUniform("hdrMap", 0);
+
+                Matrix4 proj = Projection;
+                Matrix4 view = View;
+
+                shader.SetUniformMatrix4("projectionMatrix", ref proj);
+                shader.SetUniformMatrix4("viewMatrix", ref view);
+
+                DrawBasic();
+
+                GLTexture2D.Unbind();
+            }
+        }
+
+        public virtual void DrawAsDepth()
         {
             if (Mat != null && Mat.Shader != null)
             {
@@ -207,25 +232,31 @@ namespace Materia.Rendering.Geometry
 
         public void Draw()
         {
-            if(IsLight)
+            switch (RenderMode)
             {
-                DrawAsLight();
-            }
-            else if (renderType == InternalRenderType.Basic)
-            {
-                DrawBasic();
-            }
-            else
-            {
-                DrawFull();
+                case MeshRenderType.Depth:
+                    DrawAsDepth();
+                    break;
+                case MeshRenderType.Light:
+                    DrawAsLight();
+                    break;
+                case MeshRenderType.Skybox:
+                    DrawAsSkybox();
+                    break;
+                case MeshRenderType.PBR:
+                    DrawAsPBR();
+                    break;
             }
         }
 
-        public virtual void DrawFull()
+        public virtual void DrawAsPBR()
         {
             if(Mat != null && Mat.Shader != null)
             {
                 IGLProgram shader = Mat.Shader;
+
+                //use shader
+                shader.Use();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
                 Mat.Albedo?.Bind();
@@ -249,32 +280,29 @@ namespace Materia.Rendering.Geometry
                 BRDF.Lut?.Bind();
 
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture7);
-                IrradianceMap?.Bind();
-
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture8);
-                PrefilterMap?.Bind();
-
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture9);
                 Mat.Thickness?.Bind();
 
-                IGL.Primary.ActiveTexture((int)TextureUnit.Texture10);
+                IGL.Primary.ActiveTexture((int)TextureUnit.Texture8);
                 Mat.Emission?.Bind();
 
-                //use shader
-                shader.Use();
+                IGL.Primary.ActiveTexture((int)TextureUnit.Texture9);
+                IrradianceMap?.Bind();
+
+                IGL.Primary.ActiveTexture((int)TextureUnit.Texture10);
+                PrefilterMap?.Bind();
 
                 //set texture bind points
-                shader.SetUniform("albedo", 0);
+                shader.SetUniform("albedoMap", 0);
                 shader.SetUniform("metallicMap", 1);
                 shader.SetUniform("roughnessMap", 2);
                 shader.SetUniform("occlusionMap", 3);
                 shader.SetUniform("normalMap", 4);
                 shader.SetUniform("heightMap", 5);
                 shader.SetUniform("brdfLUT", 6);
-                shader.SetUniform("irradianceMap", 7);
-                shader.SetUniform("prefilterMap", 8);
-                shader.SetUniform("thicknessMap", 9);
-                shader.SetUniform("emissionMap", 10);
+                shader.SetUniform("thicknessMap", 7);
+                shader.SetUniform("emissionMap", 8);
+                shader.SetUniform("irradianceMap", 9);
+                shader.SetUniform("prefilterMap", 10);
 
                 Vector3 lpos = LightPosition;
                 Vector3 lc = LightColor;
@@ -325,6 +353,10 @@ namespace Materia.Rendering.Geometry
 
                 shader.SetUniform2("tiling", ref tiling);
 
+                Vector3 tint = Mat.Tint;
+                //set tint
+                shader.SetUniform3("tint", ref tint);
+
                 ///draw
                 vbo?.Bind();
                 ebo?.Bind();
@@ -368,9 +400,6 @@ namespace Materia.Rendering.Geometry
 
             ebo?.Dispose();
             ebo = null;
-
-            Mat?.Dispose();
-            Mat = null;
         }
     }
 }
