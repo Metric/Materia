@@ -30,6 +30,7 @@ uniform sampler2D thicknessMap;
 uniform sampler2D emissionMap;
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
+uniform samplerCube environmentMap;
 
 uniform vec3 tint = vec3(1, 1, 1);
 
@@ -149,7 +150,7 @@ vec3 unpackNormal(AppData o, vec2 uv, sampler2D map)
     vec3 norm = texture(map, uv).rgb;
     
     if(length(norm) == 0) {
-        return o.Normal;
+        return normalize(o.Normal);
     }
     
     norm = norm * 2.0 - 1.0;
@@ -160,12 +161,12 @@ vec3 unpackNormal(AppData o, vec2 uv, sampler2D map)
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) 
 {
-    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0), 5.0);
 }
 
 float distrubtionGGX(vec3 N, vec3 H, float roughness) 
@@ -174,9 +175,12 @@ float distrubtionGGX(vec3 N, vec3 H, float roughness)
     float a2 = a * a;
     float NdotH = max(dot(N,H), 0.0);
     float NdotH2 = NdotH * NdotH;
+
+    float nom = a2;
     float denom = (NdotH2 * (a2 - 1.0) + 1.0);
     denom = PI * denom * denom;
-    return a2 / denom;
+
+    return nom / denom;
 }
 
 float geometrySchlickGGX(float NdotV, float roughness) 
@@ -198,59 +202,46 @@ float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
     return ggx1 * ggx2;
 }
 
-//const vec2 INV_ATAN = vec2(0.1591, 0.3183);
-//vec2 toRadialCoords(vec3 v)
-//{
-//    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
-//    uv *= INV_ATAN;
-//    uv += 0.5;
-//    return uv;
-//}
-
-
-//vec2 toRadialCoords(vec3 coords)
-//{
-//  vec3 normalizedCoords = normalize(coords);
-//	float latitude = acos(normalizedCoords.y);
-//	float longitude = atan(normalizedCoords.x, normalizedCoords.z);
-//	vec2 sphereCoords = vec2(longitude, latitude) * vec2(0.5 * INV_PI, INV_PI);
-//	return vec2(0.5, 1.0) - sphereCoords;
-//}
-
 vec3 lighting(vec3 lo, vec3 pos, vec3 color, vec3 wPos, Shading shading) {
     vec3 F0 = shading.dielectric;
+    
     vec3 N = shading.normal;
     vec3 V = shading.view;
-    vec3 ldiffuse = shading.diffuse;
+
+    vec3 diffuse = shading.diffuse;
     float roughness = shading.roughness;
     float metallic = shading.metallic;
-    float atten = shading.attenuation;
+    float attenuation = shading.attenuation;
 
     vec3 Lo = lo;
 
+    //light radiance
     vec3 L = normalize(pos - wPos);
     vec3 H = normalize(V + L);
-    vec3 F = fresnelSchlick(max(dot(H,V), 0.0), F0);
+    vec3 radiance = color * attenuation;
 
-    float NdotL = max(dot(N,L), 0.0);
-    float NdotV = max(dot(N,V), 0.0);
+    //Cook-Torrance BRDF
+    float NDF = distrubtionGGX(N, H, roughness);
+    float G = geometrySmith(N, V, L, roughness);
+    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
-    vec3 radiance = color * atten;
+    float NdotL = max(dot(N, L), 0.0);
+    vec3 nominator = NDF * G * F;
+    float denominator = 4 * max(dot(N, V), 0.0) * NdotL + 0.001; //prevent divide by zero
+    vec3 specular = nominator / denominator;
 
-    float NDF = distrubtionGGX(N,H,roughness);
-    float G = geometrySmith(N,V,L,roughness);
-
-    vec3 numerator = NDF * G * F;
-    float denominator = 4.0 * NdotV * NdotL + 0.001;
-    vec3 specular = numerator / denominator;
-
+    // kS is equal to Fresnel
     vec3 kS = F;
+    // for energy conservation, the diffuse and specular light can't
+    // be above 1.0 (unless the surface emits light); to preserve this
+    // relationship the diffuse component (kD) should equal 1.0 - kS.
     vec3 kD = vec3(1.0) - kS;
+    // multiply kD by the inverse metalness such that only non-metals 
+    // have diffuse lighting, or a linear blend if partly metal (pure metals
+    // have no diffuse light).
     kD *= 1.0 - metallic;
 
-    Lo += (kD * ldiffuse / PI + specular) * radiance * NdotL;
-
-    return Lo;
+    return Lo + (kD * diffuse / PI + specular) * radiance * NdotL;
 }
 
 float subsurfaceScattering(float atten, float thickness, vec3 L, vec3 N)
@@ -280,8 +271,6 @@ void main()
 {
     AppData o = data;
     Shading shading;
-
-    vec3 V = shading.view = normalize(cameraPosition - o.WorldPos);
     vec2 uv = o.UV;
 
     if(displace == 0)
@@ -296,74 +285,88 @@ void main()
 
     shading.uv = uv;
 
-    vec3 N = shading.normal = unpackNormal(o, uv, normalMap);
-    vec3 R = reflect(V, N).xyz;
-
-    float NdotV = max(dot(N,V), 0.001);
-
     vec4 color = texture(albedoMap, uv);
-    color.rgb *= tint;
-
-    vec3 ldiffuse = shading.diffuse = pow(color.rgb, vec3(2.2));
+    vec3 albedo = pow(color.rgb * tint, vec3(2.2));
 
     float roughness = shading.roughness = texture(roughnessMap, uv).r;
     float metallic = shading.metallic = texture(metallicMap, uv).r;
     float ao = texture(occlusionMap, uv).r;
+    vec3 emission = texture(emissionMap, uv).rgb;
+
+    vec3 V = shading.view = normalize(cameraPosition - o.WorldPos);
+    vec3 N = shading.normal = unpackNormal(o, uv, normalMap);
+    vec3 R = reflect(-V, N);
+
+    float NdotV = max(dot(N, V), 0.0);
+
+    vec3 diffuse = shading.diffuse = albedo;
 
     vec3 F0 = vec3(refraction);
-    F0 = shading.dielectric = mix(F0, ldiffuse.rgb, metallic);
+    F0 = shading.dielectric = mix(F0, diffuse, metallic);
 
     vec3 final = vec3(0);
 
+    //Start Light Loop Here
     ////Lighting for Point Light
     float dist = length(lightPosition - o.WorldPos);
     float attenuation = 1.0 / (dist * dist) * lightPower;
     shading.attenuation = attenuation;
+
     vec3 L = normalize(lightPosition - o.WorldPos);
     vec3 Lo = vec3(0.0);
     Lo = lighting(Lo, lightPosition, lightColor, o.WorldPos, shading);
     ////
 
+    //going back to basics for a bit
     ///SSS for point light
     float sss = subsurfaceScattering(attenuation, texture(thicknessMap, uv).r, L, N);
-    final += ldiffuse * lightColor * sss;
+    final += diffuse * lightColor * sss;
     ///
+    //End Light Loop Here
 
     vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);
-	vec3 iKs = F;
-    vec3 iKd = vec3(1.0) - iKs;
-    iKd *= 1.0 - metallic;
+    vec3 kS = F;
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - metallic;
 	
-    //ignoring this temporarily for testing purposes
-	//normal for irradiance map must be reversed
-    vec3 irradiance = texture(irradianceMap, -N).rgb;
-    vec3 diffuseIBL = irradiance * ldiffuse;
-
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    diffuse = irradiance * diffuse;
+    
     const float MAX_REFLECT_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECT_LOD).rgb;
-    vec2 envBRDF = texture(brdfLUT, vec2(NdotV, roughness)).rg;
-    vec3 specularIBL = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+    vec3 prefilteredColor = vec3(1);
+    if (roughness == 0) {
+        prefilteredColor = texture(environmentMap, R).rgb;
+    }
+    else {
+        prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECT_LOD).rgb;
+    }
+    vec2 brdf = texture(brdfLUT, vec2(NdotV, roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
-    vec3 ambient = (iKd * diffuseIBL + specularIBL) * ao;
-    //vec3 ambient = (iKd + specularIBL) * ao;
-    //add ambient + light + emission
-    final += (ambient + Lo) + texture(emissionMap, uv).rgb;
+    //ambient with specular + ao
+    vec3 ambient = (kD * diffuse + specular) * ao;
 
-    //premult
-    final *= color.a;
+    //add ambient + lighting + emission
+    final += (ambient + Lo) + emission;
 
-    //draw to secondary color attachment for bloom
-    float bright = lengthSqr(final);
+    //Bloom brightness
+    float bright = length(final);
     Brightness = vec4(0);
-    if(bright > 3) {
+    if (bright > 2) {
         Brightness = vec4(clamp(final, vec3(0), vec3(1)), 1.0);
     }
 
     //HDR
-    final = final / (final + vec3(1.0)); 
+    //final = final / (final + vec3(1.0)); 
 
     //GAMMA
-    final = pow(final, vec3(1.0/2.2));
+    //final = pow(final, vec3(1.0/2.2));
 
-    FragColor = vec4(clamp(final, vec3(0), vec3(1)), color.a);  
+    //clamp
+    //final = clamp(final, vec3(0), vec3(1));
+
+    //premult
+    final *= color.a;
+
+    FragColor = vec4(final, color.a);  
 }

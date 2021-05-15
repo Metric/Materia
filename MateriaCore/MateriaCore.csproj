@@ -86,6 +86,7 @@
     <None Remove="Components\VectorSlider.xaml" />
     <None Remove="Geometry\cube-rounded.obj" />
     <None Remove="Geometry\cube-sphere.obj" />
+    <None Remove="Geometry\cube.fbx" />
     <None Remove="Geometry\cube.obj" />
     <None Remove="Geometry\cylinder.obj" />
     <None Remove="Geometry\plane.obj" />
@@ -118,6 +119,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Geometry\cube-rounded.obj" />
     <EmbeddedResource Include="Geometry\cube-sphere.obj" />
+    <EmbeddedResource Include="Geometry\cube.fbx" />
     <EmbeddedResource Include="Geometry\cube.obj" />
     <EmbeddedResource Include="Geometry\cylinder.obj" />
     <EmbeddedResource Include="Geometry\plane.obj" />

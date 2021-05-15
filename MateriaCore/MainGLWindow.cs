@@ -46,9 +46,6 @@ namespace MateriaCore
         protected HdrFile hdrToLoad;
         protected HdrMap hdrMap;
 
-        //for testing only at the momement
-        protected GLTexture2D envMap;
-
         private Keys currentKey;
         private string currentTextInput;
 
@@ -257,6 +254,9 @@ namespace MateriaCore
             if (UI.Initied) return;
             UI.Init();
 
+            //load brdf
+            BRDF.Create();
+
             rootArea = new UIObject();
             graphArea = new UIObject();
 
@@ -345,20 +345,13 @@ namespace MateriaCore
         {
             if (hdrToLoad == null) return;
 
-            /*hdrMap.irradiance?.Dispose();
-            hdrMap.prefilter?.Dispose();
+            hdrMap.Dispose();
             
             hdrMap = HdriManager.Process(hdrToLoad);
             hdrToLoad = null;
             
-            GlobalEvents.Emit(GlobalEvent.HdriUpdate, hdrMap.irradiance, hdrMap.prefilter);*/
-
-            //testing some stuff
-            envMap?.Dispose();
-            envMap = hdrToLoad.GetTexture();
-            hdrToLoad = null;
-
-            GlobalEvents.Emit(GlobalEvent.SkyboxUpdate, this, envMap);
+            GlobalEvents.Emit(GlobalEvent.HdriUpdate, hdrMap.irradiance, hdrMap.prefilter);
+            GlobalEvents.Emit(GlobalEvent.SkyboxUpdate, this, hdrMap.environment);
         }
 
         //hdr test load
@@ -451,12 +444,8 @@ namespace MateriaCore
 
         private void InternalDispose()
         {
-            //testing only
-            envMap?.Dispose();
-
             //testing here only
-            hdrMap.irradiance?.Dispose();
-            hdrMap.prefilter?.Dispose();
+            hdrMap.Dispose();
 
             GridGenerator.Dispose();
 

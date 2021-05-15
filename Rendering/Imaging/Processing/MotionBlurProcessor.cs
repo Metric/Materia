@@ -43,9 +43,14 @@ namespace Materia.Rendering.Imaging.Processing
             float pass2 = (boxes[1] - 1.0f) / 2.0f;
             float pass3 = (boxes[2] - 1.0f) / 2.0f;
 
+            GLTexture2D output = outputBuff;
+
             //clamp output buff to edge
             outputBuff.Bind();
             outputBuff.ClampToEdge();
+            GLTexture2D.Unbind();
+
+            GLTexture2D temp = outputBuff.Copy();
 
             Identity();
             Bind();
@@ -56,20 +61,25 @@ namespace Materia.Rendering.Imaging.Processing
 
             renderQuad?.Draw();
 
+            PrepareView(temp);
             //pass 2
             SetPass(pass2);
-            SetTextures(outputBuff);
+            SetTextures(output);
 
             renderQuad?.Draw();
 
+            PrepareView(output);
             //pass 3
             SetPass(pass3);
+            SetTextures(temp);
 
             renderQuad?.Draw();
 
             //restore output to repeat
             outputBuff.Bind();
             outputBuff.Repeat();
+
+            temp.Dispose();
 
             Unbind();
         }

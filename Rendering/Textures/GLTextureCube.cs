@@ -5,6 +5,9 @@ namespace Materia.Rendering.Textures
 {
     public class GLTextureCube : IGLTexture
     {
+        public int Width { get; protected set; }
+        public int Height { get; protected set; }
+
         public int Id { get; protected set; }
 
         PixelInternalFormat iformat;
@@ -41,16 +44,22 @@ namespace Materia.Rendering.Textures
 
         public void SetData(int cubeIndex, IntPtr data, PixelFormat format, int width, int height)
         {
+            Width = width;
+            Height = height;
             IGL.Primary.TexImage2D((int)TextureTarget.TextureCubeMapPositiveX + cubeIndex, 0, (int)iformat, width, height, 0, (int)format, (int)PixelType.Float, data);
         }
 
         public void SetData(int cubeIndex, byte[] data, PixelFormat format, int width, int height)
         {
+            Width = width;
+            Height = height;
             IGL.Primary.TexImage2D((int)TextureTarget.TextureCubeMapPositiveX + cubeIndex, 0, (int)iformat, width, height, 0, (int)format, (int)PixelType.UnsignedByte, data);
         }
 
         public void SetData(int cubeIndex, float[] data, PixelFormat format, int width, int height)
         {
+            Width = width;
+            Height = height;
             IGL.Primary.TexImage2D((int)TextureTarget.TextureCubeMapPositiveX + cubeIndex, 0, (int)iformat, width, height, 0, (int)format, (int)PixelType.Float, data);
         }
 

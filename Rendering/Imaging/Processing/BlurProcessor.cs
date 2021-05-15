@@ -10,7 +10,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public BlurProcessor() : base()
         {
-            shader = GetShader("image.glsl", "blur.glsl");
+            shader = GetShader("raw.glsl", "blur.glsl");
         }
 
         protected void SetPass(bool horizontal, float intensity)
@@ -39,9 +39,15 @@ namespace Materia.Rendering.Imaging.Processing
             float pass2 = (boxes[1] - 1.0f) / 2.0f;
             float pass3 = (boxes[2] - 1.0f) / 2.0f;
 
-            //clamp output buff to edge
-            outputBuff.Bind();
-            outputBuff.ClampToEdge();
+            GLTexture2D output = outputBuff;
+
+            output.Bind();
+            output.ClampToEdge();
+            GLTexture2D.Unbind();
+
+            GLTexture2D temp = output.Copy();
+
+            PrepareView(temp);
 
             Identity();
             Bind();
@@ -52,32 +58,42 @@ namespace Materia.Rendering.Imaging.Processing
 
             renderQuad?.Draw();
 
+            PrepareView(output);
             SetPass(false, pass1);
-            SetTextures(outputBuff);
+            SetTextures(temp);
 
             renderQuad?.Draw();
 
+            PrepareView(temp);
             //pass 2
             SetPass(true, pass2);
+            SetTextures(output);
 
             renderQuad?.Draw();
 
+            PrepareView(output);
             SetPass(false, pass2);
+            SetTextures(temp);
 
             renderQuad?.Draw();
 
+            PrepareView(temp);
             //pass 3
             SetPass(true, pass3);
+            SetTextures(output);
 
             renderQuad?.Draw();
 
+            PrepareView(output);
             SetPass(false, pass3);
+            SetTextures(temp);
 
             renderQuad?.Draw();
 
-            //restore output to repeat
-            outputBuff.Bind();
-            outputBuff.Repeat();
+            output.Bind();
+            output.Repeat();
+
+            temp.Dispose();
 
             Unbind();
         }

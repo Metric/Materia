@@ -11,6 +11,12 @@ namespace Materia.Rendering.Imaging.Processing
         public float Angle { get; set; }
         public MVector Pivot { get; set; }
 
+        public TextProcessor()
+        {
+            isMatrixBased = true;
+            shader = GetShader("image.glsl", "image.glsl");
+        }
+
         public void Process(GLTexture2D input, Vector4 uv)
         {
             Transform(Translation, Scale, Angle, Pivot);

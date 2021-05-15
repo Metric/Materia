@@ -23,7 +23,7 @@ namespace MateriaCore.Components.GL.Renderer
             get
             {
                 if (stack == null || stack.Output == null || stack.Output.Length < 4) return null;
-                return stack.Output[0];
+                return stack.Output[3];
             }
         }
 
@@ -35,7 +35,7 @@ namespace MateriaCore.Components.GL.Renderer
             basePass = new BasePass(frameBuffer, (int)scene.ViewSize.X, (int)scene.ViewSize.Y);
             bloomPass = new BloomPass(frameBuffer);
             stack.Add(basePass);
-            //stack.Add(bloomPass);
+            stack.Add(bloomPass);
         }
 
         protected void InitializeFrameBuffer()
@@ -88,10 +88,11 @@ namespace MateriaCore.Components.GL.Renderer
 
             var meshes = scene.ActiveMeshes;
             var skybox = scene.ActiveSkybox;
-            stack.Process(() =>
+            stack.Process((state) =>
             {
                 IGL.Primary.Enable((int)EnableCap.CullFace);
                 IGL.Primary.CullFace((int)CullFaceMode.Back);
+                IGL.Primary.Enable((int)EnableCap.DepthTest);
 
                 IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
 

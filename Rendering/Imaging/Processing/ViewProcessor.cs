@@ -18,11 +18,13 @@ namespace Materia.Rendering.Imaging.Processing
         protected IGLProgram shader;
         public IGLProgram Shader { get => shader; set => shader = value; }
 
+        protected bool isMatrixBased = false;
+
         public ViewProcessor()
         {
             FlipY = false;
             Luminosity = 1.0f;
-            shader = GLShaderCache.GetShader("image.glsl", "image.glsl");
+            shader = GLShaderCache.GetShader("raw.glsl", "image.glsl");
         }
 
         public void Bind()
@@ -39,6 +41,8 @@ namespace Materia.Rendering.Imaging.Processing
 
         protected virtual void SetBasicUniforms()
         {
+            if (!isMatrixBased) return;
+
             Matrix4 model = Model;
             Matrix4 view = View;
             Matrix4 proj = Projection;
@@ -46,6 +50,7 @@ namespace Materia.Rendering.Imaging.Processing
             shader.SetUniformMatrix4("modelMatrix", ref model);
             shader.SetUniformMatrix4("viewMatrix", ref view);
             shader.SetUniformMatrix4("projectionMatrix", ref proj);
+            shader.SetUniform("flipY", FlipY);
         }
 
         protected virtual void SetTexturePositions()
@@ -58,7 +63,6 @@ namespace Materia.Rendering.Imaging.Processing
             Vector2 tiling = Tiling;
             shader.SetUniform2("tiling", ref tiling);
             shader.SetUniform("luminosity", Luminosity);
-            shader.SetUniform("flipY", FlipY);
         }
 
         protected virtual void SetTextures(params GLTexture2D[] textures)

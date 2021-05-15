@@ -29,6 +29,8 @@ namespace Materia.Rendering.Geometry
         public GLTextureCube IrradianceMap { get; set; }
         public GLTextureCube PrefilterMap { get; set; }
 
+        public GLTextureCube EnvironmentMap { get; set; }
+
         public Vector3 CameraPosition { get; set; }
         public Vector3 LightPosition { get; set; }
         public Vector3 LightColor { get; set; }
@@ -182,14 +184,11 @@ namespace Materia.Rendering.Geometry
 
                 Matrix4 proj = Projection;
                 Matrix4 view = View;
-                Matrix4 m = Model;
-                Matrix4 norm = Matrix4.Invert(m);
-                norm.Transpose();
+                Matrix4 model = Model;
 
                 shader.SetUniformMatrix4("projectionMatrix", ref proj);
                 shader.SetUniformMatrix4("viewMatrix", ref view);
-                shader.SetUniformMatrix4("modelMatrix", ref m);
-                shader.SetUniformMatrix4("normalMatrix", ref norm);
+                shader.SetUniformMatrix4("modelMatrix", ref model);
 
                 Vector2 tiling = Tiling;
 
@@ -209,14 +208,11 @@ namespace Materia.Rendering.Geometry
 
                 Matrix4 proj = Projection;
                 Matrix4 view = View;
-                Matrix4 m = Model;
-                Matrix4 norm = Matrix4.Invert(m);
-                norm.Transpose();
+                Matrix4 model = Model;
 
                 shader.SetUniformMatrix4("projectionMatrix", ref proj);
                 shader.SetUniformMatrix4("viewMatrix", ref view);
-                shader.SetUniformMatrix4("modelMatrix", ref m);
-                shader.SetUniformMatrix4("normalMatrix", ref norm);
+                shader.SetUniformMatrix4("modelMatrix", ref model);
 
                 Vector2 tiling = Tiling;
 
@@ -291,6 +287,9 @@ namespace Materia.Rendering.Geometry
                 IGL.Primary.ActiveTexture((int)TextureUnit.Texture10);
                 PrefilterMap?.Bind();
 
+                IGL.Primary.ActiveTexture((int)TextureUnit.Texture11);
+                EnvironmentMap?.Bind();
+
                 //set texture bind points
                 shader.SetUniform("albedoMap", 0);
                 shader.SetUniform("metallicMap", 1);
@@ -303,6 +302,7 @@ namespace Materia.Rendering.Geometry
                 shader.SetUniform("emissionMap", 8);
                 shader.SetUniform("irradianceMap", 9);
                 shader.SetUniform("prefilterMap", 10);
+                shader.SetUniform("environmentMap", 11);
 
                 Vector3 lpos = LightPosition;
                 Vector3 lc = LightColor;
@@ -318,14 +318,11 @@ namespace Materia.Rendering.Geometry
                 //setup MVP and N matrices
                 Matrix4 proj = Projection;
                 Matrix4 view = View;
-                Matrix4 m = Model;
-                Matrix4 norm = Matrix4.Invert(m);
-                norm.Transpose();
+                Matrix4 model = Model;
 
                 shader.SetUniformMatrix4("projectionMatrix", ref proj);
                 shader.SetUniformMatrix4("viewMatrix", ref view);
-                shader.SetUniformMatrix4("modelMatrix", ref m);
-                shader.SetUniformMatrix4("normalMatrix", ref norm);
+                shader.SetUniformMatrix4("modelMatrix", ref model);
 
                 shader.SetUniform("far", Far);
                 shader.SetUniform("near", Near);

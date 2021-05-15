@@ -4,18 +4,20 @@ in vec3 localPos;
 
 uniform sampler2D hdrMap;
 
-const vec2 invAtan = vec2(0.1591, 0.3183);
-vec2 toRadial(vec3 v)
+const float M_PI = 3.14159265359;
+
+vec2 toRadialCoords(vec3 coords)
 {
-    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
-    uv *= invAtan;
-    uv += 0.5;
-    return uv;
+    vec3 normalizedCoords = normalize(coords);
+    float latitude = acos(normalizedCoords.y);
+    float longitude = atan(normalizedCoords.x, normalizedCoords.z);
+    vec2 sphereCoords = vec2(longitude, latitude) * vec2(0.5F / M_PI, 1.0F / M_PI);
+    return vec2(0.5F, 1.0F) - sphereCoords;
 }
 
 void main()
 {		
-    vec2 uv = toRadial(normalize(localPos)); // make sure to normalize localPos
+    vec2 uv = toRadialCoords(localPos); // make sure to normalize localPos
     vec3 color = texture(hdrMap, uv).rgb;
     
     FragColor = vec4(color, 1.0);

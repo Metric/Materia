@@ -40,7 +40,7 @@ namespace Materia.Rendering.Passes
             quad = null;
         }
 
-        public override void Render(GLTexture2D[] inputs, out GLTexture2D[] outputs, Action renderScene = null)
+        public override void Render(GLTexture2D[] inputs, out GLTexture2D[] outputs, Action<RenderStackState> renderScene = null)
         {
             outputs = inputs;
 
@@ -51,11 +51,10 @@ namespace Materia.Rendering.Passes
 
             FullScreenQuad.SharedVao?.Bind();
 
-            /*blur.PrepareView(inputs[2]);
+            blur.PrepareView(inputs[2]);
             blur.Intensity = Intensity;
             blur.Process(inputs[1]);
             blur.Complete();
-            */
 
             frame.Bind();
             frame.AttachColor(inputs[3], 0);
@@ -84,7 +83,7 @@ namespace Materia.Rendering.Passes
             inputs[0].Bind();
 
             IGL.Primary.ActiveTexture((int)TextureUnit.Texture1);
-            inputs[1].Bind();
+            inputs[2].Bind();
 
             //ensure polygon is actually rendered instead of wireframe during this step
             IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);

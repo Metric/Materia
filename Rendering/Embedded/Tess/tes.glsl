@@ -4,7 +4,6 @@ layout(triangles, equal_spacing, ccw) in;
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
-uniform mat4 normalMatrix;
 
 uniform int displace = 0;
 uniform float heightScale = 0.2;
@@ -57,13 +56,13 @@ void main()
     vec3 pos = interpolate3D(ObjectPos_ES[0], ObjectPos_ES[1], ObjectPos_ES[2]);
 
     o.UV = uv;
-    o.Normal = normalize(n);
+    o.Normal = n;
     o.ObjectPos = pos;
 
     o.T = t;
     o.N = n;
-    
-    vec3 b = mat3(normalMatrix) * (cross(n, t) * tw);
+
+    vec3 b = mat3(modelMatrix) * (cross(n, t) * tw);
     o.B = b;
     o.TBN = mat3(normalize(t),normalize(b),normalize(n));
 
@@ -71,7 +70,7 @@ void main()
     if(displace == 1) 
     {
         float disp = texture(heightMap, uv).r;
-        wpos += o.Normal * disp * heightScale;
+        wpos += normalize(n) * disp * heightScale;
     }
 
     o.WorldPos = wpos;

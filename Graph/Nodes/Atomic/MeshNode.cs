@@ -39,6 +39,23 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        protected static GLTextureCube environment;
+        public static GLTextureCube Environment
+        {
+            get
+            {
+                return environment;
+            }
+            set
+            {
+                environment = value;
+                if (OnHdriChanged != null)
+                {
+                    OnHdriChanged.Invoke();
+                }
+            }
+        }
+
         private Archive archive;
 
         public static GLTexture2D DefaultBlack { get; set; }
@@ -323,6 +340,7 @@ namespace Materia.Nodes.Atomic
 
             mesh.IrradianceMap = Irradiance;
             mesh.PrefilterMap = Prefilter;
+            mesh.EnvironmentMap = Environment;
 
             if (albedo == null)
             {

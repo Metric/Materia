@@ -9,8 +9,19 @@ namespace Materia.Rendering.Hdr
 {
     public struct HdrMap
     {
+        public GLTextureCube environment;
         public GLTextureCube irradiance;
         public GLTextureCube prefilter;
+
+        public void Dispose()
+        {
+            environment?.Dispose();
+            environment = null;
+            irradiance?.Dispose();
+            irradiance = null;
+            prefilter?.Dispose();
+            prefilter = null;
+        }
     }
 
     public static class HdriManager
@@ -44,16 +55,19 @@ namespace Materia.Rendering.Hdr
             Converter cv = new Converter();
             GLTexture2D hdMap = f.GetTexture();
 
-            GLTextureCube prefilter = cv.ToCube(hdMap);
-            GLTextureCube irradiance = cv.ToIrradiance(prefilter);
+            GLTextureCube cubeSky = cv.ToCube(hdMap); //this is working as expected now
+            GLTextureCube irradiance = cv.ToIrradiance(cubeSky);
+            GLTextureCube prefilter = cv.ToPrefilter(cubeSky);
 
             f.Dispose();
             cv.Dispose();
 
             return new HdrMap
             {
+                //testing cube map generator from equi
                 prefilter = prefilter,
-                irradiance = irradiance
+                irradiance = irradiance,
+                environment = cubeSky
             };
         }
     }

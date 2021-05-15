@@ -13,14 +13,14 @@ namespace Materia.Rendering.Material
 
         public Vector3 Tint { get; set; } = Vector3.One;
 
-        public GLTexture2D Albedo { get; set; }
-        public GLTexture2D Normal { get; set; }
-        public GLTexture2D Metallic { get; set; }
-        public GLTexture2D Roughness { get; set; }
-        public GLTexture2D Occlusion { get; set; }
-        public GLTexture2D Height { get; set; }
-        public GLTexture2D Thickness { get; set; }
-        public GLTexture2D Emission { get; set; }
+        public IGLTexture Albedo { get; set; }
+        public IGLTexture Normal { get; set; }
+        public IGLTexture Metallic { get; set; }
+        public IGLTexture Roughness { get; set; }
+        public IGLTexture Occlusion { get; set; }
+        public IGLTexture Height { get; set; }
+        public IGLTexture Thickness { get; set; }
+        public IGLTexture Emission { get; set; }
 
         /// <summary>
         /// SSS Related Properties
@@ -44,7 +44,6 @@ namespace Materia.Rendering.Material
             SSSAmbient = 0f;
             SSSPower = 1f;
 
-            BRDF.Create();
             LoadShader();
         }
 

@@ -29,6 +29,8 @@ namespace MateriaCore.Components.GL
         #region 3D Objects
         ISceneRenderer sceneRenderer;
         SceneObject cube;
+        SceneObject skyBox;
+        SceneObject sphere;
         #endregion
 
         //note we need to come back and use 
@@ -61,8 +63,10 @@ namespace MateriaCore.Components.GL
 
             //load meshes
             //testing skybox data
-            cube = scene.CreateMeshFromEmbeddedFile("Geometry/sphere-standard.obj", typeof(UI3DPreview), Materia.Rendering.Geometry.MeshRenderType.Skybox);
-            
+            skyBox = scene.CreateMeshFromEmbeddedFile("Geometry/cube.fbx", typeof(UI3DPreview), Materia.Rendering.Geometry.MeshRenderType.Skybox);
+            cube = scene.CreateMeshFromEmbeddedFile("Geometry/cube.fbx", typeof(UI3DPreview));
+
+            scene.Root.Add(skyBox);
             scene.Root.Add(cube);
 
             //create scene renderer
@@ -149,7 +153,8 @@ namespace MateriaCore.Components.GL
 
             if (e.Button.HasFlag(MouseButton.Left))
             {
-                scene.Cam.LocalRotation = GetViewAngle(ref delta);
+                Quaternion direction = GetViewAngle(ref delta);
+                scene.Cam.LocalRotation = direction;
                 scene.IsModified = true;
             }
             else if(e.Button.HasFlag(MouseButton.Middle))

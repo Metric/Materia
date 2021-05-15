@@ -57,7 +57,7 @@ namespace Materia.Rendering.Passes
             }
         }
 
-        public override void Render(GLTexture2D[] inputs, out GLTexture2D[] outputs, Action renderScene = null)
+        public override void Render(GLTexture2D[] inputs, out GLTexture2D[] outputs, Action<RenderStackState> renderScene = null)
         {
             outputs = color;
 
@@ -77,7 +77,7 @@ namespace Materia.Rendering.Passes
             IGL.Primary.ClearColor(0, 0, 0, 0);
             IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit);
 
-            renderScene?.Invoke();
+            renderScene?.Invoke(RenderStackState.Color);
 
             frame.Unbind();
         }

@@ -87,7 +87,7 @@ namespace Materia.Rendering
             }
         }
 
-        public Matrix4 InvertedView
+        public Matrix4 OrbitView
         {
             get
             {
@@ -95,11 +95,11 @@ namespace Materia.Rendering
             }
         }
 
-        public virtual Vector3 EyePosition
+        public Vector3 OrbitEyePosition
         {
             get
             {
-                return Position;
+                return (OrbitView * new Vector4(Position, 1)).Xyz;
             }
         }
 

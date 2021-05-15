@@ -20,7 +20,6 @@ namespace Materia.Rendering.Imaging.Processing
         protected static GLFrameBuffer temp;
 
         protected static GLTexture2D outputBuff;
-        protected static GLTexture2D colorBuff;
 
         public static readonly Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.UnitY);
 
@@ -37,8 +36,8 @@ namespace Materia.Rendering.Imaging.Processing
 
         protected void Transform(MVector translation, MVector scale, float angle, MVector pivot)
         {
-            int owidth = outputBuff.Width;
-            int oheight = outputBuff.Height;
+            int owidth = Width;
+            int oheight = Height;
 
             Matrix4 proj = Matrix4.CreateOrthographic(owidth, oheight, 0f, 1000f);
             Matrix4 pTrans = Matrix4.CreateTranslation(-pivot.X, -pivot.Y, 0);
@@ -60,8 +59,8 @@ namespace Materia.Rendering.Imaging.Processing
 
         protected void TransformAutoSize(GLTexture2D inc, MVector translation, MVector scale, float angle, MVector pivot)
         {
-            int owidth = outputBuff.Width;
-            int oheight = outputBuff.Height;
+            int owidth = Width;
+            int oheight = Height;
 
             Matrix4 proj = Matrix4.CreateOrthographic(owidth, oheight, 0f, 1000f);
             Matrix4 pTrans = Matrix4.CreateTranslation(-pivot.X, -pivot.Y, 0);
@@ -83,8 +82,8 @@ namespace Materia.Rendering.Imaging.Processing
 
         protected void Resize(GLTexture2D inc)
         {
-            int nwidth = outputBuff.Width;
-            int nheight = outputBuff.Height;
+            int nwidth = Width; 
+            int nheight = Height;
 
             int owidth = inc.Width;
             int oheight = inc.Height;
@@ -105,8 +104,8 @@ namespace Materia.Rendering.Imaging.Processing
 
         protected void Identity()
         {
-            int nwidth = outputBuff.Width;
-            int nheight = outputBuff.Height;
+            int nwidth = Width;
+            int nheight = Height;
 
             Projection = Matrix4.CreateOrthographic(nwidth, nheight, 0f, 1000f);
             View = view;
@@ -123,21 +122,10 @@ namespace Materia.Rendering.Imaging.Processing
                 renderBuff.Unbind();
             }
 
-            if (colorBuff == null)
-            {
-                colorBuff = new GLTexture2D(PixelInternalFormat.Rgba32f);
-                colorBuff.Bind();
-                colorBuff.SetData(IntPtr.Zero, PixelFormat.Bgra, 4096, 4096);
-                colorBuff.Linear();
-                colorBuff.ClampToEdge();
-                GLTexture2D.Unbind();
-            }
-
             if (frameBuff == null)
             {
                 frameBuff = new GLFrameBuffer();
                 frameBuff.Bind();
-                frameBuff.AttachColor(colorBuff);
                 frameBuff.AttachDepth(renderBuff);
 
                 IGL.Primary.DrawBuffers(new int[] { (int)DrawBufferMode.ColorAttachment0 });
@@ -147,14 +135,14 @@ namespace Materia.Rendering.Imaging.Processing
             }
         }
 
-        public virtual void PrepareView(GLTexture2D output = null)
+        public virtual void PrepareView(GLTexture2D output)
         {
             CreateBuffersIfNeeded();
 
-            outputBuff = output == null ? colorBuff : output;
+            outputBuff = output;
 
-            Width = outputBuff.Width;
-            Height = outputBuff.Height;
+            Width = output.Width;
+            Height = output.Height;
 
             if(renderQuad == null)
             {
@@ -253,9 +241,6 @@ namespace Materia.Rendering.Imaging.Processing
 
         public static void DisposeCache()
         {
-            colorBuff?.Dispose();
-            colorBuff = null;
-
             temp?.Dispose();
             temp = null;
 

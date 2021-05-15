@@ -125,15 +125,15 @@ namespace MateriaCore.Components.GL.Renderer
         {
             Cam = new Camera()
             {
-                LocalEulerAngles = new Vector3(25, 45, 0),
+                LocalEulerAngles = new Vector3(0, 0, 0),
                 LocalPosition = new Vector3(0, 0, 3)
             };
 
             Light = new Light()
             {
-                LocalPosition = new Vector3(0, 2, 2),
-                Color = new Vector3(1, 1, 1),
-                LocalScale = new Vector3(0.01f, 0.01f, 0.01f)
+                LocalPosition = new Vector3(0, 2, 0),
+                Color = new Vector3(1, 0, 0),
+                LocalScale = new Vector3(1f, 1f, 1f)
             };
 
             SceneLightingSettings = new Settings.Lighting();
@@ -363,11 +363,12 @@ namespace MateriaCore.Components.GL.Renderer
 
         protected virtual void OnSkyboxUpdate(object sender, object texture)
         {
-            if (texture is GLTexture2D)
+            if (texture is IGLTexture)
             {
                 if (DefaultSkyboxMaterial != null)
                 {
-                    DefaultSkyboxMaterial.Albedo = texture as GLTexture2D;
+                    DefaultSkyboxMaterial.Albedo = texture as IGLTexture;
+                    MeshNode.Environment = texture as GLTextureCube;
                 }
 
                 IsModified = true;
@@ -416,7 +417,7 @@ namespace MateriaCore.Components.GL.Renderer
         protected virtual void SetNormal(UINode node)
         {
             GLTexture2D buffer = node?.GetActiveBuffer();
-            DefaultMaterial.Normal = DefaultTessMaterial.Normal = buffer ?? DefaultGray;
+            DefaultMaterial.Normal = DefaultTessMaterial.Normal = buffer ?? DefaultBlack;
             IsModified = true;
         }
 
@@ -464,7 +465,7 @@ namespace MateriaCore.Components.GL.Renderer
         protected virtual void SetRoughness(UINode node)
         {
             GLTexture2D buffer = node?.GetActiveBuffer();
-            DefaultMaterial.Roughness = DefaultTessMaterial.Roughness = buffer ?? DefaultBlack;
+            DefaultMaterial.Roughness = DefaultTessMaterial.Roughness = buffer ?? DefaultDarkGray;
             IsModified = true;
         }
 
@@ -569,7 +570,7 @@ namespace MateriaCore.Components.GL.Renderer
                     },
                     GetActiveFar = () => Cam.Far,
                     GetActiveNear = () => Cam.Near,
-                    GetActiveEyePosition = () => Cam.EyePosition,
+                    GetActiveEyePosition = () => Cam.OrbitEyePosition,
                     GetActiveLight = () => Light,
                     GetActiveMaterial = () =>
                     {
@@ -585,7 +586,8 @@ namespace MateriaCore.Components.GL.Renderer
                     },
                     GetActiveIrradianceMap = () => ActiveIrradiance,
                     GetActivePrefilterMap = () => ActivePrefilter,
-                    GetActiveView = () => Cam.InvertedView,
+                    GetActiveEnvironmentMap = () => DefaultSkyboxMaterial.Albedo as GLTextureCube,
+                    GetActiveView = () => Cam.OrbitView,
                     GetActiveProjection = () => ActiveProjection
                 };
                 meshSceneObjects.Add(ms);

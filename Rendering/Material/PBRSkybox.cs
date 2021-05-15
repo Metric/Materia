@@ -12,7 +12,7 @@ namespace Materia.Rendering.Material
 
         protected override void LoadShader()
         {
-            Shader = GLShaderCache.GetShader("skybox.glsl", "equisky.glsl");
+            Shader = GLShaderCache.GetShader("skybox.glsl", "skybox.glsl");
 
             if (Shader == null)
             {

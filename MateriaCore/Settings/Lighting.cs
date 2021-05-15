@@ -11,7 +11,7 @@ namespace MateriaCore.Settings
     {
         public event Action<Lighting> Update;
 
-        protected MVector position = new MVector(0,2,2,0);
+        protected MVector position = new MVector(0,2,0,0);
         [Editable(ParameterInputType.Float3Input, "Position", "Position")]
         public MVector Position
         {
@@ -23,7 +23,7 @@ namespace MateriaCore.Settings
             }
         }
 
-        protected MVector color = new MVector(1,1,1,1);
+        protected MVector color = new MVector(1,0,0,1);
         [Editable(ParameterInputType.Color, "Color", "Light")]
         public MVector Color
         {
@@ -38,7 +38,7 @@ namespace MateriaCore.Settings
             }
         }
 
-        protected float power = 1;
+        protected float power = 10;
         [Editable(ParameterInputType.FloatInput, "Power", "Light")]
         public float Power
         {
@@ -86,9 +86,9 @@ namespace MateriaCore.Settings
 
         public void DefaultPosition()
         {
-            position.X = 0;
-            position.Y = 2;
-            position.Z = 2;
+            position.X = 1.5f;
+            position.Y = -1.5f;
+            position.Z = 1.5f;
             position.W = 0;
 
             Update?.Invoke(this);
@@ -96,17 +96,17 @@ namespace MateriaCore.Settings
 
         public void Reset(bool triggerUpdate = true)
         {
-            position.X = 0;
-            position.Y = 2;
-            position.Z = 2;
+            position.X = 1.5f;
+            position.Y = -1.5f;
+            position.Z = 1.5f;
             position.W = 0;
 
-            color.X = 1;
-            color.Y = 1;
-            color.Z = 1;
+            color.X = 0.95f;
+            color.Y = 0.75f;
+            color.Z = 0.9f;
             color.W = 1;
 
-            power = 1;
+            power = 2;
 
             bloomIntensity = 8;
 

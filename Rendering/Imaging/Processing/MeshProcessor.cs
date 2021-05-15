@@ -17,31 +17,38 @@ namespace Materia.Rendering.Imaging.Processing
 
         public void Process(GLTexture2D output)
         {
+            GLTexture2D temp = output.Copy();
+
             if (Mesh != null)
             {
-                PrepareView(colorBuff);
+                PrepareView(temp);
 
-                //enable depth test here again
+                IGL.Primary.Enable((int)EnableCap.CullFace);
+                IGL.Primary.CullFace((int)CullFaceMode.Back);
                 IGL.Primary.Enable((int)EnableCap.DepthTest);
 
-                IGL.Primary.Viewport(0, 0, output.Width, output.Height);
-                IGL.Primary.ClearColor(0, 0, 0, 0);
-                IGL.Primary.Clear((int)ClearBufferMask.DepthBufferBit);
-                IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit);
+                IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
 
-                //draw in depth
+                MeshRenderer.SharedVao?.Bind();
+
                 Mesh.Draw();
+
+                MeshRenderer.SharedVao?.Unbind();
 
                 //restore to default depth info
                 IGL.Primary.Disable((int)EnableCap.DepthTest);
+                IGL.Primary.Disable((int)EnableCap.CullFace);
+
+                FullScreenQuad.SharedVao?.Bind();
             }
 
             PrepareView(output);
 
             Identity();
             Bind();
-            SetTextures(colorBuff);
+            SetTextures(temp);
             renderQuad?.Draw();
+            temp.Dispose();
             Unbind();
         }
     }

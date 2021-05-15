@@ -24,11 +24,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Embedded\brdf.png" />
     <None Remove="Embedded\Frag\basic.glsl" />
     <None Remove="Embedded\Frag\blend.glsl" />
     <None Remove="Embedded\Frag\bloom.glsl" />
     <None Remove="Embedded\Frag\blur.glsl" />
+    <None Remove="Embedded\Frag\brdf.glsl" />
     <None Remove="Embedded\Frag\channelswitch.glsl" />
     <None Remove="Embedded\Frag\circle.glsl" />
     <None Remove="Embedded\Frag\curve.glsl" />
@@ -55,6 +55,7 @@
     <None Remove="Embedded\Frag\point.glsl" />
     <None Remove="Embedded\Frag\pointsize.glsl" />
     <None Remove="Embedded\Frag\pointui.glsl" />
+    <None Remove="Embedded\Frag\prefilter.glsl" />
     <None Remove="Embedded\Frag\satvalselector.glsl" />
     <None Remove="Embedded\Frag\sharpen.glsl" />
     <None Remove="Embedded\Frag\skybox.glsl" />
@@ -84,7 +85,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Embedded\Frag\brdf.glsl" />
     <EmbeddedResource Include="Embedded\Frag\equisky.glsl" />
+    <EmbeddedResource Include="Embedded\Frag\prefilter.glsl" />
     <EmbeddedResource Include="Embedded\Geom\pointuiuv.glsl" />
   </ItemGroup>
 
@@ -101,7 +104,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Embedded\brdf.png" />
     <EmbeddedResource Include="Embedded\Frag\blend.glsl" />
     <EmbeddedResource Include="Embedded\Frag\bloom.glsl" />
     <EmbeddedResource Include="Embedded\Frag\blur.glsl" />
@@ -151,8 +153,8 @@
 
   <ItemGroup>
     <PackageReference Include="AssimpNet" Version="4.1.0" />
-    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="3.1.3" />
-    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="5.0.6" />
+    <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
   </ItemGroup>
 
   <ItemGroup>

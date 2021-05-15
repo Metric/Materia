@@ -1,5 +1,7 @@
 ﻿#version 330 core
-out vec4 FragColor;
+layout(location = 0) out vec4 FragColor;
+layout(location = 1) out vec4 Brightness;
+
 in vec3 localPos;
 
 uniform sampler2D hdrMap;
@@ -17,6 +19,7 @@ vec2 toRadialCoords(vec3 coords)
 
 void main()
 {
+    Brightness = vec4(0);
     vec2 uv = toRadialCoords(localPos); // make sure to normalize localPos
     vec3 envColor = texture(hdrMap, uv).rgb;
 

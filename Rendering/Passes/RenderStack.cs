@@ -4,6 +4,14 @@ using Materia.Rendering.Textures;
 
 namespace Materia.Rendering.Passes
 {
+
+    public enum RenderStackState
+    {
+        Color = 0,
+        Effect = 1,
+        Skybox = 2
+    }
+
     public class RenderStack : IDisposable
     {
         public GLTexture2D[] Output { get; protected set; }
@@ -25,7 +33,7 @@ namespace Materia.Rendering.Passes
             renderers.Remove(r);
         }
 
-        public void Process(Action renderScene = null)
+        public void Process(Action<RenderStackState> renderScene = null)
         {
             GLTexture2D[] lastOuputs = null;
             for(int i = 0; i < renderers.Count; ++i)

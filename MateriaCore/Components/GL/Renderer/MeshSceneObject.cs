@@ -14,6 +14,7 @@ namespace MateriaCore.Components.GL.Renderer
         public Func<PBRMaterial> GetActiveMaterial { get; set; }
         public Func<GLTextureCube> GetActivePrefilterMap { get; set; }
         public Func<GLTextureCube> GetActiveIrradianceMap { get; set; }
+        public Func<GLTextureCube> GetActiveEnvironmentMap { get; set; }
 
         public Func<Matrix4> GetActiveProjection { get; set; }
         public Func<Matrix4> GetActiveView { get; set; }
@@ -41,6 +42,7 @@ namespace MateriaCore.Components.GL.Renderer
                 Renderer.Mat = GetActiveMaterial?.Invoke();
                 Renderer.IrradianceMap = GetActiveIrradianceMap?.Invoke();
                 Renderer.PrefilterMap = GetActivePrefilterMap?.Invoke();
+                Renderer.EnvironmentMap = GetActiveEnvironmentMap?.Invoke();
 
                 if (GetActiveProjection != null)
                 {
