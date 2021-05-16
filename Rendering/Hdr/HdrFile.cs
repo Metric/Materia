@@ -7,7 +7,7 @@ using VCDiff.Shared;
 
 namespace Materia.Rendering.Hdr
 {
-    public class HdrFile : IDisposable
+    public class HdrFile : IHdrFile
     {
         const int MINELEN = 8;
         const int MAXELEN = 0x7fff;

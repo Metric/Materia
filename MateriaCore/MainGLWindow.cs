@@ -43,7 +43,7 @@ namespace MateriaCore
         protected UI2DPreview preview2D;
         protected UI3DPreview preview3D;
 
-        protected HdrFile hdrToLoad;
+        protected IHdrFile hdrToLoad;
         protected HdrMap hdrMap;
 
         private Keys currentKey;
@@ -358,7 +358,7 @@ namespace MateriaCore
         private void TestHdrLoad()
         {
             string dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hdr");
-            HdrFile f = null;
+            IHdrFile f = null;
             Task.Run(() =>
             {
                 HdriManager.Scan(dir);
@@ -368,6 +368,7 @@ namespace MateriaCore
                 {
                     return;
                 }
+
                 f = HdriManager.Load(available[0]);
             }).ContinueWith(t =>
             {

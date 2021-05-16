@@ -31,7 +31,7 @@ namespace Materia.Rendering.Hdr
         public static void Scan(string directory)
         {
             available.Clear();
-            string[] files = System.IO.Directory.GetFiles(directory, "*.hdr");
+            string[] files = System.IO.Directory.GetFiles(directory, "*.exr");
             for (int i = 0; i < files.Length; ++i)
             {
                 var f = files[i];
@@ -39,16 +39,25 @@ namespace Materia.Rendering.Hdr
             }
         }
 
-        public static HdrFile Load(string f)
+        public static IHdrFile Load(string f)
         {
+            IHdrFile file;
             if (string.IsNullOrEmpty(f)) return null;
             if (!System.IO.File.Exists(f)) return null;
-            HdrFile hdrFile = new HdrFile(f);
-            hdrFile.Load();
-            return hdrFile;
+            if (f.ToLower().EndsWith(".exr"))
+            {
+                file = new ExrFile(f);
+            }
+            else
+            {
+                file = new HdrFile(f);
+            }
+
+            file.Load();
+            return file;
         }
 
-        public static HdrMap Process(HdrFile f)
+        public static HdrMap Process(IHdrFile f)
         {
             if (f == null || f.Width == 0 || f.Height == 0 || f.Pixels == null) return new HdrMap();
 
