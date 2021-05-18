@@ -249,6 +249,16 @@ namespace InfinityUI.Core
             get => localMatrix;
         }
 
+        public bool IsClipped
+        {
+            get
+            {
+                var drawable = FindComponent<UIDrawable>();
+                if (drawable == null) return false;
+                return drawable.Clip;
+            }
+        }
+
         public UICanvas Canvas { get; set; }
 
         public List<UIObject> Children { get; protected set; } = new List<UIObject>();
@@ -269,6 +279,11 @@ namespace InfinityUI.Core
             components[c.GetType()] = c;
             componentList.Add(c);
             c.Awake();
+        }
+
+        public T FindComponent<T>() where T : IComponent
+        {
+            return (T)componentList.Find(m => m is T);
         }
 
         public T AddComponent<T>() where T : IComponent
@@ -467,7 +482,9 @@ namespace InfinityUI.Core
             for (int i = Children.Count - 1; i >= 0; --i)
             {
                 if (!Children[i].RaycastTarget || !Children[i].Visible) continue;
-                if (Children[i].RaycastAlways || Children[i].InVisibleArea(ref p))
+                if (Children[i].RaycastAlways 
+                    || (!Children[i].IsClipped && Children[i].InVisibleArea(ref p)) 
+                    || (Children[i].IsClipped && Children[i].Contains(ref p)))
                 {
                     c = Children[i].Pick(ref p);
                     if (c == null)
@@ -765,7 +782,7 @@ namespace InfinityUI.Core
                     return;
                 case Anchor.BottomHorizFill:
                 case Anchor.BottomLeft:
-                    anchorPosition = pos + bottomLeftOffset;
+                    anchorPosition = new Vector2(pos.X, pSize.Y - size.Y - pos.Y) + bottomLeftOffset;
                     return;
                 case Anchor.BottomRight:
                     anchorPosition = pSize - size - pos + bottomRightOffset;

@@ -58,12 +58,15 @@ namespace MateriaCore.Components.GL.Renderer
                 }
             }
         }
+
+        public PreviewCameraPosition CameraView { get; set; } = PreviewCameraPosition.Front;
         public PreviewCameraMode CameraMode { get; set; } = PreviewCameraMode.Perspective;
 
         public Matrix4 ActiveProjection { get; protected set; }
 
-        public List<MeshSceneObject> ActiveMeshes { get => meshSceneObjects.FindAll(m => m.Visible && m.RenderMode != MeshRenderType.Skybox); }
+        public List<MeshSceneObject> ActiveMeshes { get => meshSceneObjects.FindAll(m => m.Visible && m.RenderMode == MeshRenderType.PBR); }
         public MeshSceneObject ActiveSkybox { get => meshSceneObjects.Find(m => m.Visible && m.RenderMode == MeshRenderType.Skybox); }
+        public MeshSceneObject ActiveLight { get => meshSceneObjects.Find(m => m.Visible && m.RenderMode == MeshRenderType.Light);  }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance is modified.
@@ -105,6 +108,36 @@ namespace MateriaCore.Components.GL.Renderer
             AddEvents();
         }
 
+        protected void InvalidateCameraAngle()
+        {
+            var camera = Cam;
+            PreviewCameraPosition v = CameraView;
+            switch (v)
+            {
+                case PreviewCameraPosition.Top:
+                    camera.LocalEulerAngles = new Vector3(90, 0, 0);
+                    break;
+                case PreviewCameraPosition.Bottom:
+                    camera.LocalEulerAngles = new Vector3(270, 0, 0);
+                    break;
+                case PreviewCameraPosition.Back:
+                    camera.LocalEulerAngles = new Vector3(0, 180, 0);
+                    break;
+                case PreviewCameraPosition.Front:
+                    camera.LocalEulerAngles = new Vector3(0, 0, 0);
+                    break;
+                case PreviewCameraPosition.Left:
+                    camera.LocalEulerAngles = new Vector3(0, 270, 0);
+                    break;
+                case PreviewCameraPosition.Right:
+                    camera.LocalEulerAngles = new Vector3(0, 90, 0);
+                    break;
+                case PreviewCameraPosition.Angled:
+                    camera.LocalEulerAngles = new Vector3(25, 45, 0);
+                    break;
+            }
+        }
+
         protected virtual void CreateProjection()
         {
             if (viewSize.LengthSquared <= float.Epsilon) return;
@@ -136,7 +169,7 @@ namespace MateriaCore.Components.GL.Renderer
             {
                 LocalPosition = new Vector3(0, 2, 0),
                 Color = new Vector3(1, 0, 0),
-                LocalScale = new Vector3(1f, 1f, 1f)
+                LocalScale = new Vector3(0.1f, 0.1f, 0.1f)
             };
 
             SceneLightingSettings = new Settings.Lighting();
@@ -259,6 +292,7 @@ namespace MateriaCore.Components.GL.Renderer
             DefaultMaterial.UseDisplacement = false;
 
             CreateProjection();
+            InvalidateCameraAngle();
 
             if (matSwitchCheck && SceneMaterialSettings.Displacement)
             {
@@ -521,6 +555,31 @@ namespace MateriaCore.Components.GL.Renderer
         }
         #endregion
 
+
+        public void DeleteCache(string path)
+        {
+            meshCache.Remove(path);
+        }
+
+        public void Delete(SceneObject obj)
+        {
+            for (int i = 0; i < obj.Children.Count; ++i)
+            {
+                var o = obj.Children[i];
+                if (o is MeshSceneObject)
+                {
+                    var m = o as MeshSceneObject;
+                    if (meshSceneObjectCache.Remove(m.Id))
+                    {
+                        m.Dispose();
+                    }
+                    registeredSceneObjects.Remove(m.Id);
+                }
+            }
+
+            obj.Dispose();
+            registeredSceneObjects.Remove(obj.Id);
+        }
 
         public SceneObject CreateMeshFromEmbeddedFile(string path, Type t, MeshRenderType mode = MeshRenderType.PBR)
         {

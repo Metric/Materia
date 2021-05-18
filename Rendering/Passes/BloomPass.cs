@@ -70,7 +70,7 @@ namespace Materia.Rendering.Passes
             IGL.Primary.DrawBuffers(new int[] { (int)DrawBuffersEnum.ColorAttachment0 });
             IGL.Primary.Viewport(0, 0, width, height);
             IGL.Primary.ClearColor(0, 0, 0, 0);
-            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit);
+            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit | (int)ClearBufferMask.StencilBufferBit);
 
             Vector2 tiling = new Vector2(1);
 
@@ -87,12 +87,13 @@ namespace Materia.Rendering.Passes
 
             //ensure polygon is actually rendered instead of wireframe during this step
             IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
-
+            IGL.Primary.Disable((int)EnableCap.DepthTest);
             IGL.Primary.Disable((int)EnableCap.CullFace);
 
             quad.Draw();
 
             IGL.Primary.Enable((int)EnableCap.CullFace);
+            IGL.Primary.Enable((int)EnableCap.DepthTest);
 
             GLTexture2D.Unbind();
 

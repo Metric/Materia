@@ -80,7 +80,10 @@ namespace InfinityUI.Controls
         {
             RaycastTarget = true;
 
-            textContainer = new UIObject();
+            textContainer = new UIObject()
+            {
+                RelativeTo = Anchor.Center
+            };
             textContainer.Size = Size;
             AddChild(textContainer);
 

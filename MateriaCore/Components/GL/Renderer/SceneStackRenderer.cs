@@ -1,5 +1,6 @@
 ﻿using Materia.Rendering.Buffers;
 using Materia.Rendering.Geometry;
+using Materia.Rendering.Imaging.Processing;
 using Materia.Rendering.Interfaces;
 using Materia.Rendering.Passes;
 using Materia.Rendering.Textures;
@@ -18,13 +19,28 @@ namespace MateriaCore.Components.GL.Renderer
         protected GLRenderBuffer renderBuffer;
         protected Scene scene;
 
+        protected PreviewRenderMode polyMode = PreviewRenderMode.Solid;
+        public PreviewRenderMode PolyMode
+        {
+            get => polyMode;
+            set
+            {
+                if (polyMode != value)
+                {
+                    polyMode = value;
+                    if (scene != null) scene.IsModified = true;
+                }
+            }
+        }
+
+        protected GLTexture2D uvTexture;
+        protected UVRenderer uvRenderer;
+        protected UVProcessor uvProcessor;
+
         public GLTexture2D Image
         {
-            get
-            {
-                if (stack == null || stack.Output == null || stack.Output.Length < 4) return null;
-                return stack.Output[3];
-            }
+            get;
+            protected set;
         }
 
         public SceneStackRenderer(Scene s)
@@ -58,6 +74,15 @@ namespace MateriaCore.Components.GL.Renderer
 
         public void Dispose()
         {
+            uvRenderer?.Dispose();
+            uvRenderer = null;
+
+            uvProcessor?.Dispose();
+            uvProcessor = null;
+
+            uvTexture?.Dispose();
+            uvTexture = null;
+
             stack?.Dispose();
             stack = null;
 
@@ -74,10 +99,69 @@ namespace MateriaCore.Components.GL.Renderer
             frameBuffer = null;
         }
 
+        public void UV()
+        {
+            //esnure image is set to uvTexture if available
+            if (scene == null)
+            {
+                Image = uvTexture;
+                return;
+            }
+            if (!scene.IsModified || scene.ViewSize.X <= 0 || scene.ViewSize.Y <= 0)
+            {
+                Image = uvTexture;
+                return;
+            }
+
+            if (uvTexture == null)
+            {
+                uvTexture = new GLTexture2D(PixelInternalFormat.Rgba8);
+                uvTexture.Bind();
+                uvTexture.SetData(IntPtr.Zero, PixelFormat.Bgra, 512, 512);
+                uvTexture.ClampToEdge();
+                uvTexture.Linear();
+                GLTexture2D.Unbind();
+            }
+
+            if (uvProcessor == null)
+            {
+                uvProcessor = new UVProcessor();
+            }
+            if (uvRenderer == null)
+            {
+                uvRenderer = new UVRenderer();
+            }
+
+            uvProcessor.PrepareView(uvTexture);
+
+            MeshRenderer.SharedVao?.Bind();
+
+            var meshes = scene.ActiveMeshes;
+            for (int i = 0; i < meshes.Count; ++i)
+            {
+                var m = meshes[i];
+                uvRenderer.Set(m.Renderer);
+                uvProcessor.Process(uvRenderer);
+            }
+            MeshRenderer.SharedVao?.Unbind();
+
+            uvProcessor.Complete();
+            Image = uvTexture;
+        }
+
         public void Render()
         {
-            if (scene == null) return;
-            if (!scene.IsModified || scene.ViewSize.X <= 0 || scene.ViewSize.Y <= 0) return;
+            //always ensure image is set to stack output
+            if (scene == null)
+            {
+                Image = stack != null && stack.Output != null && stack.Output.Length >= 4 ? stack.Output[3] : null;
+                return;
+            }
+            if (!scene.IsModified || scene.ViewSize.X <= 0 || scene.ViewSize.Y <= 0)
+            {
+                Image = stack != null && stack.Output != null && stack.Output.Length >= 4 ? stack.Output[3] : null;
+                return;
+            }
 
             InitializeFrameBuffer();
             
@@ -88,29 +172,52 @@ namespace MateriaCore.Components.GL.Renderer
 
             var meshes = scene.ActiveMeshes;
             var skybox = scene.ActiveSkybox;
+            var light = scene.ActiveLight;
             stack.Process((state) =>
             {
                 IGL.Primary.Enable((int)EnableCap.CullFace);
                 IGL.Primary.CullFace((int)CullFaceMode.Back);
                 IGL.Primary.Enable((int)EnableCap.DepthTest);
+                IGL.Primary.DepthFunc((int)DepthFunction.Lequal);
 
-                IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
+                switch (polyMode)
+                {
+                    case PreviewRenderMode.Solid:
+                        IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
+                        break;
+                    case PreviewRenderMode.Wireframe:
+                        IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Line);
+                        break;
+                }
 
                 MeshRenderer.SharedVao?.Bind();
 
-                if (meshes == null) return;
-                for(int i = 0; i < meshes.Count; ++i)
+                if (meshes != null)
                 {
-                    meshes[i]?.Draw();
+                    for (int i = 0; i < meshes.Count; ++i)
+                    {
+                        meshes[i]?.Draw();
+                    }
                 }
 
+                light?.Draw();
+
                 IGL.Primary.Disable((int)EnableCap.CullFace);
+
+                //ensure we switch back to default
+                if (polyMode != PreviewRenderMode.Solid)
+                {
+                    IGL.Primary.PolygonMode((int)MaterialFace.FrontAndBack, (int)PolygonMode.Fill);
+                }
 
                 skybox?.Draw();
 
                 MeshRenderer.SharedVao?.Unbind();
+
+                IGL.Primary.Disable((int)EnableCap.DepthTest);
             });
             scene.IsModified = false;
+            Image = stack != null && stack.Output != null && stack.Output.Length >= 4 ? stack.Output[3] : null;
         }
     }
 }

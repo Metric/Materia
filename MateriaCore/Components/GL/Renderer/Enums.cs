@@ -23,7 +23,8 @@ namespace MateriaCore.Components.GL.Renderer
         Right,
         Front,
         Back,
-        Perspective
+        Angled,
+        Custom
     }
 
     public enum PreviewCameraMode
@@ -34,7 +35,7 @@ namespace MateriaCore.Components.GL.Renderer
 
     public enum PreviewRenderMode
     {
-        WireframeShading,
-        FullShading
+        Wireframe,
+        Solid
     }
 }

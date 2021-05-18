@@ -9,7 +9,7 @@ namespace Materia.Rendering.Material
 
         protected override void LoadShader()
         {
-            Shader = GLShaderCache.GetShader("pbr.glsl", "depth.glsl");
+            Shader = GLShaderCache.GetShader("pbrbasic.glsl", "depth.glsl");
 
             if(Shader == null)
             {

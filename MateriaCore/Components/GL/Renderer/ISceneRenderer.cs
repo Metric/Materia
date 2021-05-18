@@ -7,8 +7,11 @@ namespace MateriaCore.Components.GL.Renderer
 {
     public interface ISceneRenderer : IDisposable
     {
+        PreviewRenderMode PolyMode { get; set; }
+
         GLTexture2D Image { get; }
 
+        void UV();
         void Render();
     }
 }

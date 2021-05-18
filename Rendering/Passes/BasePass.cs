@@ -64,9 +64,10 @@ namespace Materia.Rendering.Passes
             if (frame == null) return;
 
             frame.Bind();
+
             frame.AttachColor(color[0], 0);
             frame.AttachColor(color[1], 1);
-            
+
             if (!frame.IsValid)
             {
                 Log.Error("Invalid frame buffer");
@@ -75,7 +76,7 @@ namespace Materia.Rendering.Passes
             IGL.Primary.DrawBuffers(new int[] { (int)DrawBuffersEnum.ColorAttachment0, (int)DrawBuffersEnum.ColorAttachment1 });
             IGL.Primary.Viewport(0, 0, width, height);
             IGL.Primary.ClearColor(0, 0, 0, 0);
-            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit);
+            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit | (int)ClearBufferMask.StencilBufferBit);
 
             renderScene?.Invoke(RenderStackState.Color);
 

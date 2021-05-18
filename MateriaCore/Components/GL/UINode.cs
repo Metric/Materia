@@ -16,6 +16,7 @@ using Materia.Rendering.Imaging;
 using MateriaCore.Utils;
 using InfinityUI.Interfaces;
 using Materia.Rendering.Textures;
+using System.Diagnostics;
 
 namespace MateriaCore.Components.GL
 {
@@ -533,17 +534,24 @@ namespace MateriaCore.Components.GL
 
         protected void Export()
         {
-            var dialog = new SaveFileDialog();
-            FileDialogFilter filter = new FileDialogFilter();
-            filter.Extensions.Add("png");
-            dialog.Filters.Add(filter);
-            dialog.Title = "Export Image";
-
             string path = null;
 
             Task.Run(async () =>
             {
-                path = await dialog.ShowAsync(null); //note need to assign actual main window here
+                try
+                {
+                    var dialog = new SaveFileDialog();
+                    FileDialogFilter filter = new FileDialogFilter();
+                    filter.Name = "PNG";
+                    filter.Extensions.Add("png");
+                    dialog.Filters.Add(filter);
+                    dialog.Title = "Export Image";
+                    path = await dialog.ShowAsync(MainWindow.Instance);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.StackTrace);
+                }
             }).ContinueWith(t =>
             {
                 if (string.IsNullOrEmpty(path)) return;

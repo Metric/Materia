@@ -62,6 +62,12 @@ namespace MateriaCore.Components.GL.Renderer
 
                 if (light != null)
                 {
+                    if (RenderMode == MeshRenderType.Light)
+                    {
+                        LocalPosition = light.Position;
+                        LocalScale = light.LocalScale;
+                    }
+
                     Renderer.LightColor = light.Color;
                     Renderer.LightPosition = light.Position;
                     Renderer.LightPower = light.Power;

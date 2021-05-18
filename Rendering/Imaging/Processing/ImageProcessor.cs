@@ -152,6 +152,7 @@ namespace Materia.Rendering.Imaging.Processing
             //these must be disabled
             //otherwise image processing will not work properly
             IGL.Primary.Disable((int)EnableCap.DepthTest);
+            IGL.Primary.Disable((int)EnableCap.CullFace);
 
             frameBuff.Bind();
             frameBuff.AttachColor(outputBuff);
@@ -159,7 +160,7 @@ namespace Materia.Rendering.Imaging.Processing
             IGL.Primary.Viewport(0, 0, Width, Height);
             IGL.Primary.ClearColor(0, 0, 0, 0);
 
-            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit);
+            IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit | (int)ClearBufferMask.StencilBufferBit);
         }
 
         /*
@@ -236,6 +237,7 @@ namespace Materia.Rendering.Imaging.Processing
         public virtual void Complete()
         {
             frameBuff?.Unbind();
+            IGL.Primary.Enable((int)EnableCap.CullFace);
             IGL.Primary.Enable((int)EnableCap.DepthTest);
         }
 

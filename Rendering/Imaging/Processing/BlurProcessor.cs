@@ -46,6 +46,9 @@ namespace Materia.Rendering.Imaging.Processing
             GLTexture2D.Unbind();
 
             GLTexture2D temp = output.Copy();
+            temp.Bind();
+            temp.ClampToEdge();
+            GLTexture2D.Unbind();
 
             PrepareView(temp);
 

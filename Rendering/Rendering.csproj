@@ -75,6 +75,7 @@
     <None Remove="Embedded\Vertex\image.glsl" />
     <None Remove="Embedded\Vertex\line.glsl" />
     <None Remove="Embedded\Vertex\pbr.glsl" />
+    <None Remove="Embedded\Vertex\pbrbasic.glsl" />
     <None Remove="Embedded\Vertex\pbrtes.glsl" />
     <None Remove="Embedded\Vertex\point.glsl" />
     <None Remove="Embedded\Vertex\pointui.glsl" />
@@ -82,6 +83,10 @@
     <None Remove="Embedded\Vertex\raw.glsl" />
     <None Remove="Embedded\Vertex\skybox.glsl" />
     <None Remove="Embedded\Vertex\uv.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Embedded\Vertex\pbrbasic.glsl" />
   </ItemGroup>
 
   <ItemGroup>

@@ -26,7 +26,7 @@ namespace Materia.Rendering
             }
         }
 
-        protected float near;
+        protected float near = 0.03f;
         [Editable(ParameterInputType.FloatInput, "Near")]
         public float Near
         {
@@ -37,12 +37,12 @@ namespace Materia.Rendering
             set
             {
                 near = value;
-                if (near == 0) near = 0.0001f;
+                if (near <= 0) near = 0.03f;
                 Update?.Invoke(this);
             }
         }
 
-        protected float far;
+        protected float far = 1000f;
         [Editable(ParameterInputType.FloatInput, "Far")]
         public float Far
         {
@@ -53,7 +53,7 @@ namespace Materia.Rendering
             set
             {
                 far = value;
-                if (far == 0) far = 0.0001f;
+                if (far <= 0) far = 1000f;
                 Update?.Invoke(this);
             }
         }

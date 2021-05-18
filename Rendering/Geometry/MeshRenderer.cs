@@ -137,16 +137,30 @@ namespace Materia.Rendering.Geometry
 
             int dataSize = renderType == InternalRenderType.Advanced ? 12 : 3;       
 
-            IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, dataSize * sizeof(float), 0);
-            IGL.Primary.EnableVertexAttribArray(0);
-            IGL.Primary.DisableVertexAttribArray(1);
-            IGL.Primary.DisableVertexAttribArray(2);
-            IGL.Primary.DisableVertexAttribArray(3);
+            if (renderType == InternalRenderType.Basic)
+            {
+                IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, dataSize * sizeof(float), 0);
+                IGL.Primary.EnableVertexAttribArray(0);
+                IGL.Primary.DisableVertexAttribArray(1);
+                IGL.Primary.DisableVertexAttribArray(2);
+                IGL.Primary.DisableVertexAttribArray(3);
+            }
+            else
+            {
+                IGL.Primary.VertexAttribPointer(0, 3, (int)VertexAttribPointerType.Float, false, dataSize * sizeof(float), 0);
+                IGL.Primary.VertexAttribPointer(1, 3, (int)VertexAttribPointerType.Float, false, dataSize * sizeof(float), (3 * 4) + (2 * 4));
+                IGL.Primary.VertexAttribPointer(2, 2, (int)VertexAttribPointerType.Float, false, dataSize * sizeof(float), 3 * 4);
+                IGL.Primary.VertexAttribPointer(3, 4, (int)VertexAttribPointerType.Float, false, dataSize * sizeof(float), (3 * 4) + (2 * 4) + (3 * 4));
+                IGL.Primary.EnableVertexAttribArray(0);
+                IGL.Primary.EnableVertexAttribArray(1);
+                IGL.Primary.EnableVertexAttribArray(2);
+                IGL.Primary.EnableVertexAttribArray(3);
+            }
 
             IGL.Primary.DrawElements((int)BeginMode.Triangles, indicesCount, (int)DrawElementsType.UnsignedInt, 0);
 
-            vbo?.Unbind();
             ebo?.Unbind();
+            vbo?.Unbind();
         }
 
         public virtual void DrawAsSkybox()
@@ -190,10 +204,6 @@ namespace Materia.Rendering.Geometry
                 shader.SetUniformMatrix4("viewMatrix", ref view);
                 shader.SetUniformMatrix4("modelMatrix", ref model);
 
-                Vector2 tiling = Tiling;
-
-                shader.SetUniform2("tiling", ref tiling);
-
                 DrawBasic();
             }
         }
@@ -214,11 +224,7 @@ namespace Materia.Rendering.Geometry
                 shader.SetUniformMatrix4("viewMatrix", ref view);
                 shader.SetUniformMatrix4("modelMatrix", ref model);
 
-                Vector2 tiling = Tiling;
-
                 Vector4 lightColor = new Vector4(LightColor * LightPower, 1);
-
-                shader.SetUniform2("tiling", ref tiling);
 
                 shader.SetUniform4("color", ref lightColor);
 

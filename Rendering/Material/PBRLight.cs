@@ -9,7 +9,7 @@ namespace Materia.Rendering.Material
 
         protected override void LoadShader()
         {
-            Shader = GLShaderCache.GetShader("pbr.glsl", "uniformcolor.glsl");
+            Shader = GLShaderCache.GetShader("pbrbasic.glsl", "uniformcolor.glsl");
 
             if (Shader == null)
             {

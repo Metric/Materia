@@ -25,6 +25,17 @@ namespace InfinityUI.Components.Layout
             }
         }
 
+        protected Anchor childAlignment = Anchor.TopLeft;
+        public Anchor ChildAlignment
+        {
+            get => childAlignment;
+            set
+            {
+                childAlignment = value;
+                NeedsUpdate = true;
+            }
+        }
+
         protected bool autoSize;
         public bool AutoSize
         {
@@ -107,6 +118,8 @@ namespace InfinityUI.Components.Layout
             float verticalOffset;
 
             var csize = child.AnchorSize;
+
+            child.RelativeTo = childAlignment;
 
             if (direction == Orientation.Horizontal)
             {

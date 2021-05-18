@@ -66,6 +66,7 @@ namespace MateriaCore.Components.GL.Menu
             var fitter = AddComponent<UIContentFitter>();
             fitter.Ignore(typeof(UIMenu));
 
+            textContainer.RelativeTo = Anchor.TopLeft;
             textView.Alignment = TextAlignment.Left;
 
             Padding = new Box2(2, 2, 2, 2);
@@ -120,22 +121,28 @@ namespace MateriaCore.Components.GL.Menu
             switch (submenuAnchor)
             {
                 case Anchor.Bottom:
-                    submenu.RelativeTo = Anchor.BottomLeft;
+                    submenu.RelativeTo = Anchor.TopLeft;
                     selectable.Down = submenu.GetComponent<UISelectable>().Down;
-                    submenu.Margin = new Box2(-Padding.Left, 0, 0, -(Padding.Bottom - 1));
+                    submenu.Margin = new Box2(-Padding.Left, -Padding.Top, 0, 0);
                     submenu.Position = new Vector2(0, AnchorSize.Y);
                     break;
                 case Anchor.Top:
-                    submenu.RelativeTo = Anchor.TopLeft;
+                    submenu.RelativeTo = Anchor.BottomLeft;
                     selectable.Up = submenu.GetComponent<UISelectable>().Down;
+                    submenu.Position = new Vector2(0, -AnchorSize.Y);
+                    submenu.Margin = new Box2(-Padding.Left, 0, 0, -Padding.Bottom);
                     break;
                 case Anchor.Left:
-                    submenu.RelativeTo = Anchor.TopLeft;
+                    submenu.RelativeTo = Anchor.TopRight;
                     selectable.Left = submenu.GetComponent<UISelectable>().Down;
+                    submenu.Position = new Vector2(-AnchorSize.X, 0);
+                    submenu.Margin = new Box2(0, -Padding.Top, -Padding.Right, 0);
                     break;
                 case Anchor.Right:
-                    submenu.RelativeTo = Anchor.TopRight;
+                    submenu.RelativeTo = Anchor.TopLeft;
                     selectable.Right = submenu.GetComponent<UISelectable>().Down;
+                    submenu.Position = new Vector2(AnchorSize.X, 0);
+                    submenu.Margin = new Box2(-Padding.Left, -Padding.Top, 0, 0);
                     break;
             }
         }
