@@ -66,10 +66,10 @@ namespace MateriaCore.Components.GL.Menu
             var fitter = AddComponent<UIContentFitter>();
             fitter.Ignore(typeof(UIMenu));
 
-            textContainer.RelativeTo = Anchor.TopLeft;
+            textContainer.RelativeTo = Anchor.Left;
             textView.Alignment = TextAlignment.Left;
 
-            Padding = new Box2(2, 2, 2, 2);
+            Padding = new Box2(8, 2, 8, 2);
 
             submenuArrowArea = new UIObject()
             {

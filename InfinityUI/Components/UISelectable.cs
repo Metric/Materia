@@ -28,6 +28,8 @@ namespace InfinityUI.Components
 
         public UIObject Parent { get; set; }
 
+        public bool IsFocusable { get; set; } = true;
+
         protected UIDrawable targetGraphic;
         public UIDrawable TargetGraphic
         {
@@ -103,7 +105,7 @@ namespace InfinityUI.Components
             }
         }
 
-        protected Vector4 focusedColor = new Vector4(1, 1, 1, 1);
+        protected Vector4 focusedColor = new Vector4(1, 1.25f, 1.5f, 1);
         public Vector4 FocusedColor
         {
             get => focusedColor;
@@ -126,16 +128,6 @@ namespace InfinityUI.Components
         public virtual void Dispose()
         {
          
-        }
-
-        public virtual void OnFocus(FocusEvent fev)
-        {
-            if (fev.IsHandled) return;
-            fev.IsHandled = !BubbleEvents;
-            UI.Focus = this;
-            Focused = true;
-            FocusChanged?.Invoke(this, fev, Focused);
-            UpdateTargetGraphic();
         }
 
         public virtual void OnKeyDown(KeyboardEventArgs e)
@@ -201,12 +193,22 @@ namespace InfinityUI.Components
             KeyUp?.Invoke(this, e);
         }
 
+        public virtual void OnFocus(FocusEvent fev)
+        {
+            if (fev.IsHandled) return;
+            fev.IsHandled = !BubbleEvents;
+            UI.Focus = this;
+            Focused = true;
+            FocusChanged?.Invoke(this, fev, true);
+            UpdateTargetGraphic();
+        }
+
         public virtual void OnLostFocus(FocusEvent fev)
         {
             if (fev.IsHandled) return;
             fev.IsHandled = !BubbleEvents;
             Focused = false;
-            FocusChanged?.Invoke(this, fev, Focused);
+            FocusChanged?.Invoke(this, fev, false);
             UpdateTargetGraphic();
         }
 

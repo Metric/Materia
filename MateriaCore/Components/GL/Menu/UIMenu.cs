@@ -61,6 +61,7 @@ namespace MateriaCore.Components.GL.Menu
             background = AddComponent<UIImage>();
             background.Color = new Vector4(0.1f, 0.1f, 0.1f, 1);
             selectable = AddComponent<UISelectable>();
+            selectable.IsFocusable = false;
             stack = AddComponent<UIStackPanel>();
 
             RaycastTarget = true;

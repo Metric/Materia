@@ -763,6 +763,8 @@ namespace InfinityUI.Core
             Vector2 topLeftOffset = new Vector2(margin.Left + pPadding.Left, margin.Top + pPadding.Top);
             Vector2 bottomRightOffset = new Vector2(-(margin.Right + pPadding.Right), -(margin.Bottom + pPadding.Bottom));
             Vector2 topRightOffset = new Vector2(-(margin.Right + pPadding.Right), margin.Top + pPadding.Top);
+            Vector2 leftOffset = new Vector2(margin.Left + pPadding.Left, margin.Top - pPadding.Top);
+            Vector2 rightOffset = new Vector2(-(margin.Right + pPadding.Right), margin.Top - pPadding.Top);
 
             switch (relativeTo)
             {
@@ -789,13 +791,13 @@ namespace InfinityUI.Core
                     return;
                 case Anchor.CenterHorizFill:
                 case Anchor.Center:
-                    anchorPosition = pSize * 0.5f - size * 0.5f + pos + topLeftOffset;
+                    anchorPosition = pSize * 0.5f - size * 0.5f + pos + leftOffset;
                     return;
                 case Anchor.Right:
-                    anchorPosition = new Vector2(pSize.X - size.X - pos.X, pSize.Y * 0.5f - size.Y * 0.5f + pos.Y) + topRightOffset;
+                    anchorPosition = new Vector2(pSize.X - size.X - pos.X, pSize.Y * 0.5f - size.Y * 0.5f + pos.Y) + rightOffset;
                     return;
                 case Anchor.Left:
-                    anchorPosition = new Vector2(pos.X, pSize.Y * 0.5f - size.Y * 0.5f + pos.Y) + topLeftOffset;
+                    anchorPosition = new Vector2(pos.X, pSize.Y * 0.5f - size.Y * 0.5f + pos.Y) + leftOffset;
                     return;
             }
 

@@ -41,6 +41,7 @@ namespace MateriaCore.Components.GL
 
         public UIWindow(Vector2 size, string titleText = "") : base(size)
         {
+            selectable.IsFocusable = false;
             InitializeComponents();
             title.Text = titleText;
         }

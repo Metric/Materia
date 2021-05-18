@@ -7,6 +7,7 @@ namespace InfinityUI.Interfaces
 {
     public interface IFocusable
     {
+        bool IsFocusable { get; set; }
         UIObject Parent { get; }
         void OnFocus(FocusEvent ev);
         void OnLostFocus(FocusEvent ev);

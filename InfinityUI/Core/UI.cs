@@ -30,6 +30,7 @@ namespace InfinityUI.Core
 
         public static Dictionary<string, UIObject> Elements { get; protected set; } = new Dictionary<string, UIObject>();
 
+        private static IFocusable origin;
         private static IFocusable focus;
         public static IFocusable Focus
         {
@@ -41,13 +42,14 @@ namespace InfinityUI.Core
                     if (focus != null)
                     {
                         var inValue = value;
-                        var cParent = focus.Parent;
+                        var cParent = origin.Parent;
                         if (cParent == null)
                         {
                             focus?.OnLostFocus(new FocusEvent());
-                            focus = value;
+                            origin = focus = value;
+                            return;
                         }
-                        else if (inValue != null)
+                        else if (inValue != null && origin.IsFocusable)
                         {
                             var oParent = inValue.Parent;
                             while (oParent != cParent && oParent != null)
@@ -57,20 +59,28 @@ namespace InfinityUI.Core
 
                             if (oParent != cParent)
                             {
-                                cParent.SendMessageUpwards("OnLostFocus", new FocusEvent());
-                                focus = value;
+                                focus.Parent.SendMessageUpwards("OnLostFocus", new FocusEvent());
+                                origin = focus = value;
+                                return;
                             }
+
+                            if (focus != origin)
+                            {
+                                focus.OnLostFocus(new FocusEvent());
+                            }
+
+                            focus = value;
+                            return;
                         }
                         else
                         {
-                            cParent?.SendMessageUpwards("OnLostFocus", new FocusEvent());
-                            focus = value;
+                            focus.Parent.SendMessageUpwards("OnLostFocus", new FocusEvent());
+                            origin = focus = value;
+                            return;
                         }
                     }
-                    else
-                    {
-                        focus = value;
-                    }
+                    
+                    origin = focus = value;
                 }
             }
         }

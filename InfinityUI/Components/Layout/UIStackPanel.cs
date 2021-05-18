@@ -131,7 +131,14 @@ namespace InfinityUI.Components.Layout
                 float s = csize.X + marginOffset;
                 offset += s;
                 width += s;
-                height = MathF.Max(height, csize.Y);
+                if (autoSize)
+                {
+                    height = MathF.Max(height, csize.Y - child.Padding.Bottom);
+                }
+                else
+                {
+                    height = MathF.Max(height, csize.Y);
+                }
             }
             else
             {
@@ -143,7 +150,14 @@ namespace InfinityUI.Components.Layout
                 float s = csize.Y + marginOffset;
                 offset += s;
                 height += s;
-                width = MathF.Max(width, csize.X);
+                if (autoSize)
+                {
+                    width = MathF.Max(width, csize.X - child.Padding.Right);
+                }
+                else
+                {
+                    width = MathF.Max(width, csize.X);
+                }
             }
 
             return new Vector3(offset, width, height);
@@ -184,10 +198,10 @@ namespace InfinityUI.Components.Layout
                     switch (direction)
                     {
                         case Orientation.Horizontal:
-                            maxSize = MathF.Max(size.Y, maxSize);
+                            maxSize = MathF.Max(size.Y - (child.Padding.Bottom + child.Padding.Top), maxSize);
                             break;
                         case Orientation.Vertical:
-                            maxSize = MathF.Max(size.X, maxSize);
+                            maxSize = MathF.Max(size.X - (child.Padding.Left + child.Padding.Left), maxSize);
                             break;
                     }
                 }
