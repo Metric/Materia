@@ -3,6 +3,7 @@ using InfinityUI.Controls;
 using InfinityUI.Core;
 using InfinityUI.Interfaces;
 using Materia.Rendering.Mathematics;
+using MateriaCore.Components.GL.Menu;
 using MateriaCore.Components.GL.Renderer;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,8 @@ namespace MateriaCore.Components.GL
         protected UIImage internalBackground;
         protected MovablePane previewArea;
         protected UIImage preview;
+
+        protected UIMenu menu;
         #endregion
 
         #region 3D Objects
@@ -35,12 +38,13 @@ namespace MateriaCore.Components.GL
 
         //note we need to come back and use 
         //localization for the title
-        public UI3DPreview() : base(new Vector2(0.25f,0.25f), "3D Preview")
+        public UI3DPreview() : base(new Vector2(956f, 512f), "3D Preview")
         {
             RelativeTo = Anchor.BottomRight;
-            Position = new Vector2(0.25f, 0);
+            Position = new Vector2(956f, 0);
             InitializeComponents();
             InitializeScene();
+            InitializeMenu();
         }
 
         public void Render()
@@ -63,8 +67,8 @@ namespace MateriaCore.Components.GL
 
             //load meshes
             //testing skybox data
-            skyBox = scene.CreateMeshFromEmbeddedFile("Geometry/cube.fbx", typeof(UI3DPreview), Materia.Rendering.Geometry.MeshRenderType.Skybox);
-            cube = scene.CreateMeshFromEmbeddedFile("Geometry/cube.fbx", typeof(UI3DPreview));
+            skyBox = scene.CreateMeshFromEmbeddedFile("Geometry/cube.obj", typeof(UI3DPreview), Materia.Rendering.Geometry.MeshRenderType.Skybox);
+            cube = scene.CreateMeshFromEmbeddedFile("Geometry/cube.obj", typeof(UI3DPreview));
 
             scene.Root.Add(skyBox);
             scene.Root.Add(cube);
@@ -77,8 +81,8 @@ namespace MateriaCore.Components.GL
         {
             internalContainer = new UIObject
             {
-                RelativeTo = Anchor.Fill,
-                RaycastTarget = true
+                RaycastTarget = true,
+                RelativeTo = Anchor.Fill
             };
             internalBackground = internalContainer.AddComponent<UIImage>();
             internalBackground.Color = new Vector4(0.05f, 0.05f, 0.05f, 1); //todo: use theme class
@@ -88,11 +92,9 @@ namespace MateriaCore.Components.GL
             //since it it will be calculated by fill
             previewArea = new MovablePane(new Vector2(1,1))
             {
-                RelativeTo = Anchor.Fill,
-                RelativeMode = SizeMode.Pixel,
-                Sizing = SizeMode.Pixel,
                 MoveAxis = Axis.None,
-                SnapMode = MovablePaneSnapMode.None
+                SnapMode = MovablePaneSnapMode.None,
+                RelativeTo = Anchor.Fill
             };
    
             preview = previewArea.GetComponent<UIImage>();
@@ -104,6 +106,59 @@ namespace MateriaCore.Components.GL
 
             internalContainer.AddChild(previewArea);
             content.AddChild(internalContainer);
+        }
+
+        private void InitializeMenu()
+        {
+            Localization.Local loc = new Localization.Local();
+            UIMenuBuilder builder = new UIMenuBuilder();
+            menu = builder.Add(loc.Get("Scene"))
+                .StartSubMenu()
+                    .Add("Cube")
+                    .Add("Sphere")
+                    .Add("Cube Sphere")
+                    .Add("Rounded Cube")
+                    .Add("Plane")
+                    .Add("Cylinder")
+                    .Separator()
+                    .Add("Custom")
+                    .Separator()
+                    .Add("Reset")
+                .FinishSubMenu()
+                .Add(loc.Get("Camera"))
+                .StartSubMenu()
+                    .Add("Top")
+                    .Add("Bottom")
+                    .Add("Left")
+                    .Add("Right")
+                    .Add("Front")
+                    .Add("Back")
+                    .Add("Angled")
+                    .Separator()
+                    .Add("Orthographic")
+                    .Add("Perspective")
+                    .Separator()
+                    .Add("Settings")
+                .FinishSubMenu()
+                .Add(loc.Get("Light"))
+                .StartSubMenu()
+                    .Add("Default Position")
+                    .Add("Set to Origin")
+                    .Add("Reset")
+                    .Separator()
+                    .Add("Settings")
+                .FinishSubMenu()
+                .Add(loc.Get("Material"))
+                .StartSubMenu()
+                    .Add("Settings")
+                    .Separator()
+                    .Add("Wireframe")
+                    .Add("Solid")
+                    .Separator()
+                    .Add("Reset")
+                .FinishSubMenu()
+                .Finilize();
+            content.AddChild(menu);
         }
 
         private void Selectable_Wheel(UISelectable arg1, MouseWheelArgs e)

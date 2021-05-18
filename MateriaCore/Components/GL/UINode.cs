@@ -66,13 +66,11 @@ namespace MateriaCore.Components.GL
 
         public UINode() : base(new Vector2(DEFAULT_WIDTH, DEFAULT_HEIGHT))
         {
-            RelativeTo = Anchor.TopLeft;
             InitializeComponents();
         }
 
         public UINode(UIGraph g, Node n) : base(new Vector2(DEFAULT_WIDTH, DEFAULT_HEIGHT))
         {
-            RelativeTo = Anchor.TopLeft;
             Position = new Vector2((float)n.ViewOriginX, (float)n.ViewOriginY);
 
             InitializeComponents();
@@ -342,18 +340,6 @@ namespace MateriaCore.Components.GL
             outputs.Clear();
             inputs.Clear();
         }
-
-        protected void UpdateNodePoints()
-        {
-            for (int i = 0; i < outputs.Count; ++i)
-            {
-                outputs[i]?.Update();
-            }
-            for (int i = 0; i < inputs.Count; ++i)
-            {
-                inputs[i]?.Update();
-            }
-        }
         #endregion
 
         private void InitializeComponents()
@@ -364,8 +350,6 @@ namespace MateriaCore.Components.GL
             selectable.BubbleEvents = false;
 
             selectable.NormalColor = new Vector4(0.15f, 0.15f, 0.15f, 1);
-            selectable.HoverColor = new Vector4(1.05f, 1.05f, 1.05f, 1);
-            selectable.PressedColor = new Vector4(0.9f, 0.9f, 0.9f, 1);
            
             selectable.Click += Selectable_Click;
             selectable.PointerUp += Selectable_PointerUp;
@@ -394,24 +378,25 @@ namespace MateriaCore.Components.GL
 
             descArea = new UIObject
             {
-                RelativeTo = Anchor.Center,
-                Visible = false
+                Margin = new Box2(20, 20, 20, 4),
+                Visible = false,
+                RelativeTo = Anchor.Fill
             };
             desc = descArea.AddComponent<UIText>();
             desc.Alignment = InfinityUI.Components.TextAlignment.Center;
 
             previewArea = new UIObject
             {
-                Size = new Vector2(Size.X, Size.X),
-                RelativeTo = Anchor.Center,
-                RaycastTarget = false
+                Margin = new Box2(20,20,20,4),
+                RelativeTo = Anchor.Fill,
             };
             preview = previewArea.AddComponent<UIImage>();
+            previewArea.RaycastTarget = false;
 
             outputsArea = new UIObject
             {
                 RaycastTarget = true,
-                RelativeTo = Anchor.CenterRight
+                RelativeTo = Anchor.Right,
             };
             var stack = outputsArea.AddComponent<UIStackPanel>();
             stack.Direction = Orientation.Vertical;
@@ -419,7 +404,7 @@ namespace MateriaCore.Components.GL
             inputsArea = new UIObject
             {
                 RaycastTarget = true,
-                RelativeTo = Anchor.CenterLeft
+                RelativeTo = Anchor.Left,
             };
             stack = inputsArea.AddComponent<UIStackPanel>();
             stack.Direction = Orientation.Vertical;
@@ -429,7 +414,6 @@ namespace MateriaCore.Components.GL
                 Size = new Vector2(128,32),
                 Position = new Vector2(0,-32),
                 RaycastTarget = false,
-                RelativeTo = Anchor.TopLeft
             };
             var iconStack = iconsArea.AddComponent<UIStackPanel>();
             iconStack.Direction = Orientation.Horizontal;
@@ -490,9 +474,6 @@ namespace MateriaCore.Components.GL
             Node.ViewOriginX = Position.X;
             Node.ViewOriginY = Position.Y;
 
-            //update node point paths
-            UpdateNodePoints();
-
             //send event to other node that are multiselected for delta move
             GlobalEvents.Emit(GlobalEvent.MoveSelected, this, delta);
         }
@@ -500,8 +481,6 @@ namespace MateriaCore.Components.GL
         {
             Node.ViewOriginX = Position.X;
             Node.ViewOriginY = Position.Y;
-
-            UpdateNodePoints();
         }
 
         protected void TryAndSelect()

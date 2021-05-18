@@ -49,6 +49,8 @@ namespace MateriaCore
         private Keys currentKey;
         private string currentTextInput;
 
+        private bool pbrInitialized = false;
+
         public MainGLWindow(NativeWindowSettings settings) : base(settings)
         {
             InitializeEvents();
@@ -242,7 +244,6 @@ namespace MateriaCore
 
         private void UpdateSize()
         {
-            //ensure ui canvases are resized appropriately
             graphCanvas?.Resize(Size.X, Size.Y);
             rootCanvas?.Resize(Size.X, Size.Y);
         }
@@ -252,10 +253,8 @@ namespace MateriaCore
         {
             if (IsExiting) return;
             if (UI.Initied) return;
+            long ms = Environment.TickCount;
             UI.Init();
-
-            //load brdf
-            BRDF.Create();
 
             rootArea = new UIObject();
             graphArea = new UIObject();
@@ -263,28 +262,35 @@ namespace MateriaCore
             graphCanvas = graphArea.AddComponent<UICanvas>();
             rootCanvas = rootArea.AddComponent<UICanvas>();
 
-            activeDocument = new UIGraph(graphArea.Size);
+            activeDocument = new UIGraph();
 
-            activeGraph = new Graph("Untitled", 512, 512); //testing
-            activeGraph.DefaultTextureType = GraphPixelType.RGBA; //testing
+            //activeGraph = new Graph("Untitled", 512, 512); //testing
+            //activeGraph.DefaultTextureType = GraphPixelType.RGBA; //testing
 
             graphArea.AddChild(activeDocument);
 
-            //test 2d window
             preview2D = new UI2DPreview();
             rootArea.AddChild(preview2D);
 
-            //test 3d window
             preview3D = new UI3DPreview();
             rootArea.AddChild(preview3D);
 
-            GraphTemplate.PBRFull(activeGraph);
-            activeDocument.Load(activeGraph.GetJson(), "");
-            activeGraph = activeDocument.Current;
+            //GraphTemplate.PBRFull(activeGraph);
+            //activeDocument.Load(activeGraph.GetJson(), "");
+            //activeGraph = activeDocument.Current;
+            Debug.WriteLine("UI Initialize: " + (Environment.TickCount - ms) + "ms");
+        }
 
+        private void InitializePBR()
+        {
+            if (IsExiting) return;
+            if (pbrInitialized) return;
+            
             MLog.Log.Info("GL Version: " + OpenTK.Graphics.OpenGL.GL.GetString(OpenTK.Graphics.OpenGL.StringName.Version));
 
-            TestHdrLoad();
+            pbrInitialized = true;
+            BRDF.Create();
+            InitializeHDR();
         }
 
         private void InitializeGL()
@@ -323,6 +329,7 @@ namespace MateriaCore
 
             InitializeGL();
             InitializeUI();
+            InitializePBR();
 
             UpdateSize();
 
@@ -335,7 +342,7 @@ namespace MateriaCore
 
             //next render 3d preview
             preview3D?.Render();
-
+            
             InitializeViewport();
             //draw UI last
             UI.Draw();
@@ -355,7 +362,7 @@ namespace MateriaCore
         }
 
         //hdr test load
-        private void TestHdrLoad()
+        private void InitializeHDR()
         {
             string dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hdr");
             IHdrFile f = null;
@@ -445,6 +452,7 @@ namespace MateriaCore
 
         private void InternalDispose()
         {
+            hdrToLoad?.Dispose();
             //testing here only
             hdrMap.Dispose();
 

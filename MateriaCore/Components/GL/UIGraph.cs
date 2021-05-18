@@ -184,10 +184,8 @@ namespace MateriaCore.Components.GL
 
         protected Dictionary<string, IGraphNode> nodes = new Dictionary<string, IGraphNode>();
 
-        public UIGraph(Vector2 size) : base(size) 
+        public UIGraph() : base(Vector2.Zero) 
         {
-            RelativeTo = Anchor.Fill;
-
             InitializeComponents();
         }
 
@@ -205,6 +203,8 @@ namespace MateriaCore.Components.GL
 
         protected void InitializeComponents()
         {
+            RelativeTo = Anchor.Fill;
+
             //set it so children can always be raycast to
             //even outside bounds
             RaycastAlways = true;
@@ -217,18 +217,18 @@ namespace MateriaCore.Components.GL
             SnapMode = MovablePaneSnapMode.None;
 
             Background.Color = new Vector4(0.1f, 0.1f, 0.1f, 1);
-            gridArea = new UIObject
+            gridArea = new UIObject()
             {
                 RelativeTo = Anchor.Fill
             };
 
             //disable raycastTarget for grid area
-            gridArea.RaycastTarget = false;
             grid = gridArea.AddComponent<UIImage>();
             grid.Texture = GridGenerator.CreateBasic(64,64);
             grid.Color = Vector4.One;
             grid.Tiling = new Vector2(16, 16);
             grid.BeforeDraw += Grid_BeforeDraw;
+            gridArea.RaycastTarget = false;
 
             selectable.Wheel += Selectable_Wheel;
             selectable.PointerUp += Selectable_PointerUp;
@@ -252,7 +252,7 @@ namespace MateriaCore.Components.GL
             grid.Tiling = new Vector2(newSize, newSize / aspect) * zoom;
 
             //calculate grid offset
-            Vector2 gpos = gridArea.Position;
+            Vector2 gpos = gridArea.WorldPosition;
             Vector2 fpos = new Vector2(gpos.X / size.X, gpos.Y / size.Y);
             grid.Offset = fpos;
         }
@@ -626,10 +626,10 @@ namespace MateriaCore.Components.GL
             UIObject unode = n as UIObject;
             if (Canvas != null)
             {
-                Vector2 pos = unode.WorldPosition;
+                Vector2 pos = unode.Position;
                 Canvas.Cam.LocalPosition = new Vector3(pos.X, pos.Y, 0);
             }
-            UI.Focus = unode.GetComponent<UISelectable>();
+            unode.GetComponent<UISelectable>()?.OnFocus(new FocusEvent());
         }
 
         public void TryAndCopyResources(string cwd)

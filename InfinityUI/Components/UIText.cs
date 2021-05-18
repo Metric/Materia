@@ -1,4 +1,5 @@
 ﻿using InfinityUI.Core;
+using InfinityUI.Interfaces;
 using Materia.Rendering.Fonts;
 using Materia.Rendering.Interfaces;
 using Materia.Rendering.Mathematics;
@@ -21,7 +22,7 @@ namespace InfinityUI.Components
         Right = 2
     }
 
-    public class UIText : UIDrawable
+    public class UIText : UIDrawable, ILayout
     {
         public const string DefaultFont = "Segoe UI";
 
@@ -41,7 +42,7 @@ namespace InfinityUI.Components
                 if (text != value)
                 {
                     text = value;
-                    Invalidate();
+                    NeedsUpdate = true;
                 }
             }
         }
@@ -58,7 +59,7 @@ namespace InfinityUI.Components
                 if (fontSize != value)
                 {
                     fontSize = value;
-                    Invalidate();
+                    NeedsUpdate = true;
                 }
             }
         }
@@ -75,7 +76,7 @@ namespace InfinityUI.Components
                 if (fontFamily != value)
                 {
                     fontFamily = value;
-                    Invalidate();
+                    NeedsUpdate = true;
                 }
             }
         }
@@ -92,7 +93,7 @@ namespace InfinityUI.Components
                 if (spacing != value)
                 {
                     spacing = value;
-                    Invalidate();
+                    NeedsUpdate = true;
                 }
             }
         }
@@ -110,7 +111,7 @@ namespace InfinityUI.Components
                 if (style != value)
                 {
                     style = value;
-                    Invalidate();
+                    NeedsUpdate = true;
                 }
             }
         }
@@ -127,18 +128,20 @@ namespace InfinityUI.Components
                 if (alignment != value)
                 {
                     alignment = value;
-                    Invalidate();
+                    NeedsUpdate = true;
                 }
             }
         }
 
         public override void Awake()
         {
-            base.Awake();
-            if (Parent == null) return;
+            if (Parent != null)
+            {
+                Parent.RaycastTarget = false;
+            }
+
             //by default text view should not be raycasted to
             Shader = GLShaderCache.GetShader("pointuiuv.glsl", "pointuiuv.glsl", "pointui.glsl");
-            Parent.RaycastTarget = false;
         }
 
         public Vector2 Measure(string s)
@@ -281,16 +284,16 @@ namespace InfinityUI.Components
             if (!Parent.Visible) return;
             if (string.IsNullOrEmpty(text)) return;
 
+            OnBeforeDraw(this);
+
             Vector2 size = Parent.WorldSize;
 
             if (size.X <= float.Epsilon || size.Y <= float.Epsilon) return;
 
-            OnBeforeDraw(this);
-
             Matrix4 m = Parent.WorldMatrix;
+            Vector2 pos = Parent.WorldPosition;
             Vector4 color = Color;
             Vector2 tiling = Tiling;
-            Vector2 pos = Parent.WorldPosition;
 
             Shader.Use();
             Shader.SetUniformMatrix4("projectionMatrix", ref projection);
@@ -332,8 +335,10 @@ namespace InfinityUI.Components
 
         public override void Invalidate()
         {
+            if (!NeedsUpdate) return;
             TryAndGenerateMap();
             ArrangeVertices();
+            NeedsUpdate = false;
         }
 
         public override void Dispose()

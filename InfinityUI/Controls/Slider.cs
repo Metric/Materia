@@ -12,6 +12,8 @@ namespace InfinityUI.Controls
     {
         public event Action<float> ValueChanged;
 
+        public bool NeedsUpdate { get; set; }
+
         protected bool mouseDown;
         protected bool isFocused;
 
@@ -35,7 +37,7 @@ namespace InfinityUI.Controls
             {
                 max = value;
                 Clamp();
-                Invalidate();
+                NeedsUpdate = true;
             }
         }
 
@@ -50,7 +52,7 @@ namespace InfinityUI.Controls
             {
                 min = value;
                 Clamp();
-                Invalidate();
+                NeedsUpdate = true;
             }
         }
 
@@ -70,7 +72,7 @@ namespace InfinityUI.Controls
                 if (prev != val)
                 {
                     ValueChanged?.Invoke(val);
-                    Invalidate();
+                    NeedsUpdate = true;
                 }
             }
         }
@@ -85,7 +87,7 @@ namespace InfinityUI.Controls
             set
             {
                 direction = value;
-                Invalidate();
+                NeedsUpdate = true;
             }
         }
 
@@ -96,6 +98,8 @@ namespace InfinityUI.Controls
 
         public Slider(Vector2 size) : base()
         {
+            RaycastTarget = true;
+
             Size = size;
 
             background = AddComponent<UIImage>();
@@ -107,14 +111,14 @@ namespace InfinityUI.Controls
             {
                 Size = size,
                 Position = Vector2.Zero,
-                RelativeTo = Anchor.BottomLeft
             };
 
             var fillImage = FillBar.AddComponent<UIImage>();
             fillImage.Color = new Vector4(0, 0.5f, 1, 1);
             AddChild(FillBar);
-            Invalidate();
             InitEvents();
+
+            NeedsUpdate = true;
         }
 
         protected virtual void InitEvents()
@@ -128,32 +132,37 @@ namespace InfinityUI.Controls
             selectable.PointerUp += OnMouseUp;
         }
 
-        private void Selectable_FocusChanged(UISelectable arg1, bool arg2)
+        private void Selectable_FocusChanged(UISelectable arg1, FocusEvent fv, bool arg2)
         {
             isFocused = arg2;
         }
 
         public virtual void Invalidate()
         {
+            if (!NeedsUpdate) return;
+
             float fx = (val - min) / (max - min);
 
+            Vector2 wSize = WorldSize;
             if (Direction == Orientation.Horizontal) 
             {
-                float rx = Size.X * fx;
-                FillBar.Size = new Vector2(rx, Size.Y);
+                float rx = wSize.X * fx;
+                FillBar.Size = new Vector2(rx, wSize.Y);
             }
             else
             {
-                float ry = Size.Y * fx;
-                FillBar.Size = new Vector2(Size.X, ry);
+                float ry = wSize.Y * fx;
+                FillBar.Size = new Vector2(wSize.X, ry);
             }
+
+            NeedsUpdate = false;
         }
 
         public void Assign(float v)
         {
             val = v;
             Clamp();
-            Invalidate();
+            NeedsUpdate = true;
         }
 
         protected void Clamp()
@@ -182,10 +191,11 @@ namespace InfinityUI.Controls
         protected float GetValFromPos(Vector2 p)
         {
             float f;
+            var rect = Rect;
 
             if (Direction == Orientation.Horizontal)
             {
-                f = (p.X - Rect.Left) / (Rect.Right - Rect.Left) * (max - min) + min;
+                f = (p.X - rect.Left) / (rect.Right - rect.Left) * (max - min) + min;
             }
             else
             {
@@ -196,10 +206,10 @@ namespace InfinityUI.Controls
                     case Anchor.TopRight:
                     case Anchor.TopHorizFill:
                     case Anchor.CenterHorizFill:
-                        f = (1.0f - (p.Y - Rect.Top) / (Rect.Bottom - Rect.Top)) * (max - min) + min;
+                        f = (1.0f - (p.Y - rect.Top) / (rect.Bottom - rect.Top)) * (max - min) + min;
                         break;
                     default:
-                        f = (p.Y - Rect.Top) / (Rect.Bottom - Rect.Top) * (max - min) + min;
+                        f = (p.Y - rect.Top) / (rect.Bottom - rect.Top) * (max - min) + min;
                         break;
 
                 }

@@ -105,7 +105,7 @@ namespace MateriaCore.Components.GL
         public UINodePoint() : base()
         {
             Size = new Vector2(DEFAULT_SIZE, DEFAULT_SIZE);
-            Padding = new Box2(DEFAULT_PADDING, 
+            Margin = new Box2(DEFAULT_PADDING, 
                                 DEFAULT_PADDING, 
                                 DEFAULT_PADDING, 
                                 DEFAULT_PADDING);
@@ -118,7 +118,7 @@ namespace MateriaCore.Components.GL
             NodePoint = point;
 
             Size = new Vector2(DEFAULT_SIZE, DEFAULT_SIZE);
-            Padding = new Box2(DEFAULT_PADDING, 
+            Margin = new Box2(DEFAULT_PADDING, 
                                 DEFAULT_PADDING, 
                                 DEFAULT_PADDING, 
                                 DEFAULT_PADDING);
@@ -161,7 +161,6 @@ namespace MateriaCore.Components.GL
             selectable.BubbleEvents = false;
 
             nodeNameArea = new UIObject();
-            nodeNameArea.RelativeTo = NodePoint is NodeInput ? Anchor.CenterLeft : Anchor.CenterRight; //this can change based on if input or output
             nodeNameArea.Position = new Vector2(18, 0);
             nodeName = nodeNameArea.AddComponent<UIText>();
             nodeName.Alignment = NodePoint is NodeInput ? TextAlignment.Right : TextAlignment.Left;
@@ -288,24 +287,6 @@ namespace MateriaCore.Components.GL
                 {
                     (NodePoint as NodeOutput).Add(p.NodePoint as NodeInput);
                 }
-            }
-        }
-
-        public override void Update()
-        {
-            base.Update();
-
-            if (NodePoint is NodeOutput)
-            {
-                var activePaths = paths.Values.ToList();
-                for (int i = 0; i < activePaths.Count; ++i)
-                {
-                    activePaths[i]?.Update();
-                }
-            }
-            else
-            {
-                ParentNode?.Update();
             }
         }
 

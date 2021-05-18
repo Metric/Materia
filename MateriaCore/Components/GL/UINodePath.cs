@@ -25,9 +25,11 @@ namespace MateriaCore.Components.GL
             set
             {
                 selected = value;
-                Update();
             }
         }
+
+        protected Vector2 previousPoint1;
+        protected Vector2 previousPoint2;
 
         protected Line leftSide;
         protected Line leftAngle;
@@ -48,8 +50,6 @@ namespace MateriaCore.Components.GL
         /// <param name="execute">if set to <c>true</c> [execute].</param>
         public UINodePath(UINodePoint p1, UINodePoint p2, bool execute = false) : base()
         {
-            RelativeTo = Anchor.TopLeft;
-
             point1 = p1;
             point2 = p2;
 
@@ -62,7 +62,6 @@ namespace MateriaCore.Components.GL
             isExecute = execute;
 
             InitializeComponents();
-            Update();
         }
 
         protected void InitializeComponents()
@@ -70,7 +69,6 @@ namespace MateriaCore.Components.GL
             if (isExecute)
             {
                 textArea = new UIObject();
-                textArea.RelativeTo = Anchor.TopLeft;
                 text = textArea.AddComponent<UIText>();
                 text.Color = new Vector4(0.75f, 0.75f, 0.75f, 1);
                 text.FontSize = 12;
@@ -100,20 +98,26 @@ namespace MateriaCore.Components.GL
             }
         }
 
-        public override void Update()
+        private void Invalidate()
         {
-            base.Update();
-
             if (point1 == null || point2 == null) return;
 
-            Vector2 r1 = point1.WorldPosition;
-            Vector2 r2 = point2.WorldPosition;
+            Vector2 r1 = point1.Position;
+            Vector2 r2 = point2.Position;
+
+            if (r1 == previousPoint1 && r2 == previousPoint2)
+            {
+                return;
+            }
+
+            previousPoint1 = r1;
+            previousPoint2 = r1;
 
             float midy = (r2.Y + r1.Y) * 0.5f;
             float midx = (r2.X + r1.X) * 0.5f;
 
             //subtract / add 10 for spacing
-            float dist = Vector2.Distance(r1 + new Vector2(10,0), r2 - new Vector2(10,0));
+            float dist = Vector2.Distance(r1 + new Vector2(10, 0), r2 - new Vector2(10, 0));
 
             leftSide.Start = new Vector3(r1.X, r1.Y, -2);
             leftSide.End = leftSide.Start + new Vector3(10, 0, 0);
@@ -133,9 +137,14 @@ namespace MateriaCore.Components.GL
                 text.Text = (point1.GetOutIndex(point2) + 1).ToString();
             }
 
-            UpdateColors();
+            path.NeedsUpdate = true;
+        }
 
-            path?.Invalidate();
+        public override void Update()
+        {
+            base.Update();
+            Invalidate();
+            UpdateColors();
         }
 
         public override void Dispose(bool disposing = true)

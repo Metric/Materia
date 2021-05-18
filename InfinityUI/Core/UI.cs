@@ -17,7 +17,11 @@ using System.Linq;
 namespace InfinityUI.Core
 {
     public class UI
-    {
+    { 
+        public static float DeltaTime { get; protected set; }
+        private static long oldTime = 0;
+        private static long newTime = 0;
+
         protected static Dictionary<string, GLTexture2D> ImageCache { get; set; } = new Dictionary<string, GLTexture2D>();
         public static GLTexture2D DefaultWhite { get; protected set; }
 
@@ -34,13 +38,44 @@ namespace InfinityUI.Core
             {
                 if (focus != value)
                 {
-                    focus?.OnLostFocus(new FocusEvent());
+                    if (focus != null)
+                    {
+                        var inValue = value;
+                        var cParent = focus.Parent;
+                        if (cParent == null)
+                        {
+                            focus?.OnLostFocus(new FocusEvent());
+                            focus = value;
+                        }
+                        else if (inValue != null)
+                        {
+                            var oParent = inValue.Parent;
+                            while (oParent != cParent && oParent != null)
+                            {
+                                oParent = oParent.Parent;
+                            }
+
+                            if (oParent != cParent)
+                            {
+                                cParent.SendMessageUpwards("OnLostFocus", new FocusEvent());
+                                focus = value;
+                            }
+                        }
+                        else
+                        {
+                            cParent?.SendMessageUpwards("OnLostFocus", new FocusEvent());
+                            focus = value;
+                        }
+                    }
+                    else
+                    {
+                        focus = value;
+                    }
                 }
-                focus = value;
             }
         }
 
-        private static List<UIObject> canvases = new List<UIObject>();
+        private static List<UICanvas> canvases = new List<UICanvas>();
 
         private static UIObject currentSelection = null, activeSelection = null;
         private static Vector2 mousePosition, prevMousePosition;
@@ -205,6 +240,8 @@ namespace InfinityUI.Core
 
             if (currentSelection != last)
             {
+
+                //then send mouse leave to the old one
                 if (last != null)
                 {
                     MouseEventArgs e = new MouseEventArgs()
@@ -217,6 +254,9 @@ namespace InfinityUI.Core
                     last.SendMessage("OnMouseLeave", false, e);
                 }
 
+                //order matters for stuff
+                //so we want to send mouse enter first
+                //to the new one
                 if (currentSelection != null)
                 {
                     MouseEventArgs e = new MouseEventArgs()
@@ -238,7 +278,7 @@ namespace InfinityUI.Core
                 if (currentSelection != null)
                 {
                     FocusEvent fev = new FocusEvent();
-                    currentSelection.SendMessageUpwards("OnFocus", fev);
+                    currentSelection.SendMessage("OnFocus", false, fev);
 
                     MouseEventArgs e = new MouseEventArgs()
                     {
@@ -284,7 +324,7 @@ namespace InfinityUI.Core
                         Position = MousePosition
                     };
 
-                    currentSelection.SendMessageUpwards("OnMouseClick", ex);
+                    currentSelection.SendMessage("OnMouseClick", false, ex);
   
                     MouseEventArgs e = new MouseEventArgs()
                     {
@@ -456,14 +496,14 @@ namespace InfinityUI.Core
 
         public static void RegisterCanvas(UICanvas canvas)
         {
-            if (canvas == null || canvas.Parent == null) return;
-            canvases.Add(canvas.Parent);
+            if (canvas == null) return;
+            canvases.Add(canvas);
         }
 
         public static void UnregisterCanvas(UICanvas canvas)
         {
-            if (canvas == null || canvas.Parent == null) return;
-            canvases.Remove(canvas.Parent);
+            if (canvas == null) return;
+            canvases.Remove(canvas);
         }
 
         public static UIObject Get(string id)
@@ -475,17 +515,24 @@ namespace InfinityUI.Core
 
         public static void Draw()
         {
+            oldTime = newTime;
+            newTime = DateTime.Now.Ticks;
+            TimeSpan span = new TimeSpan(newTime - oldTime);
+            DeltaTime = (float)span.TotalMilliseconds / 16.0f; //60fps expected
+
             IGL.Primary.Disable((int)EnableCap.CullFace);
             IGL.Primary.Enable((int)EnableCap.StencilTest);
             IGL.Primary.Clear((int)ClearBufferMask.StencilBufferBit);
             IGL.Primary.StencilMask(0xFF);
 
-            UIRenderer.Bind();
-
             for (int i = 0; i < canvases.Count; ++i)
             {
                 if (!canvases[i].Visible) continue;
-                var cv = canvases[i]?.GetComponent<UICanvas>();
+                var cv = canvases[i];
+
+                cv?.Prepare();
+
+                UIRenderer.Bind();
                 cv?.Render();
             }
 
@@ -498,12 +545,10 @@ namespace InfinityUI.Core
             Selection = null;
             for (int i = canvases.Count - 1; i >= 0; --i)
             {
-                UIObject obj = canvases[i];
-                if (!obj.Visible) continue;
-
-                UICanvas canvas = obj.GetComponent<UICanvas>();
-                Vector2 wp = canvas.ToCanvasSpace(p);
-                Selection = obj.Pick(ref wp);
+                UICanvas cv = canvases[i];
+                if (!cv.Visible) continue;
+                Vector2 wp = cv.ToCanvasSpace(p);
+                Selection = cv.Parent?.Pick(ref wp);
 
                 if (Selection != null)
                 {
@@ -612,13 +657,6 @@ namespace InfinityUI.Core
                            );
 
             ele.Position *= gridSize;
-
-            if (ele.RelativeMode == SizeMode.Percent && ele.Parent != null)
-            {
-                Vector2 pSize = ele.Parent.WorldSize;
-                Vector2 p = ele.Position;
-                ele.Position = new Vector2(p.X / pSize.X, p.Y / pSize.y);
-            }
         }
 
         public static void SnapToElement(UIObject a, UIObject b, 
@@ -632,55 +670,58 @@ namespace InfinityUI.Core
 
             if (xSign > 0)
             {
-                if (MathF.Abs(aRect.Left - bRect.Right) <= tolerance)
+                float side1 = MathF.Abs(aRect.Left - bRect.Right);
+                float side2 = MathF.Abs(aRect.Right - bRect.Left);
+
+                if (side1 <= tolerance && side1 > 0)
                 {
                     a.Position = new Vector2(b.Position.X + bSize.X, a.Position.Y);
                 }
-                else if (MathF.Abs(aRect.Right - bRect.Left) <= tolerance)
+                else if (side2 <= tolerance && side2 > 0)
                 {
                     a.Position = new Vector2(b.Position.X - aSize.X, a.Position.Y);
                 }
             }
             else
             {
-                if (MathF.Abs(aRect.Left - bRect.Right) <= tolerance)
+                float side1 = MathF.Abs(aRect.Left - bRect.Right);
+                float side2 = MathF.Abs(aRect.Right - bRect.Left);
+
+                if (side1 <= tolerance && side1 > 0)
                 {
-                    a.Position = new Vector2(b.Position.X, a.Position.Y);
+                    a.Position = new Vector2(b.Position.X - bSize.X, a.Position.Y);
                 }
-                else if (MathF.Abs(aRect.Right - bRect.Left) <= tolerance)
+                else if (side2 <= tolerance && side2 > 0)
                 {
-                    a.Position = new Vector2(b.Position.X + bSize.X + aSize.X, a.Position.Y);
+                    a.Position = new Vector2(b.Position.X + bSize.X, a.Position.Y);
                 }
             }
 
             if (ySign > 0)
             {
-                if (MathF.Abs(aRect.Top - bRect.Bottom) <= tolerance)
+                float side1 = MathF.Abs(aRect.Top - bRect.Bottom);
+                float side2 = MathF.Abs(aRect.Bottom - bRect.Top);
+                if (side1 <= tolerance && side1 > 0)
                 {
                     a.Position = new Vector2(a.Position.X, b.Position.Y + bSize.Y);
                 }
-                else if (MathF.Abs(aRect.Bottom - bRect.Top) <= tolerance)
+                else if (side2 <= tolerance && side2 > 0)
                 {
                     a.Position = new Vector2(a.Position.X, b.Position.Y - aSize.Y);
                 }
             }
             else
             {
-                if (MathF.Abs(aRect.Top - bRect.Bottom) <= tolerance)
+                float side1 = MathF.Abs(aRect.Top - bRect.Bottom);
+                float side2 = MathF.Abs(aRect.Bottom - bRect.Top);
+                if (side1 <= tolerance && side1 > 0)
                 {
-                    a.Position = new Vector2(a.Position.X, b.Position.Y);
+                    a.Position = new Vector2(a.Position.X, b.Position.Y - bSize.Y);
                 }
-                else if (MathF.Abs(aRect.Bottom - bRect.Top) <= tolerance)
+                else if (side2 <= tolerance && side2 > 0)
                 {
-                    a.Position = new Vector2(a.Position.X, b.Position.Y + bSize.Y + aSize.Y);
+                    a.Position = new Vector2(a.Position.X, b.Position.Y + bSize.Y);
                 }
-            }
-
-            if (a.RelativeMode == SizeMode.Percent && a.Parent != null)
-            {
-                Vector2 pSize = a.Parent.WorldSize;
-                Vector2 p = a.Position;
-                a.Position = new Vector2(p.X / pSize.X, p.Y / pSize.y);
             }
         }
     }

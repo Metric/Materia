@@ -9,13 +9,15 @@ namespace InfinityUI.Components.Layout
 {
     public class UIContentFitter : IComponent, ILayout
     {
+        public bool NeedsUpdate { get; set; }
         public UIObject Parent { get; set; }
 
         public Axis Axis { get; set; } = Axis.Both;
 
+        protected HashSet<Type> ignoreTypes = new HashSet<Type>();
+
         public virtual void Awake()
         {
-            Invalidate();
             AddEvents();
         }
 
@@ -33,14 +35,18 @@ namespace InfinityUI.Components.Layout
 
             Parent.ChildAdded += Parent_ChildAdded;
             Parent.ChildRemoved += Parent_ChildRemoved;
+            NeedsUpdate = true;
+        }
+
+        public void Ignore(Type t)
+        {
+            ignoreTypes.Add(t);
         }
 
         private void Parent_ChildRemoved(UIObject child)
         {
             child.Resize -= Child_Resize;
-
-            //have to invalidate to get true area
-            Invalidate();
+            NeedsUpdate = true;
         }
 
         private void Parent_ChildAdded(UIObject child)
@@ -53,10 +59,12 @@ namespace InfinityUI.Components.Layout
         {
             if (Parent == null) return;
 
+            if (ignoreTypes.Contains(obj.GetType())) return;
+
             //do not have to do a full invalidate
             //we can just adjust
-            Box2 area = Parent.LocalRect;
-            area.Encapsulate(obj.LocalRect);
+            Box2 area = Parent.AnchoredRect;
+            area.Encapsulate(obj.AnchoredRect);
             ResizeTo(ref area);
         }
 
@@ -67,16 +75,13 @@ namespace InfinityUI.Components.Layout
             switch (Axis)
             {
                 case Axis.Both:
-                    Parent.Position = new Vector2(area.Left, area.Top);
-                    Parent.Size = new Vector2(MathF.Abs(area.Right = area.Left), MathF.Abs(area.Bottom - area.Top));
+                    Parent.Size = new Vector2(area.Width, area.Height);
                     break;
                 case Axis.Horizontal:
-                    Parent.Position = new Vector2(area.Left, Parent.Position.Y);
-                    Parent.Size = new Vector2(MathF.Abs(area.Right - area.Left), Parent.Size.Y);
+                    Parent.Size = new Vector2(area.Width, Parent.Size.Y);
                     break;
                 case Axis.Vertical:
-                    Parent.Position = new Vector2(Parent.Position.X, area.Top);
-                    Parent.Size = new Vector2(Parent.Size.X, MathF.Abs(area.Bottom - area.Top));
+                    Parent.Size = new Vector2(Parent.Size.X, area.Height);
                     break;
             }
         }
@@ -90,7 +95,8 @@ namespace InfinityUI.Components.Layout
 
         public virtual void Invalidate()
         {
-            if (Parent == null) return;
+            if (Parent == null || !NeedsUpdate) return;
+            NeedsUpdate = false;
             var children = Parent.Children;
 
             Box2 area = new Box2(0,0,0,0);
@@ -98,7 +104,8 @@ namespace InfinityUI.Components.Layout
             for (int i = 0; i < children.Count; ++i)
             {
                 var child = children[i];
-                area.Encapsulate(child.LocalRect);
+                if (ignoreTypes.Contains(child.GetType())) continue;
+                area.Encapsulate(child.AnchoredRect);
             }
 
             ResizeTo(ref area);

@@ -31,8 +31,6 @@ namespace MateriaCore.Components
 
         Point mousePosition;
         GradientHandle target;
-        int clickCount = 0;
-        ulong clickTimeStamp = 0;
 
         public GradientEditor()
         {

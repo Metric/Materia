@@ -11,7 +11,7 @@ namespace MateriaCore.Components.GL.Renderer
 {
     public class MeshSceneObject : SceneObject
     {
-        public Func<PBRMaterial> GetActiveMaterial { get; set; }
+        public Func<MeshRenderType, PBRMaterial> GetActiveMaterial { get; set; }
         public Func<GLTextureCube> GetActivePrefilterMap { get; set; }
         public Func<GLTextureCube> GetActiveIrradianceMap { get; set; }
         public Func<GLTextureCube> GetActiveEnvironmentMap { get; set; }
@@ -25,8 +25,9 @@ namespace MateriaCore.Components.GL.Renderer
 
         public Func<Light> GetActiveLight { get; set; }
 
+        public MeshRenderType RenderMode { get; set; }
+
         public MeshRenderer Renderer { get; set; }
-        public Mesh RawMesh { get; set; }
 
         public override void Dispose()
         {
@@ -39,7 +40,8 @@ namespace MateriaCore.Components.GL.Renderer
             if (!Visible) return;
             if (Renderer != null)
             {
-                Renderer.Mat = GetActiveMaterial?.Invoke();
+                Renderer.RenderMode = RenderMode;
+                Renderer.Mat = GetActiveMaterial?.Invoke(RenderMode);
                 Renderer.IrradianceMap = GetActiveIrradianceMap?.Invoke();
                 Renderer.PrefilterMap = GetActivePrefilterMap?.Invoke();
                 Renderer.EnvironmentMap = GetActiveEnvironmentMap?.Invoke();

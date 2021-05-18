@@ -58,16 +58,18 @@ namespace InfinityUI.Components.Layout
             if (!isMouseDown) return;
             e.IsHandled = true;
 
+            Vector2 delta = e.Delta;
+
             switch (DragAxis) 
             {
                 case Axis.Both:
-                    Parent.Position += e.Delta;
+                    Parent.Position += delta / Parent.Scale;
                     break;
                 case Axis.Horizontal:
-                    Parent.Position += new Vector2(e.Delta.X, 0);
+                    Parent.Position += new Vector2(delta.X, 0) / Parent.Scale;
                     break;
                 case Axis.Vertical:
-                    Parent.Position += new Vector2(0, e.Delta.Y);
+                    Parent.Position += new Vector2(0, delta.Y) / Parent.Scale;
                     break;
             }
         }

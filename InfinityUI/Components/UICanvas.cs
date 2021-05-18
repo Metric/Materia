@@ -116,6 +116,11 @@ namespace InfinityUI.Components
             InvertedProjection = Projection.Inverted();
         }
 
+        public void Prepare()
+        {
+            Parent?.Update();
+        }
+
         public void Render()
         {
             if (Parent == null) return;
@@ -145,16 +150,15 @@ namespace InfinityUI.Components
 
         public virtual void Awake()
         {
+            if (Parent == null) return;
+
             //register canvas for picking
             UI.RegisterCanvas(this);
 
-            if (Parent != null)
-            {
-                //the canvas should always try
-                //and raycast down to children
-                Parent.RaycastAlways = true;
-                Parent.Canvas = this;
-            }
+            //the canvas should always try
+            //and raycast down to children
+            Parent.RaycastAlways = true;
+            Parent.Canvas = this;
         }
 
         private void CalculateScale()

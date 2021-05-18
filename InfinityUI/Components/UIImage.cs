@@ -14,9 +14,8 @@ namespace InfinityUI.Components
     {
         public GLTexture2D Texture { get; set; }
 
-        public override void Awake()
+        public UIImage() : base()
         {
-            //set default texture to UI.DefaultWhite
             Texture = UI.DefaultWhite;
         }
 
@@ -26,11 +25,11 @@ namespace InfinityUI.Components
             if (!Parent.Visible) return;
             if (Shader == null) return;
 
+            OnBeforeDraw(this);
+
             Vector2 size = Parent.WorldSize;
 
             if (size.X <= float.Epsilon || size.Y <= float.Epsilon) return;
-
-            OnBeforeDraw(this);
 
             Matrix4 m = Parent.WorldMatrix;
             Vector2 pos = Parent.WorldPosition;

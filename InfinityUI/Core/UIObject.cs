@@ -23,6 +23,8 @@ namespace InfinityUI.Core
 
         public string Name { get; set; }
 
+        public bool IsDirty { get; private set; } = false;
+
         public bool Visible { get; set; } = true;
 
         public bool RaycastTarget { get; set; } = false;
@@ -36,27 +38,93 @@ namespace InfinityUI.Core
         /// </value>
         public bool RaycastAlways { get; set; } = false;
 
-        public UIObject Parent { get; protected set; }
+        private UIObject parent = null;
+        public UIObject Parent
+        {
+            get => parent;
+        }
 
-        public Box2 Padding { get; set; } = new Box2(0, 0, 0, 0);
+        private Anchor relativeTo = Anchor.TopLeft;
+        public Anchor RelativeTo
+        {
+            get => relativeTo;
+            set
+            {
+                if (relativeTo != value)
+                {
+                    relativeTo = value;
+                    IsDirty = true;
+                    UpdateMatrix();
+                }
+            }
+        }
 
-        public Vector2 Position { get; set; } = Vector2.Zero;
-        public Anchor RelativeTo { get; set; } = Anchor.BottomLeft;
+        private Box2 margin = new Box2(0, 0, 0, 0);
+        public Box2 Margin
+        {
+            get => margin;
+            set
+            {
+                if (margin != value)
+                {
+                    margin = value;
+                    IsDirty = true;
+                    UpdateMatrix();
+                }
+            }
+        }
+
+        private Box2 padding = new Box2(0, 0, 0, 0);
+        public Box2 Padding
+        {
+            get => padding;
+            set
+            {
+                if (padding != value)
+                {
+                    padding = value;
+                    IsDirty = true;
+                    UpdateMatrix();
+                }
+            }
+        }
+
+        private Vector2 position = Vector2.Zero;
+        public Vector2 Position
+        {
+            get => position;
+            set
+            {
+                if (position != value)
+                {
+                    position = value;
+                    IsDirty = true;
+                    UpdateMatrix();
+                }
+            }
+        }
 
         public Vector2 MinSize { get; set; } = Vector2.Zero;
 
-        public SizeMode Sizing { get; set; } = SizeMode.Pixel;
-        public SizeMode RelativeMode { get; set; } = SizeMode.Pixel;
+        private Vector2 origin = Vector2.Zero;
+        public Vector2 Origin
+        {
+            get => origin;
+            set
+            {
+                if (origin != value)
+                {
+                    origin = value;
+                    IsDirty = true;
+                    UpdateMatrix();
+                }
+            }
+        }
 
-        public Vector2 Origin { get; set; } = Vector2.Zero;
-
-        protected int zOrder = 0;
+        private int zOrder = 0;
         public int ZOrder
         {
-            get
-            {
-                return zOrder;
-            }
+            get => zOrder;
             set
             {
                 if (zOrder != value)
@@ -67,46 +135,75 @@ namespace InfinityUI.Core
             }
         }
 
-        protected Vector2 size;
+        private Vector2 size;
         public Vector2 Size
         {
-            get
-            {
-                return size;
-            }
+            get => size;
             set
             {
                 Vector2 prevSize = size;
                 size = Vector2.MagnitudeMax(MinSize, value);
                 if (prevSize != size)
                 {
+                    IsDirty = true;
+                    UpdateMatrix();
                     Resize?.Invoke(this);
                 }
             }
         }
 
-        protected Vector2 scale = new Vector2(1,1);
+        private Vector2 scale = new Vector2(1,1);
         public Vector2 Scale
         {
-            get { return scale; }
-            set { scale = value; }
-        }
-
-        /// <summary>
-        /// Gets the rect
-        /// </summary>
-        /// <value>
-        /// The rect.
-        /// </value>
-        public Box2 Rect
-        {
-            get
+            get => scale;
+            set
             {
-                Vector2 size = WorldSize;
-                return new Box2(WorldPosition, size.X, size.Y);
+                if (scale != value)
+                {
+                    scale = value;
+                    IsDirty = true;
+                    UpdateMatrix();
+                }
             }
         }
 
+        private Vector2 worldSize = Vector2.Zero;
+        public Vector2 WorldSize
+        {
+            get => worldSize;
+        }
+
+        private Vector2 worldScale = Vector2.One;
+        public Vector2 WorldScale
+        {
+            get => worldScale;
+        }
+
+        private Vector2 worldPosition = Vector2.Zero;
+        public Vector2 WorldPosition
+        {
+            get => worldPosition;
+        }
+
+        private Matrix4 worldMatrix = Matrix4.Identity;
+        public Matrix4 WorldMatrix
+        {
+            get => worldMatrix;
+        }
+
+        private Vector2 anchorSize = Vector2.Zero;
+        public Vector2 AnchorSize
+        {
+            get => anchorSize;
+        }
+
+        private Vector2 anchorPosition = Vector2.Zero;
+        public Vector2 AnchorPosition
+        {
+            get => anchorPosition;
+        }
+
+        private Box2 rect = new Box2(0, 0, 0, 0);
         /// <summary>
         /// Gets the local rect.
         /// This does not include scaling
@@ -114,137 +211,42 @@ namespace InfinityUI.Core
         /// <value>
         /// The local rect.
         /// </value>
-        public Box2 LocalRect
+        public Box2 Rect
         {
-            get
+            get => rect;
+        }
+
+        private Box2 visibleRect;
+        public Box2 VisibleRect
+        {
+            get => visibleRect;
+        }
+
+        private Box2 anchoredRect = new Box2(0, 0, 0, 0);
+        public Box2 AnchoredRect
+        {
+            get => anchoredRect;
+        }
+
+        private float rotation = 0;
+        public float Rotation
+        {
+            get => rotation;
+            set
             {
-                Vector2 size = AnchoredSize;
-                return new Box2(AnchoredPosition, size.X, size.Y);
+                if (rotation != value)
+                {
+                    rotation = value;
+                    IsDirty = true;
+                    UpdateMatrix();
+                }
             }
         }
 
-        public float Rotation { get; set; }
-
+        private Matrix4 localMatrix = Matrix4.Identity;
         public Matrix4 LocalMatrix
         {
-            get
-            {
-                Vector2 size = AnchoredSize;
-                Vector3 offset = new Vector3(size.X * Origin.X, size.Y * Origin.Y, 0);
-                return Matrix4.CreateTranslation(-offset) * Matrix4.CreateRotationZ(Rotation * MathHelper.Deg2Rad) * Matrix4.CreateTranslation(offset);
-            }
-        }
-
-        public Matrix4 WorldMatrix
-        {
-            get
-            {
-                if (Parent == null) return LocalMatrix;
-                return LocalMatrix * Parent.WorldMatrix;
-            }
-        }
-
-        public virtual Vector2 WorldScale
-        {
-            get
-            {
-                if (Parent == null) return Scale;
-                return Scale * Parent.WorldScale;
-            }
-        }
-
-        public virtual Vector2 WorldPosition
-        {
-            get
-            {
-                if (Parent == null) return AnchoredPosition;
-                return AnchoredPosition + Parent.WorldPosition;
-            }
-        }
-
-        public virtual Vector2 WorldSize
-        {
-            get
-            {
-                return AnchoredSize * WorldScale;
-            }
-        }
-
-        public virtual Vector2 AnchoredPosition
-        {
-            get
-            {
-                Vector2 size = AnchoredSize;
-
-                if (Parent == null) return Position + new Vector2(Padding.Left, Padding.Top);
-
-                Vector2 pSize = Parent.AnchoredSize;
-
-                //if RelativeMode is Percent we set local pos as a percent of parent size
-                Vector2 pos = RelativeMode == SizeMode.Percent ? pSize * Position : Position;
-                Vector2 offset = size * Origin;
-
-                //calculate scale first
-                pos -= offset;
-                pos *= Scale;
-                pos += offset;
-
-                switch (RelativeTo)
-                {
-                    case Anchor.Top:
-                        return new Vector2(pSize.X / 2 - size.X / 2 + pos.X + Padding.Left, pos.Y + Padding.Top);
-                    case Anchor.Bottom:
-                        return new Vector2(pSize.X / 2 - size.X / 2 + pos.X + Padding.Left, pSize.Y - pos.Y - Padding.Bottom - size.Y);
-                    case Anchor.BottomLeft:
-                    case Anchor.BottomHorizFill:
-                        return new Vector2(pos.X + Padding.Left, pSize.Y - pos.Y - Padding.Bottom - size.Y);
-                    case Anchor.TopLeft:
-                    case Anchor.TopHorizFill:
-                    case Anchor.Fill:
-                        return pos + new Vector2(Padding.Left, Padding.Top);
-                    case Anchor.BottomRight:
-                        return new Vector2(pSize.X - pos.X - Padding.Right - size.X, pSize.Y - pos.Y - Padding.Bottom - size.Y);
-                    case Anchor.TopRight:
-                        return new Vector2(pSize.X - pos.X - Padding.Right - size.X, pos.Y + Padding.Top);
-                    case Anchor.Center:
-                        return new Vector2(pSize.X / 2 - size.X / 2 + pos.X + Padding.Left, pSize.Y / 2 - size.Y / 2 + pos.Y + Padding.Top);
-                    case Anchor.CenterHorizFill:
-                    case Anchor.CenterLeft:
-                        return new Vector2(pos.X + Padding.Left, pSize.Y / 2 - size.Y / 2 + pos.Y + Padding.Top);
-                    case Anchor.CenterRight:
-                        return new Vector2(pSize.X - pos.X - Padding.Right - size.X, pSize.Y / 2 - size.Y / 2 + pos.Y + Padding.Top);
-                }
-
-                return pos + new Vector2(Padding.Left, Padding.Top);
-            }
-        }
-
-        public virtual Vector2 AnchoredSize
-        {
-            get
-            {
-                Vector2 size = Size;
-                Vector2 pSize = Parent == null ? Vector2.One : Parent.AnchoredSize;
-
-                //if we are percent mode
-                //then size is 0-1 only for percent
-                //thus we need to calculate size based
-                //on parent if there is one
-                size = Parent == null || Sizing == SizeMode.Pixel ? size : new Vector2(size.X * pSize.X, size.Y * pSize.Y);
-
-                if (Parent == null) return size + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
-                switch (RelativeTo)
-                {
-                    case Anchor.BottomHorizFill:
-                    case Anchor.CenterHorizFill:
-                    case Anchor.TopHorizFill:
-                        return new Vector2(pSize.X, size.Y) + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
-                    case Anchor.Fill:
-                        return pSize + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
-                }
-
-                return size + new Vector2(-(Padding.Right + Padding.Left), -(Padding.Bottom + Padding.Top));
-            }
+            get => localMatrix;
         }
 
         public UICanvas Canvas { get; set; }
@@ -252,6 +254,7 @@ namespace InfinityUI.Core
         public List<UIObject> Children { get; protected set; } = new List<UIObject>();
 
         protected Dictionary<Type, IComponent> components = new Dictionary<Type, IComponent>();
+        protected List<IComponent> componentList = new List<IComponent>();
 
         public UIObject()
         {
@@ -260,13 +263,11 @@ namespace InfinityUI.Core
 
         public void AddComponent<T>(T c) where T : IComponent
         {
-            if (c == null)
-            {
-                return;
-            }
+            if (c == null) return;
 
             c.Parent = this;
             components[c.GetType()] = c;
+            componentList.Add(c);
             c.Awake();
         }
 
@@ -284,6 +285,7 @@ namespace InfinityUI.Core
 
                 c.Parent = this;
                 components[type] = c;
+                componentList.Add(c);
                 c.Awake();
                 return (T)c;
             }
@@ -302,6 +304,7 @@ namespace InfinityUI.Core
 
             if (c != null)
             {
+                componentList.Remove(c);
                 c.Dispose();
                 c.Parent = null;
             }
@@ -321,7 +324,53 @@ namespace InfinityUI.Core
             return (T)c;
         }
 
-        public virtual void Update() { }
+        public virtual void Update() 
+        {
+            bool wasDirty = IsDirty;
+            IsDirty = false;
+
+            if (wasDirty)
+            {
+                UpdateMatrix(false);
+            }
+
+            Box2 visibleArea = rect;
+
+            for (int i = 0; i < Children.Count; ++i)
+            {
+                if (wasDirty)
+                {
+                    Children[i].IsDirty = true;
+                }
+
+                Children[i].Update();
+
+                //get visibleRect
+                if (Children[i].Visible)
+                {
+                    visibleArea.Encapsulate(Children[i].rect);
+                    visibleArea.Encapsulate(Children[i].visibleRect);
+                }
+            }
+
+            visibleRect = visibleArea;
+
+            for (int i = 0; i < componentList.Count; ++i)
+            {
+                var c = componentList[i];
+                if (c is ILayout)
+                {
+                    var layout = c as ILayout;
+                    layout?.Invalidate();
+                }
+            }
+
+            if (this is ILayout)
+            {
+                var layout = (this as ILayout);
+                layout?.Invalidate();
+            }
+        }
 
         public void Dispose()
         {
@@ -337,12 +386,12 @@ namespace InfinityUI.Core
                 if (ele == null) continue;
 
                 ele.Dispose(disposing);
-                ele.Parent = null;
+                ele.parent = null;
             }
 
             Children.Clear();
 
-            var comps = components.Values.ToList();
+            var comps = componentList;
 
             for (int i = 0; i < comps.Count; ++i)
             {
@@ -350,12 +399,13 @@ namespace InfinityUI.Core
             }
 
             components.Clear();
+            componentList.Clear();
         }
 
         protected bool IsPointInPolygon(ref Vector2 p)
         {
-            Vector2 pos = WorldPosition;
-            Vector2 size = WorldSize;
+            Vector2 pos = worldPosition;
+            Vector2 size = worldSize;
 
             Vector2 topLeft = pos;
             Vector2 topRight = pos + new Vector2(size.X, 0);
@@ -380,7 +430,7 @@ namespace InfinityUI.Core
 
         public virtual Vector2 ToWorld(ref Vector2 p)
         {
-            Vector4 rot = new Vector4(p.X, p.Y, 0, 1) * WorldMatrix;
+            Vector4 rot = new Vector4(p.X, p.Y, 0, 1) * LocalMatrix;
             return rot.Xy;
         }
 
@@ -388,10 +438,10 @@ namespace InfinityUI.Core
         {
             if (!Visible) return false;
 
-            float s = Scale.LengthSquared;
+            float s = worldScale.LengthSquared;
 
-            if (Rotation > 0 || Rotation < 0
-                || s < 1 || s > 1)
+            if (rotation > 0 || rotation < 0
+                || s < 2 || s > 2)
             {
                 return IsPointInPolygon(ref p);
             }
@@ -404,33 +454,45 @@ namespace InfinityUI.Core
             return Rect.Contains(e.Rect);
         }
 
+        public virtual bool InVisibleArea(ref Vector2 p)
+        {
+            return visibleRect.Contains(p);
+        }
+
         public UIObject Pick(ref Vector2 p)
         {
-            if (!Visible || (!RaycastAlways && !Contains(ref p))) return null;
+            if (!Visible) return null;
 
+            UIObject c;
             for (int i = Children.Count - 1; i >= 0; --i)
             {
                 if (!Children[i].RaycastTarget || !Children[i].Visible) continue;
-                if (Children[i].RaycastAlways || Children[i].Contains(ref p))
+                if (Children[i].RaycastAlways || Children[i].InVisibleArea(ref p))
                 {
-                    var c = Children[i].Pick(ref p);
+                    c = Children[i].Pick(ref p);
                     if (c == null)
                     {
-                        return Children[i].RaycastTarget ? Children[i] : null;
+                        if ((Children[i].RaycastTarget && Children[i].Contains(ref p)) || (Children[i].RaycastTarget && Children[i].RaycastAlways))
+                        {
+                            return Children[i];
+                        }
                     }
 
-                    return c.RaycastTarget ? c : null;
+                    if (c != null && ((c.RaycastTarget && c.Contains(ref p)) || (c.RaycastTarget && c.RaycastAlways)))
+                    {
+                        return c;
+                    }
                 }
             }
 
-            return RaycastTarget ? this : null;
+            return (RaycastTarget && Contains(ref p)) || (RaycastTarget && RaycastAlways) ? this : null;
         }
 
         public virtual void InsertChild(int i, UIObject e)
         {
             if (e == null) return;
 
-            e.Parent?.RemoveChild(e);
+            e.parent?.RemoveChild(e, false);
 
             if (i >= Children.Count)
             {
@@ -439,30 +501,29 @@ namespace InfinityUI.Core
             }
 
             e.Canvas = Canvas;
+            e.parent = this;
 
-            e.Parent = this;
             Children.Insert(i, e);
             Children.Sort(Compare);
             e.Reorder += E_Reorder;
             ChildAdded?.Invoke(e);
+            IsDirty = true;
         }
 
         public virtual void AddChild(UIObject e)
         {
             if (e == null) return;
 
-            e.Parent?.RemoveChild(e);
-
+            e.parent?.RemoveChild(e, false);
             e.Canvas = Canvas;
 
-            e.Parent = this;
+            e.parent = this;
 
             Children.Add(e);
             Children.Sort(Compare);
-
             e.Reorder += E_Reorder;
-
             ChildAdded?.Invoke(e);
+            IsDirty = true;
         }
 
         private void E_Reorder()
@@ -470,12 +531,12 @@ namespace InfinityUI.Core
             Children.Sort(Compare);
         }
 
-        public virtual void RemoveChild(UIObject e)
+        public virtual void RemoveChild(UIObject e, bool markDirty = true)
         {
             if (e == null) return;
-            if (e.Parent != this) return;
+            if (e.parent != this) return;
             e.Reorder -= E_Reorder;
-            e.Parent = null;
+            e.parent = null;
             Children.Remove(e);
             ChildRemoved?.Invoke(e);
         }
@@ -515,8 +576,9 @@ namespace InfinityUI.Core
         {
             try
             {
-                foreach (var c in components.Values)
+                for (int i = 0; i < componentList.Count; ++i)
                 {
+                    var c = componentList[i];
                     TryAndSendMessage(c, fn, args);
                 }
             }
@@ -539,7 +601,7 @@ namespace InfinityUI.Core
                 }
 
                 parent.SendMessage(fn, false, args);
-                parent = parent.Parent;
+                parent = parent.parent;
             }
         }
 
@@ -547,8 +609,9 @@ namespace InfinityUI.Core
         {
             try
             {
-                foreach (var c in components.Values)
+                for (int i = 0; i < componentList.Count; ++i)
                 {
+                    var c = componentList[i];
                     TryAndSendMessage(c, fn, args);
                 }
             }
@@ -581,6 +644,166 @@ namespace InfinityUI.Core
                     }
                 }
             }
+        }
+
+        private void UpdateMatrix(bool updateChildren = true)
+        {
+            CalculateWorldScale();
+            CalculateWorldSize();
+            CalculateWorldPosition();
+
+            Vector3 offset = new Vector3(origin * anchorSize);
+            localMatrix = Matrix4.CreateTranslation(-offset) * Matrix4.CreateRotationZ(rotation * MathHelper.Deg2Rad) * Matrix4.CreateTranslation(offset);
+
+            CalculateWorldMatrix();
+
+            anchoredRect = new Box2(anchorPosition, anchorSize.X, anchorSize.Y);
+            rect = new Box2(worldPosition, worldSize.X, worldSize.Y);
+
+            if (!updateChildren) return;
+
+            Box2 visibleArea = rect;
+            var children = Children;
+            for (int i = 0; i < children.Count; ++i)
+            {
+                children[i]?.UpdateMatrix();
+                if (children[i].Visible)
+                {
+                    visibleArea.Encapsulate(children[i].rect);
+                    visibleArea.Encapsulate(children[i].visibleRect);
+                }
+            }
+
+            visibleRect = visibleArea;
+        }
+
+        private void CalculateAnchorSize()
+        {
+            Vector2 offset = new Vector2(-(margin.Left + margin.Right),
+                                        -(margin.Top + margin.Bottom))
+                            + new Vector2(padding.Left + padding.Right,
+                                           padding.Top + padding.Bottom);
+            if (parent == null)
+            {
+                anchorSize = size + offset;
+                return;
+            }
+            Vector2 pSize = parent.anchorSize;
+
+            switch (relativeTo)
+            {
+                case Anchor.TopHorizFill:
+                case Anchor.CenterHorizFill:
+                case Anchor.BottomHorizFill:
+                    anchorSize = new Vector2(pSize.X, size.Y) + offset;
+                    return;
+                case Anchor.Fill:
+                    anchorSize = pSize + offset;
+                    return;
+                default:
+                    anchorSize = size + offset;
+                    return;
+            }
+        }
+
+        private void CalculateWorldSize()
+        {
+            CalculateAnchorSize();
+            worldSize = anchorSize * worldScale;
+        }
+
+        private void CalculateWorldMatrix()
+        {
+            if (parent == null)
+            {
+                worldMatrix = localMatrix;
+                return;
+            }
+            worldMatrix = localMatrix * parent.worldMatrix;
+        }
+
+        private void CalculateAnchorPosition()
+        {
+            Vector2 size = anchorSize;
+            Vector2 pos = position;
+
+            //calculate scaled position
+            Vector2 offset = origin * size;
+            pos -= offset;
+            pos *= scale;
+            pos += offset;
+
+            if (parent == null)
+            {
+                anchorPosition = pos + new Vector2(margin.Left, margin.Top);
+                return;
+            }
+
+            Vector2 pSize = parent.anchorSize;
+            Box2 pPadding = parent.padding;
+
+            Vector2 bottomLeftOffset = new Vector2(margin.Left + pPadding.Left, -(margin.Bottom + pPadding.Bottom));
+            Vector2 topLeftOffset = new Vector2(margin.Left + pPadding.Left, margin.Top + pPadding.Top);
+            Vector2 bottomRightOffset = new Vector2(-(margin.Right + pPadding.Right), -(margin.Bottom + pPadding.Bottom));
+            Vector2 topRightOffset = new Vector2(-(margin.Right + pPadding.Right), margin.Top + pPadding.Top);
+
+            switch (relativeTo)
+            {
+                case Anchor.Bottom:
+                    anchorPosition = new Vector2(pSize.X * 0.5f - size.X * 0.5f + pos.X, pSize.Y - size.Y - pos.Y) + bottomLeftOffset;
+                    return;
+                case Anchor.Top:
+                    anchorPosition = new Vector2(pSize.X * 0.5f - size.X * 0.5f + pos.X, pos.Y) + topLeftOffset;
+                    return;
+                case Anchor.TopHorizFill:
+                case Anchor.TopLeft:
+                case Anchor.Fill:
+                    anchorPosition = pos + topLeftOffset;
+                    return;
+                case Anchor.TopRight:
+                    anchorPosition = new Vector2(pSize.X - size.X - pos.X, pos.Y) + topRightOffset;
+                    return;
+                case Anchor.BottomHorizFill:
+                case Anchor.BottomLeft:
+                    anchorPosition = pos + bottomLeftOffset;
+                    return;
+                case Anchor.BottomRight:
+                    anchorPosition = pSize - size - pos + bottomRightOffset;
+                    return;
+                case Anchor.CenterHorizFill:
+                case Anchor.Center:
+                    anchorPosition = pSize * 0.5f - size * 0.5f + pos + topLeftOffset;
+                    return;
+                case Anchor.Right:
+                    anchorPosition = new Vector2(pSize.X - size.X - pos.X, pSize.Y * 0.5f - size.Y * 0.5f + pos.Y) + topRightOffset;
+                    return;
+                case Anchor.Left:
+                    anchorPosition = new Vector2(pos.X, pSize.Y * 0.5f - size.Y * 0.5f + pos.Y) + topLeftOffset;
+                    return;
+            }
+
+            anchorPosition = pos + topLeftOffset;
+        }
+
+        private void CalculateWorldPosition()
+        {
+            CalculateAnchorPosition();
+            if (parent == null)
+            {
+                worldPosition = anchorPosition;
+                return;
+            }
+            worldPosition = anchorPosition + parent.worldPosition;
+        }
+
+        private void CalculateWorldScale()
+        {
+            if (parent == null)
+            {
+                worldScale = scale;
+                return;
+            }
+            worldScale = scale * parent.worldScale;
         }
     }
 }

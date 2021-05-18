@@ -17,6 +17,12 @@ namespace MateriaCore.Components.GL
         public override void Awake()
         {
             base.Awake();
+            
+            if (Parent != null)
+            {
+                Parent.RaycastTarget = false;
+            }
+
             renderer = new LineRenderer();
             Shader = GLShaderCache.GetShader("line.glsl", "line.glsl");
         }
@@ -33,17 +39,18 @@ namespace MateriaCore.Components.GL
         {
             if (Shader == null) return;
             if (Parent == null) return;
+            if (renderer == null) return;
             if (!Parent.Visible) return;
 
             OnBeforeDraw(this);
 
-            Matrix4 model = Parent.WorldMatrix;
-            Vector2 offset = Parent.WorldPosition;
-          
+            Matrix4 m = Parent.WorldMatrix;
+            Vector2 pos = Parent.WorldPosition;
+
             Shader.Use();
-            Shader.SetUniform2("offset", ref offset);
+            Shader.SetUniform2("offset", ref pos);
             Shader.SetUniformMatrix4("projectionMatrix", ref projection);
-            Shader.SetUniformMatrix4("modelMatrix", ref model);
+            Shader.SetUniformMatrix4("modelMatrix", ref m);
 
             LineRenderer.SharedVao.Bind();
 
@@ -53,7 +60,8 @@ namespace MateriaCore.Components.GL
         }
 
         public override void Invalidate()
-        { 
+        {
+            if (!NeedsUpdate) return;
             renderer?.Update();   
         }
 

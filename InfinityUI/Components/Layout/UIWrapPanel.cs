@@ -9,6 +9,8 @@ namespace InfinityUI.Components.Layout
 {
     public class UIWrapPanel : IComponent, ILayout
     {
+        public bool NeedsUpdate { get; set; }
+
         protected Orientation direction;
         public Orientation Direction
         {
@@ -19,7 +21,7 @@ namespace InfinityUI.Components.Layout
             set
             {
                 direction = value;
-                Invalidate();
+                NeedsUpdate = true;
             }
         }
 
@@ -33,7 +35,7 @@ namespace InfinityUI.Components.Layout
             set
             {
                 reverse = value;
-                Invalidate();
+                NeedsUpdate = true;
             }
         }
 
@@ -41,7 +43,6 @@ namespace InfinityUI.Components.Layout
 
         public virtual void Awake()
         {
-            Invalidate();
             AddEvents();
         }
 
@@ -60,30 +61,32 @@ namespace InfinityUI.Components.Layout
             Parent.ChildAdded += Parent_ChildAdded;
             Parent.ChildRemoved += Parent_ChildRemoved;
             Parent.Resize += Parent_Resize;
+
+            NeedsUpdate = true;
         }
 
         private void Parent_Resize(UIObject obj)
         {
-            Invalidate();
+            NeedsUpdate = true;
         }
 
         private void Parent_ChildRemoved(UIObject obj)
         {
             if (obj == null) return;
             obj.Resize -= Obj_Resize;
-            Invalidate();
+            NeedsUpdate = true;
         }
 
         private void Parent_ChildAdded(UIObject obj)
         {
             if (obj == null) return;
             obj.Resize += Obj_Resize;
-            Invalidate();
+            NeedsUpdate = true;
         }
 
         private void Obj_Resize(UIObject obj)
         {
-            Invalidate();
+            NeedsUpdate = true;
         }
 
         protected void RemoveEvents()
@@ -96,65 +99,92 @@ namespace InfinityUI.Components.Layout
 
         public virtual void Invalidate()
         {
-            if (Parent == null)
-            {
-                return;
-            }
+            if (Parent == null || !NeedsUpdate) return;
 
             var Children = Parent.Children;
-            var Size = Parent.Size;
+            var Size = Parent.AnchorSize;
+
+            UIObject prev = null;
 
             float yOffset = 0;
             float xOffset = 0;
             float maxOffset = 0;
 
+            int rowCount = 0;
+            int prevRowCount = 0;
+
             for (int i = 0; i < Children.Count; ++i)
             {
-                if (!Children[i].Visible) continue;
+                int k = i;
+                if (reverse) k = (Children.Count - 1) - i;
 
-                if (!reverse)
-                {
-                    Children[i].RelativeTo = Anchor.TopLeft;
-                }
-                else
-                {
-                    if (direction == Orientation.Horizontal)
-                    {
-                        Children[i].RelativeTo = Anchor.TopRight;
-                    }
-                    else
-                    {
-                        Children[i].RelativeTo = Anchor.BottomLeft;
-                    }
-                }
+                var child = Children[k];
+
+                if (!child.Visible) continue;
+
+                var csize = child.AnchorSize;
 
                 if (direction == Orientation.Horizontal)
                 {
-                    if (xOffset + Children[i].Size.X > Size.X)
+                    float marginOffset = 0;
+
+                    marginOffset = (prev != null ? prev.Margin.Right : Parent.Padding.Left) + child.Margin.Left;
+
+                    if (xOffset + csize.X + marginOffset > Size.X)
                     {
+                        prevRowCount = rowCount;
+                        rowCount = 0;
+                        prev = null;
                         xOffset = 0;
                         yOffset += maxOffset;
-                        maxOffset = Children[i].Size.Y;
+                        maxOffset = csize.Y;
+                    }
+                    else
+                    {
+                        prev = Children[i];
                     }
 
-                    Children[i].Position = new Vector2(xOffset, yOffset);
-                    maxOffset = MathF.Max(maxOffset, Children[i].Size.Y);
-                    xOffset += Children[i].Size.X;
+                    int t = i - (prevRowCount - rowCount);
+                    if (reverse) t = (Children.Count - 1) - t;
+                    float verticalOffset = (prevRowCount == 0 ? Parent.Padding.Top : Children[t].Margin.Bottom) + child.Margin.Top;
+
+                    child.Position = new Vector2(xOffset + marginOffset, yOffset + verticalOffset);
+                    maxOffset = MathF.Max(maxOffset, csize.Y + verticalOffset);
+                    xOffset += csize.X + marginOffset;
                 }
                 else
                 {
-                    if (yOffset + Children[i].Size.Y > Size.Y)
+                    float marginOffset = 0;
+
+                    marginOffset = (prev != null ? prev.Margin.Bottom : Parent.Padding.Top) + child.Margin.Top;
+
+                    if (yOffset + csize.Y + marginOffset > Size.Y)
                     {
+                        prev = null;
+                        prevRowCount = rowCount;
+                        rowCount = 0;
                         yOffset = 0;
                         xOffset += maxOffset;
-                        maxOffset = Children[i].Size.X;
+                        maxOffset = csize.X;
+                    }
+                    else
+                    {
+                        prev = Children[i];
                     }
 
-                    Children[i].Position = new Vector2(xOffset, yOffset);
-                    maxOffset = MathF.Max(maxOffset, Children[i].Size.X);
-                    yOffset += Children[i].Size.X;
+                    int t = i - (prevRowCount - rowCount);
+                    if (reverse) t = (Children.Count - 1) - t;
+                    float verticalOffset = (prevRowCount == 0 ? Parent.Padding.Left : Children[t].Margin.Bottom) + child.Margin.Top;
+
+                    child.Position = new Vector2(xOffset + verticalOffset, yOffset + marginOffset);
+                    maxOffset = MathF.Max(maxOffset, csize.X + verticalOffset);
+                    yOffset += csize.Y + marginOffset;
                 }
+
+                ++rowCount;
             }
+
+            NeedsUpdate = false;
         }
 
         public virtual void Dispose()

@@ -60,12 +60,10 @@ namespace InfinityUI.Controls
             originSize = Size;
 
             textView.Alignment = TextAlignment.Left;
-            textContainer.RelativeTo = Anchor.TopLeft;
             textContainer.Position = new Vector2(5, textView.FontSize * 0.25f);
 
             list = new ListView(new Vector2(Size.X, 256));
             list.SelectionChanged += List_SelectionChanged;
-            list.RelativeTo = Anchor.TopHorizFill;
             list.Position = new Vector2(0, Size.Y);
 
             Submit += new Action<Button>((b) =>

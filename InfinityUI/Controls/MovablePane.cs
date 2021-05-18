@@ -22,24 +22,20 @@ namespace InfinityUI.Controls
 
         public Axis MoveAxis { get; set; } = Axis.Both;
 
-        public float SnapTolerance { get; set; } = 4;
+        public float SnapTolerance { get; set; } = 4f;
         public MovablePaneSnapMode SnapMode { get; set; } = MovablePaneSnapMode.Panes;
 
         protected bool isMouseDown = false;
         private long lastClick;
         private int clickCount = 0;
 
-        public bool Collaspable { get; set; } = false;
-        protected float CollapseToHeight { get; set; } = 32;
-        private Vector2 originSize;
-
         protected UISelectable selectable;
         public UIImage Background { get; protected set; }
 
         public MovablePane(Vector2 size) : base()
         {
+            RaycastTarget = true;
             Size = size;
-            originSize = size;
             selectable = AddComponent<UISelectable>();
             Background = AddComponent<UIImage>();
             Background.Color = new Vector4(0, 0, 0, 0.75f);
@@ -68,20 +64,6 @@ namespace InfinityUI.Controls
             if (clickCount >= 2)
             {
                 clickCount = 0;
-
-                if (Collaspable)
-                {
-                    if (originSize.Equals(Size))
-                    {
-                        Background.Clip = true;
-                        Size = new Vector2(Size.X, CollapseToHeight);
-                    }
-                    else
-                    {
-                        Background.Clip = false;
-                        Size = originSize;
-                    }
-                }
 
                 DoubleClick?.Invoke(this);
             }
@@ -112,6 +94,8 @@ namespace InfinityUI.Controls
                 scaledDelta *= Canvas.Scale;
             }
 
+            scaledDelta /= Scale;
+
             switch (RelativeTo)
             {
                 case Anchor.BottomRight:
@@ -124,7 +108,7 @@ namespace InfinityUI.Controls
 
             switch (RelativeTo)
             {
-                case Anchor.CenterRight:
+                case Anchor.Right:
                 case Anchor.BottomRight:
                 case Anchor.TopRight:
                     xSign = -1;
@@ -136,20 +120,14 @@ namespace InfinityUI.Controls
             switch (MoveAxis)
             {
                 case Axis.Both:
-                    movementDelta = new Vector2(scaledDelta.X / Scale.X * xSign, scaledDelta.Y / Scale.Y * ySign);
+                    movementDelta = new Vector2(scaledDelta.X * xSign, scaledDelta.Y * ySign);
                     break;
                 case Axis.Horizontal:
-                    movementDelta = new Vector2(scaledDelta.X / Scale.X * xSign, 0);
+                    movementDelta = new Vector2(scaledDelta.X * xSign, 0);
                     break;
                 case Axis.Vertical:
-                    movementDelta = new Vector2(0, scaledDelta.Y / Scale.Y * ySign);
+                    movementDelta = new Vector2(0, scaledDelta.Y * ySign);
                     break;
-            }
-
-            if (RelativeMode == SizeMode.Percent && Parent != null)
-            {
-                Vector2 psize = Parent.WorldSize;
-                movementDelta = new Vector2(movementDelta.X / psize.X, movementDelta.Y / psize.Y);
             }
 
             Position += movementDelta;
@@ -157,10 +135,7 @@ namespace InfinityUI.Controls
             switch (SnapMode)
             {
                 case MovablePaneSnapMode.Panes:
-                    //todo: fix snap to element for Relative Mode = Percent
-                    //break for the moment on RelativeMode == Percent
-                    //as we have not taken that into account in snap to element yet
-                    if (Parent == null || RelativeMode == SizeMode.Percent) break;
+                    if (Parent == null) break;
                     for (int i = 0; i < Parent.Children.Count; ++i)
                     {
                         UIObject el = Parent.Children[i];
@@ -182,25 +157,6 @@ namespace InfinityUI.Controls
             float xSign = 1;
             float ySign = 1;
 
-            switch (RelativeTo)
-            {
-                case Anchor.BottomRight:
-                case Anchor.BottomLeft:
-                case Anchor.BottomHorizFill:
-                case Anchor.Bottom:
-                    ySign = -1;
-                    break;
-            }
-
-            switch (RelativeTo)
-            {
-                case Anchor.CenterRight:
-                case Anchor.BottomRight:
-                case Anchor.TopRight:
-                    xSign = -1;
-                    break;
-            }
-
             switch (MoveAxis)
             {
                 case Axis.Both:
@@ -217,7 +173,7 @@ namespace InfinityUI.Controls
             switch (SnapMode)
             {
                 case MovablePaneSnapMode.Panes:
-                    if (Parent == null || RelativeMode == SizeMode.Percent) break;
+                    if (Parent == null) break;
                     for (int i = 0; i < Parent.Children.Count; ++i)
                     {
                         UIObject el = Parent.Children[i];
@@ -228,7 +184,6 @@ namespace InfinityUI.Controls
 
                     break;
                 case MovablePaneSnapMode.Grid:
-                    if (RelativeMode == SizeMode.Percent) break;
                     UI.SnapToGrid(this, (int)SnapTolerance);
                     break;
             }
@@ -247,12 +202,15 @@ namespace InfinityUI.Controls
 
         protected virtual void OnMouseUp(UISelectable selectable,  MouseEventArgs e)
         {
-            ZOrder = 0;
-
-            //todo: handle Relate Mode = Percent for Snap To Grid
-            if (SnapMode == MovablePaneSnapMode.Grid && RelativeMode == SizeMode.Pixel)
+            if (isMouseDown)
             {
-                UI.SnapToGrid(this, (int)SnapTolerance);
+                ZOrder = 0;
+
+                //todo: handle Relate Mode = Percent for Snap To Grid
+                if (SnapMode == MovablePaneSnapMode.Grid)
+                {
+                    UI.SnapToGrid(this, (int)SnapTolerance);
+                }
             }
 
             isMouseDown = false;

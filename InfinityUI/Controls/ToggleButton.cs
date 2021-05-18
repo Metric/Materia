@@ -14,6 +14,7 @@ namespace InfinityUI.Controls
 
         public ToggleButton(string text, Vector2 size) : base(text, size)
         {
+            RaycastTarget = true;
             toggleState = AddComponent<UIToggleable>();
             Submit += OnSubmit;
         }

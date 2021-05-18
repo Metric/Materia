@@ -41,6 +41,9 @@ namespace MateriaCore.Components.GL.Renderer
         public GLTextureCube ActiveIrradiance { get; set; }
         public GLTextureCube ActivePrefilter { get; set; }
 
+        protected Dictionary<string, List<Mesh>> meshCache = new Dictionary<string, List<Mesh>>();
+        protected Dictionary<string, MeshSceneObject> meshSceneObjectCache = new Dictionary<string, MeshSceneObject>();
+
         protected Vector2 viewSize = new Vector2(512, 512);
         public Vector2 ViewSize 
         { 
@@ -59,8 +62,8 @@ namespace MateriaCore.Components.GL.Renderer
 
         public Matrix4 ActiveProjection { get; protected set; }
 
-        public List<MeshSceneObject> ActiveMeshes { get => meshSceneObjects.FindAll(m => m.Visible && m.Renderer.RenderMode != MeshRenderType.Skybox); }
-        public MeshSceneObject ActiveSkybox { get => meshSceneObjects.Find(m => m.Visible && m.Renderer.RenderMode == MeshRenderType.Skybox); }
+        public List<MeshSceneObject> ActiveMeshes { get => meshSceneObjects.FindAll(m => m.Visible && m.RenderMode != MeshRenderType.Skybox); }
+        public MeshSceneObject ActiveSkybox { get => meshSceneObjects.Find(m => m.Visible && m.RenderMode == MeshRenderType.Skybox); }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance is modified.
@@ -523,8 +526,10 @@ namespace MateriaCore.Components.GL.Renderer
         {
             try
             {
+                SceneObject obj = CreateFromCache(path, mode);
+                if (obj != null) return obj;
                 EmbeddedFileProvider provider = new EmbeddedFileProvider(t.Assembly);
-                return CreateMeshFromStream(provider.GetFileInfo(path).CreateReadStream(), mode);
+                return CreateMeshFromStream(path, provider.GetFileInfo(path).CreateReadStream(), mode);
             }
             catch (Exception e)
             {
@@ -539,9 +544,11 @@ namespace MateriaCore.Components.GL.Renderer
             try
             {
                 if (!File.Exists(path)) return null;
+                SceneObject obj = CreateFromCache(path, mode);
+                if (obj != null) return obj;
                 using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
-                    return CreateMeshFromStream(fs, mode);
+                    return CreateMeshFromStream(path, fs, mode);
                 }
             }
             catch (Exception e)
@@ -552,10 +559,62 @@ namespace MateriaCore.Components.GL.Renderer
             return null;
         }
 
-        protected SceneObject CreateMeshFromStream(Stream stream, MeshRenderType mode)
+        protected SceneObject CreateFromCache(string id, MeshRenderType mode)
+        {
+            List<Mesh> meshes = null;
+            meshCache.TryGetValue(id, out meshes);
+            if (meshes == null) return null;
+
+            SceneObject group = new SceneObject();
+            for (int i = 0; i < meshes.Count; ++i)
+            {
+                var mid = id + i;
+                MeshSceneObject origin = null;
+                MeshSceneObject ms = null;
+                if (meshSceneObjectCache.TryGetValue(mid, out origin))
+                {
+                    ms = new MeshSceneObject
+                    {
+                        RenderMode = mode,
+                        Renderer = origin.Renderer,
+                        GetActiveFar = () => Cam.Far,
+                        GetActiveNear = () => Cam.Near,
+                        GetActiveEyePosition = () => Cam.OrbitEyePosition,
+                        GetActiveLight = () => Light,
+                        GetActiveMaterial = (m) =>
+                        {
+                            switch (m)
+                            {
+                                case MeshRenderType.Light:
+                                    return DefaultLightMaterial;
+                                case MeshRenderType.Skybox:
+                                    return DefaultSkyboxMaterial;
+                                default:
+                                    return ActiveMaterial;
+                            }
+                        },
+                        GetActiveIrradianceMap = () => ActiveIrradiance,
+                        GetActivePrefilterMap = () => ActivePrefilter,
+                        GetActiveEnvironmentMap = () => DefaultSkyboxMaterial.Albedo as GLTextureCube,
+                        GetActiveView = () => Cam.OrbitView,
+                        GetActiveProjection = () => ActiveProjection
+                    };
+                    meshSceneObjects.Add(ms);
+                    registeredSceneObjects[ms.Id] = ms;
+                    group.Add(ms);
+                }
+            }
+
+            registeredSceneObjects[group.Id] = group;
+            return group;
+        }
+
+        protected SceneObject CreateMeshFromStream(string id, Stream stream, MeshRenderType mode)
         {
             Importer importer = new Importer();
             var meshes = importer.Parse(stream);
+
+            meshCache[id] = meshes;
 
             SceneObject group = new SceneObject();
 
@@ -563,18 +622,15 @@ namespace MateriaCore.Components.GL.Renderer
             {
                 MeshSceneObject ms = new MeshSceneObject
                 {
-                    RawMesh = meshes[i],
-                    Renderer = new MeshRenderer(meshes[i])
-                    {
-                        RenderMode = mode
-                    },
+                    RenderMode = mode,
+                    Renderer = new MeshRenderer(meshes[i]),
                     GetActiveFar = () => Cam.Far,
                     GetActiveNear = () => Cam.Near,
                     GetActiveEyePosition = () => Cam.OrbitEyePosition,
                     GetActiveLight = () => Light,
-                    GetActiveMaterial = () =>
+                    GetActiveMaterial = (m) =>
                     {
-                        switch(mode)
+                        switch(m)
                         {
                             case MeshRenderType.Light:
                                 return DefaultLightMaterial;
@@ -591,6 +647,7 @@ namespace MateriaCore.Components.GL.Renderer
                     GetActiveProjection = () => ActiveProjection
                 };
                 meshSceneObjects.Add(ms);
+                meshSceneObjectCache[id + i] = ms;
                 registeredSceneObjects[ms.Id] = ms;
                 group.Add(ms);
             }
@@ -620,6 +677,8 @@ namespace MateriaCore.Components.GL.Renderer
                 objects[i]?.Dispose();
             }
             registeredSceneObjects.Clear();
+            meshSceneObjectCache.Clear();
+            meshCache.Clear();
         }
     }
 }

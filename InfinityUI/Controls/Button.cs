@@ -9,8 +9,8 @@ namespace InfinityUI.Controls
     public class Button : UIObject
     {
         public event Action<Button> Submit;
-        public event Action<Button> Focused;
-        public event Action<Button> Unfocused;
+        public event Action<Button, FocusEvent> Focused;
+        public event Action<Button, FocusEvent> Unfocused;
 
         protected UIImage background;
 
@@ -70,17 +70,18 @@ namespace InfinityUI.Controls
         {
             Size = size;
 
-            InitComponents();
-            InitEvents();
+            InitializeComponents();
+            InitializeEvents();
 
             Text = text;
         }
 
-        protected virtual void InitComponents()
+        private void InitializeComponents()
         {
+            RaycastTarget = true;
+
             textContainer = new UIObject();
             textContainer.Size = Size;
-            textContainer.RelativeTo = Anchor.CenterHorizFill;
             AddChild(textContainer);
 
             textView = textContainer.AddComponent<UIText>();
@@ -91,7 +92,7 @@ namespace InfinityUI.Controls
             selectable.TargetGraphic = background;
         }
 
-        protected virtual void InitEvents()
+        private void InitializeEvents()
         {
             if (selectable == null) return;
             selectable.Submit += Selectable_Submit;
@@ -99,15 +100,15 @@ namespace InfinityUI.Controls
             selectable.FocusChanged += Selectable_FocusChanged;
         }
 
-        private void Selectable_FocusChanged(UISelectable arg1, bool arg2)
+        private void Selectable_FocusChanged(UISelectable arg1, FocusEvent fv, bool arg2)
         {
             if (arg2)
             {
-                Focused?.Invoke(this);
+                Focused?.Invoke(this, fv);
             }
             else
             {
-                Unfocused?.Invoke(this);
+                Unfocused?.Invoke(this, fv);
             }
         }
 

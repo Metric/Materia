@@ -35,8 +35,8 @@ namespace InfinityUI.Core
         Top,
         Fill,
         Center,
-        CenterLeft,
-        CenterRight,
+        Left,
+        Right,
         TopHorizFill,
         CenterHorizFill,
         BottomHorizFill

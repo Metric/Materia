@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace Materia.Rendering.Hdr
 {
@@ -31,11 +32,17 @@ namespace Materia.Rendering.Hdr
         public static void Scan(string directory)
         {
             available.Clear();
-            string[] files = System.IO.Directory.GetFiles(directory, "*.exr");
+            string[] files = Directory.GetFiles(directory, "*.hdr");
             for (int i = 0; i < files.Length; ++i)
             {
                 var f = files[i];
-                available.Add(System.IO.Path.Combine(directory, f));
+                available.Add(Path.Combine(directory, f));
+            }
+            files = Directory.GetFiles(directory, "*.exr");
+            for (int i = 0; i < files.Length; ++i)
+            {
+                var f = files[i];
+                available.Add(Path.Combine(directory, f));
             }
         }
 
@@ -43,7 +50,7 @@ namespace Materia.Rendering.Hdr
         {
             IHdrFile file;
             if (string.IsNullOrEmpty(f)) return null;
-            if (!System.IO.File.Exists(f)) return null;
+            if (!File.Exists(f)) return null;
             if (f.ToLower().EndsWith(".exr"))
             {
                 file = new ExrFile(f);

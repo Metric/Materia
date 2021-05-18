@@ -148,8 +148,9 @@ namespace MLog
 
         protected static string GetCurrentFileName()
         {
-            DateTime d = DateTime.Now;
-            return d.ToString(File);
+            //DateTime d = DateTime.Now;
+            //return d.ToString(File);
+            return File;
         }
     }
 }

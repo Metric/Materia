@@ -3,6 +3,7 @@ using InfinityUI.Interfaces;
 using Materia.Rendering.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace InfinityUI.Components
@@ -19,7 +20,7 @@ namespace InfinityUI.Components
         public event Action<UISelectable, KeyboardEventArgs> TextInput;
         public event Action<UISelectable, KeyboardEventArgs> KeyDown;
         public event Action<UISelectable, KeyboardEventArgs> KeyUp;
-        public event Action<UISelectable, bool> FocusChanged;
+        public event Action<UISelectable, FocusEvent, bool> FocusChanged;
         public event Action<UISelectable, MouseWheelArgs> Wheel;
         public event Action<UISelectable> BeforeUpdateTarget;
 
@@ -39,7 +40,7 @@ namespace InfinityUI.Components
         }
 
         public Navigation TabDirection { get; set; } = Navigation.Right | Navigation.Down;
-        
+
         public UISelectable Left { get; set; }
         public UISelectable Right { get; set; }
         public UISelectable Up { get; set; }
@@ -69,7 +70,7 @@ namespace InfinityUI.Components
             }
         }
 
-        protected Vector4 hoverColor = new Vector4(1.05f, 1.05f, 1.05f, 1);
+        protected Vector4 hoverColor = new Vector4(1.25f, 1.25f, 1.25f, 1);
         public Vector4 HoverColor
         {
             get => hoverColor;
@@ -133,7 +134,7 @@ namespace InfinityUI.Components
             fev.IsHandled = !BubbleEvents;
             UI.Focus = this;
             Focused = true;
-            FocusChanged?.Invoke(this, Focused);
+            FocusChanged?.Invoke(this, fev, Focused);
             UpdateTargetGraphic();
         }
 
@@ -156,40 +157,40 @@ namespace InfinityUI.Components
                 //handle tabbing based on navigation type
                 if (TabDirection.HasFlag(Navigation.Right) && Right != null)
                 {
-                    Right.OnFocus(new FocusEvent());
+                    Right.OnFocus(new FocusEvent(true));
                 }
                 else if (TabDirection.HasFlag(Navigation.Left) && Left != null)
                 {
-                    Left.OnFocus(new FocusEvent());
+                    Left.OnFocus(new FocusEvent(true));
                 }
                 else if (TabDirection.HasFlag(Navigation.Down) && Down != null)
                 {
-                    Down.OnFocus(new FocusEvent());
+                    Down.OnFocus(new FocusEvent(true));
                 }
                 else if (TabDirection.HasFlag(Navigation.Up) && Up != null)
                 {
-                    Up.OnFocus(new FocusEvent());
+                    Up.OnFocus(new FocusEvent(true));
                 }
             }
             else if (e.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up)
             {
                 //handle navigation based on flow
-                Up?.OnFocus(new FocusEvent());
+                Up?.OnFocus(new FocusEvent(true));
             }
             else if (e.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down)
             {
                 //handle navigation based on flow
-                Down?.OnFocus(new FocusEvent());
+                Down?.OnFocus(new FocusEvent(true));
             }
             else if (e.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left)
             {
                 //handle navigation based on flow
-                Left?.OnFocus(new FocusEvent());
+                Left?.OnFocus(new FocusEvent(true));
             }
             else if (e.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right)
             {
                 //handle navigation based on flow
-                Right?.OnFocus(new FocusEvent());
+                Right?.OnFocus(new FocusEvent(true));
             }
            
             if(e.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Enter && Focused)
@@ -205,7 +206,7 @@ namespace InfinityUI.Components
             if (fev.IsHandled) return;
             fev.IsHandled = !BubbleEvents;
             Focused = false;
-            FocusChanged?.Invoke(this, Focused);
+            FocusChanged?.Invoke(this, fev, Focused);
             UpdateTargetGraphic();
         }
 

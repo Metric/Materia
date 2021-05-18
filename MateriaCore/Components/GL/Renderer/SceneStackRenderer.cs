@@ -77,7 +77,7 @@ namespace MateriaCore.Components.GL.Renderer
         public void Render()
         {
             if (scene == null) return;
-            if (!scene.IsModified) return;
+            if (!scene.IsModified || scene.ViewSize.X <= 0 || scene.ViewSize.Y <= 0) return;
 
             InitializeFrameBuffer();
             

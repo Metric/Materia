@@ -160,7 +160,6 @@ namespace InfinityUI.Controls
 
             int previousIdx = Items.Count - 1;
 
-            b.TextContainer.RelativeTo = Anchor.CenterLeft;
             b.TextContainer.Position = new Vector2(5, 0);
             b.TextAlignment = TextAlignment.Left;
 
@@ -187,7 +186,7 @@ namespace InfinityUI.Controls
             }
         }
 
-        private void B_Focused(Button obj)
+        private void B_Focused(Button obj, FocusEvent fv)
         {
             scrollView?.ScrollTo(obj);
         }

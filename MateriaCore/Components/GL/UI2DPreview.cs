@@ -15,9 +15,6 @@ namespace MateriaCore.Components.GL
 {
     public class UI2DPreview : UIWindow
     {
-        public const float DEFAULT_WIDTH_PERCENT = 0.25f;
-        public const float DEFAULT_HEIGHT_PERCENT = 0.25f;
-
         protected Node activeNode;
 
         #region Components
@@ -31,7 +28,7 @@ namespace MateriaCore.Components.GL
 
         protected const float ZOOM_SPEED = 1.0f / 60.0f;
 
-        public UI2DPreview() : base(new Vector2(DEFAULT_WIDTH_PERCENT, DEFAULT_HEIGHT_PERCENT), "2D Preview")
+        public UI2DPreview() : base(new Vector2(956f, 512f), "2D Preview")
         {
             RelativeTo = Anchor.BottomRight;
             InitializeComponents();
@@ -65,11 +62,11 @@ namespace MateriaCore.Components.GL
         }
 
         private void InitializeComponents()
-        {
+        { 
             internalContainer = new UIObject
             {
-                RelativeTo = Anchor.Fill,
-                RaycastTarget = true
+                RaycastTarget = true,
+                RelativeTo = Anchor.Fill
             };
             internalBackground = internalContainer.AddComponent<UIImage>();
             internalBackground.Color = new Vector4(0.05f, 0.05f, 0.05f, 1); //todo: use theme class
@@ -86,13 +83,12 @@ namespace MateriaCore.Components.GL
             //};
             //uvArea.Moved += UvArea_Moved;
 
-            imageArea = new MovablePane(new Vector2(512,512))
+            imageArea = new MovablePane(new Vector2(512, 512))
             {
-                RelativeTo = Anchor.Center,
-                RelativeMode = SizeMode.Pixel,
-                Sizing = SizeMode.Pixel,
                 SnapMode = MovablePaneSnapMode.None,
-                Origin = new Vector2(0.5f, 0.5f)
+                Origin = new Vector2(0.5f, 0.5f),
+                RelativeTo = Anchor.Center,
+                RaycastTarget = true
             };
 
             imageArea.Background.Color = new Vector4(1, 1, 1, 1);

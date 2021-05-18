@@ -42,9 +42,9 @@ namespace MateriaCore
             //load fontmanager fonts here
             Materia.Rendering.Fonts.FontManager.GetAvailableFonts();
 
-            updateTimer = new DispatcherTimer(DispatcherPriority.Render)
+            updateTimer = new DispatcherTimer(DispatcherPriority.Normal)
             {
-                Interval = new TimeSpan(0, 0, 0, 0, 16)
+                Interval = new TimeSpan(0, 0, 0, 0, 1)
             };
             updateTimer.Tick += UpdateTimer_Tick;
             updateTimer.Start();

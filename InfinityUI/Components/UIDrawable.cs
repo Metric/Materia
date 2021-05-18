@@ -11,6 +11,8 @@ namespace InfinityUI.Components
 {
     public class UIDrawable : IComponent, IDrawable
     {
+        public bool NeedsUpdate { get; set; }
+
         public event Action<UIDrawable> BeforeDraw;
 
         public UIObject Parent { get; set; }

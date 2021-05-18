@@ -41,8 +41,6 @@ namespace MateriaCore.Components.GL
 
         public UIWindow(Vector2 size, string titleText = "") : base(size)
         {
-            Sizing = SizeMode.Percent;
-            RelativeMode = SizeMode.Percent;
             InitializeComponents();
             title.Text = titleText;
         }
@@ -51,8 +49,8 @@ namespace MateriaCore.Components.GL
         {
             titleArea = new UIObject
             {
-                RelativeTo = Anchor.Center,
-                RaycastTarget = false
+                RaycastTarget = false,
+                RelativeTo = Anchor.Center
             };
             title = titleArea.AddComponent<UIText>();
             title.FontSize = 22;
@@ -60,24 +58,25 @@ namespace MateriaCore.Components.GL
 
             titleBackgroundArea = new UIObject
             {
-                Size = new Vector2(1, 32),
+                Size = new Vector2(1, 48),
                 RelativeTo = Anchor.TopHorizFill,
             };
             titleBackground = titleBackgroundArea.AddComponent<UIImage>();
             titleBackground.Color = new Vector4(0.1f, 0.1f, 0.1f, 1); //todo: add in a theme system
             titleBackgroundArea.AddChild(titleArea);
+            titleBackgroundArea.RaycastTarget = false;
 
             content = new UIObject
             {
                 RelativeTo = Anchor.Fill,
-                Padding = new Box2(0, 32, 0, 0),
+                Margin = new Box2(0, 48, 0, 0),
                 RaycastTarget = true
             };
 
-            closeButton = new Button("", new Vector2(32, 32))
+            closeButton = new Button("", new Vector2(48, 48))
             {
-                RelativeTo = Anchor.TopRight,
-                Padding = new Box2(2, 2, 2, 2)
+                Margin = new Box2(2, 2, 2, 2),
+                RelativeTo = Anchor.TopRight
             };
 
             //todo: load close button icon here

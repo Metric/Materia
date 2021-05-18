@@ -51,7 +51,6 @@ namespace MateriaCore.Components
         RawBitmap display;
 
         CurvePoint target;
-        Point mouseStart;
 
         CurvesMode mode;
 

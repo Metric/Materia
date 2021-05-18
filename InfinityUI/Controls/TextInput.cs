@@ -49,6 +49,8 @@ namespace InfinityUI.Controls
         public event Action<TextInput> LostFocus;
         public event Action<TextInput> OnSubmit;
 
+        public bool NeedsUpdate { get; set; }
+
         TextRange selectedText;
         public TextRange SelectText
         {
@@ -59,7 +61,7 @@ namespace InfinityUI.Controls
             set
             {
                 selectedText = value;
-                Invalidate();
+                NeedsUpdate = true;
             }
         }
 
@@ -77,7 +79,7 @@ namespace InfinityUI.Controls
                 if (View == null) return;
                 View.Text = value;
                 carretPosition = value.Length;
-                Invalidate();
+                NeedsUpdate = true;
             }
         }
 
@@ -126,13 +128,15 @@ namespace InfinityUI.Controls
             set
             {
                 carretPosition = Math.Min(Text.Length, Math.Max(0, value));
-                Invalidate();
+                NeedsUpdate = true;
             }
         }
         public int MaxLength { get; set; }
 
         public TextInput(float fontSize, Vector2 size, int maxLength = 0) : base()
         {
+            RaycastTarget = true;
+
             Size = size;
 
             TextPadding = new Vector2(2, -fontSize * 0.25f);
@@ -143,7 +147,6 @@ namespace InfinityUI.Controls
             selectable = AddComponent<UISelectable>();
 
             textContainer = new UIObject();
-            textContainer.RelativeTo = Anchor.CenterLeft;
 
             View = textContainer.AddComponent<UIText>();
             View.Text = "";
@@ -167,7 +170,7 @@ namespace InfinityUI.Controls
 
             InitEvents();
 
-            Invalidate();
+            NeedsUpdate = true;
         }
 
         protected virtual void InitEvents()
@@ -184,7 +187,7 @@ namespace InfinityUI.Controls
 
         public virtual void Invalidate()
         {
-            if (View == null || Carret == null) return;
+            if (View == null || Carret == null || !NeedsUpdate) return;
 
             var carretImage = Carret.GetComponent<UIImage>();
             if (carretImage != null && background != null)
@@ -200,13 +203,14 @@ namespace InfinityUI.Controls
 
             float carretSelectWidth = MathF.Abs(carretSelectEnd - carretSelectX);
 
-            if (textSize > Size.X)
+            Vector2 wSize = WorldSize;
+            if (textSize > wSize.X)
             {
-                maxOverflow = textSize - Size.X;
+                maxOverflow = textSize - wSize.X;
 
-                if (carretX >= Size.X)
+                if (carretX >= wSize.X)
                 {
-                    horizontalOffset = (Size.X - carretX - TextPadding.X - Carret.Size.X) - (Size.X - (carretX % Size.X));
+                    horizontalOffset = (wSize.X - carretX - TextPadding.X - Carret.Size.X) - (wSize.X - (carretX % wSize.X));
                 }
                 else
                 {
@@ -234,6 +238,8 @@ namespace InfinityUI.Controls
             //update carret selection area
             CarretSelection.Size = new Vector2(carretSelectWidth, CarretSelection.Size.Y);
             CarretSelection.Position = new Vector2(TextPadding.X + carretSelectX + horizontalOffset, 0);
+
+            NeedsUpdate = false;
         }
 
         protected float GetTextSizeX()
@@ -611,7 +617,7 @@ namespace InfinityUI.Controls
             mouseDown = false;
         }
 
-        protected virtual void OnFocusChanged(UISelectable selectable, bool focused)
+        protected virtual void OnFocusChanged(UISelectable selectable, FocusEvent fv, bool focused)
         {
             isFocused = focused;
             Carret.Visible = focused;

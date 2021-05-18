@@ -6,6 +6,7 @@ namespace InfinityUI.Interfaces
 {
     public interface ILayout
     {
+        bool NeedsUpdate { get; set; }
         void Invalidate();
     }
 }

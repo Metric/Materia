@@ -9,6 +9,8 @@ namespace InfinityUI.Components.Layout
 {
     public class UIStackPanel : IComponent, ILayout
     {
+        public bool NeedsUpdate { get; set; }
+
         protected Orientation direction;
         public Orientation Direction
         {
@@ -19,7 +21,18 @@ namespace InfinityUI.Components.Layout
             set
             {
                 direction = value;
-                Invalidate();
+                NeedsUpdate = true;
+            }
+        }
+
+        protected bool autoSize;
+        public bool AutoSize
+        {
+            get => autoSize;
+            set
+            {
+                autoSize = value;
+                NeedsUpdate = true;
             }
         }
 
@@ -33,7 +46,7 @@ namespace InfinityUI.Components.Layout
             set
             {
                 reverse = value;
-                Invalidate();
+                NeedsUpdate = true;
             }
         }
 
@@ -41,7 +54,6 @@ namespace InfinityUI.Components.Layout
 
         public virtual void Awake()
         {
-            Invalidate();
             AddEvents();
         }
 
@@ -59,25 +71,27 @@ namespace InfinityUI.Components.Layout
 
             Parent.ChildAdded += Parent_ChildAdded;
             Parent.ChildRemoved += Parent_ChildRemoved;
+
+            NeedsUpdate = true;
         }
 
         private void Parent_ChildRemoved(UIObject obj)
         {
             if (obj == null) return;
             obj.Resize -= Obj_Resize;
-            Invalidate();
+            NeedsUpdate = true;
         }
 
         private void Parent_ChildAdded(UIObject obj)
         {
             if (obj == null) return;
             obj.Resize += Obj_Resize;
-            Invalidate();
+            NeedsUpdate = true;
         }
 
         private void Obj_Resize(UIObject obj)
         {
-            Invalidate();
+            NeedsUpdate = true;
         }
 
         protected void RemoveEvents()
@@ -87,53 +101,114 @@ namespace InfinityUI.Components.Layout
             Parent.ChildRemoved -= Parent_ChildRemoved;
         }
 
-        public virtual void Invalidate()
+        private Vector3 Arrange(UIObject child, UIObject prev, float offset, float width, float height)
         {
-            if (Parent == null)
+            float marginOffset;
+            float verticalOffset;
+
+            var csize = child.AnchorSize;
+
+            if (direction == Orientation.Horizontal)
             {
-                return;
+                verticalOffset = Parent.Padding.Top + child.Margin.Top;
+
+                marginOffset = (prev != null ? prev.Margin.Right : Parent.Padding.Left) + child.Margin.Left;
+
+                child.Position = new Vector2(offset, verticalOffset);
+                float s = csize.X + marginOffset;
+                offset += s;
+                width += s;
+                height = MathF.Max(height, csize.Y);
+            }
+            else
+            {
+                verticalOffset = Parent.Padding.Left + child.Margin.Left;
+
+                marginOffset = (prev != null ? prev.Margin.Bottom : Parent.Padding.Top) + child.Margin.Top;
+
+                child.Position = new Vector2(verticalOffset, offset);
+                float s = csize.Y + marginOffset;
+                offset += s;
+                height += s;
+                width = MathF.Max(width, csize.X);
             }
 
+            return new Vector3(offset, width, height);
+        }
+
+        public virtual void Invalidate()
+        {
+            if (Parent == null || !NeedsUpdate) return;
+
             var Children = Parent.Children;
+            UIObject prev = null;
 
             float width = 0;
             float height = 0;
             float offset = 0;
 
+            if (autoSize)
+            {
+                float maxSize = 0;
+                for (int i = 0; i < Children.Count; ++i)
+                {
+                    var child = Children[i];
+                    var fitter = child.GetComponent<UIContentFitter>();
+                    if (fitter != null)
+                    {
+                        switch (direction)
+                        {
+                            case Orientation.Horizontal:
+                                fitter.Axis = Axis.Horizontal;
+                                break;
+                            case Orientation.Vertical:
+                                fitter.Axis = Axis.Vertical;
+                                break;
+                        }
+                    }
+
+                    Vector2 size = child.AnchorSize;
+                    switch (direction)
+                    {
+                        case Orientation.Horizontal:
+                            maxSize = MathF.Max(size.Y, maxSize);
+                            break;
+                        case Orientation.Vertical:
+                            maxSize = MathF.Max(size.X, maxSize);
+                            break;
+                    }
+                }
+
+                for (int i = 0; i < Children.Count; ++i)
+                {
+                    var child = Children[i];
+                    var size = child.AnchorSize;
+                    switch (direction)
+                    {
+                        case Orientation.Horizontal:
+                            child.Size = new Vector2(size.X, maxSize);
+                            break;
+                        case Orientation.Vertical:
+                            child.Size = new Vector2(maxSize, size.Y);
+                            break;
+                    }
+                }
+            }
+
             for (int i = 0; i < Children.Count; ++i)
             {
-                if (!Children[i].Visible) continue;
+                int k = i;
+                if (reverse) k = (Children.Count - 1) - i;
+                var child = Children[k];
+                if (!child.Visible) continue;
 
-                if (!reverse)
-                {
-                    Children[i].RelativeTo = Anchor.TopLeft;
-                }
-                else
-                {
-                    if (direction == Orientation.Horizontal)
-                    {
-                        Children[i].RelativeTo = Anchor.TopRight;
-                    }
-                    else
-                    {
-                        Children[i].RelativeTo = Anchor.BottomLeft;
-                    }
-                }
+                Vector3 sizes = Arrange(child, prev, offset, width, height);
 
-                if (direction == Orientation.Horizontal)
-                {
-                    Children[i].Position = new Vector2(offset, 0);
-                    offset += Children[i].Size.X;
-                    width += Children[i].Size.X;
-                    height = MathF.Max(height, Children[i].Size.Y);
-                }
-                else
-                {
-                    Children[i].Position = new Vector2(0, offset);
-                    offset += Children[i].Size.Y;
-                    height += Children[i].Size.Y;
-                    width = MathF.Max(width, Children[i].Size.X);
-                }
+                offset = sizes.X;
+                width = sizes.Y;
+                height = sizes.Z;
+
+                prev = child;
             }
 
             var RelativeTo = Parent.RelativeTo;
@@ -151,6 +226,8 @@ namespace InfinityUI.Components.Layout
                     Parent.Size = new Vector2(width, height);
                     break;
             }
+
+            NeedsUpdate = false;
         }
 
         public virtual void Dispose()
