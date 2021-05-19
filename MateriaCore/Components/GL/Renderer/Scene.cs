@@ -59,8 +59,34 @@ namespace MateriaCore.Components.GL.Renderer
             }
         }
 
-        public PreviewCameraPosition CameraView { get; set; } = PreviewCameraPosition.Front;
-        public PreviewCameraMode CameraMode { get; set; } = PreviewCameraMode.Perspective;
+        protected PreviewCameraPosition cameraView = PreviewCameraPosition.Front;
+        public PreviewCameraPosition CameraView
+        {
+            get => cameraView;
+            set
+            {
+                if (cameraView != value)
+                {
+                    cameraView = value;
+                    IsModified = true;
+                    InvalidateCameraAngle();
+                }
+            }
+        }
+
+        protected PreviewCameraMode cameraMode = PreviewCameraMode.Perspective;
+        public PreviewCameraMode CameraMode
+        {
+            get => cameraMode;
+            set
+            {
+                if (cameraMode != value)
+                {
+                    cameraMode = value;
+                    IsModified = true;
+                }
+            }
+        }
 
         public Matrix4 ActiveProjection { get; protected set; }
 
@@ -133,7 +159,7 @@ namespace MateriaCore.Components.GL.Renderer
                     camera.LocalEulerAngles = new Vector3(0, 90, 0);
                     break;
                 case PreviewCameraPosition.Angled:
-                    camera.LocalEulerAngles = new Vector3(25, 45, 0);
+                    camera.LocalEulerAngles = new Vector3(45, -35, 32);
                     break;
             }
         }
@@ -164,6 +190,8 @@ namespace MateriaCore.Components.GL.Renderer
                 LocalEulerAngles = new Vector3(0, 0, 0),
                 LocalPosition = new Vector3(0, 0, 3)
             };
+
+            Cam.Update += Cam_Update;
 
             Light = new Light()
             {
@@ -209,6 +237,11 @@ namespace MateriaCore.Components.GL.Renderer
             SetEmission(null);
 
             Invalidate();
+        }
+
+        private void Cam_Update(Camera obj)
+        {
+            IsModified = true;
         }
 
         protected virtual void CreateDefaultTextures()
@@ -273,7 +306,6 @@ namespace MateriaCore.Components.GL.Renderer
             Light.Color = SceneLightingSettings.Color.ToVector3();
 
             IsModified = true;
-            Invalidate();
         }
         #endregion
 

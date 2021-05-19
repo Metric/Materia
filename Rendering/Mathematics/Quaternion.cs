@@ -162,6 +162,54 @@ namespace Materia.Rendering.Mathematics
         }
 
         /// <summary>
+        /// Convert this instance to an Euler angle representation.
+        /// </summary>
+        /// <returns>The Euler angles in radians.</returns>
+        public Vector3 ToEulerAngles()
+        {
+            /*
+            reference
+            http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+            http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
+            */
+
+            var q = this;
+
+            Vector3 eulerAngles;
+
+            // Threshold for the singularities found at the north/south poles.
+            const float SINGULARITY_THRESHOLD = 0.4999995f;
+
+            var sqw = q.W * q.W;
+            var sqx = q.X * q.X;
+            var sqy = q.Y * q.Y;
+            var sqz = q.Z * q.Z;
+            var unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
+            var singularityTest = (q.X * q.Z) + (q.W * q.Y);
+
+            if (singularityTest > SINGULARITY_THRESHOLD * unit)
+            {
+                eulerAngles.Z = (float)(2 * Math.Atan2(q.X, q.W));
+                eulerAngles.Y = MathHelper.PiOver2;
+                eulerAngles.X = 0;
+            }
+            else if (singularityTest < -SINGULARITY_THRESHOLD * unit)
+            {
+                eulerAngles.Z = (float)(-2 * Math.Atan2(q.X, q.W));
+                eulerAngles.Y = -MathHelper.PiOver2;
+                eulerAngles.X = 0;
+            }
+            else
+            {
+                eulerAngles.Z = MathF.Atan2(2 * ((q.W * q.Z) - (q.X * q.Y)), sqw + sqx - sqy - sqz);
+                eulerAngles.Y = MathF.Asin(2 * singularityTest / unit);
+                eulerAngles.X = MathF.Atan2(2 * ((q.W * q.X) - (q.Y * q.Z)), sqw - sqx - sqy + sqz);
+            }
+
+            return eulerAngles;
+        }
+
+        /// <summary>
         /// Gets the length (magnitude) of the quaternion.
         /// </summary>
         /// <seealso cref="LengthSquared"/>

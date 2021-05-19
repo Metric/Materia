@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using MateriaCore.Utils;
 using System;
 using System.Reflection;
 using System.Threading;
@@ -146,7 +147,13 @@ namespace MateriaCore.Components
             sliderInput.MaxValue = max;
             sliderInput.MinValue = min;
 
-            float f = Convert.ToSingle(p?.GetValue(owner));
+            UpdateValuesFromProperty();
+            input.Set(IsInt ? NumberInputType.Int : NumberInputType.Float, propertyOwner, property);
+        }
+
+        private void UpdateValuesFromProperty()
+        {
+            float f = Convert.ToSingle(property?.GetValue(propertyOwner));
 
             if (float.IsInfinity(f) || float.IsNaN(f))
             {
@@ -154,7 +161,27 @@ namespace MateriaCore.Components
             }
 
             sliderInput.Value = f;
-            input.Set(IsInt ? NumberInputType.Int : NumberInputType.Float, owner, p);
+        }
+
+        private void OnUpdateParameter(object sender, object v)
+        {
+            if (v == propertyOwner)
+            {
+                UpdateValuesFromProperty();
+            }
+        }
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            GlobalEvents.On(GlobalEvent.UpdateParameters, OnUpdateParameter);
+            UpdateValuesFromProperty();
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+            GlobalEvents.Off(GlobalEvent.UpdateParameters, OnUpdateParameter);
         }
 
         private void InitializeComponent()

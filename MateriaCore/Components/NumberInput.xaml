@@ -3,8 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="256" d:DesignHeight="32" Height="32" HorizontalAlignment="Stretch"
-             x:Class="MateriaCore.Components.NumberInput">
+             x:Class="MateriaCore.Components.NumberInput"
+             Focusable="True">
   <Grid>
-    <TextBox IsEnabled="{Binding IsEnabled}" Background="{StaticResource Overlay5}" CaretBrush="{StaticResource Primary}" Height="32" Padding="2,4,2,0" Foreground="{StaticResource TextLight}" BorderThickness="0" Name="Input" Margin="2" HorizontalAlignment="Stretch"></TextBox>
+    <TextBox IsEnabled="{Binding IsEnabled}" Focusable="True" Background="{StaticResource Overlay5}" CaretBrush="{StaticResource Primary}" Height="32" Padding="2,4,2,0" Foreground="{StaticResource TextLight}" BorderThickness="0" Name="Input" Margin="2" HorizontalAlignment="Stretch"></TextBox>
   </Grid>
 </UserControl>

@@ -22,6 +22,9 @@ namespace MateriaCore.Components
         object propertyOwner;
         VectorPropertyContainer pc;
 
+        float Min = 0;
+        float Max = 1;
+
         public VectorSlider()
         {
             this.InitializeComponent();
@@ -55,7 +58,22 @@ namespace MateriaCore.Components
                     break;
             }
 
-            object b = p.GetValue(owner);
+            Min = min;
+            Max = max;
+
+            xvalue.IsInt = isInt;
+            yvalue.IsInt = isInt;
+            zvalue.IsInt = isInt;
+            wvalue.IsInt = isInt;
+
+            UpdateValuesFromProperty();
+        }
+
+        private void UpdateValuesFromProperty()
+        {
+            if (property == null || propertyOwner == null) return;
+
+            object b = property.GetValue(propertyOwner);
 
             if (b != null)
             {
@@ -68,15 +86,32 @@ namespace MateriaCore.Components
             var zprop = pc.GetType().GetProperty("ZProp");
             var wprop = pc.GetType().GetProperty("WProp");
 
-            xvalue.IsInt = isInt;
-            yvalue.IsInt = isInt;
-            zvalue.IsInt = isInt;
-            wvalue.IsInt = isInt;
 
-            xvalue.Set(min, max, xprop, pc);
-            yvalue.Set(min, max, yprop, pc);
-            zvalue.Set(min, max, zprop, pc);
-            wvalue.Set(min, max, wprop, pc);
+            xvalue.Set(Min, Max, xprop, pc);
+            yvalue.Set(Min, Max, yprop, pc);
+            zvalue.Set(Min, Max, zprop, pc);
+            wvalue.Set(Min, Max, wprop, pc);
+        }
+
+        private void OnUpdateParameter(object sender, object v)
+        {
+            if (v == propertyOwner)
+            {
+                UpdateValuesFromProperty();
+            }
+        }
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            GlobalEvents.On(GlobalEvent.UpdateParameters, OnUpdateParameter);
+            UpdateValuesFromProperty();
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+            GlobalEvents.Off(GlobalEvent.UpdateParameters, OnUpdateParameter);
         }
 
         private void InitializeComponent()

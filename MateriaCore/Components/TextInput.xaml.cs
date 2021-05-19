@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using MateriaCore.Utils;
 using System;
 using System.Reflection;
 using System.Threading;
@@ -18,6 +19,8 @@ namespace MateriaCore.Components
 
         private TextBox input;
 
+        private bool isMultiline;
+
         string placeholder;
         public string Placeholder
         {
@@ -34,7 +37,7 @@ namespace MateriaCore.Components
         public TextInput()
         {
             this.InitializeComponent();
-            input.TextInput += Input_TextInput;
+            input.AddHandler(TextInputEvent, Input_TextInput, Avalonia.Interactivity.RoutingStrategies.Tunnel);
             input.KeyDown += Input_KeyDown;
             input.GotFocus += Input_GotFocus;
             input.LostFocus += Input_LostFocus;
@@ -53,7 +56,9 @@ namespace MateriaCore.Components
             propertyOwner = null;
             input.Text = text;
 
-            if (multi)
+            isMultiline = multi;
+
+            if (isMultiline)
             {
                 input.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
                 input.AcceptsReturn = true;
@@ -75,31 +80,7 @@ namespace MateriaCore.Components
             property = p;
             propertyOwner = owner;
 
-            var v = property.GetValue(owner);
-
-            if (v != null)
-            {
-                try
-                {
-                    input.Text = v.ToString();
-                }
-                catch (Exception e) 
-                { 
-                }
-            }
-
-            if (multi)
-            {
-                input.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
-                input.AcceptsReturn = true;
-                Height = 128;
-            }
-            else
-            {
-                input.TextWrapping = Avalonia.Media.TextWrapping.NoWrap;
-                input.AcceptsReturn = false;
-                Height = 32;
-            }
+            UpdateValuesFromProperty();
         }
 
         private void Input_LostFocus(object sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -153,6 +134,56 @@ namespace MateriaCore.Components
                     property.SetValue(propertyOwner, input.Text);
                 }
             }, TaskScheduler.FromCurrentSynchronizationContext());
+        }
+
+        private void UpdateValuesFromProperty()
+        {
+            if (property == null || propertyOwner == null) return;
+            var v = property.GetValue(propertyOwner);
+
+            if (v != null)
+            {
+                try
+                {
+                    input.Text = v.ToString();
+                }
+                catch (Exception e)
+                {
+                }
+            }
+
+            if (isMultiline)
+            {
+                input.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
+                input.AcceptsReturn = true;
+                Height = 128;
+            }
+            else
+            {
+                input.TextWrapping = Avalonia.Media.TextWrapping.NoWrap;
+                input.AcceptsReturn = false;
+                Height = 32;
+            }
+        }
+
+        private void OnUpdateParameter(object sender, object v)
+        {
+            if (v == propertyOwner)
+            {
+                UpdateValuesFromProperty();
+            }
+        }
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            GlobalEvents.On(GlobalEvent.UpdateParameters, OnUpdateParameter);
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+            GlobalEvents.Off(GlobalEvent.UpdateParameters, OnUpdateParameter);
         }
 
         private void InitializeComponent()

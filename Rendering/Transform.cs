@@ -40,17 +40,14 @@ namespace Materia.Rendering
             }
         }
 
-        private Vector3 localEulerAngles = Vector3.Zero;
-
         public Vector3 LocalEulerAngles
         {
             get
             {
-                return localEulerAngles;
+                return LocalRotation.ToEulerAngles() * MathHelper.Rad2Deg;
             }
             set
             {
-                localEulerAngles = value;
                 Vector3 angles = value * MathHelper.Deg2Rad;
                 LocalRotation = Quaternion.FromEulerAngles(angles);
             }

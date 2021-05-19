@@ -142,7 +142,11 @@ namespace MateriaCore.Components.GL
             };
             var rightStackPanel = rightStack.AddComponent<UIStackPanel>();
 
-            zoomIn = new Button("", new Vector2(32, 32));
+            zoomIn = new Button("", new Vector2(32, 32))
+            {
+                Margin = new Box2(4, 0, 4, 0),
+                Padding = new Box2(4, 0, 4, 0),
+            };
             zoomIn.Background.Texture = UI.GetEmbeddedImage(Icons.ADD, typeof(UI2DPreview));
             zoomIn.Submit += ZoomIn_Submit;
 
@@ -151,6 +155,8 @@ namespace MateriaCore.Components.GL
             zoomLevelArea = new UIObject
             {
                 RaycastTarget = false,
+                Padding = new Box2(4,0,4,0),
+                Margin = new Box2(4,0,4,0)
             };
             zoomLevel = zoomLevelArea.AddComponent<UIText>();
             zoomLevel.Text = "100%";
@@ -159,12 +165,20 @@ namespace MateriaCore.Components.GL
             rightStackPanel.ChildAlignment = Anchor.Left;
             rightStack.AddChild(zoomLevelArea);
 
-            zoomOut = new Button("", new Vector2(32, 32));
+            zoomOut = new Button("", new Vector2(32, 32))
+            {
+                Margin = new Box2(4, 0, 4, 0),
+                Padding = new Box2(4, 0, 4, 0),
+            };
             zoomOut.Background.Texture = UI.GetEmbeddedImage(Icons.MINUS, typeof(UI2DPreview));
             zoomOut.Submit += ZoomOut_Submit;
             rightStack.AddChild(zoomOut);
 
-            ratio1x1 = new Button("", new Vector2(32, 32));
+            ratio1x1 = new Button("", new Vector2(32, 32))
+            {
+                Margin = new Box2(4, 0, 4, 0),
+                Padding = new Box2(4, 0, 4, 0),
+            };
             ratio1x1.Background.Texture = UI.GetEmbeddedImage(Icons.ONE_X_ONE, typeof(UI2DPreview));
             ratio1x1.Submit += Ratio1x1_Submit;
             rightStack.AddChild(ratio1x1);

@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -24,7 +25,6 @@ namespace MateriaCore
             InitializeComponent();
             MLog.Log.File = "log.txt";
 
-            Closing += MainWindow_Closing;
             Instance = this;
 
             //set TKGL as default GL Interface
@@ -48,17 +48,21 @@ namespace MateriaCore
             };
             updateTimer.Tick += UpdateTimer_Tick;
             updateTimer.Start();
+
+            Opened += MainWindow_Opened;
+        }
+
+        private void MainWindow_Opened(object sender, EventArgs e)
+        {
+            Task.Delay(1000).ContinueWith(t =>
+            {
+                Hide();
+            }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         private void UpdateTimer_Tick(object sender, EventArgs e)
         {
             glWindow?.Process();
-        }
-
-        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            glWindow?.Close();
-            glWindow?.Dispose();
         }
 
         private void InitializeComponent()

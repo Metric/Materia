@@ -167,6 +167,11 @@ namespace MateriaCore.Components
 
         private void Slider_PropertyChanged(object sender, AvaloniaPropertyChangedEventArgs e)
         {
+            if (e.Property.Name == "Bounds")
+            {
+                UpdateFillFromValue();
+            }
+
             if (e.Property.Name == "IsEnabled" && fillRect != null)
             {
                 if (!IsEnabled)
@@ -234,6 +239,12 @@ namespace MateriaCore.Components
             {
                 fillRect.Width = Math.Min(sliderArea.Bounds.Width, Math.Max(w, 0));
             }
+        }
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            UpdateFillFromValue();
         }
 
         private void InitializeComponent()

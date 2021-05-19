@@ -25,7 +25,7 @@ namespace MateriaCore.Localization
                 Assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
                 var assy = Assembly.GetExecutingAssembly();
                 EmbeddedFileProvider provider = new EmbeddedFileProvider(assy);
-                Language = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(new StreamReader(provider.GetFileInfo("Localization\\localization.json").CreateReadStream()).ReadToEnd());
+                Language = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(new StreamReader(provider.GetFileInfo("Localization/localization.json").CreateReadStream()).ReadToEnd());
             }
             catch (Exception e)
             {
@@ -40,28 +40,30 @@ namespace MateriaCore.Localization
 
         public string Get(string id)
         {
+            string v = "";
             try
             {
                 var currentCulture = CultureInfo.CurrentCulture;
                 if (Language.ContainsKey(currentCulture.Name))
                 {
 
-                    return Language[currentCulture.Name][id];
+                    Language[currentCulture.Name].TryGetValue(id, out v);
                 }
                 else
                 {
-                    return Language["default"][id];
+                    Language["default"].TryGetValue(id, out v);
                 }
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.Message + " | " + e.StackTrace);
-                return "";
             }
+            return v;
         }
 
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
+            string v = "";
             try
             {
                 if(Language == null)
@@ -73,18 +75,19 @@ namespace MateriaCore.Localization
                 if (Language.ContainsKey(currentCulture.Name))
                 {
 
-                    return Language[currentCulture.Name][Id];
+                    Language[currentCulture.Name].TryGetValue(Id, out v);
                 }
                 else
                 {
-                    return Language["default"][Id];
+                    Language["default"].TryGetValue(Id, out v);
                 }
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.Message + " | " + e.StackTrace);
-                return "";
             }
+
+            return v;
         }
     }
 }

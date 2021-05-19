@@ -136,8 +136,8 @@
 		"New": "NEW",
 		"PromoteToConstant": "Promote to Constant",
 		"PromoteToFunction": "Promote to Function",
-		"AssignFunction":  "Assign Function",
-		"ResetToDefault":  "Reset to Default",
+		"AssignFunction": "Assign Function",
+		"ResetToDefault": "Reset to Default",
 		"Recent": "RECENT",
 		"Redo": "REDO",
 		"Reset": "RESET",
@@ -190,6 +190,8 @@
 		"ParameterName": "Parameter Name",
 		"SaveChanges": "SAVE CHANGES",
 		"Search": "Search...",
-		"SeparateFiles": "Separate Files"
+		"SeparateFiles": "Separate Files",
+		"HeightClipBias": "Height Clip Bias",
+		"IndexofRefraction":  "Index of Refraction"
 	}
 }

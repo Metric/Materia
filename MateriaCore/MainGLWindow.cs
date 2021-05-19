@@ -1,4 +1,6 @@
-﻿using InfinityUI.Components;
+﻿using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using InfinityUI.Components;
 using InfinityUI.Core;
 using Materia.Graph;
 using Materia.Rendering.Fonts;
@@ -11,6 +13,7 @@ using Materia.Rendering.Mathematics;
 using Materia.Rendering.Shaders;
 using Materia.Rendering.Textures;
 using MateriaCore.Components.GL;
+using MateriaCore.Components.Panes;
 using MateriaCore.Utils;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -24,6 +27,8 @@ namespace MateriaCore
 {
     public class MainGLWindow : NativeWindow
     {
+        public event Action Restored;
+
         #region DeltaTime
         public static int TargetFPS { get; set; } = 60;
         protected float deltaTime = 0;
@@ -51,9 +56,15 @@ namespace MateriaCore
 
         private bool pbrInitialized = false;
 
+        private Parameters parameterPane;
+
+        private bool isMinimized = false;
+
         public MainGLWindow(NativeWindowSettings settings) : base(settings)
         {
             InitializeEvents();
+            parameterPane = new Parameters(this);
+            parameterPane.Show();
         }
 
         #region Window Events
@@ -61,6 +72,7 @@ namespace MateriaCore
         {
             IsVisible = false;
             InternalDispose();
+            (Application.Current.ApplicationLifetime as IControlledApplicationLifetime)?.Shutdown();
         }
 
         private void MainGLWindow_KeyUp(OpenTK.Windowing.Common.KeyboardKeyEventArgs obj)
@@ -232,6 +244,7 @@ namespace MateriaCore
 
         private void InitializeEvents()
         {
+            Minimized += MainGLWindow_Minimized;
             TextInput += MainGLWindow_TextInput;
             MouseDown += MainGLWindow_MouseDown;
             MouseMove += MainGLWindow_MouseMove;
@@ -240,6 +253,11 @@ namespace MateriaCore
             KeyDown += MainGLWindow_KeyDown;
             KeyUp += MainGLWindow_KeyUp;
             Closing += MainGLWindow_Closing;  
+        }
+
+        private void MainGLWindow_Minimized(OpenTK.Windowing.Common.MinimizedEventArgs obj)
+        {
+            isMinimized = true;
         }
 
         private void UpdateSize()
@@ -323,6 +341,12 @@ namespace MateriaCore
                 || WindowState == OpenTK.Windowing.Common.WindowState.Minimized)
             {
                 return;
+            }
+
+            if (isMinimized)
+            {
+                Restored?.Invoke();
+                isMinimized = false;
             }
 
             MakeCurrent();

@@ -454,5 +454,91 @@ namespace Materia.Rendering.Mathematics
             double diff = Math.Abs(a - b);
             return diff <= tolerance;
         }
+
+        /// <summary>
+        /// Normalizes an angle to the range (-π, π].
+        /// </summary>
+        /// <param name="angle">The angle in radians to normalize.</param>
+        /// <returns>The normalized angle in the range (-π, π].</returns>
+        public static float NormalizeRadians(float angle)
+        {
+            // returns angle in the range [0, 2π).
+            angle = ClampRadians(angle);
+
+            if (angle > PiOver2)
+            {
+                // shift angle to range (-π, π]
+                angle -= 2 * Pi;
+            }
+
+            return angle;
+        }
+
+        /// <summary>
+        /// Normalizes an angle to the range (-π, π].
+        /// </summary>
+        /// <param name="angle">The angle in radians to normalize.</param>
+        /// <returns>The normalized angle in the range (-π, π].</returns>
+        public static double NormalizeRadians(double angle)
+        {
+            // returns angle in the range [0, 2π).
+            angle = ClampRadians(angle);
+
+            if (angle > PiOver2)
+            {
+                // shift angle to range (-π, π]
+                angle -= 2 * Pi;
+            }
+
+            return angle;
+        }
+
+        /// <summary>
+        /// Clamps an angle to the range [0, 2π).
+        /// </summary>
+        /// <param name="angle">The angle to clamp in radians.</param>
+        /// <returns>The clamped angle in the range [0, 2π).</returns>
+        public static float ClampRadians(float angle)
+        {
+            // mod angle so it's in the range (-2π,2π)
+            angle %= 2 * Pi;
+
+            // abs angle so it's in the range [0,2π)
+            angle = MathF.Abs(angle);
+
+            return angle;
+        }
+
+        /// <summary>
+        /// Clamps an angle to the range [0, 2π).
+        /// </summary>
+        /// <param name="angle">The angle to clamp in radians.</param>
+        /// <returns>The clamped angle in the range [0, 2π).</returns>
+        public static double ClampRadians(double angle)
+        {
+            // mod angle so it's in the range (-2π,2π)
+            angle %= 2 * Pi;
+
+            // abs angle so it's in the range [0,2π)
+            angle = Math.Abs(angle);
+
+            return angle;
+        }
+
+        /// <summary>
+        /// Clamps an angle to the range [0, 360).
+        /// </summary>
+        /// <param name="angle">The angle to clamp in degrees.</param>
+        /// <returns>The clamped angle in the range [0, 360).</returns>
+        public static double ClampAngle(double angle)
+        {
+            // mod angle so it's in the range (-360, 360)
+            angle %= 360f;
+
+            // abs angle so it's in the range [0, 360)
+            angle = Math.Abs(angle);
+
+            return angle;
+        }
     }
 }

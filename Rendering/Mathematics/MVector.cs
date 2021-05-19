@@ -21,7 +21,7 @@ namespace Materia.Rendering.Mathematics
 
         public float Length()
         {
-            return MathF.Sqrt(LengthSqr());
+            return MathF.Sqrt(X * X + Y * Y + Z * Z + W * W);
         }
 
         public float LengthSqr()
@@ -31,37 +31,70 @@ namespace Materia.Rendering.Mathematics
 
         public MVector Normalized()
         {
-            if(LengthSqr() == 0)
+            float lsqr = LengthSqr();
+            if(float.IsNaN(lsqr) || float.IsInfinity(lsqr) || lsqr == 0)
             {
                 return new MVector();
             }
 
-            float l = 1.0f / Length();
+            float l = 1.0f / MathF.Sqrt(lsqr);
             return this * l;
+        }
+
+        public MVector(float v)
+        {
+            X = v;
+            Y = v;
+            Z = v;
+            W = v;
         }
 
         public MVector(float x, float y)
         {
-            this.X = x;
-            this.Y = y;
+            X = x;
+            Y = y;
             Z = 0;
             W = 0;
         }
 
         public MVector(float x, float y, float z)
         {
-            this.X = x;
-            this.Y = y;
-            this.Z = z;
+            X = x;
+            Y = y;
+            Z = z;
             W = 0;
         }
 
         public MVector(float x, float y, float z, float w)
         {
-            this.X = x;
-            this.Y = y;
-            this.Z = z;
-            this.W = w;
+            X = x;
+            Y = y;
+            Z = z;
+            W = w;
+        }
+
+        public MVector(Vector2 v)
+        {
+            X = v.X;
+            Y = v.Y;
+            Z = 0;
+            W = 0;
+        }
+
+        public MVector(Vector3 v)
+        {
+            X = v.X;
+            Y = v.Y;
+            Z = v.Z;
+            W = 0;
+        }
+
+        public MVector(Vector4 v)
+        {
+            X = v.X;
+            Y = v.Y;
+            Z = v.Z;
+            W = v.W;
         }
 
         public Vector4 ToVector4()
@@ -267,6 +300,11 @@ namespace Materia.Rendering.Mathematics
                     v1.Z / (v2.Z + float.Epsilon),
                     v1.W / (v2.W + float.Epsilon)
                 );
+        }
+
+        public static MVector operator %(MVector v, float t)
+        {
+            return new MVector(v.X % t, v.Y % t, v.Z % t, v.W % t);
         }
 
         public static MVector operator -(float t, MVector v1)

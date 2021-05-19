@@ -19,6 +19,7 @@ namespace MateriaCore.Utils
         MoveSelected,
         MoveComplete,
         ViewParameters,
+        UpdateParameters,
         ClearViewParameters,
         HdriUpdate,
         SkyboxUpdate

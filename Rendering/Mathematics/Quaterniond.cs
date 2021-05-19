@@ -158,6 +158,56 @@ namespace Materia.Rendering.Mathematics
             return result;
         }
 
+
+        /// <summary>
+        /// Convert this instance to an Euler angle representation.
+        /// </summary>
+        /// <returns>The Euler angles in radians.</returns>
+        public Vector3d ToEulerAngles()
+        {
+            /*
+            reference
+            http://en.wikipedia.org/wiki/Conversion_between_qernions_and_Euler_angles
+            http://www.euclideanspace.com/maths/geometry/rotations/conversions/qernionToEuler/
+            */
+
+            var q = this;
+
+            q.Normalize();
+
+            double singularityTest = (q.X * q.Y) - (q.W * q.Z);
+            double yawY = 2d * ((q.W * q.X) + (q.Y * q.Z));
+            double yawX = 1d - (2d * ((q.Z * q.Z) + (q.X * q.X)));
+
+            // Threshold for the singularities found at the north/south poles.
+            // TODO: Think about how this threshold should change with the added precision
+            const double SINGULARITY_THRESHOLD = 0.4999995d;
+
+            Vector3d eulerAngles;
+
+            if (singularityTest < -SINGULARITY_THRESHOLD)
+            {
+                eulerAngles.Z = -Math.PI / 2; // -90 degrees
+                eulerAngles.Y = Math.Atan2(yawY, yawX);
+                eulerAngles.X = MathHelper.NormalizeRadians(-eulerAngles.Y - (2d * Math.Atan2(q.Y, q.W)));
+            }
+            else if (singularityTest > SINGULARITY_THRESHOLD)
+            {
+                eulerAngles.Z = Math.PI / 2; // 90 degrees
+                eulerAngles.Y = Math.Atan2(yawY, yawX);
+                eulerAngles.X = MathHelper.NormalizeRadians(eulerAngles.Y - (2d * Math.Atan2(q.Y, q.W)));
+            }
+            else
+            {
+                eulerAngles.Z = Math.Asin(2d * singularityTest);
+                eulerAngles.X = Math.Atan2(yawY, yawX);
+                eulerAngles.Y = Math.Atan2(-2d * ((q.W * q.Y) + (q.Z * q.X)), 1d - (2d * ((q.Y * q.Y) + (q.Z * q.Z))));
+            }
+
+            return eulerAngles;
+        }
+
+
         /// <summary>
         /// Gets the length (magnitude) of the Quaterniond.
         /// </summary>

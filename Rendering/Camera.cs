@@ -58,6 +58,17 @@ namespace Materia.Rendering
             }
         }
 
+        [Editable(ParameterInputType.Float3Input, "Rotation", min: 0, max: 360)]
+        public MVector EulerRotation
+        {
+            get => new MVector(LocalEulerAngles) % 360f;
+            set
+            {
+                LocalEulerAngles = value.ToVector3();
+                Update?.Invoke(this);
+            }
+        }
+
         public Matrix4 OrthographicWithSize(float width, float height)
         {
             return Matrix4.CreateOrthographic(width,height,Near,Far);

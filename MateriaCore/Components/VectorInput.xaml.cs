@@ -19,6 +19,8 @@ namespace MateriaCore.Components
         object propertyOwner;
         VectorPropertyContainer pc;
 
+        NumberInputType nType;
+
         public VectorInput()
         {
             this.InitializeComponent();
@@ -31,6 +33,8 @@ namespace MateriaCore.Components
         {
             property = p;
             propertyOwner = owner;
+
+            nType = ntype;
 
             switch (type)
             {
@@ -48,7 +52,13 @@ namespace MateriaCore.Components
                     break;
             }
 
-            object b = p.GetValue(owner);
+            UpdateValuesFromProperty();
+        }
+
+        private void UpdateValuesFromProperty()
+        {
+            if (property == null || propertyOwner == null) return;
+            object b = property.GetValue(propertyOwner);
 
             if (b != null)
             {
@@ -61,10 +71,30 @@ namespace MateriaCore.Components
             var zprop = pc.GetType().GetProperty("ZProp");
             var wprop = pc.GetType().GetProperty("WProp");
 
-            xpos.Set(ntype, pc, xprop);
-            ypos.Set(ntype, pc, yprop);
-            zpos.Set(ntype, pc, zprop);
-            wpos.Set(ntype, pc, wprop);
+            xpos.Set(nType, pc, xprop);
+            ypos.Set(nType, pc, yprop);
+            zpos.Set(nType, pc, zprop);
+            wpos.Set(nType, pc, wprop);
+        }
+
+        private void OnUpdateParameter(object sender, object v)
+        {
+            if (v == propertyOwner)
+            {
+                UpdateValuesFromProperty();
+            }
+        }
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            GlobalEvents.On(GlobalEvent.UpdateParameters, OnUpdateParameter);
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+            GlobalEvents.Off(GlobalEvent.UpdateParameters, OnUpdateParameter);
         }
 
         private void Pc_OnUpdate()

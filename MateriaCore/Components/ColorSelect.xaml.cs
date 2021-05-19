@@ -7,6 +7,7 @@ using Materia.Rendering.Mathematics;
 using MateriaCore.Components.Dialogs;
 using MateriaCore.Utils;
 using System.Threading.Tasks;
+using Avalonia.LogicalTree;
 
 namespace MateriaCore.Components
 {
@@ -25,9 +26,18 @@ namespace MateriaCore.Components
         public ColorSelect()
         {
             InitializeComponent();
+            
             selectColor.Background = new SolidColorBrush(Colors.Black);
             selectColor.PointerReleased += SelectColor_PointerReleased;
             dropper.Click += Dropper_Click;
+        }
+
+        private void OnUpdateParameter(object sender, object v)
+        {
+            if (v == propertyOwner)
+            {
+                UpdateValuesFromProperty();
+            }
         }
 
         private void Dropper_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -78,8 +88,13 @@ namespace MateriaCore.Components
         {
             property = p;
             propertyOwner = owner;
+            UpdateValuesFromProperty();
+        }
 
-            MVector m = (MVector)p.GetValue(owner);
+        private void UpdateValuesFromProperty()
+        {
+            if (property == null || propertyOwner == null) return;
+            MVector m = (MVector)property.GetValue(propertyOwner);
             current = m.Clamp(MVector.Zero, MVector.One);
             UpdateBrush();
         }
@@ -98,11 +113,17 @@ namespace MateriaCore.Components
             dropper = this.FindControl<Button>("Dropper");
         }
 
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            GlobalEvents.On(GlobalEvent.UpdateParameters, OnUpdateParameter);
+        }
+
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
-
             pixelGrabber?.Dispose();
+            GlobalEvents.Off(GlobalEvent.UpdateParameters, OnUpdateParameter);
         }
     }
 }

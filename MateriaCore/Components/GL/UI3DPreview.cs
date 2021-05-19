@@ -6,6 +6,7 @@ using InfinityUI.Interfaces;
 using Materia.Rendering.Mathematics;
 using MateriaCore.Components.GL.Menu;
 using MateriaCore.Components.GL.Renderer;
+using MateriaCore.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,6 +17,13 @@ namespace MateriaCore.Components.GL
 {
     public class UI3DPreview : UIWindow
     {
+        protected enum ResetLightType
+        {
+            DefaultPosition,
+            SettoOrigin,
+            Reset
+        }
+
         protected Scene scene;
         public Scene Scene { get => scene;  }
 
@@ -154,24 +162,24 @@ namespace MateriaCore.Components.GL
                     .Add("Orthographic", CameraMode_Click)
                     .Add("Perspective", CameraMode_Click)
                     .Separator()
-                    .Add("Settings")
+                    .Add("Settings", CameraSettings_Click)
                 .FinishSubMenu()
                 .Add(loc.Get("Light"))
                 .StartSubMenu()
-                    .Add("Default Position")
-                    .Add("Set to Origin")
-                    .Add("Reset")
+                    .Add("Default Position", ResetLight_Click)
+                    .Add("Set to Origin", ResetLight_Click)
+                    .Add("Reset", ResetLight_Click)
                     .Separator()
-                    .Add("Settings")
+                    .Add("Settings", LightSettings_Click)
                 .FinishSubMenu()
                 .Add(loc.Get("Material"))
                 .StartSubMenu()
-                    .Add("Settings")
+                    .Add("Settings", MaterialSettings_Click)
                     .Separator()
                     .Add("Wireframe", PolygonMode_Click)
                     .Add("Solid", PolygonMode_Click)
                     .Separator()
-                    .Add("Reset")
+                    .Add("Reset", ResetMaterial_Click)
                 .FinishSubMenu()
                 .Finilize();
             content.AddChild(menu);
@@ -234,6 +242,53 @@ namespace MateriaCore.Components.GL
         #endregion
 
         #region Menu Callbacks
+        private void CameraSettings_Click(InfinityUI.Controls.Button item)
+        {
+            GlobalEvents.Emit(GlobalEvent.ViewParameters, this, scene.Cam);
+            UI.Focus = null;
+        }
+
+        private void MaterialSettings_Click(InfinityUI.Controls.Button item)
+        {
+            GlobalEvents.Emit(GlobalEvent.ViewParameters, this, scene.SceneMaterialSettings);
+            UI.Focus = null;
+        }
+
+        private void LightSettings_Click(InfinityUI.Controls.Button item)
+        {
+            GlobalEvents.Emit(GlobalEvent.ViewParameters, this, scene.SceneLightingSettings);
+            UI.Focus = null;
+        }
+
+        private void ResetMaterial_Click(InfinityUI.Controls.Button item)
+        {
+            scene?.SceneMaterialSettings?.Reset();
+            scene.IsModified = true;
+            UI.Focus = null;
+            GlobalEvents.Emit(GlobalEvent.UpdateParameters, this, scene.SceneMaterialSettings);
+        }
+
+        private void ResetLight_Click(InfinityUI.Controls.Button item)
+        {
+            ResetLightType v;
+            Enum.TryParse<ResetLightType>(item.Text.Replace(" ", ""), out v);
+            switch (v)
+            {
+                case ResetLightType.DefaultPosition:
+                    scene?.SceneLightingSettings?.DefaultPosition();
+                    break;
+                case ResetLightType.SettoOrigin:
+                    scene?.SceneLightingSettings?.SetToOrigin();
+                    break;
+                case ResetLightType.Reset:
+                    scene?.SceneLightingSettings?.Reset();
+                    break;
+            }
+            scene.IsModified = true;
+            UI.Focus = null;
+            GlobalEvents.Emit(GlobalEvent.UpdateParameters, this, scene.SceneLightingSettings);
+        }
+
         private void ResetScene_Click(InfinityUI.Controls.Button item)
         {
             scene.Root.LocalPosition = new Vector3(0, 0, 0);
@@ -328,6 +383,7 @@ namespace MateriaCore.Components.GL
             scene.CameraView = v;
             scene.IsModified = true;
             UI.Focus = null;
+            GlobalEvents.Emit(GlobalEvent.UpdateParameters, this, scene.Cam);
         }
         #endregion
 
@@ -336,7 +392,6 @@ namespace MateriaCore.Components.GL
             PreviewCameraMode v;
             Enum.TryParse<PreviewCameraMode>(item.Text, out v);
             scene.CameraMode = v;
-            scene.IsModified = true;
             UI.Focus = null;
         }
 
@@ -384,6 +439,7 @@ namespace MateriaCore.Components.GL
             {
                 scene.Cam.LocalRotation = GetViewAngle(ref delta);
                 scene.IsModified = true;
+                GlobalEvents.Emit(GlobalEvent.UpdateParameters, this, scene.Cam);
                 return;
             }
 
@@ -392,6 +448,8 @@ namespace MateriaCore.Components.GL
                 Quaternion direction = GetViewAngle(ref delta);
                 scene.Cam.LocalRotation = direction;
                 scene.IsModified = true;
+
+                GlobalEvents.Emit(GlobalEvent.UpdateParameters, this, scene.Cam);
             }
             else if(e.Button.HasFlag(MouseButton.Middle))
             {

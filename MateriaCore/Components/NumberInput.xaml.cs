@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using MateriaCore.Utils;
 using System;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -37,8 +38,14 @@ namespace MateriaCore.Components
         public NumberInput()
         {
             InitializeComponent();
-            input.TextInput += Input_TextInput;
+            input.LostFocus += Input_LostFocus;
+            input.AddHandler(TextInputEvent, Input_TextInput, Avalonia.Interactivity.RoutingStrategies.Tunnel);
             input.KeyDown += Input_KeyDown;
+        }
+
+        private void Input_LostFocus(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            UpdateProperty();
         }
 
         private void Input_KeyDown(object sender, Avalonia.Input.KeyEventArgs e)
@@ -81,37 +88,36 @@ namespace MateriaCore.Components
 
             if (property != null)
             {
-                switch (NumberType)
-                {
-                    case NumberInputType.Float:
-                        Task.Delay(250, ctk.Token)
-                            .ContinueWith(t =>
-                            {
-                                if (t.IsCanceled) return;
+                Task.Delay(250, ctk.Token)
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsCanceled) return;
 
-                                ctk = null;
-                                float fv = 0;
-                                float.TryParse(input.Text, out fv);
+                        ctk = null;
 
-                                property?.SetValue(propertyOwner, fv);
-                                OnValueChanged?.Invoke(this, fv);
-                            }, TaskScheduler.FromCurrentSynchronizationContext());
-                        break;
-                    case NumberInputType.Int:
-                        Task.Delay(250, ctk.Token)
-                            .ContinueWith(t =>
-                            {
-                                if (t.IsCanceled) return;
+                        UpdateProperty();
+                    }, TaskScheduler.FromCurrentSynchronizationContext());
+            }
+        }
 
-                                ctk = null;
-                                int iv = 0;
-                                int.TryParse(input.Text, out iv);
+        private void UpdateProperty()
+        {
+            switch (NumberType)
+            {
+                case NumberInputType.Float:
+                    float fv;
+                    float.TryParse(input.Text, out fv);
 
-                                property?.SetValue(propertyOwner, iv);
-                                OnValueChanged?.Invoke(this, iv);
-                            }, TaskScheduler.FromCurrentSynchronizationContext());
-                        break;
-                }
+                    property?.SetValue(propertyOwner, fv);
+                    OnValueChanged?.Invoke(this, fv);
+                    break;
+                case NumberInputType.Int:
+                    int iv;
+                    int.TryParse(input.Text, out iv);
+
+                    property?.SetValue(propertyOwner, iv);
+                    OnValueChanged?.Invoke(this, iv);
+                    break;
             }
         }
 
@@ -126,7 +132,7 @@ namespace MateriaCore.Components
             property = p;
             propertyOwner = owner;
 
-            UpdateValue(t, p.GetValue(owner));
+            UpdateValuesFromProperty();
         }
 
         public void UpdateValue(NumberInputType t, object o)
@@ -139,6 +145,32 @@ namespace MateriaCore.Components
             {
                 input.Text = string.Format("{0:0.000}", Convert.ToSingle(o));
             }
+        }
+
+        private void UpdateValuesFromProperty()
+        {
+            if (property == null || propertyOwner == null) return;
+            UpdateValue(NumberType, property.GetValue(propertyOwner));
+        }
+
+        private void OnUpdateParameter(object sender, object v)
+        {
+            if (v == propertyOwner)
+            {
+                UpdateValuesFromProperty();
+            }
+        }
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            GlobalEvents.On(GlobalEvent.UpdateParameters, OnUpdateParameter);
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+            GlobalEvents.Off(GlobalEvent.UpdateParameters, OnUpdateParameter);
         }
 
         private void InitializeComponent()
