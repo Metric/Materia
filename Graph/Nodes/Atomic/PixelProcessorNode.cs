@@ -149,6 +149,7 @@ namespace Materia.Nodes.Atomic
             processor.Shader = function.Shader;
             processor.Prepare(i1, i2, i3, i4);
             function.PrepareUniforms();
+            function.AssignUniforms();
             processor.Process();
             processor.Complete();
 

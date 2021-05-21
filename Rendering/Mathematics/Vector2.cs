@@ -931,6 +931,13 @@ namespace Materia.Rendering.Mathematics
             return vec;
         }
 
+        public static Vector2 operator %(Vector2 vec, float mod)
+        {
+            vec.X %= mod;
+            vec.Y %= mod;
+            return vec;
+        }
+
         /// <summary>
         /// Compares the specified instances for equality.
         /// </summary>

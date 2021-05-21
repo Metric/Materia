@@ -26,6 +26,35 @@ namespace InfinityUI.Components
         public IGLProgram Shader { get; set; } = GLShaderCache.GetShader("pointui.glsl", "pointui.glsl", "pointui.glsl");
         public Vector4 Color { get; set; } = Vector4.One;
 
+        protected virtual bool IsInClipBounds()
+        {
+            if (Parent == null) return false;
+            var p = Parent.ClippingParent;
+            if (p != null)
+            {
+                return p.Rect.Intersects(Parent.Rect);
+            }
+            return true;
+        }
+
+        protected virtual void AdjustStencil(DrawEvent e)
+        {
+            bool adjustStencil = e.previous != null && e.previous.Parent == Parent.Parent && e.previous.IsClipped;
+
+            if (adjustStencil)
+            {
+                UIRenderer.StencilStage--;
+
+                if (UIRenderer.StencilStage < 0)
+                {
+                    UIRenderer.StencilStage = 0;
+                }
+
+                IGL.Primary.StencilFunc((int)StencilFunction.Equal, UIRenderer.StencilStage, UIRenderer.StencilStage);
+                IGL.Primary.StencilMask(0x00);
+            }
+        }
+
         public virtual void Awake()
         {
             if (Parent == null) return;
@@ -37,7 +66,7 @@ namespace InfinityUI.Components
 
         }
 
-        public virtual void Draw(Matrix4 projection)
+        public virtual void Draw(DrawEvent e)
         {
 
         }

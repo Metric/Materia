@@ -274,7 +274,7 @@ namespace InfinityUI.Components
             renderer.Update();
         }
 
-        public override void Draw(Matrix4 projection)
+        public override void Draw(DrawEvent e)
         {
             if (Parent == null) return;
             if (Shader == null) return;
@@ -283,6 +283,13 @@ namespace InfinityUI.Components
             if (characters == null) return;
             if (!Parent.Visible) return;
             if (string.IsNullOrEmpty(text)) return;
+
+            //basically if we are outside the clipping bounds of the
+            //parent that is clipping, if there is one, then do not render
+            if (!IsInClipBounds())
+            {
+                return;
+            }
 
             OnBeforeDraw(this);
 
@@ -294,9 +301,10 @@ namespace InfinityUI.Components
             Vector2 pos = Parent.WorldPosition;
             Vector4 color = Color;
             Vector2 tiling = Tiling;
+            Matrix4 proj = e.projection;
 
             Shader.Use();
-            Shader.SetUniformMatrix4("projectionMatrix", ref projection);
+            Shader.SetUniformMatrix4("projectionMatrix", ref proj);
             Shader.SetUniformMatrix4("modelMatrix", ref m);
             Shader.SetUniform2("offset", ref pos);
             Shader.SetUniform4("color", ref color);
@@ -311,6 +319,7 @@ namespace InfinityUI.Components
 
             if (!Clip)
             {
+                AdjustStencil(e);
                 renderer?.Draw();
                 UIRenderer.Bind();
                 return;

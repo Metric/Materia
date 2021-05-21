@@ -82,6 +82,7 @@ namespace MateriaCore.Components.GL
             {
                 RaycastTarget = true,
                 RelativeTo = Anchor.Fill,
+                Margin = new Box2(0,0,0,32)
             };
             internalBackground = internalContainer.AddComponent<UIImage>();
             internalBackground.Color = new Vector4(0.05f, 0.05f, 0.05f, 1); //todo: use theme class
@@ -205,9 +206,9 @@ namespace MateriaCore.Components.GL
         private void FitIntoView_Submit(Button obj)
         {
             ResetView();
-            Vector2 size = internalContainer.AnchorSize;
+            Box2 rect = internalContainer.AnchoredRect;
             Vector2 imageSize = imageArea.Size;
-            float minViewArea = MathF.Min(size.X, size.Y);
+            float minViewArea = MathF.Min(rect.Width, rect.Height);
             float maxSize = MathF.Max(imageSize.X, imageSize.Y);
             float scale = minViewArea / maxSize;
             imageArea.Scale = new Vector2(scale, scale);

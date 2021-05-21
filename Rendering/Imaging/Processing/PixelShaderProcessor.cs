@@ -40,8 +40,11 @@ namespace Materia.Rendering.Imaging.Processing
 
         public void Process()
         {
-            IGL.Primary.DispatchCompute(Width / 8, Height / 8, 1);
-            IGL.Primary.MemoryBarrier((int)MemoryBarrierFlags.AllBarrierBits);
+            if (Shader != null)
+            {
+                IGL.Primary.DispatchCompute(Width / 8, Height / 8, 1);
+                IGL.Primary.MemoryBarrier((int)MemoryBarrierFlags.AllBarrierBits);
+            }
 
             GLTexture2D.UnbindAsImage(0);
             GLTexture2D.Unbind();

@@ -35,7 +35,7 @@ namespace MateriaCore.Components.GL
             renderer.Update();
         }
 
-        public override void Draw(Matrix4 projection)
+        public override void Draw(DrawEvent e)
         {
             if (Shader == null) return;
             if (Parent == null) return;
@@ -46,10 +46,11 @@ namespace MateriaCore.Components.GL
 
             Matrix4 m = Parent.WorldMatrix;
             Vector2 pos = Parent.WorldPosition;
+            Matrix4 proj = e.projection;
 
             Shader.Use();
             Shader.SetUniform2("offset", ref pos);
-            Shader.SetUniformMatrix4("projectionMatrix", ref projection);
+            Shader.SetUniformMatrix4("projectionMatrix", ref proj);
             Shader.SetUniformMatrix4("modelMatrix", ref m);
 
             LineRenderer.SharedVao?.Bind();

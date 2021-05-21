@@ -263,6 +263,8 @@ namespace MateriaCore.Components.GL
         public void Connect(UINodePoint p, bool applyToGraph = false)
         {
             if (p.ParentNode == this) return;
+
+            ParentNode?.Disconnect(this);
             p.ParentNode?.Disconnect(p);
 
             if (p.NodePoint is NodeOutput && NodePoint is NodeInput)

@@ -127,8 +127,6 @@ namespace InfinityUI.Components
         {
             if (Parent == null) return;
 
-            var projection = Projection;
-
             for (int i = 0; i < Parent.Children.Count; ++i)
             {
 
@@ -140,7 +138,11 @@ namespace InfinityUI.Components
 
                 var child = Parent.Children[i];
                 if (child == null || !child.Visible) continue;
-                child.SendMessage("Draw", true, projection);
+                DrawEvent ev = new DrawEvent
+                {
+                    projection = Projection
+                };
+                child.SendMessage("Draw", true, ev);
             }
 
             //Reset Stencil

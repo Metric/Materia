@@ -441,7 +441,7 @@ namespace Materia.Graph
                 {
                     //todo: reimplement layer support later
                     //(n as GraphInstanceNode).GraphInst?.CombineLayers();
-                    //n.TriggerTextureChange();
+                    n.TriggerTextureChange();
                 }
 
                 n.IsScheduled = false;
@@ -449,7 +449,7 @@ namespace Materia.Graph
             else if (IsProcessing)
             {
                 IsProcessing = false;
-                CombineLayers();
+                //CombineLayers();
             }
         }
 
@@ -459,57 +459,54 @@ namespace Materia.Graph
             if (n.ParentGraph == null) return;
             if (IsProcessing) return;
             IsProcessing = true;
-            Task.Run(() =>
+            Node realNode = n; 
+            Queue<Node> queue = new Queue<Node>();
+            List<Node> starting = realNode.ParentGraph.EndNodes;
+
+            Node endNode = realNode;
+
+            if(starting.Contains(realNode))
             {
-                Node realNode = n; 
-                Queue<Node> queue = new Queue<Node>();
-                List<Node> starting = realNode.ParentGraph.EndNodes;
+                //if this node is an end node itself
+                //we can ignore all other end nodes
+                //as a point of rebuilding
+                starting.Clear();
+                starting.Add(realNode);
+            }
 
-                Node endNode = realNode;
+            if (realNode is GraphInstanceNode)
+            {
+                GraphInstanceNode gn = realNode as GraphInstanceNode;
+                NodeInput inp = gn.Inputs.Find(m => m.HasInput);
 
-                if(starting.Contains(realNode))
+                if (inp != null)
                 {
-                    //if this node is an end node itself
-                    //we can ignore all other end nodes
-                    //as a point of rebuilding
-                    starting.Clear();
-                    starting.Add(realNode);
-                }
-
-                if (realNode is GraphInstanceNode)
-                {
-                    GraphInstanceNode gn = realNode as GraphInstanceNode;
-                    NodeInput inp = gn.Inputs.Find(m => m.HasInput);
-
-                    if (inp != null)
-                    {
-                        endNode = inp.ParentNode;
-                    }
-                    else
-                    {
-                        endNode = null;
-                    }
+                    endNode = inp.ParentNode;
                 }
                 else
                 {
-                    endNode = realNode;
+                    endNode = null;
                 }
+            }
+            else
+            {
+                endNode = realNode;
+            }
 
-                if (starting.Count > 1 || (starting.Count == 1 && starting[0] != endNode))
-                {
-                    GatherNodes(starting, queue, endNode);
-                }
-                else
-                {
-                    queue.Enqueue(endNode);
-                }
+            if (starting.Count > 1 || (starting.Count == 1 && starting[0] != endNode))
+            {
+                GatherNodes(starting, queue, endNode);
+            }
+            else
+            {
+                queue.Enqueue(endNode);
+            }
 
-                Node[] nodesToSchedule = queue.ToArray();
-                for(int i = 0; i < nodesToSchedule.Length; ++i)
-                {
-                    scheduledNodes.Enqueue(nodesToSchedule[i]);
-                }
-            });
+            Node[] nodesToSchedule = queue.ToArray();
+            for(int i = 0; i < nodesToSchedule.Length; ++i)
+            {
+                scheduledNodes.Enqueue(nodesToSchedule[i]);
+            }
         }
 
         protected static List<Node> Backtrack(NodeInput n, Node endNode, HashSet<Node> inStack = null)
@@ -688,26 +685,30 @@ namespace Materia.Graph
                         if (next.IsScheduled) continue;
                         next.IsScheduled = true;
 
+                        //cannot do this here
                         //go ahead and populate params if needed
-                        if (next is GraphInstanceNode)
-                        {
-                            GraphInstanceNode gn = next as GraphInstanceNode;
-                            gn.PopulateGraphParams();
-                        }
+                        //if (next is GraphInstanceNode)
+                        //{
+                        //    GraphInstanceNode gn = next as GraphInstanceNode;
+                        //    gn.PopulateGraphParams();
+                        //}
 
                         queue.Enqueue(next);
                     }
                 }
 
                 n.IsScheduled = true;
-                    
+
+                queue.Enqueue(n);
+
                 //go ahead and populate params if needed
-                if (n is GraphInstanceNode)
-                {
-                    GraphInstanceNode gn = n as GraphInstanceNode;
-                    gn.PopulateGraphParams();
-                }
-                else if (n is OutputNode)
+                //if (n is GraphInstanceNode)
+                //{
+                //    GraphInstanceNode gn = n as GraphInstanceNode;
+                //cannot do this here
+                //gn.PopulateGraphParams();
+                //}
+                if (n is OutputNode)
                 {
                     OutputNode op = n as OutputNode;
                     if (op.Outputs.Count > 0)
@@ -716,13 +717,12 @@ namespace Materia.Graph
                         {
                             GraphInstanceNode gn = op.Outputs[0].ParentNode as GraphInstanceNode;
                             gn.IsScheduled = true;
-                            gn.PopulateGraphParams();
+                            //cannot do this here
+                            //gn.PopulateGraphParams();
                             queue.Enqueue(gn);
                         }
                     }
                 }
-
-                queue.Enqueue(n);
             }
         }
 
@@ -825,7 +825,7 @@ namespace Materia.Graph
             //try and retrieve from graph inst
             for(int i = 0; i < graphinsts.Count; ++i)
             {
-                var proc = graphinsts[i] as GraphInstanceNode;
+                var proc = graphinsts[i];
 
                 if (proc.GraphInst != null)
                 {
@@ -870,33 +870,36 @@ namespace Materia.Graph
         }
 
         public virtual void TryAndProcess()
-        {    
+        {
             //todo: reimplement layer support later
             //int c = Layers.Count;
             //for(int i = 0; i < c; ++i)
             //{
-                //no need to process layers
-                //that are invisible
+            //no need to process layers
+            //that are invisible
             //    if (Layers[i].Visible)
             //    {
             //        Layers[i].TryAndProcess();
             //    }
             //}
 
-            
-            Task.Run(() =>
+            var graphInstances = InstanceNodes;
+            //go ahead and populate params for graph instances here
+            for (int i = 0; i < graphInstances.Count; ++i)
             {
-                List<Node> root = EndNodes;
-                Queue<Node> nodes = new Queue<Node>();
-                GatherNodes(root, nodes, null);
-                Node[] nodesToSchedule = nodes.ToArray();
-                Graph g = Top();
-                ConcurrentQueue<Node> scheduled = g.scheduledNodes;
-                for (int i = 0; i < nodesToSchedule.Length; ++i)
-                {
-                   scheduled.Enqueue(nodesToSchedule[i]);
-                }
-            });
+                graphInstances[i]?.PopulateGraphParams();
+            }
+            
+            List<Node> root = EndNodes;
+            Queue<Node> nodes = new Queue<Node>();
+            GatherNodes(root, nodes, null);
+            Node[] nodesToSchedule = nodes.ToArray();
+            Graph g = Top();
+            ConcurrentQueue<Node> scheduled = g.scheduledNodes;
+            for (int i = 0; i < nodesToSchedule.Length; ++i)
+            {
+                scheduled.Enqueue(nodesToSchedule[i]);
+            }
         }
 
         public virtual void AssignPixelType(GraphPixelType pixel)

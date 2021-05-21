@@ -247,7 +247,6 @@ namespace MateriaCore.Components.GL
 
         private void Grid_BeforeDraw(UIDrawable obj)
         {
-            //cache size so we don't keep calculating it
             Vector2 size = WorldSize; 
             float newSize = MathF.Max(size.X, size.Y) / 64;
             float aspect = size.X / size.Y;
@@ -255,8 +254,10 @@ namespace MateriaCore.Components.GL
 
             //calculate grid offset
             Vector2 gpos = gridArea.WorldPosition;
-            Vector2 fpos = new Vector2(gpos.X / size.X, gpos.Y / size.Y);
-            grid.Offset = fpos;
+
+            //whoops forgot to multiply by invZoom
+            Vector2 fpos = new Vector2(gpos.X / size.X, gpos.Y / size.Y) * invZoom;
+            grid.Offset = fpos % 1.0f; //we modulo by 1.0f to keep it within -1f to 1f
         }
 
         #region Loading Handlers

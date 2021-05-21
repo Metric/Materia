@@ -25,6 +25,8 @@ namespace InfinityUI.Core
 
         public bool IsDirty { get; private set; } = false;
 
+        public UIObject ClippingParent { get; private set; }
+
         private bool visible = true;
         public bool Visible
         {
@@ -377,6 +379,7 @@ namespace InfinityUI.Core
 
             for (int i = 0; i < Children.Count; ++i)
             {
+                Children[i].ClippingParent = IsClipped ? this : ClippingParent;
                 Children[i].IsDirty = wasDirty;
                 //make sure canvas is passed down properly
                 Children[i].Canvas = Canvas;
@@ -706,30 +709,31 @@ namespace InfinityUI.Core
 
             if (!toChildren) return;
 
-            Stack<UIObject> queue = new Stack<UIObject>();
+            //Stack<UIObject> stack = new Stack<UIObject>();
 
-            for (int i = Children.Count - 1; i >= 0; --i)
+            UIObject previous = null;
+            for (int i = 0; i < Children.Count; ++i)
             {
                 var c = Children[i];
-                if (c == null || !c.Visible) continue;
-                queue.Push(c);
-            }
+                if (c == null || !c.visible) continue;
 
-            while (queue.Count > 0)
-            {
-                var c = queue.Pop();
-                if (c != null)
+                //special handling of draw
+                //to help reset stencil level
+                //if needed
+                if (args != null && args.Length > 0)
                 {
-                    c.SendMessage(fn, false, args);
-
-                    var childs = c.Children;
-                    for (int i = childs.Count - 1; i >= 0; --i)
+                    if (args[0] is DrawEvent)
                     {
-                        var subchild = childs[i];
-                        if (subchild == null || !subchild.Visible) continue;
-                        queue.Push(subchild);
+                        var d = args[0] as DrawEvent;
+                        var copy = d.Copy();
+                        copy.previous = previous;
+                        args[0] = copy;
                     }
                 }
+
+                c.SendMessage(fn, toChildren, args);
+
+                previous = c;
             }
         }
 
