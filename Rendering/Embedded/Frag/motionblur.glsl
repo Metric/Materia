@@ -21,8 +21,10 @@ void main() {
 
     for(float j = -whalf; j <= whalf; j++) 
     {
-        result += texture(MainTex, UV + (j * offset * dir));
+        vec4 c = texture(MainTex, UV + (j * offset * dir));
+        result += c;
     }
 
-    FragColor = result / magnitude;
+    vec4 final = result / magnitude;
+    FragColor = final;
 }

@@ -25,7 +25,25 @@ namespace InfinityUI.Core
 
         public bool IsDirty { get; private set; } = false;
 
-        public bool Visible { get; set; } = true;
+        private bool visible = true;
+        public bool Visible
+        {
+            get => visible;
+            set
+            {
+                if (visible != value)
+                {
+                    visible = value;
+
+                    //call resize because
+                    //technically we have visually
+                    //but not physically
+                    //and thus allow components
+                    //and etc to update properly
+                    Resize?.Invoke(this);
+                }
+            }
+        }
 
         public bool RaycastTarget { get; set; } = false;
 
@@ -222,6 +240,12 @@ namespace InfinityUI.Core
             get => visibleRect;
         }
 
+        private Box2 extendedRect;
+        public Box2 ExtendedRect
+        {
+            get => extendedRect;
+        }
+
         private Box2 anchoredRect = new Box2(0, 0, 0, 0);
         public Box2 AnchoredRect
         {
@@ -349,30 +373,27 @@ namespace InfinityUI.Core
                 UpdateMatrix(false);
             }
 
-            Box2 visibleArea = rect;
+            Box2 b = rect;
 
             for (int i = 0; i < Children.Count; ++i)
             {
-                if (wasDirty)
-                {
-                    Children[i].IsDirty = true;
-                }
-
+                Children[i].IsDirty = wasDirty;
+                //make sure canvas is passed down properly
+                Children[i].Canvas = Canvas;
                 Children[i].Update();
-
-                //get visibleRect
                 if (Children[i].Visible)
                 {
-                    visibleArea.Encapsulate(Children[i].rect);
-                    visibleArea.Encapsulate(Children[i].visibleRect);
+                    b.Encapsulate(Children[i].rect);
+                    b.Encapsulate(Children[i].visibleRect);
                 }
             }
 
-            visibleRect = visibleArea;
+            visibleRect = b;
 
             for (int i = 0; i < componentList.Count; ++i)
             {
                 var c = componentList[i];
+                c.Update();
                 if (c is ILayout)
                 {
                     var layout = c as ILayout;
@@ -543,19 +564,40 @@ namespace InfinityUI.Core
             IsDirty = true;
         }
 
+        public virtual void ClearChildren()
+        {
+            for (int i = 0; i < Children.Count; ++i)
+            {
+                RemoveChild(Children[i]);
+                Children[i]?.Dispose();
+                --i;
+            }
+        }
+
+        public virtual int IndexOf(UIObject e)
+        {
+            if (e == null) return -1;
+            if (e.parent != this) return -1;
+            return Children.IndexOf(e);
+        }
+
         private void E_Reorder()
         {
             Children.Sort(Compare);
         }
 
-        public virtual void RemoveChild(UIObject e, bool markDirty = true)
+        public virtual bool RemoveChild(UIObject e, bool markDirty = true)
         {
-            if (e == null) return;
-            if (e.parent != this) return;
-            e.Reorder -= E_Reorder;
-            e.parent = null;
-            Children.Remove(e);
-            ChildRemoved?.Invoke(e);
+            if (e == null) return false;
+            if (e.parent != this) return false;
+            if (Children.Remove(e))
+            {
+                e.Reorder -= E_Reorder;
+                e.parent = null;
+                ChildRemoved?.Invoke(e);
+                return true;
+            }
+            return false;
         }
 
         protected virtual int Compare(UIObject a, UIObject b)
@@ -563,7 +605,7 @@ namespace InfinityUI.Core
             return b.zOrder - a.zOrder;
         }
 
-        protected static void TryAndSendMessage(IComponent c, string fn, params object[] args)
+        protected static void TryAndSendMessage(object c, string fn, params object[] args)
         {
             if (string.IsNullOrEmpty(fn)) return;
             if (c == null) return;
@@ -601,6 +643,20 @@ namespace InfinityUI.Core
             }
             catch { }
 
+            if (args != null && args.Length > 0)
+            {
+                var arg = args[0];
+                if (arg is UIEventArgs)
+                {
+                    if ((arg as UIEventArgs).IsHandled)
+                    {
+                        return;
+                    }
+                }
+            }
+
+            TryAndSendMessage(this, fn, args);
+
             UIObject parent = Parent;
 
             while (parent != null)
@@ -633,6 +689,20 @@ namespace InfinityUI.Core
                 }
             }
             catch { }
+
+            if (args != null && args.Length > 0)
+            {
+                var arg = args[0];
+                if (arg is UIEventArgs)
+                {
+                    if ((arg as UIEventArgs).IsHandled)
+                    {
+                        return;
+                    }
+                }
+            }
+
+            TryAndSendMessage(this, fn, args);
 
             if (!toChildren) return;
 
@@ -673,33 +743,101 @@ namespace InfinityUI.Core
             localMatrix = Matrix4.CreateTranslation(-offset) * Matrix4.CreateRotationZ(rotation * MathHelper.Deg2Rad) * Matrix4.CreateTranslation(offset);
 
             CalculateWorldMatrix();
+            CalculateExtendedRect();
 
             anchoredRect = new Box2(anchorPosition, anchorSize.X, anchorSize.Y);
             rect = new Box2(worldPosition, worldSize.X, worldSize.Y);
 
             if (!updateChildren) return;
 
-            Box2 visibleArea = rect;
+            Box2 b = rect;
             var children = Children;
             for (int i = 0; i < children.Count; ++i)
             {
-                children[i]?.UpdateMatrix();
+                children[i].UpdateMatrix();
                 if (children[i].Visible)
                 {
-                    visibleArea.Encapsulate(children[i].rect);
-                    visibleArea.Encapsulate(children[i].visibleRect);
+                    b.Encapsulate(children[i].rect);
+                    b.Encapsulate(children[i].visibleRect);
                 }
             }
+            visibleRect = b;
+        }
 
-            visibleRect = visibleArea;
+        private void CalculateExtendedRect()
+        {
+            Vector2 size = anchorSize + new Vector2(margin.Left + margin.Right, margin.Top + margin.Bottom);
+            Vector2 offset = anchorPosition;
+
+            if (parent == null)
+            {
+                offset -= new Vector2(margin.Left, margin.Top);
+                extendedRect = new Box2(offset, anchorPosition + size);
+                return;
+            }
+
+            Box2 pPadding = parent.padding;
+
+            Vector2 bottomLeftOffset = new Vector2(margin.Left + pPadding.Left, -(margin.Bottom + pPadding.Bottom));
+            Vector2 topLeftOffset = new Vector2(margin.Left + pPadding.Left, margin.Top + pPadding.Top);
+            Vector2 bottomRightOffset = new Vector2(-(margin.Right + pPadding.Right), -(margin.Bottom + pPadding.Bottom));
+            Vector2 topRightOffset = new Vector2(-(margin.Right + pPadding.Right), margin.Top + pPadding.Top);
+
+            Vector2 leftOffset = new Vector2(margin.Left + pPadding.Left, margin.Top - pPadding.Top * 0.5f);
+            Vector2 rightOffset = new Vector2(-(margin.Right + pPadding.Right), margin.Top - pPadding.Top * 0.5f);
+
+            switch (relativeTo)
+            {
+                case Anchor.TopLeft:
+                case Anchor.TopHorizFill:
+                    offset -= topLeftOffset;
+                    break;
+                case Anchor.TopRight:
+                    offset -= topRightOffset;
+                    break;
+                case Anchor.Top:
+                    offset -= new Vector2(margin.Left - pPadding.Left * 0.5f, margin.Top + pPadding.Top);
+                    break;
+                case Anchor.BottomLeft:
+                case Anchor.BottomHorizFill:
+                    offset -= bottomLeftOffset;
+                    break;
+                case Anchor.BottomRight:
+                    offset -= bottomRightOffset;
+                    break;
+                case Anchor.Bottom:
+                    offset -= new Vector2(margin.Left - pPadding.Left * 0.5f, -(margin.Bottom + pPadding.Bottom));
+                    break;
+                case Anchor.Center:
+                    offset -= new Vector2(margin.Left - pPadding.Left * 0.5f, margin.Top - pPadding.Top * 0.5f);
+                    break;
+                case Anchor.CenterHorizFill:
+                    offset -= leftOffset;
+                    break;
+                case Anchor.Left:
+                    offset -= leftOffset;
+                    break;
+                case Anchor.Right:
+                    offset -= rightOffset;
+                    break;
+                case Anchor.LeftVerticalFill:
+                    offset -= topLeftOffset;
+                    break;
+                case Anchor.RightVerticalFill:
+                    offset -= topRightOffset;
+                    break;
+                default:
+                    offset -= topLeftOffset;
+                    break;
+            }
+
+            extendedRect = new Box2(offset, anchorPosition + size);
         }
 
         private void CalculateAnchorSize()
         {
-            Vector2 offset = new Vector2(-(margin.Left + margin.Right),
-                                        -(margin.Top + margin.Bottom))
-                            + new Vector2(padding.Left + padding.Right,
-                                           padding.Top + padding.Bottom);
+            Vector2 offset = new Vector2(padding.Left + padding.Right, padding.Top + padding.Bottom)
+                           - new Vector2(margin.Left + margin.Right, margin.Top + margin.Bottom);
             if (parent == null)
             {
                 anchorSize = size + offset;
@@ -713,13 +851,17 @@ namespace InfinityUI.Core
                 case Anchor.CenterHorizFill:
                 case Anchor.BottomHorizFill:
                     anchorSize = new Vector2(pSize.X, size.Y) + offset;
-                    return;
+                    break;
                 case Anchor.Fill:
                     anchorSize = pSize + offset;
-                    return;
+                    break;
+                case Anchor.LeftVerticalFill:
+                case Anchor.RightVerticalFill:
+                    anchorSize = new Vector2(size.X, pSize.Y) + offset;
+                    break;
                 default:
                     anchorSize = size + offset;
-                    return;
+                    break;
             }
         }
 
@@ -739,6 +881,70 @@ namespace InfinityUI.Core
             worldMatrix = localMatrix * parent.worldMatrix;
         }
 
+        private void CalculateAnchorPositionOffset()
+        {
+            if (parent == null)
+            {
+                anchorPosition += new Vector2(margin.Left, margin.Top);
+                return;
+            }
+
+            Box2 pPadding = parent.padding;
+
+            Vector2 bottomLeftOffset = new Vector2(margin.Left + pPadding.Left, -(margin.Bottom + pPadding.Bottom));
+            Vector2 topLeftOffset = new Vector2(margin.Left + pPadding.Left, margin.Top + pPadding.Top);
+            Vector2 bottomRightOffset = new Vector2(-(margin.Right + pPadding.Right), -(margin.Bottom + pPadding.Bottom));
+            Vector2 topRightOffset = new Vector2(-(margin.Right + pPadding.Right), margin.Top + pPadding.Top);
+
+            Vector2 leftOffset = new Vector2(margin.Left + pPadding.Left, margin.Top - pPadding.Top * 0.5f);
+            Vector2 rightOffset = new Vector2(-(margin.Right + pPadding.Right), margin.Top - pPadding.Top * 0.5f);
+
+            switch (relativeTo)
+            {
+                case Anchor.TopLeft:
+                case Anchor.TopHorizFill:
+                    anchorPosition += topLeftOffset;
+                    break;
+                case Anchor.TopRight:
+                    anchorPosition += topRightOffset;
+                    break;
+                case Anchor.Top:
+                    anchorPosition += new Vector2(margin.Left - pPadding.Left * 0.5f, margin.Top + pPadding.Top);
+                    break;
+                case Anchor.BottomLeft:
+                case Anchor.BottomHorizFill:
+                    anchorPosition += bottomLeftOffset;
+                    break;
+                case Anchor.BottomRight:
+                    anchorPosition += bottomRightOffset;
+                    break;
+                case Anchor.Bottom:
+                    anchorPosition += new Vector2(margin.Left - pPadding.Left * 0.5f, -(margin.Bottom + pPadding.Bottom));
+                    break;
+                case Anchor.Center:
+                    anchorPosition += new Vector2(margin.Left - pPadding.Left * 0.5f, margin.Top - pPadding.Top * 0.5f);
+                    break;
+                case Anchor.CenterHorizFill:
+                    anchorPosition += leftOffset;
+                    break;
+                case Anchor.Left:
+                    anchorPosition += leftOffset;
+                    break;
+                case Anchor.Right:
+                    anchorPosition += rightOffset;
+                    break;
+                case Anchor.LeftVerticalFill:
+                    anchorPosition += topLeftOffset;
+                    break;
+                case Anchor.RightVerticalFill:
+                    anchorPosition += topRightOffset;
+                    break;
+                default:
+                    anchorPosition += topLeftOffset;
+                    break;
+            }
+        }
+
         private void CalculateAnchorPosition()
         {
             Vector2 size = anchorSize;
@@ -752,61 +958,57 @@ namespace InfinityUI.Core
 
             if (parent == null)
             {
-                anchorPosition = pos + new Vector2(margin.Left, margin.Top);
+                anchorPosition = pos;
                 return;
             }
 
             Vector2 pSize = parent.anchorSize;
-            Box2 pPadding = parent.padding;
-
-            Vector2 bottomLeftOffset = new Vector2(margin.Left + pPadding.Left, -(margin.Bottom + pPadding.Bottom));
-            Vector2 topLeftOffset = new Vector2(margin.Left + pPadding.Left, margin.Top + pPadding.Top);
-            Vector2 bottomRightOffset = new Vector2(-(margin.Right + pPadding.Right), -(margin.Bottom + pPadding.Bottom));
-            Vector2 topRightOffset = new Vector2(-(margin.Right + pPadding.Right), margin.Top + pPadding.Top);
-            Vector2 leftOffset = new Vector2(margin.Left + pPadding.Left, margin.Top - pPadding.Top);
-            Vector2 rightOffset = new Vector2(-(margin.Right + pPadding.Right), margin.Top - pPadding.Top);
 
             switch (relativeTo)
             {
                 case Anchor.Bottom:
-                    anchorPosition = new Vector2(pSize.X * 0.5f - size.X * 0.5f + pos.X, pSize.Y - size.Y - pos.Y) + bottomLeftOffset;
-                    return;
+                    anchorPosition = new Vector2(pSize.X * 0.5f - size.X * 0.5f + pos.X, pSize.Y - size.Y - pos.Y);
+                    break;
                 case Anchor.Top:
-                    anchorPosition = new Vector2(pSize.X * 0.5f - size.X * 0.5f + pos.X, pos.Y) + topLeftOffset;
-                    return;
+                    anchorPosition = new Vector2(pSize.X * 0.5f - size.X * 0.5f + pos.X, pos.Y);
+                    break;
+                case Anchor.LeftVerticalFill:
                 case Anchor.TopHorizFill:
                 case Anchor.TopLeft:
                 case Anchor.Fill:
-                    anchorPosition = pos + topLeftOffset;
-                    return;
+                    anchorPosition = pos;
+                    break;
+                case Anchor.RightVerticalFill:
                 case Anchor.TopRight:
-                    anchorPosition = new Vector2(pSize.X - size.X - pos.X, pos.Y) + topRightOffset;
-                    return;
+                    anchorPosition = new Vector2(pSize.X - size.X - pos.X, pos.Y);
+                    break;
                 case Anchor.BottomHorizFill:
                 case Anchor.BottomLeft:
-                    anchorPosition = new Vector2(pos.X, pSize.Y - size.Y - pos.Y) + bottomLeftOffset;
-                    return;
+                    anchorPosition = new Vector2(pos.X, pSize.Y - size.Y - pos.Y);
+                    break;
                 case Anchor.BottomRight:
-                    anchorPosition = pSize - size - pos + bottomRightOffset;
-                    return;
+                    anchorPosition = pSize - size - pos;
+                    break;
                 case Anchor.CenterHorizFill:
                 case Anchor.Center:
-                    anchorPosition = pSize * 0.5f - size * 0.5f + pos + leftOffset;
-                    return;
+                    anchorPosition = pSize * 0.5f - size * 0.5f + pos;
+                    break;
                 case Anchor.Right:
-                    anchorPosition = new Vector2(pSize.X - size.X - pos.X, pSize.Y * 0.5f - size.Y * 0.5f + pos.Y) + rightOffset;
-                    return;
+                    anchorPosition = new Vector2(pSize.X - size.X - pos.X, pSize.Y * 0.5f - size.Y * 0.5f + pos.Y);
+                    break;
                 case Anchor.Left:
-                    anchorPosition = new Vector2(pos.X, pSize.Y * 0.5f - size.Y * 0.5f + pos.Y) + leftOffset;
-                    return;
+                    anchorPosition = new Vector2(pos.X, pSize.Y * 0.5f - size.Y * 0.5f + pos.Y);
+                    break;
+                default:
+                    anchorPosition = pos;
+                    break;
             }
-
-            anchorPosition = pos + topLeftOffset;
         }
 
         private void CalculateWorldPosition()
         {
             CalculateAnchorPosition();
+            CalculateAnchorPositionOffset();
             if (parent == null)
             {
                 worldPosition = anchorPosition;

@@ -9,7 +9,7 @@ namespace Materia.Rendering.Imaging.Processing
         GLTexture2D CurveLUT;
         public CurvesProcessor(GLTexture2D lut) : base()
         {
-            shader = GetShader("image.glsl", "curve.glsl");
+            shader = GetShader("raw.glsl", "curve.glsl");
             CurveLUT = lut;
         }
 

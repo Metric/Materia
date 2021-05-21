@@ -12,7 +12,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public MotionBlurProcessor() : base()
         {
-            shader = GetShader("image.glsl", "motionblur.glsl");
+            shader = GetShader("raw.glsl", "motionblur.glsl");
         }
 
         protected override void SetUniqueUniforms()

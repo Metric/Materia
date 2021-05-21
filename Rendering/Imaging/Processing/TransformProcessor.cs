@@ -13,7 +13,7 @@ namespace Materia.Rendering.Imaging.Processing
         public TransformProcessor() : base()
         {
             Stretch = false;
-            shader = GetShader("image.glsl", "transform.glsl");
+            shader = GetShader("raw.glsl", "transform.glsl");
         }
 
         protected override void SetUniqueUniforms()

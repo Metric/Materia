@@ -37,16 +37,16 @@ namespace MateriaCore.Components.GL.Menu
             }
         }
 
-        public bool AutoSize
+        public Anchor ChildAlignment
         {
             get
             {
-                return stack == null ? false : stack.AutoSize;
+                return stack == null ? Anchor.TopLeft : stack.ChildAlignment;
             }
             set
             {
                 if (stack == null) return;
-                stack.AutoSize = value;
+                stack.ChildAlignment = value;
             }
         }
 

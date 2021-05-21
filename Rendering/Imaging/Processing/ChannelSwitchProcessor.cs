@@ -14,7 +14,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public ChannelSwitchProcessor() : base()
         {
-            shader = GetShader("image.glsl", "channelswitch.glsl");    
+            shader = GetShader("raw.glsl", "channelswitch.glsl");    
         }
 
         protected override void SetUniqueUniforms()

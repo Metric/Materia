@@ -22,7 +22,37 @@ namespace MLog
 
         public static event Action<LogLevel, string> OnEntry;
 
-        public static string File { get; set; }
+        /// <summary>
+        /// Gets or sets the sub directory
+        /// that the log files should be written to
+        /// if the sub directory does not exist
+        /// it will be created
+        /// Default to Logs
+        /// </summary>
+        /// <value>
+        /// The sub directory.
+        /// </value>
+        public static string SubDirectory { get; set; } = "Logs";
+
+        /// <summary>
+        /// Gets or sets the maximum time to keep.
+        /// Defaults to 7 days
+        /// </summary>
+        /// <value>
+        /// The maximum time to keep.
+        /// </value>
+        public static TimeSpan MaxTimeToKeep { get; set; } = new TimeSpan(7);
+
+        /// <summary>
+        /// Gets or sets the file extension to use for log files
+        /// Defaults to .txt
+        /// </summary>
+        /// <value>
+        /// The file extension.
+        /// </value>
+        public static string FileExtension { get; set; } = ".txt";
+
+        public static string Filename { get; set; }
         public static Func<LogLevel, string, string, string> Formatter { get; set; }
 
         public static LogLevel Levels { get; set; }
@@ -119,13 +149,12 @@ namespace MLog
 
             OnEntry?.Invoke(l, fmsg);
 
-            if (string.IsNullOrEmpty(File))
+            if (string.IsNullOrEmpty(Filename))
             {
                 return;
             }
 
             string fname = GetCurrentFileName();
-            fname += ".txt";
 
             if (fileStream == null || lastFileName == null || !lastFileName.Equals(fname))
             {
@@ -134,6 +163,19 @@ namespace MLog
                     fileStream.Close();
                     fileStream = null;
                 }
+
+                if (!string.IsNullOrEmpty(SubDirectory))
+                {
+                    //make sure directory exists
+                    string sub = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, SubDirectory);
+                    if (!Directory.Exists(sub))
+                    {
+                        Directory.CreateDirectory(sub);
+                    }
+                }
+
+                //check to remove old files
+                RemoveOldFiles();
 
                 fileStream = new StreamWriter(new FileStream(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fname), FileMode.Append, FileAccess.Write, FileShare.Read));
                 lastFileName = fname;
@@ -146,11 +188,43 @@ namespace MLog
             }
         }
 
+        protected static void RemoveOldFiles()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string actualPath = null;
+            if (!string.IsNullOrEmpty(SubDirectory))
+            {
+                actualPath = Path.Combine(basePath, SubDirectory);
+            }
+            else
+            {
+                actualPath = basePath;
+            }
+
+            if (!Directory.Exists(actualPath)) return;
+
+            string[] files = Directory.GetFiles(actualPath, "*" + FileExtension);
+            for (int i = 0; i < files.Length; ++i)
+            {
+                string absolutePath = Path.Combine(actualPath, files[i]);
+                if (!File.Exists(absolutePath)) continue;
+                DateTime t = File.GetCreationTime(absolutePath);
+                long currentTime = DateTime.Now.Ticks;
+                TimeSpan span = new TimeSpan(currentTime - t.Ticks);
+                if (span >= MaxTimeToKeep)
+                {
+                    File.Delete(absolutePath);
+                }
+            }
+        }
+
         protected static string GetCurrentFileName()
         {
+            if (string.IsNullOrEmpty(SubDirectory)) return Filename + FileExtension;
+            return Path.Combine(SubDirectory, Filename + FileExtension);
+
             //DateTime d = DateTime.Now;
             //return d.ToString(File);
-            return File;
         }
     }
 }

@@ -115,6 +115,7 @@ namespace InfinityUI.Controls
 
             var fillImage = FillBar.AddComponent<UIImage>();
             fillImage.Color = new Vector4(0, 0.5f, 1, 1);
+            FillBar.RaycastTarget = false;
             AddChild(FillBar);
             InitEvents();
 
@@ -201,15 +202,17 @@ namespace InfinityUI.Controls
             {
                 switch (FillBar.RelativeTo)
                 {
+                    case Anchor.LeftVerticalFill:
+                    case Anchor.RightVerticalFill:
                     case Anchor.Top:
                     case Anchor.TopLeft:
                     case Anchor.TopRight:
                     case Anchor.TopHorizFill:
                     case Anchor.CenterHorizFill:
-                        f = (1.0f - (p.Y - rect.Top) / (rect.Bottom - rect.Top)) * (max - min) + min;
+                        f = (p.Y - rect.Top) / (rect.Bottom - rect.Top) * (max - min) + min;
                         break;
                     default:
-                        f = (p.Y - rect.Top) / (rect.Bottom - rect.Top) * (max - min) + min;
+                        f = (1.0f - (p.Y - rect.Top) / (rect.Bottom - rect.Top)) * (max - min) + min;
                         break;
 
                 }

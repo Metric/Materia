@@ -24,6 +24,8 @@ namespace InfinityUI.Components
         public event Action<UISelectable, MouseWheelArgs> Wheel;
         public event Action<UISelectable> BeforeUpdateTarget;
 
+        public string Tooltip { get; set; }
+
         public bool BubbleEvents { get; set; } = true;
 
         public UIObject Parent { get; set; }
@@ -311,5 +313,7 @@ namespace InfinityUI.Components
                 }
             }
         }
+
+        public virtual void Update() { }
     }
 }

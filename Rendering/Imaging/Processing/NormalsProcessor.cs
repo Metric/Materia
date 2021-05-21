@@ -12,7 +12,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public NormalsProcessor() : base()
         {
-            shader = GetShader("image.glsl", "normals.glsl");
+            shader = GetShader("raw.glsl", "normals.glsl");
         }
 
         protected override void SetUniqueUniforms()

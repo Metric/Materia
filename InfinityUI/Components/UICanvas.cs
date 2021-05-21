@@ -21,6 +21,8 @@ namespace InfinityUI.Components
         protected Vector2 inverseSize;
         protected Vector2 halfSize;
 
+        public UIDragDrop DragDrop { get; protected set; }
+
         public Vector2 Size 
         { 
             get { return new Vector2(Width, Height); } 
@@ -159,6 +161,8 @@ namespace InfinityUI.Components
             //and raycast down to children
             Parent.RaycastAlways = true;
             Parent.Canvas = this;
+
+            DragDrop = new UIDragDrop(this);
         }
 
         private void CalculateScale()
@@ -178,6 +182,11 @@ namespace InfinityUI.Components
 
             //unregister canvas for picking
             UI.UnregisterCanvas(this);
+        }
+
+        public virtual void Update()
+        {
+
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public LevelsProcessor() : base()
         {
-            shader = GetShader("image.glsl", "levels.glsl");
+            shader = GetShader("raw.glsl", "levels.glsl");
         }
 
         protected override void SetUniqueUniforms()

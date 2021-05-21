@@ -6,5 +6,5 @@ out vec4 FragColor;
 void main() {
     vec4 c = Color;
     c.rgb *= c.a;
-    FragColor = c;
+    FragColor = clamp(c, vec4(0), vec4(1));
 }

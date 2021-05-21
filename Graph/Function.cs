@@ -380,7 +380,7 @@ namespace Materia.Graph
             return false;
         }
 
-        public override void Remove(Node n)
+        public override void Remove(Node n, bool dispose = true)
         {
             if(Execute == n)
             {
@@ -405,7 +405,7 @@ namespace Materia.Graph
                 forLoops.Remove(n as ForLoopNode);
             }
 
-            base.Remove(n);
+            base.Remove(n, dispose);
 
             isDirty = true;
             modified = true;

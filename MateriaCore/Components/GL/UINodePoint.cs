@@ -160,8 +160,11 @@ namespace MateriaCore.Components.GL
             selectable.BeforeUpdateTarget += Selectable_BeforeUpdateTarget;
             selectable.BubbleEvents = false;
 
-            nodeNameArea = new UIObject();
-            nodeNameArea.Position = new Vector2(18, 0);
+            nodeNameArea = new UIObject()
+            {
+                RelativeTo = NodePoint is NodeInput ? Anchor.Right : Anchor.Left
+            };
+            nodeNameArea.Position = new Vector2(DEFAULT_SIZE + DEFAULT_PADDING + DEFAULT_PADDING, 0);
             nodeName = nodeNameArea.AddComponent<UIText>();
             nodeName.Alignment = NodePoint is NodeInput ? TextAlignment.Right : TextAlignment.Left;
             nodeName.Text = NodePoint.Name;

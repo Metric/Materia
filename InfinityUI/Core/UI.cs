@@ -190,6 +190,19 @@ namespace InfinityUI.Core
             }
         }
 
+        public static void OnFileDrop(string[] files)
+        {
+            var target = UI.Selection;
+            if (target == null) return;
+
+            UIFileDropEvent evt = new UIFileDropEvent
+            {
+                files = files
+            };
+
+            target.SendMessageUpwards("OnFileDrop", evt);
+        }
+
         public static void OnMouseWheel(Vector2 delta)
         {
             delta.Y *= -1;
@@ -669,69 +682,57 @@ namespace InfinityUI.Core
             ele.Position *= gridSize;
         }
 
-        public static void SnapToElement(UIObject a, UIObject b, 
-            float tolerance = 4, float xSign = 1, float ySign = 1)
+        public static void SnapToElement(UIObject a, UIObject b, float tolerance = 4)
         {
+            float xSign = 1, ySign = 1;
+
+            switch (a.RelativeTo)
+            {
+                case Anchor.BottomRight:
+                case Anchor.BottomLeft:
+                case Anchor.BottomHorizFill:
+                case Anchor.Bottom:
+                    ySign = -1;
+                    break;
+            }
+
+            switch (a.RelativeTo)
+            {
+                case Anchor.RightVerticalFill:
+                case Anchor.Right:
+                case Anchor.BottomRight:
+                case Anchor.TopRight:
+                    xSign = -1;
+                    break;
+            }
+
             Box2 aRect = a.Rect;
             Box2 bRect = b.Rect;
 
-            Vector2 aSize = new Vector2(aRect.Width, aRect.Height);
-            Vector2 bSize = new Vector2(bRect.Width, bRect.Height);
+            float xSide1 = MathF.Abs(aRect.Left - bRect.Right);
+            float xSide2 = MathF.Abs(aRect.Right - bRect.Left);
 
-            if (xSign > 0)
+            // YAY for simplification that can handle any left 
+            // or right + up or down anchor orientation
+            if (xSide1 <= tolerance && xSide1 > 0)
             {
-                float side1 = MathF.Abs(aRect.Left - bRect.Right);
-                float side2 = MathF.Abs(aRect.Right - bRect.Left);
-
-                if (side1 <= tolerance && side1 > 0)
-                {
-                    a.Position = new Vector2(b.Position.X + bSize.X, a.Position.Y);
-                }
-                else if (side2 <= tolerance && side2 > 0)
-                {
-                    a.Position = new Vector2(b.Position.X - aSize.X, a.Position.Y);
-                }
+                a.Position = new Vector2(a.Position.X - (aRect.Left - bRect.Right) * xSign, a.Position.Y);
             }
-            else
+            else if (xSide2 <= tolerance && xSide2 > 0)
             {
-                float side1 = MathF.Abs(aRect.Left - bRect.Right);
-                float side2 = MathF.Abs(aRect.Right - bRect.Left);
-
-                if (side1 <= tolerance && side1 > 0)
-                {
-                    a.Position = new Vector2(b.Position.X - bSize.X, a.Position.Y);
-                }
-                else if (side2 <= tolerance && side2 > 0)
-                {
-                    a.Position = new Vector2(b.Position.X + bSize.X, a.Position.Y);
-                }
+                a.Position = new Vector2(a.Position.X - (aRect.Right - bRect.Left) * xSign, a.Position.Y);
             }
 
-            if (ySign > 0)
+            float ySide1 = MathF.Abs(aRect.Top - bRect.Bottom);
+            float ySide2 = MathF.Abs(aRect.Bottom - bRect.Top);
+
+            if (ySide1 <= tolerance && ySide1 > 0)
             {
-                float side1 = MathF.Abs(aRect.Top - bRect.Bottom);
-                float side2 = MathF.Abs(aRect.Bottom - bRect.Top);
-                if (side1 <= tolerance && side1 > 0)
-                {
-                    a.Position = new Vector2(a.Position.X, b.Position.Y + bSize.Y);
-                }
-                else if (side2 <= tolerance && side2 > 0)
-                {
-                    a.Position = new Vector2(a.Position.X, b.Position.Y - aSize.Y);
-                }
+                a.Position = new Vector2(a.Position.X, a.Position.Y - (aRect.Top - bRect.Bottom) * ySign);
             }
-            else
+            else if (ySide2 <= tolerance && ySide2 > 0)
             {
-                float side1 = MathF.Abs(aRect.Top - bRect.Bottom);
-                float side2 = MathF.Abs(aRect.Bottom - bRect.Top);
-                if (side1 <= tolerance && side1 > 0)
-                {
-                    a.Position = new Vector2(a.Position.X, b.Position.Y - bSize.Y);
-                }
-                else if (side2 <= tolerance && side2 > 0)
-                {
-                    a.Position = new Vector2(a.Position.X, b.Position.Y + bSize.Y);
-                }
+                a.Position = new Vector2(a.Position.X, a.Position.Y - (aRect.Bottom - bRect.Top) * ySign);
             }
         }
     }

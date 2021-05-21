@@ -155,7 +155,7 @@ namespace Materia.Nodes.Atomic
 
             if (GraphInst != null)
             {
-                GraphInst.OnGraphParameterUpdate -= GraphInst_OnGraphParameterUpdate;
+                GraphInst.OnParameterUpdate -= GraphInst_OnParameterUpdate;
                 GraphInst.Dispose();
                 GraphInst = null;
             }
@@ -319,7 +319,7 @@ namespace Materia.Nodes.Atomic
             GraphInst.AssignCustomParameters(jsonCustomParameters);
             GraphInst.AssignSeed(randomSeed);
             GraphInst.AssignPixelType(internalPixelType);
-            GraphInst.OnGraphParameterUpdate += GraphInst_OnGraphParameterUpdate;
+            GraphInst.OnParameterUpdate += GraphInst_OnParameterUpdate;
             //now do real initial resize
             GraphInst.ResizeWith(width, height);
 
@@ -332,7 +332,7 @@ namespace Materia.Nodes.Atomic
             loading = false;
         }
 
-        private void GraphInst_OnGraphParameterUpdate(ParameterValue param)
+        private void GraphInst_OnParameterUpdate(ParameterValue param)
         {
             TriggerValueChange();
         }
@@ -467,7 +467,7 @@ namespace Materia.Nodes.Atomic
             //we only show the first output as preview
             if(Outputs.Count > 0)
             {
-                return Outputs[0].Node.GetPreview(width, height);
+                return Outputs[0]?.GetPreview(width, height);
             }
 
             return null;
@@ -477,7 +477,7 @@ namespace Materia.Nodes.Atomic
         {
             if(Outputs.Count > 0)
             {
-                return Outputs[0].Node.GetActiveBuffer();
+                return Outputs[0]?.GetActiveBuffer();
             }
 
             return null;
@@ -487,18 +487,18 @@ namespace Materia.Nodes.Atomic
         {
             if(parentGraph != null)
             {
-                parentGraph.OnGraphParameterUpdate -= ParentGraph_OnGraphParameterUpdate;
+                parentGraph.OnParameterUpdate -= ParentGraph_OnParameterUpdate;
             }
 
             base.AssignParentGraph(g);
 
             if (g != null)
             {
-                g.OnGraphParameterUpdate += ParentGraph_OnGraphParameterUpdate;
+                g.OnParameterUpdate += ParentGraph_OnParameterUpdate;
             }
         }
 
-        private void ParentGraph_OnGraphParameterUpdate(ParameterValue param)
+        private void ParentGraph_OnParameterUpdate(ParameterValue param)
         {
             isDirty = true;
             PopulateGraphParams();
@@ -666,7 +666,7 @@ namespace Materia.Nodes.Atomic
         {
             if (parentGraph != null)
             {
-                parentGraph.OnGraphParameterUpdate -= ParentGraph_OnGraphParameterUpdate;
+                parentGraph.OnParameterUpdate -= ParentGraph_OnParameterUpdate;
             }
 
             if (child != null)
@@ -679,7 +679,7 @@ namespace Materia.Nodes.Atomic
 
             if(GraphInst != null)
             {
-                GraphInst.OnGraphParameterUpdate -= GraphInst_OnGraphParameterUpdate;
+                GraphInst.OnParameterUpdate -= GraphInst_OnParameterUpdate;
                 GraphInst.Dispose();
                 GraphInst = null;
             }

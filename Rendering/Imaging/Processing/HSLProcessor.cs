@@ -12,7 +12,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public HSLProcessor()
         {
-            shader = GetShader("image.glsl", "hsl.glsl");
+            shader = GetShader("raw.glsl", "hsl.glsl");
         }
 
         protected override void SetUniqueUniforms()

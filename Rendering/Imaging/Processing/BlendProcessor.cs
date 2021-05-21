@@ -23,7 +23,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public BlendProcessor() : base()
         {
-            shader = GetShader("image.glsl", "blend.glsl");
+            shader = GetShader("raw.glsl", "blend.glsl");
             AlphaMode = 0;
         }
 

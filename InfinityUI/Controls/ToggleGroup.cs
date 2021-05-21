@@ -82,5 +82,10 @@ namespace InfinityUI.Controls
                 ToggleChanged?.Invoke(this, ActiveToggle, Parent.Children.IndexOf(ActiveToggle.Parent));
             }
         }
+
+        public virtual void Update()
+        {
+
+        }
     }
 }

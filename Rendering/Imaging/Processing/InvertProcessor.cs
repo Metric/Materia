@@ -13,7 +13,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public InvertProcessor() : base()
         {
-            shader = GetShader("image.glsl", "invert.glsl");
+            shader = GetShader("raw.glsl", "invert.glsl");
         }
 
         protected override void SetUniqueUniforms()

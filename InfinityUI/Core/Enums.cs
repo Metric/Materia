@@ -39,7 +39,9 @@ namespace InfinityUI.Core
         Right,
         TopHorizFill,
         CenterHorizFill,
-        BottomHorizFill
+        BottomHorizFill,
+        RightVerticalFill,
+        LeftVerticalFill
     };
 
     public enum Navigation

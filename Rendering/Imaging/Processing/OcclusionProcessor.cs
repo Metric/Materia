@@ -9,7 +9,7 @@ namespace Materia.Rendering.Imaging.Processing
     {
         public OcclusionProcessor() : base()
         {
-            shader = GetShader("image.glsl", "occlusion.glsl");
+            shader = GetShader("raw.glsl", "occlusion.glsl");
         }
 
         protected override void SetTexturePositions()

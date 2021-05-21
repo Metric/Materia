@@ -76,5 +76,10 @@ namespace InfinityUI.Components
         {
 
         }
+
+        public virtual void Update()
+        {
+
+        }
     }
 }

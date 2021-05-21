@@ -42,9 +42,9 @@ namespace MateriaCore.Components.GL.Menu
             var sub = new UIMenu();
             var menuItem = (menu.Children.Last() as UIMenuItem);
             menu = sub;
-            menu.AutoSize = true;
             menu.Visible = false;
             menu.Direction = InfinityUI.Core.Orientation.Vertical;
+            menu.ChildAlignment = InfinityUI.Core.Anchor.TopHorizFill;
             if (submenus.Count == 1)
             {
                 menuItem.SubMenuAnchor = InfinityUI.Core.Anchor.Bottom;

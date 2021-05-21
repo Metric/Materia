@@ -3,7 +3,7 @@ in vec2 uv;
 
 out vec4 FragColor;
 
-uniform vec4 color;
+uniform vec4 color = vec4(1, 1, 1, 1);
 uniform float luminosity = 1.0;
 uniform sampler2D MainTex;
 uniform int flipY = 1;
@@ -30,5 +30,7 @@ void main() {
 
     vec4 mult = c * color * luminosity;
     mult.rgb *= mult.a;
-    FragColor = mult;
+
+    //clamp final output between 0-1
+    FragColor = clamp(mult, vec4(0), vec4(1));
 }

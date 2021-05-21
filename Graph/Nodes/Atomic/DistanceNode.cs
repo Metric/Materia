@@ -53,22 +53,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        
-        //we override as the distance node
-        //does not allow changing internal pixel format
-        //since it requires RGBA32F no matter what to function
-        public new GraphPixelType InternalPixelFormat
-        {
-            get
-            {
-                return internalPixelType;
-            }
-            set
-            {
-                internalPixelType = value;
-            }
-        } 
-
         public DistanceNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Distance";
@@ -91,6 +75,15 @@ namespace Materia.Nodes.Atomic
             Inputs.Add(input);
             Inputs.Add(input2);
             Outputs.Add(Output);
+
+            input.OnInputChanged += Input_OnInputChanged;
+            input2.OnInputChanged += Input_OnInputChanged;
+        }
+
+
+        private void Input_OnInputChanged(NodeInput n)
+        {
+            rebuild = true;
         }
 
         public override void Dispose()
@@ -134,38 +127,67 @@ namespace Materia.Nodes.Atomic
             Process();
         }
 
+        private string GetFormat(GLTexture2D t)
+        {
+            string outputType = "rgba32f";
+
+            if (t == null) return outputType;
+
+            var format = t.InternalFormat;
+            if (format == PixelInternalFormat.Rgba16f || format == PixelInternalFormat.Rgb16f)
+            {
+                outputType = "rgba16f";
+            }
+            else if (format == PixelInternalFormat.Rgb || format == PixelInternalFormat.Rgba
+                || format == PixelInternalFormat.Rgb8 || format == PixelInternalFormat.Rgba8)
+            {
+                outputType = "rgba8";
+            }
+            else if (format == PixelInternalFormat.R32f)
+            {
+                outputType = "r32f";
+            }
+            else if (format == PixelInternalFormat.R16f)
+            {
+                outputType = "r16f";
+            }
+            return outputType;
+        }
+
         bool rebuild = true;
         void BuildShader()
         {
+            if (!input.HasInput) return;
+
+            CreateBufferIfNeeded();
+
             if (shader == null || preshader == null || rebuild)
             {
-                if(shader != null)
-                {
-                    shader.Dispose();
-                    shader = null;
-                }
+                shader?.Dispose();
+                shader = null;
 
-                if(preshader != null)
-                {
-                    preshader.Dispose();
-                    preshader = null;
-                }
+                preshader?.Dispose();
+                preshader = null;
 
                 string rawFrag = GLShaderCache.GetRawFrag("distance.glsl");
 
                 if (string.IsNullOrEmpty(rawFrag)) return;
 
-                string outputType = "rgba32f";
-                rawFrag = rawFrag.Replace("{0}", outputType);
+                string sourceType = GetFormat(input2.HasInput ? input2.Reference.Data as GLTexture2D : buffer);
+
+                rawFrag = rawFrag.Replace("{0}", sourceType);
 
                 shader = GLShaderCache.CompileCompute(rawFrag);
 
                 if (shader == null) return;
 
+                string outputType = GetFormat(buffer);
+                string inputType = GetFormat(input.Reference.Data as GLTexture2D);
+
                 rawFrag = GLShaderCache.GetRawFrag("distanceprecalc.glsl");
 
                 if (string.IsNullOrEmpty(rawFrag)) return;
-                rawFrag = rawFrag.Replace("{0}", outputType);
+                rawFrag = rawFrag.Replace("{0}", inputType).Replace("{1}", sourceType).Replace("{2}", outputType);
                 preshader = GLShaderCache.CompileCompute(rawFrag);
 
                 if (preshader == null) return;
@@ -176,12 +198,14 @@ namespace Materia.Nodes.Atomic
 
         protected override void OnPixelFormatChange()
         {
-            
+            base.OnPixelFormatChange();
+            rebuild = true;
         }
 
         public override void AssignPixelType(GraphPixelType pix)
         {
-            
+            base.AssignPixelType(pix);
+            rebuild = true;
         }
 
         float pmaxDistance;
@@ -205,8 +229,6 @@ namespace Materia.Nodes.Atomic
             if (processor == null) return;
             if (shader == null) return;
             if (preshader == null) return;
-
-            CreateBufferIfNeeded();
 
             processor.PrepareView(buffer);
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Materia.Rendering.Attributes;
+using Materia.Rendering.Textures;
 using Newtonsoft.Json;
 
 namespace Materia.Nodes
@@ -75,6 +76,28 @@ namespace Materia.Nodes
             ParentNode = parent;
             Name = name;
             To = new List<NodeInput>();
+        }
+
+        /// <summary>
+        /// Gets the preview.
+        /// A shortcut to Node?.GetPreview()
+        /// </summary>
+        /// <param name="width">The width.</param>
+        /// <param name="height">The height.</param>
+        /// <returns></returns>
+        public byte[] GetPreview(int width, int height)
+        {
+            return Node?.GetPreview(width, height);
+        }
+
+        /// <summary>
+        /// Gets the active buffer.
+        /// Basically a shortcut to Node?.GetActiveBuffer()
+        /// </summary>
+        /// <returns></returns>
+        public GLTexture2D GetActiveBuffer()
+        {
+            return Node?.GetActiveBuffer();
         }
 
         public void InsertAt(int index, NodeInput inp, bool assign = false)

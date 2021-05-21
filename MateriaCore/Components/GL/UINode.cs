@@ -25,7 +25,7 @@ namespace MateriaCore.Components.GL
         public event Action<UINode> Restored;
         public event Action<UINode> PreviewUpdated;
 
-        public const int DEFAULT_HEIGHT = 64;
+        public const int DEFAULT_HEIGHT = 128;
         public const int DEFAULT_WIDTH = 128;
 
         #region UI Components  
@@ -37,6 +37,8 @@ namespace MateriaCore.Components.GL
 
         protected UIObject previewArea;
         protected UIImage preview;
+
+        protected UIObject previewTransparency;
 
         protected UIToggleable toggleable;
 
@@ -370,6 +372,8 @@ namespace MateriaCore.Components.GL
             //with the title area first
             //followed by the container
 
+            float nodePointSizePadding = UINodePoint.DEFAULT_SIZE + UINodePoint.DEFAULT_PADDING + UINodePoint.DEFAULT_PADDING;
+
             titleArea = new UIObject
             {
                 RelativeTo = Anchor.Top
@@ -379,7 +383,7 @@ namespace MateriaCore.Components.GL
 
             descArea = new UIObject
             {
-                Margin = new Box2(20, 20, 20, 4),
+                Margin = new Box2(nodePointSizePadding, 26, nodePointSizePadding, nodePointSizePadding - 4),
                 Visible = false,
                 RelativeTo = Anchor.Fill
             };
@@ -388,11 +392,21 @@ namespace MateriaCore.Components.GL
 
             previewArea = new UIObject
             {
-                Margin = new Box2(20,20,20,4),
+                Margin = new Box2(nodePointSizePadding, 26, nodePointSizePadding, nodePointSizePadding - 4),
                 RelativeTo = Anchor.Fill,
             };
             preview = previewArea.AddComponent<UIImage>();
             previewArea.RaycastTarget = false;
+
+            previewTransparency = new UIObject
+            {
+                Margin = new Box2(nodePointSizePadding, 26, nodePointSizePadding, nodePointSizePadding - 4),
+                RelativeTo = Anchor.Fill
+            };
+            var transparencyBG = previewTransparency.AddComponent<UIImage>();
+            transparencyBG.Texture = GridGenerator.CreateTransparent(32, 32);
+            transparencyBG.Tiling = new Vector2(4, 4);
+            previewTransparency.RaycastTarget = false;
 
             outputsArea = new UIObject
             {
@@ -429,6 +443,7 @@ namespace MateriaCore.Components.GL
 
             iconsArea.AddChild(inputOutputIcon);
 
+            AddChild(previewTransparency);
             AddChild(previewArea);
             AddChild(descArea);
             AddChild(titleArea);

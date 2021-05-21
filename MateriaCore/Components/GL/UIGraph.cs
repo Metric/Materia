@@ -80,7 +80,7 @@ namespace MateriaCore.Components.GL
         }
     }
 
-    public class UIGraph : MovablePane
+    public class UIGraph : MovablePane, IDropTarget
     {
         public event Action<UIGraph> NameChanged;
 
@@ -203,6 +203,8 @@ namespace MateriaCore.Components.GL
 
         protected void InitializeComponents()
         {
+            selectable.IsFocusable = false;
+
             RelativeTo = Anchor.Fill;
 
             //set it so children can always be raycast to
@@ -356,7 +358,7 @@ namespace MateriaCore.Components.GL
 
             IGraphNode unode = CreateUINode(n);
             pins.Add(unode);
-            Current.Snapshot();
+            Current?.Snapshot();
         }
 
         public void TryAndComment()
@@ -386,7 +388,7 @@ namespace MateriaCore.Components.GL
 
             IGraphNode unode = CreateUINode(n);
             comments.Add(unode);
-            Current.Snapshot();
+            Current?.Snapshot();
         }
 
         public void TryAndDelete()
@@ -405,7 +407,8 @@ namespace MateriaCore.Components.GL
                 unode?.Dispose();
             }
 
-            Current.Snapshot();
+            Current?.Snapshot();
+            Current?.TryAndProcess();
 
             Selected.Clear();
             SelectedIds.Clear();
@@ -551,10 +554,10 @@ namespace MateriaCore.Components.GL
                     addedUINodes[i]?.LoadConnections();
                 }
 
-                Current.Snapshot();
+                Current?.Snapshot();
 
                 //try and process graph
-                Current.TryAndProcess();
+                Current?.TryAndProcess();
             }
             catch (Exception e)
             {
@@ -578,7 +581,7 @@ namespace MateriaCore.Components.GL
             if (n is PinNode || n is CommentNode)
             {
                 CreateUINode(n);
-                Current.Snapshot();
+                Current?.Snapshot();
                 return;
             }
 
@@ -612,7 +615,8 @@ namespace MateriaCore.Components.GL
 
             unode = CreateUINode(n);
             unode.LoadConnections();
-            Current.Snapshot();
+            Current?.Snapshot();
+            Current?.TryAndProcess();
         }
 
         public void GotoNextPin()
@@ -836,6 +840,51 @@ namespace MateriaCore.Components.GL
 
             //add to view
             AddChild(unode as UIObject);
+            unode.Snap();
+            return unode;
+        }
+
+        protected IGraphNode CreateUINode(Node n, Vector2 pos)
+        {
+            IGraphNode unode = null;
+
+            //handle node type
+            //comment etc
+            //otherwise just do
+            if (n is CommentNode)
+            {
+
+            }
+            else if (n is PinNode)
+            {
+
+            }
+            else
+            {
+                if (graphState == UIGraphState.LoadingWithTemplate)
+                {
+                    n.ViewOriginX = Size.X * 0.5f;
+                    n.ViewOriginY = Size.Y * 0.5f;
+                }
+
+                unode = new UINode(this, n);
+            }
+
+            nodes[unode.Id] = unode;
+
+            //handle output preview linking
+
+            if (unode is UINode)
+            {
+                TryAndLinkOutputPreview(unode as UINode);
+            }
+
+            var uobj = unode as UIObject;
+            uobj.Position = pos;
+
+            //add to view
+            AddChild(unode as UIObject);
+            unode.Snap();
             return unode;
         }
         #endregion
@@ -846,9 +895,8 @@ namespace MateriaCore.Components.GL
             if (Current == null) return;
             Current.OnUndo += Current_OnUndo;
             Current.OnRedo += Current_OnRedo;
-            Current.OnGraphUpdated += Current_OnGraphUpdated;
-            Current.OnHdriChanged += Current_OnHdriChanged;
-            Current.OnGraphNameChanged += Current_OnGraphNameChanged;
+            Current.OnUpdate += Current_OnGraphUpdated;
+            Current.OnNameChange += Current_OnGraphNameChanged;
         }
 
         protected void RemoveCurrentEvents()
@@ -856,9 +904,8 @@ namespace MateriaCore.Components.GL
             if (Current == null) return;
             Current.OnUndo -= Current_OnUndo;
             Current.OnRedo -= Current_OnRedo;
-            Current.OnGraphUpdated -= Current_OnGraphUpdated;
-            Current.OnHdriChanged -= Current_OnHdriChanged;
-            Current.OnGraphNameChanged -= Current_OnGraphNameChanged;
+            Current.OnUpdate -= Current_OnGraphUpdated;
+            Current.OnNameChange -= Current_OnGraphNameChanged;
         }
 
         private void Current_OnRedo(Graph g)
@@ -871,11 +918,6 @@ namespace MateriaCore.Components.GL
         {
             if (g != Current) return;
             MergeUndoRedo();
-        }
-
-        private void Current_OnHdriChanged(Graph g)
-        {
-            //HdriManager.Selected = g.HdriIndex;
         }
 
         private void Current_OnGraphNameChanged(Graph g)
@@ -945,6 +987,8 @@ namespace MateriaCore.Components.GL
             {
                 Canvas.Cam.LocalPosition = new Vector3((float)Current.ShiftX, (float)Current.ShiftY, 0);
             }
+
+            Current?.TryAndProcess();
         }
 
         public void TryAndLoadGraphStack(string[] stack)
@@ -1407,6 +1451,89 @@ namespace MateriaCore.Components.GL
             RawRoot = null;
             InternalDispose();
             base.Dispose(disposing);
+        }
+
+        public void OnFileDrop(UIFileDropEvent e)
+        {
+            e.IsHandled = true;
+            var data = e.files;
+
+            if (data == null) return;
+
+            int totalValid = 0;
+            for (int i = 0; i < data.Length; ++i)
+            {
+                string f = data[i];
+                if (string.IsNullOrEmpty(f)) continue;
+                string ext = System.IO.Path.GetExtension(f);
+                if (ext.ToLower().Equals(".mtg") || ext.ToLower().Equals(".mtga"))
+                {
+                    var n = CreateNode(f);
+                    if (n == null) return;
+
+                    Vector2 pos = UI.MousePosition;
+
+                    if (Canvas != null)
+                    {
+                        pos = Canvas.ToCanvasSpace(pos);
+                    }
+
+                    pos += new Vector2(totalValid * UINode.DEFAULT_WIDTH, 0);
+
+                    CreateUINode(n, pos);
+                    ++totalValid;
+                }
+            }
+
+            if (totalValid > 0)
+            {
+                Current?.Snapshot();
+                Current?.TryAndProcess();
+            }
+        }
+
+        public void OnDrop(UIDropEvent e)
+        {
+            var data = e.dragDrop.DropData;
+            if (data is UINodeSource) //todo: check for string type file stuff
+            {
+                e.IsHandled = true;
+                UINodeSource src = data as UINodeSource;
+                var n = CreateNode(src.Type);
+                if (n == null) return;
+                
+                Vector2 pos = UI.MousePosition;
+                
+                if (Canvas != null)
+                {
+                    pos = Canvas.ToCanvasSpace(pos);
+                }
+
+                CreateUINode(n, pos);
+                Current?.Snapshot();
+                Current?.TryAndProcess();
+            }
+            else if (data is string)
+            {
+                e.IsHandled = true;
+                string v = (string)data;
+                if (!string.IsNullOrEmpty(v))
+                {
+                    var n = CreateNode(v);
+                    if (n == null) return;
+
+                    Vector2 pos = UI.MousePosition;
+
+                    if (Canvas != null)
+                    {
+                        pos = Canvas.ToCanvasSpace(pos);
+                    }
+
+                    CreateUINode(n, pos);
+                    Current?.Snapshot();
+                    Current?.TryAndProcess();
+                }
+            }
         }
     }
 }

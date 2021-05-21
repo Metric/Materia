@@ -11,6 +11,8 @@ namespace MateriaCore.Components.GL
         UIGraph Graph { get; }
         string Id { get; }
 
+        void Snap();
+
         void LoadConnection(UINodePoint n, NodeInput p);
         void LoadConnections();
         void Restore();

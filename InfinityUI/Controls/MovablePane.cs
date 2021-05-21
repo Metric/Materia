@@ -84,8 +84,7 @@ namespace InfinityUI.Controls
 
         public virtual void Move(Vector2 delta, bool invokeEvent = true, MouseEventArgs e = null)
         {
-            float xSign = 1;
-            float ySign = 1;
+            float xSign = 1, ySign = 1;
 
             Vector2 scaledDelta = delta;
 
@@ -108,6 +107,7 @@ namespace InfinityUI.Controls
 
             switch (RelativeTo)
             {
+                case Anchor.RightVerticalFill:
                 case Anchor.Right:
                 case Anchor.BottomRight:
                 case Anchor.TopRight:
@@ -141,7 +141,7 @@ namespace InfinityUI.Controls
                         UIObject el = Parent.Children[i];
                         if (el == this || !el.Visible) continue;
                         if (!el.Rect.Intersects(Rect) || el.Rect.Contains(Rect)) continue;
-                        UI.SnapToElement(this, el, SnapTolerance, xSign, ySign);
+                        UI.SnapToElement(this, el, SnapTolerance);
                     }
                     break;
             }
@@ -170,27 +170,32 @@ namespace InfinityUI.Controls
                     break;
             }
 
-            switch (SnapMode)
-            {
-                case MovablePaneSnapMode.Panes:
-                    if (Parent == null) break;
-                    for (int i = 0; i < Parent.Children.Count; ++i)
-                    {
-                        UIObject el = Parent.Children[i];
-                        if (el == this || !el.Visible) continue;
-                        if (!el.Rect.Intersects(Rect) || el.Rect.Contains(Rect)) continue;
-                        UI.SnapToElement(this, el, SnapTolerance, xSign, ySign);
-                    }
-
-                    break;
-                case MovablePaneSnapMode.Grid:
-                    UI.SnapToGrid(this, (int)SnapTolerance);
-                    break;
-            }
+            Snap();
 
             if (invokeEvent)
             {
                 MovedTo?.Invoke(this, pos);
+            }
+        }
+
+        public void Snap()
+        {
+            switch(SnapMode)
+            {
+                case MovablePaneSnapMode.Panes:
+                    if (Parent == null) break;
+                for (int i = 0; i < Parent.Children.Count; ++i)
+                {
+                    UIObject el = Parent.Children[i];
+                    if (el == this || !el.Visible) continue;
+                    if (!el.Rect.Intersects(Rect) || el.Rect.Contains(Rect)) continue;
+                    UI.SnapToElement(this, el, SnapTolerance);
+                }
+
+                break;
+                case MovablePaneSnapMode.Grid:
+                    UI.SnapToGrid(this, (int)SnapTolerance);
+                break;
             }
         }
 
@@ -206,11 +211,7 @@ namespace InfinityUI.Controls
             {
                 ZOrder = 0;
 
-                //todo: handle Relate Mode = Percent for Snap To Grid
-                if (SnapMode == MovablePaneSnapMode.Grid)
-                {
-                    UI.SnapToGrid(this, (int)SnapTolerance);
-                }
+                Snap();
             }
 
             isMouseDown = false;

@@ -11,7 +11,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public EmbossProcessor() : base()
         {
-            shader = GetShader("image.glsl", "emboss.glsl");
+            shader = GetShader("raw.glsl", "emboss.glsl");
         }
 
         protected override void SetUniqueUniforms()

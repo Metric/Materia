@@ -52,7 +52,7 @@ namespace Materia.Graph
 
     public class Graph : IDisposable
     {
-        public const float GRAPH_VERSION = 1.1f;
+        public const float GRAPH_VERSION = 1.2f;
 
         public static bool ShaderLogging { get; set; }
 
@@ -61,12 +61,11 @@ namespace Materia.Graph
 
         public delegate void GraphUpdate(Graph g);
         public delegate void ParameterUpdate(ParameterValue p);
-        public event GraphUpdate OnGraphUpdated;
-        public event GraphUpdate OnGraphNameChanged;
-        public event ParameterValue.GraphParameterUpdate OnGraphParameterUpdate;
-        public event ParameterValue.GraphParameterUpdate OnGraphParameterTypeUpdate;
-        public event GraphUpdate OnHdriChanged;
-        public event GraphUpdate OnGraphLoaded;
+        public event GraphUpdate OnUpdate;
+        public event GraphUpdate OnNameChange;
+        public event ParameterValue.GraphParameterUpdate OnParameterUpdate;
+        public event ParameterValue.GraphParameterUpdate OnParameterTypeUpdate;
+        public event GraphUpdate OnLoad;
         public event GraphUpdate OnUndo;
         public event GraphUpdate OnRedo;
 
@@ -95,6 +94,9 @@ namespace Materia.Graph
         protected ConcurrentQueue<byte[]> undo;
         protected ConcurrentQueue<byte[]> redo;
 
+        /// <summary>
+        /// The previous byte data for undo / redo
+        /// </summary>
         protected byte[] previousByteData;
 
         /// <summary>
@@ -176,10 +178,11 @@ namespace Materia.Graph
             }
             set
             {
-                name = value;
-                if(OnGraphNameChanged != null)
+                if (name != value)
                 {
-                    OnGraphNameChanged.Invoke(this);
+                    name = value;
+                    OnNameChange?.Invoke(this);
+                    Modified = true;
                 }
             }
         }
@@ -208,39 +211,6 @@ namespace Materia.Graph
             }
         }
 
-        protected string hdriIndex;
-        public string HdriIndex
-        {
-            get
-            {
-                return hdriIndex;
-            }
-            set
-            {
-                hdriIndex = value;
-                if(OnHdriChanged != null)
-                {
-                    OnHdriChanged.Invoke(this);
-                }
-                Modified = true;
-            }
-        }
-
-        protected string[] hdriImages;
-        [Dropdown("HdriIndex")]
-        [Editable(ParameterInputType.Dropdown, "Environment HDR")]
-        public string[] HdriImages
-        {
-            get
-            {
-                return hdriImages;
-            }
-            set
-            {
-                hdriImages = value;
-            }
-        }
-
         protected int randomSeed;
 
         [Editable(ParameterInputType.IntInput, "Random Seed")]
@@ -252,22 +222,26 @@ namespace Materia.Graph
             }
             set
             {
-                AssignSeed(value);
-
-                //no need to try and process
-                //on a function graph
-                //as the parent image graph
-                //should be one to trigger
-                //the function graph
-                if (this is Function)
+                if (randomSeed != value)
                 {
-                    return;
-                }
+                    Modified = true;
+                    AssignSeed(value);
 
-                if (parentNode == null)
-                {
-                    Updated();
-                    TryAndProcess();
+                    //no need to try and process
+                    //on a function graph
+                    //as the parent image graph
+                    //should be one to trigger
+                    //the function graph
+                    if (this is Function)
+                    {
+                        return;
+                    }
+
+                    if (parentNode == null)
+                    {
+                        Updated();
+                        TryAndProcess();
+                    }
                 }
             }
         }
@@ -283,8 +257,11 @@ namespace Materia.Graph
             }
             set
             {
-                if(!ReadOnly)
+                if (!ReadOnly && width != value)
+                {
                     width = value;
+                    Modified = true;
+                }
             }
         }
 
@@ -296,8 +273,11 @@ namespace Materia.Graph
             }
             set
             {
-                if(!ReadOnly)
+                if (!ReadOnly && height != value)
+                {
                     height = value;
+                    Modified = true;
+                }
             }
         }
 
@@ -336,8 +316,20 @@ namespace Materia.Graph
             }
         }
 
+        protected bool absoluteSize = false;
         [Editable(ParameterInputType.Toggle, "Absolute Size", "Basic")]
-        public bool AbsoluteSize { get; set; }
+        public bool AbsoluteSize
+        {
+            get => absoluteSize;
+            set
+            {
+                if (absoluteSize != value)
+                {
+                    absoluteSize = value;
+                    Modified = true;
+                }
+            }
+        }
 
         public class GraphData
         {
@@ -354,8 +346,6 @@ namespace Materia.Graph
             public int width;
             public int height;
             public bool absoluteSize;
-
-            public string hdriIndex;
 
             public Dictionary<string, string> parameters;
             public List<string> customParameters;
@@ -376,7 +366,7 @@ namespace Materia.Graph
         /// <param name="w"></param>
         /// <param name="h"></param>
         /// <param name="async"></param>
-        public Graph(string name, int w = DEFAULT_SIZE, int h = DEFAULT_SIZE)
+        public Graph(string graphName, int w = DEFAULT_SIZE, int h = DEFAULT_SIZE)
         {
             Version = GRAPH_VERSION;
 
@@ -390,7 +380,7 @@ namespace Materia.Graph
 
             State = GraphState.Ready;
 
-            Name = name;
+            name = graphName;
             Zoom = 1;
             ShiftX = ShiftY = 0;
             width = w;
@@ -423,7 +413,7 @@ namespace Materia.Graph
             for (int i = 0; i < count; ++i)
             {
                 var n = Nodes[i];
-                n.CopyResources(cwd);
+                n?.CopyResources(cwd);
             }
 
             if (setCWD)
@@ -1062,7 +1052,6 @@ namespace Materia.Graph
             d.shiftX = ShiftX;
             d.shiftY = ShiftY;
             d.zoom = Zoom;
-            d.hdriIndex = hdriIndex;
             d.parameters = GetJsonReadyParameters();
             d.width = width;
             d.height = height;
@@ -1363,10 +1352,7 @@ namespace Materia.Graph
         {
             if (NodeLookup.ContainsKey(n.Id)) return false;
 
-            if (n.ParentGraph != null && n.ParentGraph != this)
-            {
-                n.ParentGraph.Remove(n);
-            }
+            n.ParentGraph?.Remove(n, false);
 
             n.AssignParentGraph(this);
 
@@ -1396,7 +1382,7 @@ namespace Materia.Graph
             return true;
         }
 
-        public virtual void Remove(Node n)
+        public virtual void Remove(Node n, bool dispose = true)
         {
             if (n is OutputNode)
             {
@@ -1419,7 +1405,12 @@ namespace Materia.Graph
             n.AssignParentGraph(null);
             NodeLookup.Remove(n.Id);
             Nodes.Remove(n);
-            n.Dispose();
+
+            if (dispose)
+            {
+                n.Dispose();
+            }
+
             Modified = true;
         }
 
@@ -1432,25 +1423,21 @@ namespace Materia.Graph
                     if (t.Equals(typeof(OutputNode)))
                     {
                         var n = new OutputNode(defaultTextureType);
-                        n.AssignParentGraph(this);
                         return n;
                     }
                     else if (t.Equals(typeof(InputNode)))
                     {
                         var n = new InputNode(defaultTextureType);
-                        n.AssignParentGraph(this);
                         return n;
                     }
                     else if (t.Equals(typeof(CommentNode)) || t.Equals(typeof(PinNode)))
                     {
                         Node n = (Node)Activator.CreateInstance(t);
-                        n.AssignParentGraph(this);
                         return n;
                     }
                     else
                     {
                         Node n = (Node)Activator.CreateInstance(t, width, height, defaultTextureType);
-                        n.AssignParentGraph(this);
                         return n;
                     }
                 }
@@ -1473,7 +1460,6 @@ namespace Materia.Graph
             if(type.Contains("/") || type.Contains("\\") || type.Contains("Materia::Layer::"))
             {
                 var n = new GraphInstanceNode(width, height);
-                n.AssignParentGraph(this);
                 return n;
             }
 
@@ -1529,7 +1515,6 @@ namespace Materia.Graph
             PixelNodes.Clear();
             InstanceNodes.Clear();
 
-            hdriIndex = d.hdriIndex;
             Name = d.name;
             OutputNodes = d.outputs;
             InputNodes = d.inputs;
@@ -1732,10 +1717,7 @@ namespace Materia.Graph
                 n.RestoreConnections(NodeLookup, true);
             }
 
-            if (OnGraphLoaded != null)
-            {
-                OnGraphLoaded.Invoke(this);
-            }
+            OnLoad?.Invoke(this);
         }
         #endregion
 
@@ -2182,9 +2164,11 @@ namespace Materia.Graph
         {
             Task.Run(() =>
             {
+                byte[] newData = Encoding.UTF8.GetBytes(GetJson());
+
                 if (previousByteData == null || previousByteData.Length == 0)
                 {
-                    previousByteData = Encoding.UTF8.GetBytes(GetJson());
+                    previousByteData = newData;
                     return;
                 }
 
@@ -2203,8 +2187,6 @@ namespace Materia.Graph
                         undo.Enqueue(queue[i]);
                     }
                 }
-
-                byte[] newData = Encoding.UTF8.GetBytes(GetJson());
 
                 using (MemoryStream output = new MemoryStream())
                 using (ByteBuffer target = new ByteBuffer(previousByteData))
@@ -2225,26 +2207,17 @@ namespace Materia.Graph
         #region Sub Events
         private void Graph_OnGraphParameterUpdate(ParameterValue param)
         {
-            if(OnGraphParameterUpdate != null)
-            {
-                OnGraphParameterUpdate.Invoke(param);
-            }
+            OnParameterUpdate?.Invoke(param);
         }
 
         private void Graph_OnGraphParameterTypeChanged(ParameterValue param)
         {
-            if(OnGraphParameterTypeUpdate != null)
-            {
-                OnGraphParameterTypeUpdate.Invoke(param);
-            }
+            OnParameterTypeUpdate?.Invoke(param);
         }
 
         protected virtual void Updated()
         {
-            if (OnGraphUpdated != null)
-            {
-                OnGraphUpdated.Invoke(this);
-            }
+            OnUpdate?.Invoke(this);
         }
         #endregion
 
@@ -2253,8 +2226,9 @@ namespace Materia.Graph
         {
             try
             {
-                foreach (Layer l in Layers)
+                for (int i = 0; i < Layers.Count; ++i)
                 {
+                    var l = Layers[i];
                     l?.Dispose();
                 }
             }
@@ -2282,23 +2256,12 @@ namespace Materia.Graph
 
             DisposeLayers();
 
-            if (NodeLookup != null)
-            {
-                NodeLookup.Clear();
-            }
+            NodeLookup?.Clear();
+            OutputNodes?.Clear();
+            InputNodes?.Clear();
 
-            if (OutputNodes != null)
-            {
-                OutputNodes.Clear();
-            }
-
-            if (InputNodes != null)
-            {
-                InputNodes.Clear();
-            }
-
-            PixelNodes.Clear();
-            InstanceNodes.Clear();
+            PixelNodes?.Clear();
+            InstanceNodes?.Clear();
 
             ClearParameters();
         }

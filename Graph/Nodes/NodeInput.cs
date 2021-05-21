@@ -1,4 +1,5 @@
 ﻿using Materia.Rendering.Attributes;
+using Materia.Rendering.Textures;
 
 namespace Materia.Nodes
 {
@@ -71,6 +72,16 @@ namespace Materia.Nodes
         public void AssignReference(NodeOutput output)
         {
             reference = output;
+        }
+
+        /// <summary>
+        /// Gets the active buffer.
+        /// Basically a shortcut to ParentNode?.GetActiveBuffer()
+        /// </summary>
+        /// <returns></returns>
+        public GLTexture2D GetActiveBuffer()
+        {
+            return ParentNode?.GetActiveBuffer();
         }
 
         public NodeInput(NodeType t, Node n, string name = "")

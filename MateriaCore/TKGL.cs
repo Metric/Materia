@@ -592,5 +592,10 @@ namespace MateriaCore
         {
             GL.AlphaFunc((OpenTK.Graphics.OpenGL.AlphaFunction)mode, threshold);
         }
+
+        public override void LineWidth(float width)
+        {
+            GL.LineWidth(width);
+        }
     }
 }

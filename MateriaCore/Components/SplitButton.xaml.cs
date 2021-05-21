@@ -39,7 +39,7 @@ namespace MateriaCore.Components
 
         private void Secondary_Click(object sender, RoutedEventArgs e)
         {
-            ContextMenu?.Open(secondary);
+            ContextMenu?.Open(this);
         }
 
         private void Primary_Click(object sender, RoutedEventArgs e)

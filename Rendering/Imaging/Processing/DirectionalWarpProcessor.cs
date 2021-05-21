@@ -11,7 +11,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public DirectionalWarpProcessor() : base()
         {
-            shader = GetShader("image.glsl", "warpdirectional.glsl");
+            shader = GetShader("raw.glsl", "warpdirectional.glsl");
             Intensity = 1;
         }
 

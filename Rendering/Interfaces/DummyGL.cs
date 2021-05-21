@@ -531,5 +531,7 @@ namespace Materia.Rendering.Interfaces
         public override void StencilFunc(int face, int func, int @ref, int m) { }
 
         public override void AlphaFunc(int mode, float threshold) { }
+
+        public override void LineWidth(float width) { }
     }
 }

@@ -51,5 +51,10 @@ namespace InfinityUI.Components
         {
             BeforeDraw?.Invoke(d);
         }
+
+        public virtual void Update()
+        {
+
+        }
     }
 }

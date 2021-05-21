@@ -19,11 +19,14 @@ namespace MateriaCore.Components.GL
         protected UIText text;
 
         protected bool selected = false;
+
+        private bool previousSelected = false;
         public bool Selected
         {
             get => selected;
             set
             {
+                previousSelected = selected;
                 selected = value;
             }
         }
@@ -71,7 +74,7 @@ namespace MateriaCore.Components.GL
                 textArea = new UIObject();
                 text = textArea.AddComponent<UIText>();
                 text.Color = new Vector4(0.75f, 0.75f, 0.75f, 1);
-                text.FontSize = 12;
+                text.FontSize = 16;
                 AddChild(textArea);
             }
 
@@ -92,9 +95,11 @@ namespace MateriaCore.Components.GL
                 leftSide.StartColor = leftSide.EndColor = point1.Color;
                 rightSide.StartColor = rightSide.EndColor = point2.Color;
                 leftAngle.StartColor = point1.Color;
-                leftAngle.EndColor = White;
-                rightAngle.StartColor = White;
+                leftAngle.EndColor = point1.Color;
+                rightAngle.StartColor = point2.Color;
                 rightAngle.EndColor = point2.Color;
+                center.StartColor = point1.Color;
+                center.EndColor = point2.Color;
             }
         }
 
@@ -102,31 +107,36 @@ namespace MateriaCore.Components.GL
         {
             if (point1 == null || point2 == null) return;
 
-            Vector2 r1 = point1.Position;
-            Vector2 r2 = point2.Position;
+            Vector2 r1 = point1.WorldPosition;
+            Vector2 r2 = point2.WorldPosition;
 
-            if (r1 == previousPoint1 && r2 == previousPoint2)
+            if (r1 == previousPoint1 && r2 == previousPoint2 && previousSelected == selected)
             {
                 return;
             }
 
+            previousSelected = selected;
+
             previousPoint1 = r1;
-            previousPoint2 = r1;
+            previousPoint2 = r2;
 
             float midy = (r2.Y + r1.Y) * 0.5f;
             float midx = (r2.X + r1.X) * 0.5f;
 
-            //subtract / add 10 for spacing
-            float dist = Vector2.Distance(r1 + new Vector2(10, 0), r2 - new Vector2(10, 0));
+            float horizDist = (r2.X - UINodePoint.DEFAULT_SIZE) - (r1.X + UINodePoint.DEFAULT_SIZE);
+            
+            float xDir = MathF.Sign(horizDist);
 
-            leftSide.Start = new Vector3(r1.X, r1.Y, -2);
+            horizDist = MathF.Abs(horizDist);
+
+            leftSide.Start = new Vector3(r1.X + UINodePoint.DEFAULT_SIZE, r1.Y + UINodePoint.DEFAULT_SIZE * 0.5f, 0);
             leftSide.End = leftSide.Start + new Vector3(10, 0, 0);
             leftAngle.Start = leftSide.End;
-            leftAngle.End = new Vector3(dist * 0.25f + leftAngle.Start.X, midy, -2);
+            leftAngle.End = new Vector3(leftAngle.Start.X + horizDist * 0.05f * xDir, midy, 0);
             center.Start = leftAngle.End;
-            center.End = new Vector3(dist * 0.5f + center.Start.X, midy, -2);
+            center.End = new Vector3(center.Start.X + horizDist * 0.90f * xDir, midy, 0);
             rightAngle.Start = center.End;
-            rightAngle.End = new Vector3(rightAngle.Start.X + dist * 0.25f, r2.Y, -2);
+            rightAngle.End = new Vector3(rightAngle.Start.X + horizDist * 0.05f * xDir, r2.Y + UINodePoint.DEFAULT_SIZE * 0.5f, 0);
             rightSide.Start = rightAngle.End;
             rightSide.End = rightSide.Start + new Vector3(10, 0, 0);
 
@@ -143,13 +153,8 @@ namespace MateriaCore.Components.GL
         public override void Update()
         {
             base.Update();
-            Invalidate();
             UpdateColors();
-        }
-
-        public override void Dispose(bool disposing = true)
-        {
-            base.Dispose(disposing);
+            Invalidate();
         }
     }
 }

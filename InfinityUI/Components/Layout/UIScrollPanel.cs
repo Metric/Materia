@@ -10,6 +10,7 @@ namespace InfinityUI.Components.Layout
     public class UIScrollPanel : IComponent, ILayout, IMouseWheel
     {
         public event Action<UIScrollPanel> Scrolled;
+        public event Action<UIScrollPanel> MaximumOffsetChanged;
 
         public bool NeedsUpdate { get; set; }
 
@@ -47,9 +48,14 @@ namespace InfinityUI.Components.Layout
             AddEvents();
         }
 
+        protected Box2 lastVisibleView;
+
         protected void CreateView()
         {
-            view = new UIObject();
+            view = new UIObject()
+            {
+                RaycastTarget = true,
+            };
 
             if (Parent != null)
             {
@@ -84,6 +90,7 @@ namespace InfinityUI.Components.Layout
 
         protected void RemoveEvents()
         {
+            view.Resize -= View_Resize;
             if (Parent == null) return;
             Parent.Resize -= Parent_Resize;
         }
@@ -103,7 +110,8 @@ namespace InfinityUI.Components.Layout
             //do nothing if already in view
             if (Parent.Rect.Intersects(o.Rect)) return;
 
-            offset = new Vector2(o.Rect.Left, o.Rect.Top);
+            var rect = o.AnchoredRect;
+            offset = new Vector2(rect.Left, rect.Top);
             NeedsUpdate = true;
             Scrolled?.Invoke(this);
         }
@@ -111,11 +119,11 @@ namespace InfinityUI.Components.Layout
         public virtual void Invalidate()
         {
             if (Parent == null || !NeedsUpdate) return;
-            var size = Parent.WorldSize;
-            var vSize = view.WorldSize;
-            if (vSize.X > size.X || vSize.Y > size.Y)
+            var size = Parent.AnchoredRect;
+            var vSize = view.ExtendedRect;
+            if (vSize.Width > size.Width || vSize.Height > size.Height)
             {
-                MaximumOffset = vSize - size;
+                MaximumOffset = new Vector2(vSize.Width, vSize.Height) - new  Vector2(size.Width, size.Height);
                 MaximumOffset = Vector2.Clamp(MaximumOffset, Vector2.Zero, MaximumOffset);
             }
             else
@@ -129,15 +137,27 @@ namespace InfinityUI.Components.Layout
             view.Position = -offset;
 
             NeedsUpdate = false;
+
+            MaximumOffsetChanged?.Invoke(this);
         }
 
         public virtual void OnMouseWheel(MouseWheelArgs e)
         {
             if (e.IsHandled) return;
             e.IsHandled = true;
-            offset -= e.Delta * ScrollStep;
+            offset += e.Delta * ScrollStep;
             NeedsUpdate = true;
             Scrolled?.Invoke(this);
+        }
+
+        public virtual void Update()
+        {
+            if (view == null) return;
+            if (lastVisibleView != view.VisibleRect)
+            {
+                lastVisibleView = view.VisibleRect;
+                NeedsUpdate = true;
+            }
         }
     }
 }

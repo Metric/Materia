@@ -10,7 +10,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public UniformColorProcessor() : base()
         {
-            shader = GetShader("image.glsl", "uniformcolor.glsl");
+            shader = GetShader("raw.glsl", "uniformcolor.glsl");
         }
 
         protected override void SetUniqueUniforms()

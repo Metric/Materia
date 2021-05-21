@@ -23,7 +23,7 @@ namespace MateriaCore
         public MainWindow()
         {
             InitializeComponent();
-            MLog.Log.File = "log.txt";
+            MLog.Log.Filename = "log";
 
             Instance = this;
 

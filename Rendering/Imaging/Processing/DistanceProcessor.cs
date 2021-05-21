@@ -18,12 +18,26 @@ namespace Materia.Rendering.Imaging.Processing
 
         public void Process(GLTexture2D input, GLTexture2D source)
         {
-            int width = outputBuff.Width;
-            int height = outputBuff.Height;
+            int width = Width;
+            int height = Height;
 
             if (Shader != null && PreShader != null)
             {
-                GLTexture2D sourceTemp = source == null ? outputBuff.Copy() : source;
+                int sourceMode = source == null ? 2 : SourceOnly ? 1 : 0;
+
+                GLTexture2D inputTemp = new GLTexture2D(PixelInternalFormat.Rgba32f);
+                inputTemp.Bind();
+                inputTemp.SetData(IntPtr.Zero, PixelFormat.Rgba, Width, Height);
+                inputTemp.Nearest();
+                inputTemp.ClampToEdge();
+                GLTexture2D.Unbind();
+
+                GLTexture2D outputTemp = new GLTexture2D(PixelInternalFormat.Rgba32f);
+                outputTemp.Bind();
+                outputTemp.SetData(IntPtr.Zero, PixelFormat.Rgba, Width, Height);
+                outputTemp.Nearest();
+                outputTemp.ClampToEdge();
+                GLTexture2D.Unbind();
 
                 GLTexture2D vz = new GLTexture2D(PixelInternalFormat.Rgba32f);
                 vz.Bind();
@@ -34,26 +48,26 @@ namespace Materia.Rendering.Imaging.Processing
 
                 PreShader.Use();
 
-                //bind output
-                outputBuff.Bind();
-                outputBuff.BindAsImage(0, true, true);
+                //bind internal 32f output
+                inputTemp.Bind();
+                inputTemp.BindAsImage(0, true, true);
 
-                //bind input
+                //bind incoming input
                 input.Bind();
                 input.BindAsImage(1, true, true);
 
                 //bind source
-                sourceTemp.Bind();
-                sourceTemp.BindAsImage(2, true, true);
+                source?.Bind();
+                source?.BindAsImage(2, true, true);
                 
-                //bind vs
+                //bind internal vs
                 vz.Bind();
                 vz.BindAsImage(3, true, true);
 
                 PreShader.SetUniform("width", (float)width);
                 PreShader.SetUniform("height", (float)height);
 
-                PreShader.SetUniform("sourceOnly", SourceOnly);
+                PreShader.SetUniform("sourceOnly", sourceMode);
                 PreShader.SetUniform("maxDistance", Distance);
 
                 //stage 1 convert input range 
@@ -61,20 +75,21 @@ namespace Materia.Rendering.Imaging.Processing
                 //for dt
                 PreShader.SetUniform("stage", (int)0);
                 IGL.Primary.DispatchCompute(width / 8, height / 8, 1);
+                IGL.Primary.MemoryBarrier((int)MemoryBarrierFlags.AllBarrierBits);
 
                 Shader.Use();
 
-                //bind output
-                outputBuff.Bind();
-                outputBuff.BindAsImage(0, true, true);
+                //bind internal 32f output
+                outputTemp.Bind();
+                outputTemp.BindAsImage(0, true, true);
 
-                //bind input
-                input.Bind();
-                input.BindAsImage(1, true, true);
+                //bind internal 32f input
+                inputTemp.Bind();
+                inputTemp.BindAsImage(1, true, true);
 
                 //bind source
-                sourceTemp.Bind();
-                sourceTemp.BindAsImage(2, true, true);
+                source?.Bind();
+                source?.BindAsImage(2, true, true);
 
                 //bind vz
                 vz.Bind();
@@ -83,30 +98,32 @@ namespace Materia.Rendering.Imaging.Processing
                 Shader.SetUniform("width", (float)width);
                 Shader.SetUniform("height", (float)height);
 
-                Shader.SetUniform("sourceOnly", SourceOnly);
+                Shader.SetUniform("sourceOnly", sourceMode);
                 Shader.SetUniform("maxDistance", Distance);
 
                 //stage 2 run column transform
                 Shader.SetUniform("stage", (int)0);
                 IGL.Primary.DispatchCompute(width / 8, 1, 1);
-      
+                IGL.Primary.MemoryBarrier((int)MemoryBarrierFlags.AllBarrierBits);
+
                 //stage 3 run row transform
                 Shader.SetUniform("stage", (int)1);
                 IGL.Primary.DispatchCompute(height / 8, 1, 1);
+                IGL.Primary.MemoryBarrier((int)MemoryBarrierFlags.AllBarrierBits);
 
                 PreShader.Use();
 
-                //bind output
+                //bind actual output
                 outputBuff.Bind();
-                outputBuff.BindAsImage(0, true, true);
+                outputBuff.BindAsImage(4, true, true);
 
-                //bind input
+                //bind actual input
                 input.Bind();
                 input.BindAsImage(1, true, true);
 
                 //bind source
-                sourceTemp.Bind();
-                sourceTemp.BindAsImage(2, true, true);
+                source?.Bind();
+                source?.BindAsImage(2, true, true);
 
                 //bind vz
                 vz.Bind();
@@ -115,12 +132,13 @@ namespace Materia.Rendering.Imaging.Processing
                 PreShader.SetUniform("width", (float)width);
                 PreShader.SetUniform("height", (float)height);
 
-                PreShader.SetUniform("sourceOnly", SourceOnly);
+                PreShader.SetUniform("sourceOnly", sourceMode);
                 PreShader.SetUniform("maxDistance", Distance);
 
                 //stage 4 finalize with sqrt() etc
                 PreShader.SetUniform("stage", (int)1);
                 IGL.Primary.DispatchCompute(width / 8, height / 8, 1);
+                IGL.Primary.MemoryBarrier((int)MemoryBarrierFlags.AllBarrierBits);
 
                 GLTexture2D.UnbindAsImage(0);
                 GLTexture2D.UnbindAsImage(1);
@@ -128,11 +146,9 @@ namespace Materia.Rendering.Imaging.Processing
                 GLTexture2D.UnbindAsImage(3);
                 GLTexture2D.Unbind();
 
-                temp.Dispose();
-                if (sourceTemp != source)
-                {
-                    sourceTemp.Dispose();
-                }
+                inputTemp?.Dispose();
+                outputTemp?.Dispose();
+                vz?.Dispose();
             }
         }
     }

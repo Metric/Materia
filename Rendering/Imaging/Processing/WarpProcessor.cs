@@ -10,7 +10,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public WarpProcessor() : base()
         {
-            shader = GetShader("image.glsl", "warp.glsl");
+            shader = GetShader("raw.glsl", "warp.glsl");
             Intensity = 1;
         }
 

@@ -47,6 +47,7 @@ namespace MateriaCore
 
         protected UI2DPreview preview2D;
         protected UI3DPreview preview3D;
+        protected UIShelf shelf;
 
         protected IHdrFile hdrToLoad;
         protected HdrMap hdrMap;
@@ -252,7 +253,13 @@ namespace MateriaCore
             MouseUp += MainGLWindow_MouseUp;
             KeyDown += MainGLWindow_KeyDown;
             KeyUp += MainGLWindow_KeyUp;
-            Closing += MainGLWindow_Closing;  
+            Closing += MainGLWindow_Closing;
+            FileDrop += MainGLWindow_FileDrop;
+        }
+
+        private void MainGLWindow_FileDrop(OpenTK.Windowing.Common.FileDropEventArgs obj)
+        {
+            UI.OnFileDrop(obj.FileNames);
         }
 
         private void MainGLWindow_Minimized(OpenTK.Windowing.Common.MinimizedEventArgs obj)
@@ -282,8 +289,10 @@ namespace MateriaCore
 
             activeDocument = new UIGraph();
 
-            //activeGraph = new Graph("Untitled", 512, 512); //testing
-            //activeGraph.DefaultTextureType = GraphPixelType.RGBA; //testing
+            activeGraph = new Graph("Untitled", 512, 512)
+            {
+                DefaultTextureType = GraphPixelType.RGBA //testing
+            }; //testing
 
             graphArea.AddChild(activeDocument);
 
@@ -293,9 +302,12 @@ namespace MateriaCore
             preview3D = new UI3DPreview();
             rootArea.AddChild(preview3D);
 
+            shelf = new UIShelf();
+            rootArea.AddChild(shelf);
+
             //GraphTemplate.PBRFull(activeGraph);
-            //activeDocument.Load(activeGraph.GetJson(), "");
-            //activeGraph = activeDocument.Current;
+            activeDocument.Load(activeGraph.GetJson(), "");
+            activeGraph = activeDocument.Current;
             Debug.WriteLine("UI Initialize: " + (Environment.TickCount - ms) + "ms");
         }
 
@@ -326,6 +338,8 @@ namespace MateriaCore
             
             IGL.Primary.Enable((int)EnableCap.DepthTest);
             IGL.Primary.DepthFunc((int)DepthFunction.Lequal);
+
+            IGL.Primary.Enable((int)EnableCap.LineSmooth);
         }
 
         private void InitializeViewport()
@@ -360,9 +374,7 @@ namespace MateriaCore
             //process hdr load
             ProcessHdr();
 
-            //poll graph updates if any
-            //and let them render first before anything else
-            activeGraph?.PollScheduled();
+            PollGraph();
 
             //next render 3d preview
             preview3D?.Render();
@@ -370,6 +382,18 @@ namespace MateriaCore
             InitializeViewport();
             //draw UI last
             UI.Draw();
+        }
+
+        private void PollGraph()
+        {
+            if (IsExiting || !IsVisible) return;
+
+            FullScreenQuad.SharedVao?.Bind();
+            //poll graph updates if any
+            //and let them render first before anything else
+            activeGraph?.PollScheduled();
+
+            FullScreenQuad.SharedVao?.Unbind();
         }
 
         private void ProcessHdr()

@@ -2,6 +2,7 @@
 using InfinityUI.Core;
 using InfinityUI.Interfaces;
 using Materia.Rendering.Mathematics;
+using Materia.Rendering.Textures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,6 +49,7 @@ namespace InfinityUI.Controls
     {
         public event Action<TextInput> LostFocus;
         public event Action<TextInput> OnSubmit;
+        public event Action<TextInput> OnClear;
 
         public bool NeedsUpdate { get; set; }
 
@@ -67,6 +69,7 @@ namespace InfinityUI.Controls
 
         public Regex AllowedFormat { get; set; }
         public UIText View { get; protected set; }
+        public UIText PlaceholderView { get; protected set; }
         public string Text
         {
             get
@@ -80,6 +83,20 @@ namespace InfinityUI.Controls
                 View.Text = value;
                 carretPosition = value.Length;
                 NeedsUpdate = true;
+            }
+        }
+
+        public string Placeholder
+        {
+            get
+            {
+                if (PlaceholderView == null || string.IsNullOrEmpty(PlaceholderView.Text)) return "";
+                return PlaceholderView.Text;
+            }
+            set
+            {
+                if (PlaceholderView == null) return;
+                PlaceholderView.Text = value;
             }
         }
 
@@ -104,6 +121,8 @@ namespace InfinityUI.Controls
         protected UIImage background;
         protected UISelectable selectable;
         protected UIObject textContainer;
+        protected UIObject placeholderContainer;
+        protected Button clearButton;
 
         protected bool isFocused = false;
         protected float horizontalOffset = 0;
@@ -116,8 +135,6 @@ namespace InfinityUI.Controls
 
         protected Stack<string> redos = new Stack<string>();
         protected Stack<string> undos = new Stack<string>();
-
-        public Vector2 TextPadding { get; set; }
 
         public int CarretPosition
         {
@@ -133,25 +150,38 @@ namespace InfinityUI.Controls
         }
         public int MaxLength { get; set; }
 
-        public TextInput(float fontSize, Vector2 size, int maxLength = 0) : base()
+        public TextInput(float fontSize, Vector2 size, int maxLength = 0, GLTexture2D clearButtonIcon = null) : base()
         {
             RaycastTarget = true;
 
             Size = size;
-
-            TextPadding = new Vector2(2, -fontSize * 0.25f);
 
             background = AddComponent<UIImage>();
             background.Clip = true;
 
             selectable = AddComponent<UISelectable>();
 
-            textContainer = new UIObject();
+            textContainer = new UIObject
+            {
+                RelativeTo = Anchor.Left,
+                Margin = new Box2(4,0,0,0)
+            };
 
             View = textContainer.AddComponent<UIText>();
             View.Text = "";
             View.FontSize = fontSize;
-            
+
+            placeholderContainer = new UIObject
+            {
+                RelativeTo = Anchor.Left,
+                Margin = new Box2(4,0,0,0)
+            };
+
+            PlaceholderView = placeholderContainer.AddComponent<UIText>();
+            PlaceholderView.Text = "";
+            PlaceholderView.FontSize = fontSize;
+            PlaceholderView.Color = new Vector4(View.Color.Xyz, 0.75f);
+
             MaxLength = maxLength;
 
             Carret = new UIObject();
@@ -164,13 +194,30 @@ namespace InfinityUI.Controls
             var selectionIamge = CarretSelection.AddComponent<UIImage>();
             selectionIamge.Color = new Vector4(0, 1, 1, 0.5f);
 
+            clearButton = new Button("", new Vector2(32, 32))
+            {
+                RelativeTo = Anchor.TopRight,
+                Margin = new Box2(2,2,2,2),
+                Visible = false,
+            };
+            clearButton.Submit += ClearButton_Submit;
+            clearButton.Background.Texture = clearButtonIcon ?? UI.DefaultWhite;
+
             AddChild(textContainer);
             AddChild(Carret);
             AddChild(CarretSelection);
+            AddChild(placeholderContainer);
+            AddChild(clearButton);
 
             InitEvents();
 
             NeedsUpdate = true;
+        }
+
+        private void ClearButton_Submit(Button obj)
+        {
+            Text = "";
+            OnClear?.Invoke(this);
         }
 
         protected virtual void InitEvents()
@@ -203,14 +250,14 @@ namespace InfinityUI.Controls
 
             float carretSelectWidth = MathF.Abs(carretSelectEnd - carretSelectX);
 
-            Vector2 wSize = WorldSize;
+            Vector2 wSize = AnchorSize;
             if (textSize > wSize.X)
             {
                 maxOverflow = textSize - wSize.X;
 
                 if (carretX >= wSize.X)
                 {
-                    horizontalOffset = (wSize.X - carretX - TextPadding.X - Carret.Size.X) - (wSize.X - (carretX % wSize.X));
+                    horizontalOffset = (wSize.X - carretX - Carret.Size.X) - (wSize.X - (carretX % wSize.X));
                 }
                 else
                 {
@@ -223,8 +270,8 @@ namespace InfinityUI.Controls
                 horizontalOffset = 0;
             }
 
-            textContainer.Position = new Vector2(TextPadding.X + horizontalOffset, TextPadding.Y);
-            Carret.Position = new Vector2(TextPadding.X + carretX + horizontalOffset, 0);
+            textContainer.Position = new Vector2(horizontalOffset, 0);
+            Carret.Position = new Vector2(carretX + horizontalOffset, 0);
 
             if (selectedText != null && selectedText.Length > 0)
             {
@@ -237,7 +284,11 @@ namespace InfinityUI.Controls
 
             //update carret selection area
             CarretSelection.Size = new Vector2(carretSelectWidth, CarretSelection.Size.Y);
-            CarretSelection.Position = new Vector2(TextPadding.X + carretSelectX + horizontalOffset, 0);
+            CarretSelection.Position = new Vector2(carretSelectX + horizontalOffset, 0);
+
+            placeholderContainer.Visible = !isFocused && string.IsNullOrEmpty(View.Text);
+
+            clearButton.Visible = !string.IsNullOrEmpty(Text) && clearButton.Background.Texture != UI.DefaultWhite;
 
             NeedsUpdate = false;
         }
@@ -625,6 +676,7 @@ namespace InfinityUI.Controls
             {
                 LostFocus?.Invoke(this);
             }
+            placeholderContainer.Visible = !isFocused && string.IsNullOrEmpty(View.Text);
         }
 
         public void Focus()

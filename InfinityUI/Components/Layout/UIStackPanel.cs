@@ -36,17 +36,6 @@ namespace InfinityUI.Components.Layout
             }
         }
 
-        protected bool autoSize;
-        public bool AutoSize
-        {
-            get => autoSize;
-            set
-            {
-                autoSize = value;
-                NeedsUpdate = true;
-            }
-        }
-
         protected bool reverse;
         public bool Reverse
         {
@@ -60,6 +49,8 @@ namespace InfinityUI.Components.Layout
                 NeedsUpdate = true;
             }
         }
+
+        protected Box2 lastVisibleArea;
 
         public UIObject Parent { get; set; }
 
@@ -114,51 +105,57 @@ namespace InfinityUI.Components.Layout
 
         private Vector3 Arrange(UIObject child, UIObject prev, float offset, float width, float height)
         {
-            float marginOffset;
-            float verticalOffset;
+            var fitter = child.GetComponent<UIContentFitter>();
 
-            var csize = child.AnchorSize;
+            if (fitter != null) {
+                switch (ChildAlignment)
+                {
+                    case Anchor.TopLeft:
+                    case Anchor.TopRight:
+                    case Anchor.BottomLeft:
+                    case Anchor.BottomRight:
+                    case Anchor.Right:
+                    case Anchor.Left:
+                    case Anchor.Center:
+                    case Anchor.Bottom:
+                    case Anchor.Top:
+                        fitter.Axis = Axis.Both;
+                        break;
+                    case Anchor.BottomHorizFill:
+                    case Anchor.CenterHorizFill:
+                    case Anchor.TopHorizFill:
+                        fitter.Axis = Axis.Vertical;
+                        break;
+                    case Anchor.LeftVerticalFill:
+                    case Anchor.RightVerticalFill:
+                        fitter.Axis = Axis.Horizontal;
+                        break;
+                }
+            }
 
-            child.RelativeTo = childAlignment;
+            //reset anchor to top left
+            child.RelativeTo = Anchor.TopLeft;
+
+            var csize = child.ExtendedRect;
 
             if (direction == Orientation.Horizontal)
             {
-                verticalOffset = Parent.Padding.Top + child.Margin.Top;
-
-                marginOffset = (prev != null ? prev.Margin.Right : Parent.Padding.Left) + child.Margin.Left;
-
-                child.Position = new Vector2(offset, verticalOffset);
-                float s = csize.X + marginOffset;
+                child.Position = new Vector2(offset, 0);
+                float s = csize.Width;
                 offset += s;
                 width += s;
-                if (autoSize)
-                {
-                    height = MathF.Max(height, csize.Y - child.Padding.Bottom);
-                }
-                else
-                {
-                    height = MathF.Max(height, csize.Y);
-                }
+                height = MathF.Max(height, csize.Height);
             }
             else
             {
-                verticalOffset = Parent.Padding.Left + child.Margin.Left;
-
-                marginOffset = (prev != null ? prev.Margin.Bottom : Parent.Padding.Top) + child.Margin.Top;
-
-                child.Position = new Vector2(verticalOffset, offset);
-                float s = csize.Y + marginOffset;
+                child.Position = new Vector2(0, offset);
+                float s = csize.Height;
                 offset += s;
                 height += s;
-                if (autoSize)
-                {
-                    width = MathF.Max(width, csize.X - child.Padding.Right);
-                }
-                else
-                {
-                    width = MathF.Max(width, csize.X);
-                }
+                width = MathF.Max(width, csize.Width);
             }
+
+            child.RelativeTo = ChildAlignment;
 
             return new Vector3(offset, width, height);
         }
@@ -173,54 +170,6 @@ namespace InfinityUI.Components.Layout
             float width = 0;
             float height = 0;
             float offset = 0;
-
-            if (autoSize)
-            {
-                float maxSize = 0;
-                for (int i = 0; i < Children.Count; ++i)
-                {
-                    var child = Children[i];
-                    var fitter = child.GetComponent<UIContentFitter>();
-                    if (fitter != null)
-                    {
-                        switch (direction)
-                        {
-                            case Orientation.Horizontal:
-                                fitter.Axis = Axis.Horizontal;
-                                break;
-                            case Orientation.Vertical:
-                                fitter.Axis = Axis.Vertical;
-                                break;
-                        }
-                    }
-
-                    Vector2 size = child.AnchorSize;
-                    switch (direction)
-                    {
-                        case Orientation.Horizontal:
-                            maxSize = MathF.Max(size.Y - (child.Padding.Bottom + child.Padding.Top), maxSize);
-                            break;
-                        case Orientation.Vertical:
-                            maxSize = MathF.Max(size.X - (child.Padding.Left + child.Padding.Left), maxSize);
-                            break;
-                    }
-                }
-
-                for (int i = 0; i < Children.Count; ++i)
-                {
-                    var child = Children[i];
-                    var size = child.AnchorSize;
-                    switch (direction)
-                    {
-                        case Orientation.Horizontal:
-                            child.Size = new Vector2(size.X, maxSize);
-                            break;
-                        case Orientation.Vertical:
-                            child.Size = new Vector2(maxSize, size.Y);
-                            break;
-                    }
-                }
-            }
 
             for (int i = 0; i < Children.Count; ++i)
             {
@@ -245,7 +194,7 @@ namespace InfinityUI.Components.Layout
                 case Anchor.TopHorizFill:
                 case Anchor.BottomHorizFill:
                 case Anchor.CenterHorizFill:
-                    Parent.Size = new Vector2(Parent.Size.X, height);
+                    Parent.Size = new Vector2(1, height);
                     break;
                 case Anchor.Fill:
                     break;
@@ -255,6 +204,16 @@ namespace InfinityUI.Components.Layout
             }
 
             NeedsUpdate = false;
+        }
+
+        public virtual void Update()
+        {
+            if (Parent == null) return;
+            if (lastVisibleArea != Parent.VisibleRect)
+            {
+                lastVisibleArea = Parent.VisibleRect;
+                NeedsUpdate = true;
+            }
         }
 
         public virtual void Dispose()

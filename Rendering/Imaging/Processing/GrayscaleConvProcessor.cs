@@ -10,7 +10,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public GrayscaleConvProcessor() : base()
         {
-            shader = GetShader("image.glsl", "grayscaleconv.glsl");
+            shader = GetShader("raw.glsl", "grayscaleconv.glsl");
         }
 
         protected override void SetUniqueUniforms()

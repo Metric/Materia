@@ -136,7 +136,7 @@ namespace Materia.Rendering.Geometry
             IGL.Primary.VertexAttribPointer(1, 4, (int)VertexAttribPointerType.Float, false, 7 * sizeof(float), 3 * 4);
             IGL.Primary.EnableVertexAttribArray(0);
             IGL.Primary.EnableVertexAttribArray(1);
-            IGL.Primary.DrawArrays((int)PrimitiveType.Lines, 0, Lines.Count);
+            IGL.Primary.DrawArrays((int)PrimitiveType.Lines, 0, Lines.Count * 2);
             vbo?.Unbind();
         }
     }

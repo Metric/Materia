@@ -56,6 +56,16 @@ namespace InfinityUI.Controls
             }
         }
 
+        public string Tooltip
+        {
+            get => selectable != null ? selectable.Tooltip : null;
+            set
+            {
+                if (selectable == null) return;
+                selectable.Tooltip = value;
+            }
+        }
+
         public Button() : this("button")
         {
 

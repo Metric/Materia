@@ -465,8 +465,5 @@ void main() {
         final.b = Exclusion(a.b,b.b);
     }
 
-    //ensure premult
-    final.rgb *= final.a;
-
-    FragColor = final;
+    FragColor = clamp(final, vec4(0), vec4(1));
 }

@@ -69,12 +69,11 @@ namespace MateriaCore.Components.GL.Menu
             textContainer.RelativeTo = Anchor.Left;
             textView.Alignment = TextAlignment.Left;
 
-            Padding = new Box2(8, 2, 8, 2);
+            Padding = new Box2(4, 4, 4, 4);
 
             submenuArrowArea = new UIObject()
             {
                 Size = new Vector2(16,16),
-                Margin = new Box2(0, 0, 2, 0),
                 Visible = false
             };
 

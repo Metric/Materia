@@ -52,9 +52,11 @@ namespace MateriaCore.Components.GL
             Shader.SetUniformMatrix4("projectionMatrix", ref projection);
             Shader.SetUniformMatrix4("modelMatrix", ref m);
 
-            LineRenderer.SharedVao.Bind();
+            LineRenderer.SharedVao?.Bind();
 
             renderer?.Draw();
+
+            LineRenderer.SharedVao?.Unbind();
 
             UIRenderer.Bind();
         }
@@ -62,7 +64,8 @@ namespace MateriaCore.Components.GL
         public override void Invalidate()
         {
             if (!NeedsUpdate) return;
-            renderer?.Update();   
+            renderer?.Update();
+            NeedsUpdate = false;
         }
 
         public override void Dispose()

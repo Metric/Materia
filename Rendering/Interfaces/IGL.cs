@@ -159,5 +159,8 @@ namespace Materia.Rendering.Interfaces
 
         public abstract void AlphaFunc(int mode, float threshold);
 
+        //line stuff
+        public abstract void LineWidth(float width);
+
     }
 }

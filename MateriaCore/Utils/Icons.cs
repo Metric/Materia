@@ -22,5 +22,6 @@ namespace MateriaCore.Utils
         public const string ONE_X_ONE = "Images/1x1.png";
         public const string ADD = "Images/add.png";
         public const string PIN = "Images/pin.png";
+        public const string NODE = "Images/node-icon.png";
     }
 }

@@ -11,7 +11,7 @@ namespace Materia.Rendering.Imaging.Processing
         public GammaProcessor()
         {
             Gamma = 1;
-            shader = GetShader("image.glsl", "gamma.glsl");
+            shader = GetShader("raw.glsl", "gamma.glsl");
         }
 
         protected override void SetUniqueUniforms()

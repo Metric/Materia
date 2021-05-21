@@ -10,7 +10,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public SharpenProcessor()
         {
-            shader = GetShader("image.glsl", "sharpen.glsl");
+            shader = GetShader("raw.glsl", "sharpen.glsl");
         }
 
         protected override void SetUniqueUniforms()

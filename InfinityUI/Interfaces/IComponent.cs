@@ -9,5 +9,7 @@ namespace InfinityUI.Interfaces
     {
         UIObject Parent { get; set; }
         void Awake();
+
+        void Update();
     }
 }

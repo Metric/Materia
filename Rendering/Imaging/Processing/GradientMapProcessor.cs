@@ -14,7 +14,7 @@ namespace Materia.Rendering.Imaging.Processing
         public GradientMapProcessor()
         {
             Horizontal = true;
-            shader = GetShader("image.glsl", "gradientmap.glsl");
+            shader = GetShader("raw.glsl", "gradientmap.glsl");
             UseMask = false;
         }
 

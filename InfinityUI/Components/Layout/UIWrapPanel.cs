@@ -191,5 +191,10 @@ namespace InfinityUI.Components.Layout
         {
             RemoveEvents();
         }
+
+        public virtual void Update()
+        {
+
+        }
     }
 }

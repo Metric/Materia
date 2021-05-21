@@ -11,7 +11,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public CircleProcessor() : base()
         {
-            shader = GetShader("image.glsl", "circle.glsl");
+            shader = GetShader("raw.glsl", "circle.glsl");
         }
 
         protected override void SetUniqueUniforms()

@@ -81,5 +81,10 @@ namespace InfinityUI.Components.Layout
             e.IsHandled = true;
             isMouseDown = false;
         }
+
+        public virtual void Update()
+        {
+
+        }
     }
 }

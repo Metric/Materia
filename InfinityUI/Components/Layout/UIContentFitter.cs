@@ -16,6 +16,7 @@ namespace InfinityUI.Components.Layout
 
         protected HashSet<Type> ignoreTypes = new HashSet<Type>();
 
+        protected Box2 lastViewArea;
         public virtual void Awake()
         {
             AddEvents();
@@ -52,20 +53,13 @@ namespace InfinityUI.Components.Layout
         private void Parent_ChildAdded(UIObject child)
         {
             child.Resize += Child_Resize;
-            Child_Resize(child);
+            NeedsUpdate = true;
         }
 
         private void Child_Resize(UIObject obj)
         {
             if (Parent == null) return;
-
-            if (ignoreTypes.Contains(obj.GetType())) return;
-
-            //do not have to do a full invalidate
-            //we can just adjust
-            Box2 area = Parent.AnchoredRect;
-            area.Encapsulate(obj.AnchoredRect);
-            ResizeTo(ref area);
+            NeedsUpdate = true;
         }
 
         protected void ResizeTo(ref Box2 area)
@@ -100,20 +94,29 @@ namespace InfinityUI.Components.Layout
             var children = Parent.Children;
 
             Box2 area = new Box2(0,0,0,0);
-
             for (int i = 0; i < children.Count; ++i)
             {
                 var child = children[i];
+                if (!child.Visible) continue;
                 if (ignoreTypes.Contains(child.GetType())) continue;
-                area.Encapsulate(child.AnchoredRect);
+                area.Encapsulate(child.ExtendedRect);
             }
-
             ResizeTo(ref area);
         }
 
         public virtual void Dispose()
         {
             RemoveEvents();
+        }
+
+        public virtual void Update()
+        {
+            if (Parent == null) return;
+            if (lastViewArea != Parent.VisibleRect)
+            {
+                lastViewArea = Parent.VisibleRect;
+                NeedsUpdate = true;
+            }
         }
     }
 }
