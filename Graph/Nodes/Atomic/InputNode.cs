@@ -9,6 +9,8 @@ namespace Materia.Nodes.Atomic
 {
     public class InputNode : ImageNode
     {
+        ImageProcessor processor;
+
         public new int Height
         {
             get
@@ -72,6 +74,8 @@ namespace Materia.Nodes.Atomic
             height = 16;
             tileX = tileY = 1;
 
+            processor = new ImageProcessor();
+
             //only an output is present
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
             Outputs.Add(Output);
@@ -79,12 +83,7 @@ namespace Materia.Nodes.Atomic
 
         public override GLTexture2D GetActiveBuffer()
         {
-            if(Inputs.Count > 0 && Inputs[0].HasInput)
-            {
-                return Inputs[0].Reference.Node.GetActiveBuffer();
-            }
-
-            return null;
+            return buffer;
         }
 
         public override byte[] GetPreview(int width, int height)
@@ -112,11 +111,18 @@ namespace Materia.Nodes.Atomic
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
+            if (processor == null) return;
 
             width = i1.Width;
             height = i1.Height;
 
-            Output.Data = i1;
+            CreateBufferIfNeeded();
+
+            processor.PrepareView(buffer);
+            processor.Process(i1);
+            processor.Complete();
+
+            Output.Data = buffer;
             TriggerTextureChange();
         }
 
@@ -136,6 +142,13 @@ namespace Materia.Nodes.Atomic
             FillBaseNodeData(d);
 
             return JsonConvert.SerializeObject(d);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            processor?.Dispose();
+            processor = null;
         }
     }
 }

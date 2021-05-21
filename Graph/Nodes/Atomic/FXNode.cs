@@ -1476,6 +1476,7 @@ namespace Materia.Nodes.Atomic
                 }
 
                 IGL.Primary.DispatchCompute(width / 8, height / 8, (int)pmaxIter);
+                IGL.Primary.MemoryBarrier((int)MemoryBarrierFlags.AllBarrierBits);
             }
 
             GLTexture2D.UnbindAsImage(0);

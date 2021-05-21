@@ -441,7 +441,7 @@ namespace Materia.Graph
                 {
                     //todo: reimplement layer support later
                     //(n as GraphInstanceNode).GraphInst?.CombineLayers();
-                    n.TriggerTextureChange();
+                    //n.TriggerTextureChange();
                 }
 
                 n.IsScheduled = false;

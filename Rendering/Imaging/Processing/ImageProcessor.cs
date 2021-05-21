@@ -163,6 +163,14 @@ namespace Materia.Rendering.Imaging.Processing
             IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit | (int)ClearBufferMask.StencilBufferBit);
         }
 
+        public void Process(GLTexture2D input)
+        {
+            Bind();
+            SetTextures(input);
+            renderQuad?.Draw();
+            Unbind();
+        }
+
         /*
         protected void Blit(GLTexture2D output, int width, int height)
         {

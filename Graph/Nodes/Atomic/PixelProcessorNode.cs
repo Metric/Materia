@@ -150,6 +150,7 @@ namespace Materia.Nodes.Atomic
             processor.Prepare(i1, i2, i3, i4);
             function.PrepareUniforms();
             processor.Process();
+            processor.Complete();
 
             output.Data = buffer;
             TriggerTextureChange();
