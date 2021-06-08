@@ -86,18 +86,6 @@ namespace Materia.Nodes.Atomic
             return buffer;
         }
 
-        public override byte[] GetPreview(int width, int height)
-        {
-            GLTexture2D active = GetActiveBuffer();
-
-            if (active == null) return null;
-            if (active.Id == 0) return null;
-
-            //todo: do we even need this getpreview anymore?
-
-            return null;
-        }
-
         public override void TryAndProcess()
         {
             Process();

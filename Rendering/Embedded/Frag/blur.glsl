@@ -25,6 +25,8 @@ void main() {
         result += c;
     }
 
-    vec4 final = result / intensity;
+    //+1 required on intensity 
+    //to make up for the rounding of whalf
+    vec4 final = result / (intensity + 1);
     FragColor = final;
 }

@@ -17,6 +17,7 @@ using MateriaCore.Utils;
 using InfinityUI.Interfaces;
 using Materia.Rendering.Textures;
 using System.Diagnostics;
+using Materia.Graph.Exporters;
 
 namespace MateriaCore.Components.GL
 {
@@ -570,24 +571,7 @@ namespace MateriaCore.Components.GL
             }).ContinueWith(t =>
             {
                 if (string.IsNullOrEmpty(path)) return;
-
-                byte[] bits = Node?.GetPreview(Node.Width, Node.Height);
-
-                if (bits == null) return;
-
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        RawBitmap bmp = new RawBitmap(Node.Width, Node.Height, bits);
-                        var src = bmp.ToAvBitmap();
-                        src.Save(path);
-                    }
-                    catch (Exception e)
-                    {
-                        MLog.Log.Error(e);
-                    }
-                });
+                GlobalEvents.Emit(GlobalEvent.ScheduleExport, this, new SingleExporter(Node, path));
             }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 

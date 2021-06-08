@@ -98,33 +98,8 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(output);
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput || !input1.HasInput) return;
-
-            pintensity = intensity;
-            bintensity = blurIntensity;
-            pangle = angle;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
-            {
-                pintensity = ParentGraph.GetParameterValue(Id, "Intensity").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "BlurIntensity"))
-            {
-                bintensity = ParentGraph.GetParameterValue(Id, "BlurIntensity").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Angle"))
-            {
-                pangle = ParentGraph.GetParameterValue(Id, "Angle").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
@@ -143,9 +118,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        float bintensity;
-        float pintensity;
-        float pangle;
         void Process()
         {
             if (processor == null || blur == null) return;
@@ -162,17 +134,18 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer2);
+            processor.Tiling = GetTiling();
+            processor.Angle = GetParameter("Angle", angle) * MathHelper.Deg2Rad;
+            processor.Intensity = GetParameter("Intensity", intensity).Max(0);
 
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Angle = pangle * (float)(Math.PI / 180.0f);
-            processor.Intensity = pintensity;
+            processor.PrepareView(buffer2);
             processor.Process(i1, i2);
             processor.Complete();
 
-            blur.PrepareView(buffer);
+            blur.Tiling = Vector2.One;
+            blur.Intensity = GetParameter("BlurIntensity", blurIntensity).Max(1);
 
-            blur.Intensity = Math.Max(0, bintensity);
+            blur.PrepareView(buffer);
             blur.Process(buffer2);
             blur.Complete();
 

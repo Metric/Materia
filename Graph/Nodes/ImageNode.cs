@@ -1,10 +1,13 @@
 ﻿using Newtonsoft.Json;
 using Materia.Graph;
+using Materia.Rendering.Imaging.Processing;
 
 namespace Materia.Nodes
 {
     public abstract class ImageNode : Node
     {
+        private ImageProcessor previewProcessor;
+
         public override void FromJson(string data, Archive archive = null)
         {
             FromJson(data);
@@ -20,25 +23,32 @@ namespace Materia.Nodes
         {
             NodeData d = new NodeData();
             FillBaseNodeData(d);
-
             return JsonConvert.SerializeObject(d);
         }
 
-        //the only problem with this is that it is really
-        //intensive time wise
-        public override byte[] GetPreview(int width, int height)
+        public override byte[] Export()
         {
-            /*if (previewProcessor != null && buffer != null)
-            {
-                previewProcessor.Process(width, height, buffer);
-                byte[] data = previewProcessor.ReadByte(width, height);
-                previewProcessor.Complete();
+            if (previewProcessor == null) previewProcessor = new ImageProcessor();
+            
+            if (buffer == null) return null;
 
-                return data;
-            }
-            */
+            var temp = buffer.Copy();
+            if (temp == null) return null;
+            
+            previewProcessor.PrepareView(temp);
+            previewProcessor.Process(buffer);
+            byte[] data = previewProcessor.ReadByte(width, height);
+            previewProcessor.Complete();
+            temp.Dispose();
 
-            return null;
+            return data;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            previewProcessor?.Dispose();
+            previewProcessor = null;
         }
     }
 }

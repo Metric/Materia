@@ -97,8 +97,8 @@ namespace Materia.Nodes.Atomic
 
             curveLUT = new GLTexture2D(PixelInternalFormat.Rgba8);
             curveLUT.Bind();
-            curveLUT.SetFilter((int)TextureMinFilter.Nearest, (int)TextureMagFilter.Nearest);
-            curveLUT.SetWrap((int)TextureWrapMode.Repeat);
+            curveLUT.Nearest();
+            curveLUT.Repeat();
             GLTexture2D.Unbind();
 
             processor = new CurvesProcessor(curveLUT);
@@ -273,9 +273,9 @@ namespace Materia.Nodes.Atomic
             curveLUT.SetData(lutBrush.Image, PixelFormat.Rgba, 256, 2);
             GLTexture2D.Unbind();
 
-            processor.PrepareView(buffer);
+            processor.Tiling = GetTiling();
 
-            processor.Tiling = new Vector2(TileX, TileY);
+            processor.PrepareView(buffer);
             processor.Process(i1);
             processor.Complete();
 

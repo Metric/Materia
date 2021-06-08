@@ -108,46 +108,11 @@ namespace Materia.Nodes.Atomic
         }
 
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            pred = red;
-            pgreen = green;
-            pblue = blue;
-            palpha = alpha;
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Red"))
-            {
-                pred = ParentGraph.GetParameterValue(Id, "Red").ToBool();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Green"))
-            {
-                pgreen = ParentGraph.GetParameterValue(Id, "Green").ToBool();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Blue"))
-            {
-                pblue = ParentGraph.GetParameterValue(Id, "Blue").ToBool();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alpha"))
-            {
-                palpha = ParentGraph.GetParameterValue(Id, "Alpha").ToBool();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        bool pred;
-        bool pgreen;
-        bool pblue;
-        bool palpha;
         void Process()
         {
             if (processor == null) return;
@@ -160,14 +125,13 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            processor.Tiling = GetTiling();
+            processor.Red = GetParameter("Red", red); ;
+            processor.Green = GetParameter("Green", green);
+            processor.Blue = GetParameter("Blue", blue);
+            processor.Alpha = GetParameter("Alpha", alpha);
+
             processor.PrepareView(buffer);
-
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Red = pred;
-            processor.Green = pgreen;
-            processor.Blue = pblue;
-            processor.Alpha = palpha;
-
             processor.Process(i1);
             processor.Complete();
 

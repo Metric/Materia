@@ -10,11 +10,26 @@ using Materia.Rendering.Attributes;
 using System.Reflection;
 using Materia.Graph;
 using MLog;
+using Materia.Rendering.Extensions;
+using Materia.Rendering.Mathematics;
+using Materia.Nodes.MathNodes;
 
 namespace Materia.Nodes
 {
     public abstract class Node : IDisposable, ISchedulable
     {
+        protected enum ParameterCodeResult
+        {
+            Function,
+            Uniform
+        }
+
+        protected enum ParameterMode
+        {
+            Normal,
+            NoFunction
+        }
+
         public static TaskScheduler Context { get; set; }
         public static SynchronizationContext SyncContext { get; set; }
 
@@ -153,6 +168,7 @@ namespace Materia.Nodes
         protected float tileX;
         protected float tileY;
 
+        [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Tile X", "Basic")]
         public float TileX
         {
@@ -167,6 +183,7 @@ namespace Materia.Nodes
             }
         }
 
+        [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Tile Y", "Basic")]
         public float TileY
         {
@@ -316,7 +333,7 @@ namespace Materia.Nodes
 
         public virtual void AssignParentNode(Node n)
         {
-          
+            
         }
 
         public virtual void AssignPixelType(GraphPixelType pix)
@@ -377,7 +394,7 @@ namespace Materia.Nodes
             }
         }
 
-        public virtual byte[] GetPreview(int width, int height)
+        public virtual byte[] Export()
         {
             return null;
         }
@@ -651,6 +668,158 @@ namespace Materia.Nodes
         public virtual bool IsEnd()
         {
             return Outputs == null || Outputs.Count == 0 || Outputs.Find(m => m.To.Count != 0) == null;
+        }
+
+        protected ParameterCodeResult GetParameterCode(string prop, ref string fname, ref string uniforms, ref string previousCode, HashSet<string> seenParameter, Dictionary<string, object> seenUniforms)
+        {
+            if (ParentGraph == null) return ParameterCodeResult.Uniform;
+
+            fname = "";
+
+            var p = ParentGraph;
+            bool isFunction = false;
+            if (p.HasParameterValue(Id, prop) 
+                && (isFunction = p.IsParameterValueFunction(Id, prop)))
+            {
+                ParameterValue raw = p.GetParameterRaw(Id, prop);
+                var g = raw.Value as Function;
+
+                fname = g.CodeName;
+
+                if (seenParameter.Contains(fname)) return ParameterCodeResult.Function;
+
+                string fcode;
+                Stack<CallNode> calls = g.GetFullCallStack();
+
+                while (calls.Count > 0)
+                {
+                    CallNode n = calls.Pop();
+                    Function f = n.selectedFunction;
+
+                    if (f == null) continue;
+                    if (seenParameter.Contains(f.CodeName)) continue;
+                    seenParameter.Add(f.CodeName);
+
+                    fcode = f.GetFunctionShaderCode();
+
+                    if (string.IsNullOrEmpty(fcode)) continue;
+
+                    if (previousCode.IndexOf(fcode) == -1)
+                    {
+                        previousCode += fcode;
+                    }
+                }
+
+                if (seenParameter.Contains(fname)) return ParameterCodeResult.Function;
+
+                fcode = g.GetFunctionShaderCode();
+                if (previousCode.IndexOf(fcode) == -1)
+                {
+                    previousCode += fcode;
+                }
+
+                uniforms += g.GetParentGraphShaderParams(true, seenUniforms);
+
+                seenParameter.Add(fname);
+            }
+
+            return isFunction ? ParameterCodeResult.Function : ParameterCodeResult.Uniform;
+        }
+
+        protected object GetParameter(string prop, ParameterMode mode = ParameterMode.Normal)
+        {
+            if (ParentGraph == null) return null;
+            var p = ParentGraph;
+            if (p.HasParameterValue(Id, prop))
+            {
+                if (p.IsParameterValueFunction(Id, prop) && mode == ParameterMode.NoFunction) return null;
+                return p.GetParameterValue(Id, prop);
+            }
+            return null;
+        }
+
+        protected MVector GetParameter(string prop, MVector defaultValue, ParameterMode mode = ParameterMode.Normal)
+        {
+            object o = GetParameter(prop, mode);
+            if (o != null && o is MVector vector) return vector;
+            return defaultValue;
+        }
+
+        protected bool GetParameter(string prop, bool defaultValue, ParameterMode mode = ParameterMode.Normal)
+        {
+            object o = GetParameter(prop, mode);
+            if (o != null) return o.ToBool();
+            return defaultValue;
+        }
+
+        protected float GetParameter(string prop, float defaultValue, ParameterMode mode = ParameterMode.Normal)
+        {
+            object o = GetParameter(prop, mode);
+            if (o != null) return o.ToFloat();
+            return defaultValue;
+        }
+
+        protected int GetParameter(string prop, int defaultValue, ParameterMode mode = ParameterMode.Normal)
+        {
+            object o = GetParameter(prop, mode);
+            if (o != null) return o.ToInt();
+            return defaultValue;
+        }
+
+        protected Vector2 GetTiling()
+        {
+            float x = GetParameter("TileX", tileX);
+            float y = GetParameter("TileY", tileY);
+            return new Vector2(x, y);
+        }
+
+        protected bool IsParameterFunctionsModified(Dictionary<string, bool> previousModified)
+        {
+            if (ParentGraph == null) return false;
+            previousModified ??= new Dictionary<string, bool>();
+
+            var p = ParentGraph;
+            Type t = GetType();
+            var props = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            bool different = false;
+
+            for (int i = 0; i < props.Length; ++i)
+            {
+                var name = props[i].Name;
+                if (p.HasParameterValue(Id, name))
+                {
+                    var param = p.GetParameterRaw(Id, name);
+                    if (param == null) continue;
+                    if (!param.IsFunction())
+                    {
+                        previousModified.TryGetValue(name, out bool pf);
+                        if (pf)
+                        {
+                            different = true;
+                        }
+                        previousModified[name] = false;
+                        continue;
+                    }
+                    previousModified[name] = true;
+                    var f = param.Value as Function;
+                    if (f.Modified)
+                    {
+                        different = true;
+                    }
+                }
+                else
+                {
+                    previousModified.TryGetValue(name, out bool f);
+                    if (f)
+                    {
+                        different = true;
+                    }
+                    previousModified[name] = false;
+                }
+            }
+
+            return different;
         }
     }
 }

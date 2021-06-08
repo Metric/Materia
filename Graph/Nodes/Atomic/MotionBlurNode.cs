@@ -72,32 +72,11 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(output);
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            pintensity = magnitude;
-            pdirection = direction;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
-            {
-                pintensity = ParentGraph.GetParameterValue(Id, "Intensity").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Direction"))
-            {
-                pdirection = ParentGraph.GetParameterValue(Id, "Direction").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        float pintensity;
-        float pdirection;
         void Process()
         {
             if (processor == null) return;
@@ -109,11 +88,11 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer);
+            processor.Tiling = GetTiling();
+            processor.Direction = GetParameter("Direction", direction) * MathHelper.Deg2Rad;
+            processor.Magnitude = GetParameter("Intensity", magnitude);
 
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Direction = (float)pdirection * (float)(Math.PI / 180.0f);
-            processor.Magnitude = pintensity;
+            processor.PrepareView(buffer);
             processor.Process(i1);
             processor.Complete();
 

@@ -145,11 +145,21 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer);
             processor.Shader = function.Shader;
-            processor.Prepare(i1, i2, i3, i4);
+
+            //prepare uniforms first here
             function.PrepareUniforms();
+
+            //prepare outgoing texture view
+            processor.PrepareView(buffer);
+
+            //prepare textures and bind shader
+            processor.Prepare(i1, i2, i3, i4);
+
+            //assign uniforms to shader
             function.AssignUniforms();
+            
+            //process & complete
             processor.Process();
             processor.Complete();
 

@@ -25,6 +25,39 @@ namespace Materia.Rendering.Extensions
             return (byte)((1 - t) * v0 + t * v1);
         }
 
+        public static int Min(this int i, int min)
+        {
+            return Math.Min(i, min);
+        }
+
+        public static int Max(this int i, int max)
+        {
+            return Math.Max(i, max);
+        }
+
+        public static float Min(this float f, float min)
+        {
+            return MathF.Min(f, min);
+        }
+
+        public static float Max(this float f, float max)
+        {
+            return MathF.Max(f, max);
+        }
+
+        public static int Clamp(this int i, int min, int max)
+        {
+            if (i < min)
+            {
+                return min;
+            }
+            else if(i > max)
+            {
+                return max;
+            }
+            return i;
+        }
+
         public static float Clamp(this float f, float min, float max)
         {
             if (f < min)

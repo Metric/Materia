@@ -117,49 +117,11 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(output);
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput || !input2.HasInput) return;
-
-            predChannel = redChannel;
-            pgreenChannel = greenChannel;
-            pblueChannel = blueChannel;
-            palphaChannel = alphaChannel;
-
-            if (ParentGraph != null)
-            {
-                if (ParentGraph.HasParameterValue(Id, "RedChannel"))
-                {
-                    predChannel = ParentGraph.GetParameterValue(Id, "RedChannel").ToFloat();
-                }
-
-                if (ParentGraph.HasParameterValue(Id, "GreenChannel"))
-                {
-                    pgreenChannel = ParentGraph.GetParameterValue(Id, "GreenChannel").ToFloat();
-                }
-
-                if (ParentGraph.HasParameterValue(Id, "BlueChannel"))
-                {
-                    pblueChannel = ParentGraph.GetParameterValue(Id, "BlueChannel").ToFloat();
-                }
-
-                if (ParentGraph.HasParameterValue(Id, "AlphaChannel"))
-                {
-                    palphaChannel = ParentGraph.GetParameterValue(Id, "AlphaChannel").ToFloat();
-                }
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        float predChannel;
-        float pgreenChannel;
-        float pblueChannel;
-        float palphaChannel;
         void Process()
         {
             if (processor == null) return;
@@ -173,14 +135,13 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            processor.Tiling = GetTiling();
+            processor.RedChannel = GetParameter("RedChannel", redChannel);
+            processor.GreenChannel = GetParameter("GreenChannel", greenChannel);
+            processor.BlueChannel = GetParameter("BlueChannel", blueChannel);
+            processor.AlphaChannel = GetParameter("AlphaChannel", alphaChannel);
+
             processor.PrepareView(buffer);
-
-            processor.Tiling = new Vector2(TileX, TileY);
-
-            processor.RedChannel = (int)predChannel;
-            processor.GreenChannel = (int)pgreenChannel;
-            processor.BlueChannel = (int)pblueChannel;
-            processor.AlphaChannel = (int)palphaChannel;
             processor.Process(i1, i2);
             processor.Complete();
 

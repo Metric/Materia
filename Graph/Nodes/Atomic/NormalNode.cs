@@ -98,39 +98,11 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(Output);
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            pintensity = intensity;
-            pnoiseReduction = noiseReduction;
-            pdirectx = directx;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
-            {
-                pintensity = ParentGraph.GetParameterValue(Id, "Intensity").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "DirectX"))
-            {
-                pdirectx = ParentGraph.GetParameterValue(Id, "DirectX").ToBool();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "NoiseReduction"))
-            {
-                pnoiseReduction = ParentGraph.GetParameterValue(Id, "NoiseReduction").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        float pintensity;
-        float pnoiseReduction;
-        bool pdirectx;
         void Process() 
         {
             if (processor == null) return;
@@ -143,11 +115,12 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            processor.Tiling = GetTiling();
+            processor.DirectX = GetParameter("DirectX", directx);
+            processor.NoiseReduction = GetParameter("NoiseReduction", noiseReduction);
+            processor.Intensity = GetParameter("Intensity", intensity);
+
             processor.PrepareView(buffer);
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.DirectX = pdirectx;
-            processor.NoiseReduction = pnoiseReduction;
-            processor.Intensity = pintensity;
             processor.Process(i1);
             processor.Complete();
 

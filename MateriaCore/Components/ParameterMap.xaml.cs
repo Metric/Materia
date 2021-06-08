@@ -770,11 +770,11 @@ namespace MateriaCore.Components
                     }
                     return null;
                 case ParameterInputType.MeshFile:
-                    return new FileSelector(v, owner, "Mesh Files|*.fbx;*.obj");
+                    return new FileSelector(v, owner, "Mesh Files|fbx;obj");
                 case ParameterInputType.ImageFile:
-                    return new FileSelector(v, owner, "Image Files|*.png;*.jpg;*.tif;*.bmp;*.jpeg");
+                    return new FileSelector(v, owner, "Image Files|png;jpg;tif;bmp;jpeg");
                 case ParameterInputType.GraphFile:
-                    return new FileSelector(v, owner, "Materia Graph|*.mtg");
+                    return new FileSelector(v, owner, "Materia Graph|mtg;mtga");
                 case ParameterInputType.Text:
                     return new TextInput(v, owner, template.GetCustomAttribute<ReadOnlyAttribute>() != null);
                 case ParameterInputType.MultiText:

@@ -92,69 +92,11 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(Output);
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            pangle = angle;
-
-            pscaleX = this.scale.X;
-            pscaleY = this.scale.Y;
-
-            pxoffset = offset.X;
-            pyoffset = offset.Y;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "XOffset"))
-            {
-                pxoffset = ParentGraph.GetParameterValue(Id, "XOffset").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "YOffset"))
-            {
-                pyoffset = ParentGraph.GetParameterValue(Id, "YOffset").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Offset"))
-            {
-                MVector v = ParentGraph.GetParameterValue<MVector>(Id, "Offset");
-                pxoffset = v.X;
-                pyoffset = v.Y;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "ScaleX"))
-            {
-                pscaleX = ParentGraph.GetParameterValue(Id, "ScaleX").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "ScaleY"))
-            {
-                pscaleY = ParentGraph.GetParameterValue(Id, "ScaleY").ToFloat();
-            }
-
-            if (parentGraph != null && ParentGraph.HasParameterValue(Id, "Scale"))
-            {
-                MVector v = ParentGraph.GetParameterValue<MVector>(Id, "Scale");
-                pscaleX = v.X;
-                pscaleY = v.Y;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Angle"))
-            {
-                pangle = ParentGraph.GetParameterValue(Id, "Angle").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        float pxoffset;
-        float pyoffset;
-        float pscaleX;
-        float pscaleY;
-        float pangle;
         void Process()
         {
             if (processor == null) return;
@@ -167,17 +109,20 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            Vector2 pscale = GetParameter("Scale", scale).ToVector2();
+            float pangle = GetParameter("Angle", angle) * MathHelper.Deg2Rad;
+            Vector2 poffset = GetParameter("Offset", offset).ToVector2();
+
+            Matrix3 irot = Matrix3.CreateRotationZ(pangle);
+            Matrix3 iscale = Matrix3.CreateScale(1.0f / pscale.X, 1.0f / pscale.Y, 1);
+            Vector3 itrans = new Vector3(poffset.X * width, poffset.Y * height, 0);
+
+            processor.Tiling = GetTiling();
+            processor.Rotation = irot;
+            processor.Scale = iscale;
+            processor.Translation = itrans;
+
             processor.PrepareView(buffer);
-
-            Matrix3 rot = Matrix3.CreateRotationZ(pangle * (float)(Math.PI / 180.0));
-            Matrix3 scale = Matrix3.CreateScale(1.0f / pscaleX, 1.0f / pscaleY, 1);
-            Vector3 trans = new Vector3(pxoffset * width, pyoffset * height, 0);
-
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Rotation = rot;
-            processor.Scale = scale;
-            processor.Translation = trans;
-
             processor.Process(i1);
             processor.Complete();
 

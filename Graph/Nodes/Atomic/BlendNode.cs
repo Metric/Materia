@@ -139,37 +139,11 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(Output);
         }
 
-        private void GetParams()
-        {
-            if (!first.HasInput || !second.HasInput) return;
-
-            pmode = (int)mode;
-            palpha = alpha;
-            amode = (int)alphaMode;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Mode"))
-            {
-                pmode = ParentGraph.GetParameterValue(Id, "Mode").ToInt();
-            }
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alpha"))
-            {
-                palpha = ParentGraph.GetParameterValue(Id, "Alpha").ToFloat();
-            }
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "AlphaMode"))
-            {
-                amode = ParentGraph.GetParameterValue(Id, "AlphaMode").ToInt();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        int pmode;
-        float palpha;
-        int amode;
         void Process()
         {
             if (processor == null) return;
@@ -190,12 +164,12 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer);
+            processor.Tiling = GetTiling();
+            processor.Alpha = GetParameter("Alpha", alpha);
+            processor.BlendMode = GetParameter("Mode", (int)mode);
+            processor.AlphaMode = GetParameter("AlphaMode", (int)alphaMode);
 
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Alpha = palpha;
-            processor.BlendMode = pmode;
-            processor.AlphaMode = amode;
+            processor.PrepareView(buffer);
             processor.Process(i1, i2, i3);
             processor.Complete();
 

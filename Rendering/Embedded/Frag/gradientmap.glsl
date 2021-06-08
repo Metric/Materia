@@ -30,10 +30,8 @@ void main() {
         m = texture(Mask, UV).r;
     }
 
-    float alpha = rgb.a * m;
+    float alpha = rgba.a * m;
 
-    //ensure proper premult
     c.a = alpha * c.a;
-    c.rgb *= c.a;
     FragColor = c;
 }

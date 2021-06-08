@@ -131,27 +131,16 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(Output);
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            pinput = selected;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Selected"))
-            {
-                pinput = (SwitchInput)ParentGraph.GetParameterValue(Id, "Selected").ToInt();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
         SwitchInput pinput;
         void Process()
         {
+            pinput = (SwitchInput)GetParameter("Selected", (int)selected);
+
             GLTexture2D buff = GetActiveBuffer();
 
             if (buff == null || buff.Id == 0) return;
@@ -160,17 +149,16 @@ namespace Materia.Nodes.Atomic
             TriggerTextureChange();
         }
 
-        public override byte[] GetPreview(int width, int height)
+        public override byte[] Export()
         {
-            GLTexture2D active = GetActiveBuffer();
-
-            if (active == null) return null;
-            if (active.Id == 0) return null;
-
-            //todo: correct this GetPreview 
-            //we may or may not need it anymore
-
-            return null;
+            switch (pinput)
+            {
+                case SwitchInput.Input1:
+                    return input2.HasInput ? input2.Reference.Export() : null;
+                case SwitchInput.Input0:
+                default:
+                    return input.HasInput ? input.Reference.Export() : null;
+            }
         }
 
         public override GLTexture2D GetActiveBuffer()

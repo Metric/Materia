@@ -54,7 +54,7 @@ namespace Materia.Graph
     {
         public const float GRAPH_VERSION = 1.2f;
 
-        public static bool ShaderLogging { get; set; }
+        public static bool ShaderLogging { get; set; } = true; //for debugging right now
 
         public static int[] GRAPH_SIZES = new int[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
         public const int DEFAULT_SIZE = 512;
@@ -685,13 +685,13 @@ namespace Materia.Graph
                         if (next.IsScheduled) continue;
                         next.IsScheduled = true;
 
-                        //cannot do this here
+                        //cannot do this here when threaded
                         //go ahead and populate params if needed
-                        //if (next is GraphInstanceNode)
-                        //{
-                        //    GraphInstanceNode gn = next as GraphInstanceNode;
-                        //    gn.PopulateGraphParams();
-                        //}
+                        if (next is GraphInstanceNode)
+                        {
+                            GraphInstanceNode gn = next as GraphInstanceNode;
+                            gn.PopulateGraphParams();
+                        }
 
                         queue.Enqueue(next);
                     }
@@ -701,14 +701,14 @@ namespace Materia.Graph
 
                 queue.Enqueue(n);
 
+                //cannot do this here when threaded
                 //go ahead and populate params if needed
-                //if (n is GraphInstanceNode)
-                //{
-                //    GraphInstanceNode gn = n as GraphInstanceNode;
-                //cannot do this here
-                //gn.PopulateGraphParams();
-                //}
-                if (n is OutputNode)
+                if (n is GraphInstanceNode)
+                {
+                    GraphInstanceNode gn = n as GraphInstanceNode;
+                    gn.PopulateGraphParams();
+                }
+                else if (n is OutputNode)
                 {
                     OutputNode op = n as OutputNode;
                     if (op.Outputs.Count > 0)
@@ -717,8 +717,8 @@ namespace Materia.Graph
                         {
                             GraphInstanceNode gn = op.Outputs[0].ParentNode as GraphInstanceNode;
                             gn.IsScheduled = true;
-                            //cannot do this here
-                            //gn.PopulateGraphParams();
+                            //cannot do this here when threaded
+                            gn.PopulateGraphParams();
                             queue.Enqueue(gn);
                         }
                     }
@@ -883,13 +883,6 @@ namespace Materia.Graph
             //    }
             //}
 
-            var graphInstances = InstanceNodes;
-            //go ahead and populate params for graph instances here
-            for (int i = 0; i < graphInstances.Count; ++i)
-            {
-                graphInstances[i]?.PopulateGraphParams();
-            }
-            
             List<Node> root = EndNodes;
             Queue<Node> nodes = new Queue<Node>();
             GatherNodes(root, nodes, null);
@@ -900,6 +893,7 @@ namespace Materia.Graph
             {
                 scheduled.Enqueue(nodesToSchedule[i]);
             }
+            IsProcessing = true;
         }
 
         public virtual void AssignPixelType(GraphPixelType pixel)

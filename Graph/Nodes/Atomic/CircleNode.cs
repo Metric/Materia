@@ -77,24 +77,8 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(Output);
         }
 
-        private void GetParams()
-        {
-            pradius = radius;
-            poutline = outline;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Radius"))
-            {
-                pradius = ParentGraph.GetParameterValue(Id, "Radius").ToFloat();
-            }
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Outline"))
-            {
-                poutline = ParentGraph.GetParameterValue(Id, "Outline").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
@@ -107,20 +91,17 @@ namespace Materia.Nodes.Atomic
             buffer2 = buffer.Copy();
         }*/
 
-        float pradius;
-        float poutline;
         void Process()
         {
             if (processor == null) return;
 
             CreateBufferIfNeeded();
 
+            processor.Tiling = GetTiling();
+            processor.Radius = GetParameter("Radius", radius);
+            processor.Outline = GetParameter("Outline", outline);
+
             processor.PrepareView(buffer);
-
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Radius = pradius;
-            processor.Outline = poutline;
-
             processor.Process();
             processor.Complete();
 

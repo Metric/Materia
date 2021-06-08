@@ -47,6 +47,7 @@
     <None Remove="Embedded\Frag\invert.glsl" />
     <None Remove="Embedded\Frag\irradiance.glsl" />
     <None Remove="Embedded\Frag\levels.glsl" />
+    <None Remove="Embedded\Frag\light.glsl" />
     <None Remove="Embedded\Frag\line.glsl" />
     <None Remove="Embedded\Frag\motionblur.glsl" />
     <None Remove="Embedded\Frag\normals.glsl" />
@@ -86,6 +87,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Embedded\Frag\light.glsl" />
     <EmbeddedResource Include="Embedded\Vertex\pbrbasic.glsl" />
   </ItemGroup>
 

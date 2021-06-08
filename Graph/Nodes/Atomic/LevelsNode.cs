@@ -70,34 +70,40 @@ namespace Materia.Nodes.Atomic
 
             prange = range;
 
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "Range"))
-            {
-                MVector v = ParentGraph.GetParameterValue<MVector>(Id, "Range");
+            object value = GetParameter("Range");
+            if (value == null || !(value is MVector)) return;
+            MVector v = (MVector)value;
+            prange = new MultiRange();
 
-                if(v.W <= 0)
-                {
-                    prange.min[0] = prange.min[1] = prange.min[2] = v.X;
-                    prange.mid[0] = prange.mid[1] = prange.mid[2] = v.Y;
-                    prange.max[0] = prange.max[1] = prange.max[2] = v.Z;
-                }
-                else if(v.W <= 1)
-                {
-                    prange.min[0] = v.X;
-                    prange.mid[0] = v.Y;
-                    prange.max[0] = v.Z;
-                }
-                else if(v.W <= 2)
-                {
-                    prange.min[1] = v.X;
-                    prange.mid[1] = v.Y;
-                    prange.max[1] = v.Z;
-                }
-                else if(v.W <= 3)
-                {
-                    prange.min[2] = v.X;
-                    prange.mid[2] = v.Y;
-                    prange.max[2] = v.Z;
-                }
+            if(v.W <= 0)
+            {
+                prange.min[0] = prange.min[1] = prange.min[2] = v.X;
+                prange.mid[0] = prange.mid[1] = prange.mid[2] = v.Y;
+                prange.max[0] = prange.max[1] = prange.max[2] = v.Z;
+            }
+            else if(v.W <= 1)
+            {
+                prange.min[0] = v.X;
+                prange.mid[0] = v.Y;
+                prange.max[0] = v.Z;
+            }
+            else if(v.W <= 2)
+            {
+                prange.min[1] = v.X;
+                prange.mid[1] = v.Y;
+                prange.max[1] = v.Z;
+            }
+            else if(v.W <= 3)
+            {
+                prange.min[2] = v.X;
+                prange.mid[2] = v.Y;
+                prange.max[2] = v.Z;
+            }
+            else
+            {
+                prange.min[0] = prange.min[1] = prange.min[2] = v.X;
+                prange.mid[0] = prange.mid[1] = prange.mid[2] = v.Y;
+                prange.max[0] = prange.max[1] = prange.max[2] = v.Z;
             }
         }
 
@@ -120,14 +126,13 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer);
-
-            processor.Tiling = new Vector2(TileX, TileY);
+            processor.Tiling = GetTiling();
             processor.Min = new Vector3(prange.min[0], prange.min[1], prange.min[2]);
             processor.Max = new Vector3(prange.max[0], prange.max[1], prange.max[2]);
             processor.Mid = new Vector3(prange.mid[0], prange.mid[1], prange.mid[2]);
             processor.Value = new Vector2(prange.min[3], prange.max[3]);
 
+            processor.PrepareView(buffer);
             processor.Process(i1);
             processor.Complete();
 

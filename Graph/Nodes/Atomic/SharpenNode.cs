@@ -93,11 +93,10 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            processor.Tiling = GetTiling();
+            processor.Intensity = GetParameter("Intensity", intensity);
+
             processor.PrepareView(buffer);
-
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Intensity = pintensity;
-
             processor.Process(i1);
             processor.Complete();
 

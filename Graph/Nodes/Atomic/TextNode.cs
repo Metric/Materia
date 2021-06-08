@@ -195,6 +195,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        //TODO: add in a string node to Function based Nodes
         protected string text;
         [Editable(ParameterInputType.MultiText, "Text")]
         public string Text
@@ -318,29 +319,10 @@ namespace Materia.Nodes.Atomic
 
         private void GetParams()
         {
-            pfontSize = fontSize;
-            palignment = alignment;
-            pstyle = style;
-            pspacing = spacing;
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "FontSize"))
-            { 
-                pfontSize = ParentGraph.GetParameterValue(Id, "FontSize").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Spacing"))
-            {
-                pspacing = ParentGraph.GetParameterValue(Id, "Spacing").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Style"))
-            {
-                pstyle = (FontStyle)ParentGraph.GetParameterValue(Id, "Style").ToInt();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Alignment"))
-            {
-                palignment = (TextAlignment)ParentGraph.GetParameterValue(Id, "Alignment").ToInt();
-            }
+            pfontSize = GetParameter("FontSize", fontSize);
+            palignment = (TextAlignment)GetParameter("Alignment", (int)alignment);
+            pstyle = (FontStyle)GetParameter("Style", (int)style);
+            pspacing = GetParameter("Spacing", spacing);
 
             if (string.IsNullOrEmpty(text))
             {

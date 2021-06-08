@@ -101,21 +101,9 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            prays = rays;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Rays"))
-            {
-                prays = ParentGraph.GetParameterValue(Id, "Rays").ToFloat();
-            }
-        }
 
         public override void ReleaseBuffer()
         {
@@ -132,7 +120,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        float prays;
         void Process()
         {
             if (processor == null || blur == null) return;
@@ -145,17 +132,16 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            blur.Tiling = GetTiling();
+            blur.Intensity = GetParameter("Rays", rays);
+
             blur.PrepareView(buffer2);
-            blur.Tiling = new Vector2(TileX, TileY);
-            blur.Intensity = (int)prays;
-            
             blur.Process(i1);
             blur.Complete();
 
-            processor.PrepareView(buffer);
+            processor.Tiling = GetTiling();
 
-            processor.Tiling = new Vector2(TileX, TileY);
-            
+            processor.PrepareView(buffer);            
             processor.Process(buffer2, i1);
             processor.Complete();
 

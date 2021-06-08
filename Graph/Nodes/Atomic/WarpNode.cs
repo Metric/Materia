@@ -80,27 +80,8 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(output);
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput || !input1.HasInput) return;
-
-            pintensity = intensity;
-            bintensity = blurIntensity;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
-            {
-                pintensity = ParentGraph.GetParameterValue(Id, "Intensity").ToFloat();
-            }
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "BlurIntensity"))
-            {
-                bintensity = ParentGraph.GetParameterValue(Id, "BlurIntensity").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
         public override void ReleaseBuffer()
@@ -118,8 +99,6 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        float bintensity;
-        float pintensity;
         void Process()
         {
             if (processor == null || blur == null) return;
@@ -136,16 +115,17 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer2);
+            processor.Tiling = GetTiling();
+            processor.Intensity = GetParameter("Intensity", intensity).Max(0);
 
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Intensity = pintensity;
+            processor.PrepareView(buffer2);
             processor.Process(i1, i2);
             processor.Complete();
 
-            blur.PrepareView(buffer);
+            blur.Tiling = Vector2.One;
+            blur.Intensity = GetParameter("BlurIntensity", blurIntensity).Max(1);
 
-            blur.Intensity = Math.Max(0, bintensity);
+            blur.PrepareView(buffer);
             blur.Process(buffer2);
             blur.Complete();
 

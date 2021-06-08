@@ -318,7 +318,15 @@ namespace Materia.Nodes.Atomic
             GraphInst.AssignParameters(jsonParameters);
             GraphInst.AssignCustomParameters(jsonCustomParameters);
             GraphInst.AssignSeed(randomSeed);
-            GraphInst.AssignPixelType(internalPixelType);
+
+            //Whoops was doing this in reverse originally
+            //this is the proper way to ensure the graph instance
+            //is using the previously saved graph default texture type
+            //previously it was assigning the default from graph instance
+            //to the loaded graph, which could break depending
+            //on the graph it was being inserted into
+            AssignPixelType(GraphInst.DefaultTextureType);
+
             GraphInst.OnParameterUpdate += GraphInst_OnParameterUpdate;
             //now do real initial resize
             GraphInst.ResizeWith(width, height);
@@ -462,12 +470,11 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        public override byte[] GetPreview(int width, int height)
+        public override byte[] Export()
         {
-            //we only show the first output as preview
-            if(Outputs.Count > 0)
+            if (Outputs.Count > 0)
             {
-                return Outputs[0]?.GetPreview(width, height);
+                return Outputs[0]?.Export();
             }
 
             return null;

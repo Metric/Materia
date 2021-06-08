@@ -56,25 +56,11 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(output);
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            pgamma = gamma;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Gamma"))
-            {
-                pgamma = ParentGraph.GetParameterValue(Id, "Gamma").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        float pgamma;
         void Process()
         {
             if (processor == null) return;
@@ -87,10 +73,10 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer);
+            processor.Tiling = GetTiling();
+            processor.Gamma = GetParameter("Gamma", gamma);
 
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Gamma = pgamma;
+            processor.PrepareView(buffer);
             processor.Process(i1);
             processor.Complete();
 

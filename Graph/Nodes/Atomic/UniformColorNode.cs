@@ -78,33 +78,8 @@ namespace Materia.Nodes.Atomic
         }
 
 
-        private void GetParams()
-        {
-            pcolor = new Vector4(color.X, color.Y, color.Z, color.W);
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Color"))
-            {
-                object obj = ParentGraph.GetParameterValue(Id, "Color");
-
-                if (obj is MVector)
-                {
-                    MVector m = (MVector)obj;
-
-                    pcolor.X = m.X;
-                    pcolor.Y = m.Y;
-                    pcolor.Z = m.Z;
-                    pcolor.W = m.W;
-                }
-                else if (obj is Vector4)
-                {
-                    pcolor = (Vector4)obj;
-                }
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
@@ -115,7 +90,9 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.Color = pcolor;
+            processor.Color = GetParameter("Color", color).ToVector4();
+
+            processor.PrepareView(buffer);
             processor.Process();
             processor.Complete();
 

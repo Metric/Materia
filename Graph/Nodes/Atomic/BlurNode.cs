@@ -58,25 +58,11 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(Output);
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            pintensity = intensity;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
-            {
-                pintensity = ParentGraph.GetParameterValue(Id, "Intensity").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        float pintensity;
         void Process()
         {
             if (processor == null) return;
@@ -89,11 +75,10 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            processor.Tiling = GetTiling();
+            processor.Intensity = GetParameter("Intensity", intensity);
+
             processor.PrepareView(buffer);
-
-            processor.Tiling = new Vector2(TileX, TileY);
-
-            processor.Intensity = pintensity;
             processor.Process(i1);
             processor.Complete();
 

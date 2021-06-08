@@ -9,11 +9,11 @@ namespace Materia.Rendering.Material
 
         protected override void LoadShader()
         {
-            Shader = GLShaderCache.GetShader("pbrbasic.glsl", "uniformcolor.glsl");
+            Shader = GLShaderCache.GetShader("pbrbasic.glsl", "light.glsl");
 
             if (Shader == null)
             {
-                Log.Error("Failed to load PBR depth shader");
+                Log.Error("Failed to load PBR light shader");
             }
         }
     }

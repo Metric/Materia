@@ -217,53 +217,42 @@ namespace Materia.Nodes.Atomic
 
         private string translationFuncName;
         private bool translationIsFunc;
-        private string translationCode;
 
         private string rotationFuncName;
         private bool rotationIsFunc;
-        private string rotationCode;
 
         private string scaleFuncName;
         private bool scaleIsFunc;
-        private string scaleCode;
 
         private string pivotFuncName;
         private bool pivotIsFunc;
-        private string pivotCode;
 
         private string luminFuncName;
         private bool luminIsFunc;
-        private string luminCode;
 
         private string luminRandomFuncName;
         private bool luminRandomIsFunc;
-        private string luminRandomCode;
 
         private bool blendIsFunc;
         private string blendFuncName;
-        private string blendCode;
 
         private bool clampIsFunc;
         private string clampFuncName;
-        private string clampCode;
 
         private bool rebuildShader;
         private IGLProgram shader;
 
         private string previousCalls = "";
-        private HashSet<string> previousCallsSeen;
+        private HashSet<string> previousCallsSeen = new HashSet<string>();
 
-        private string uniformParamCode;
-        private Dictionary<string, object> uniformParams;
+        private string uniformParamCode = "";
+        private Dictionary<string, object> uniformParams = new Dictionary<string, object>();
+
+        private Dictionary<string, bool> previousModified = new Dictionary<string, bool>();
 
         public FXNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "FX";
-
-            uniformParamCode = "";
-            previousCalls = "";
-            uniformParams = new Dictionary<string, object>();
-            previousCallsSeen = new HashSet<string>();
 
             Id = Guid.NewGuid().ToString();
 
@@ -299,567 +288,72 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(Output);
         }
 
-        void RebuildCustomFuncs()
+        void RebuildCustomFunctions()
         {
-            if (ParentGraph != null)
+            if (ParentGraph == null) return;
+
+            string fcode;
+
+            foreach (Function f in ParentGraph.CustomFunctions)
             {
-                foreach (Function f in ParentGraph.CustomFunctions)
+                if (previousCallsSeen.Contains(f.CodeName)) continue;
+
+                //get call stack
+                Stack<CallNode> finalStack = f.GetFullCallStack();
+
+                while(finalStack.Count > 0)
                 {
-                    if (previousCallsSeen.Contains(f.CodeName))
+                    CallNode m = finalStack.Pop();
+                    if (m.selectedFunction == null) continue;
+                    if (previousCallsSeen.Contains(m.selectedFunction.CodeName)) continue;
+                    previousCallsSeen.Add(m.selectedFunction.CodeName);
+
+                    fcode = m.GetFunctionShaderCode();
+
+                    if (string.IsNullOrEmpty(fcode)) continue;
+
+                    if(previousCalls.IndexOf(fcode) == -1)
                     {
-                        continue;
-                    }
-
-                    //get call stack
-                    Stack<CallNode> finalStack = f.GetFullCallStack();
-
-                    while(finalStack.Count > 0)
-                    {
-                        CallNode m = finalStack.Pop();
-                        if (m.selectedFunction == null) continue;
-                        if (previousCallsSeen.Contains(m.selectedFunction.CodeName)) continue;
-                        previousCallsSeen.Add(m.selectedFunction.CodeName);
-
-                        string mf = m.GetFunctionShaderCode();
-
-                        if(previousCalls.IndexOf(mf) == -1)
-                        {
-                            previousCalls += mf;
-                        }
-                    }
-
-                    if (!previousCallsSeen.Contains(f.CodeName))
-                    {
-                        previousCallsSeen.Add(f.CodeName);
-
-                        string s = f.GetFunctionShaderCode();
-
-                        if (previousCalls.IndexOf(s) == -1)
-                        {
-                            previousCalls += s;
-                        }
+                        previousCalls += fcode;
                     }
                 }
-            }
-        }
 
-        void CollectCalls(Function g)
-        {
-            Stack<CallNode> calls = g.GetFullCallStack();
-
-            while(calls.Count > 0)
-            {
-                CallNode n = calls.Pop();
-                Function f = n.selectedFunction;
-
-                if (f == null) continue;
                 if (previousCallsSeen.Contains(f.CodeName)) continue;
+
                 previousCallsSeen.Add(f.CodeName);
 
-                string mf = f.GetFunctionShaderCode();
-                if(previousCalls.IndexOf(mf) == -1)
+                fcode = f.GetFunctionShaderCode();
+
+                if (string.IsNullOrEmpty(fcode)) continue;
+
+                if (previousCalls.IndexOf(fcode) == -1)
                 {
-                    previousCalls += mf;
+                    previousCalls += fcode;
                 }
             }
         }
 
-        bool IsRebuildRequired()
-        {
-            if (rebuildShader) return true;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Blending"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Blending"))
-                {
-                    Function g = parentGraph.GetParameterRaw(Id, "Blending").Value as Function;
-                    if (g.Modified || !blendIsFunc)
-                    {
-                        return true;
-                    }
-                }
-                else if(string.IsNullOrEmpty(blendCode) || blendIsFunc)
-                {
-                    return true;
-                }
-            }
-            else if(string.IsNullOrEmpty(blendCode) || blendIsFunc)
-            {
-                return true;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Luminosity"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
-                {
-                    Function g = parentGraph.GetParameterRaw(Id, "Luminosity").Value as Function;
-                    if (g.Modified || !luminIsFunc)
-                    {
-                        return true;
-                    }
-                }
-                else if (string.IsNullOrEmpty(luminCode) || luminIsFunc)
-                {
-                    return true;
-                }
-            }
-            else if (string.IsNullOrEmpty(luminCode) || luminIsFunc)
-            {
-                return true;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "LuminosityRandomness"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "LuminosityRandomness"))
-                {
-                    Function g = parentGraph.GetParameterRaw(Id, "LuminosityRandomness").Value as Function;
-                    if (g.Modified || !luminRandomIsFunc)
-                    {
-                        return true;
-                    }
-                }
-                else if (string.IsNullOrEmpty(luminRandomCode) || luminRandomIsFunc)
-                {
-                    return true;
-                }
-            }
-            else if (string.IsNullOrEmpty(luminRandomCode) || luminRandomIsFunc)
-            {
-                return true;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "PatternPivot"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "PatternPivot"))
-                {
-                    Function g = parentGraph.GetParameterRaw(Id, "PatternPivot").Value as Function;
-                    if (g.Modified || !pivotIsFunc)
-                    {
-                        return true;
-                    }
-                }
-                else if (string.IsNullOrEmpty(pivotCode) || pivotIsFunc)
-                {
-                    return true;
-                }
-            }
-            else if (string.IsNullOrEmpty(pivotCode) || pivotIsFunc)
-            {
-                return true;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Translation"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Translation"))
-                {
-                    Function g = parentGraph.GetParameterRaw(Id, "Translation").Value as Function;
-                    if (g.Modified || !translationIsFunc)
-                    {
-                        return true;
-                    }
-                }
-                else if (string.IsNullOrEmpty(translationCode) || translationIsFunc)
-                {
-                    return true;
-                }
-            }
-            else if (string.IsNullOrEmpty(translationCode) || translationIsFunc)
-            {
-                return true;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Scale"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Scale"))
-                {
-                    Function g = parentGraph.GetParameterRaw(Id, "Scale").Value as Function;
-                    if (g.Modified || !scaleIsFunc)
-                    {
-                        return true;
-                    }
-                }
-                else if (string.IsNullOrEmpty(scaleCode) || scaleIsFunc)
-                {
-                    return true;
-                }
-            }
-            else if (string.IsNullOrEmpty(scaleCode) || scaleIsFunc)
-            {
-                return true;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Rotation"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Rotation"))
-                {
-                    Function g = parentGraph.GetParameterRaw(Id, "Rotation").Value as Function;
-                    if (g.Modified || !rotationIsFunc)
-                    {
-                        return true;
-                    }
-                }
-                else if (string.IsNullOrEmpty(rotationCode) || rotationIsFunc)
-                {
-                    return true;
-                }
-            }
-            else if (string.IsNullOrEmpty(rotationCode) || rotationIsFunc)
-            {
-                return true;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Clamp"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Clamp"))
-                {
-                    Function g = parentGraph.GetParameterRaw(Id, "Clamp").Value as Function;
-                    if (g.Modified || !clampIsFunc)
-                    {
-                        return true;
-                    }
-                }
-                else if (string.IsNullOrEmpty(clampCode) || clampIsFunc)
-                {
-                    return true;
-                }
-            }
-            else if (string.IsNullOrEmpty(clampCode) || clampIsFunc)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        void GetParamCode()
+        void GetParameterCode()
         {
             if (quadsConnected == 0) return;
 
-            if (!IsRebuildRequired()) return;
-
-            blendCode = "";
-            luminCode = "";
-            luminRandomCode = "";
-            rotationCode = "";
-            translationCode = "";
-            scaleCode = "";
-            pivotCode = "";
-            clampCode = "";
+            if (!rebuildShader) return;
 
             uniformParamCode = "";
             uniformParams.Clear();
             previousCalls = "";
             previousCallsSeen.Clear();
 
-            rebuildShader = true;
+            RebuildCustomFunctions();
 
-            RebuildCustomFuncs();
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Blending"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Blending"))
-                {
-                    Function g = ParentGraph.GetParameterRaw(Id, "Blending").Value as Function;
-
-                    CollectCalls(g);
-
-                    uniformParamCode += g.GetParentGraphShaderParams(true, uniformParams);
-
-                    blendCode = g.GetFunctionShaderCode();
-
-                    if (previousCalls.IndexOf(blendCode) > -1)
-                    {
-                        blendCode = "";
-                    }
-                    else
-                    {
-                        previousCalls += blendCode;
-                    }
-
-                    blendIsFunc = true;
-                    blendFuncName = g.CodeName;
-                }
-                else
-                {
-                    blendIsFunc = false;
-                    blendCode = "uniform float Blending = " + ParentGraph.GetParameterValue(Id, "Blending").ToInt().ToCodeString() + ";";
-                    previousCalls += blendCode;
-                }
-            }
-            else
-            {
-                blendIsFunc = false;
-                blendCode = "uniform float Blending = " + ((int)blending).ToCodeString() + ";";
-                previousCalls += blendCode;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Luminosity"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
-                {
-                    Function g = ParentGraph.GetParameterRaw(Id, "Luminosity").Value as Function;
-
-                    CollectCalls(g);
-
-                    uniformParamCode += g.GetParentGraphShaderParams(true, uniformParams);
-
-                    luminCode = g.GetFunctionShaderCode();
-
-                    if (previousCalls.IndexOf(luminCode) > -1)
-                    {
-                        luminCode = "";
-                    }
-                    else
-                    {
-                        previousCalls += luminCode;
-                    }
-
-                    luminIsFunc = true;
-                    luminFuncName = g.CodeName;
-                }
-                else
-                {
-                    luminIsFunc = false;
-                    luminCode = "uniform float Luminosity = " + ParentGraph.GetParameterValue(Id, "Luminosity").ToFloat().ToCodeString() + ";";
-                    previousCalls += luminCode;
-                }
-            }
-            else
-            {
-                luminIsFunc = false;
-                luminCode = "uniform float Luminosity = " + luminosity.ToCodeString() + ";";
-                previousCalls += luminCode;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "LuminosityRandomness"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "LuminosityRandomness"))
-                {
-                    Function g = ParentGraph.GetParameterRaw(Id, "LuminosityRandomness").Value as Function;
-
-                    CollectCalls(g);
-
-                    uniformParamCode += g.GetParentGraphShaderParams(true, uniformParams);
-
-                    luminRandomCode = g.GetFunctionShaderCode();
-
-                    if (previousCalls.IndexOf(luminRandomCode) > -1)
-                    {
-                        luminRandomCode = "";
-                    }
-                    else
-                    {
-                        previousCalls += luminRandomCode;
-                    }
-
-                    luminRandomIsFunc = true;
-                    luminRandomFuncName = g.CodeName;
-                }
-                else
-                {
-                    luminRandomIsFunc = false;
-                    luminRandomCode = "uniform float LuminosityRandomness = " + ParentGraph.GetParameterValue(Id, "LuminosityRandomness").ToFloat().ToCodeString() + ";";
-                    previousCalls += luminRandomCode;
-                }
-            }
-            else
-            {
-                luminRandomIsFunc = false;
-                luminRandomCode = "uniform float LuminosityRandomness = " + luminosityRandomness.ToCodeString() + ";";
-                previousCalls += luminRandomCode;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "PatternPivot"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "PatternPivot"))
-                {
-                    Function g = ParentGraph.GetParameterRaw(Id, "PatternPivot").Value as Function;
-
-                    CollectCalls(g);
-
-                    uniformParamCode += g.GetParentGraphShaderParams(true, uniformParams);
-
-                    pivotCode = g.GetFunctionShaderCode();
-
-                    if (previousCalls.IndexOf(pivotCode) > -1)
-                    {
-                        pivotCode = "";
-                    }
-                    else
-                    {
-                        previousCalls += pivotCode;
-                    }
-
-                    pivotIsFunc = true;
-                    pivotFuncName = g.CodeName;
-                }
-                else
-                {
-                    pivotIsFunc = false;
-                    pivotCode = "uniform float PatternPivot = " + ParentGraph.GetParameterValue(Id, "PatternPivot").ToInt().ToCodeString() + ";";
-                    previousCalls += pivotCode;
-                }
-            }
-            else
-            {
-                pivotIsFunc = false;
-                pivotCode = "uniform float PatternPivot = " + ((int)patternPivot).ToCodeString() + ";";
-                previousCalls += pivotCode;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Translation"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Translation"))
-                {
-                    Function g = ParentGraph.GetParameterRaw(Id, "Translation").Value as Function;
-
-                    CollectCalls(g);
-
-                    uniformParamCode += g.GetParentGraphShaderParams(true, uniformParams);
-
-                    translationCode = g.GetFunctionShaderCode();
-
-                    if (previousCalls.IndexOf(translationCode) > -1)
-                    {
-                        translationCode = "";
-                    }
-                    else
-                    {
-                        previousCalls += translationCode;
-                    }
-
-                    translationIsFunc = true;
-                    translationFuncName = g.CodeName;
-                }
-                else
-                {
-                    translationIsFunc = false;
-                    MVector v = ParentGraph.GetParameterValue<MVector>(Id, "Translation");
-                    translationCode = "uniform vec2 Translation = vec2(" + v.X + "," + v.Y + ");";
-                    previousCalls += translationCode;
-                }
-            }
-            else
-            {
-                translationIsFunc = false;
-                translationCode = "uniform vec2 Translation = vec2(" + translation.X + "," + translation.Y + ");";
-                previousCalls += translationCode;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Scale"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Scale"))
-                {
-                    Function g = ParentGraph.GetParameterRaw(Id, "Scale").Value as Function;
-
-                    CollectCalls(g);
-
-                    uniformParamCode += g.GetParentGraphShaderParams(true, uniformParams);
-
-                    scaleCode = g.GetFunctionShaderCode();
-
-                    if (previousCalls.IndexOf(scaleCode) > -1)
-                    {
-                        scaleCode = "";
-                    }
-                    else
-                    {
-                        previousCalls += scaleCode;
-                    }
-
-                    scaleIsFunc = true;
-                    scaleFuncName = g.CodeName;
-                }
-                else
-                {
-                    scaleIsFunc = false;
-                    MVector v = ParentGraph.GetParameterValue<MVector>(Id, "Scale");
-                    scaleCode = "uniform vec2 Scale = vec2(" + v.X + "," + v.Y + ");";
-                    previousCalls += scaleCode;
-                }
-            }
-            else
-            {
-                scaleIsFunc = false;
-                scaleCode = "uniform vec2 Scale = vec2(" + scale.X + "," + scale.Y + ");";
-                previousCalls += scaleCode;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Rotation"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Rotation"))
-                {
-                    Function g = ParentGraph.GetParameterRaw(Id, "Rotation").Value as Function;
-
-                    CollectCalls(g);
-
-                    uniformParamCode += g.GetParentGraphShaderParams(true, uniformParams);
-
-                    rotationCode = g.GetFunctionShaderCode();
-
-                    if (previousCalls.IndexOf(rotationCode) > -1)
-                    {
-                        rotationCode = "";
-                    }
-                    else
-                    {
-                        previousCalls += rotationCode;
-                    }
-
-                    rotationIsFunc = true;
-                    rotationFuncName = g.CodeName;
-                }
-                else
-                {
-                    rotationIsFunc = false;
-                    rotationCode = "uniform float Rotation = " + ParentGraph.GetParameterValue(Id, "Rotation").ToFloat().ToCodeString() + ";";
-                    previousCalls += rotationCode;
-                }
-            }
-            else
-            {
-                rotationIsFunc = false;
-                rotationCode = "uniform float Rotation = " + rotation.ToCodeString() + ";";
-                previousCalls += rotationCode;
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Clamp"))
-            {
-                if (ParentGraph.IsParameterValueFunction(Id, "Clamp"))
-                {
-                    Function g = ParentGraph.GetParameterRaw(Id, "Clamp").Value as Function;
-
-                    CollectCalls(g);
-
-                    uniformParamCode += g.GetParentGraphShaderParams(true, uniformParams);
-
-                    clampCode = g.GetFunctionShaderCode();
-
-                    if (previousCalls.IndexOf(clampCode) > -1)
-                    {
-                        clampCode = "";
-                    }
-                    else
-                    {
-                        previousCalls += clampCode;
-                    }
-
-                    clampIsFunc = true;
-                    clampFuncName = g.CodeName;
-                }
-                else
-                {
-                    clampIsFunc = false;
-                    clampCode = "uniform float Clamp = " + ParentGraph.GetParameterValue(Id, "Clamp").ToFloat().ToCodeString() + ";";
-                    previousCalls += clampCode;
-                }
-            }
-            else
-            {
-                clampIsFunc = false;
-                clampCode = "uniform float Clamp = " + rotation.ToCodeString() + ";";
-                previousCalls += clampCode;
-            }
+            blendIsFunc = GetParameterCode("Blending", ref blendFuncName, ref uniformParamCode, ref previousCalls, previousCallsSeen, uniformParams) == ParameterCodeResult.Function;
+            pivotIsFunc = GetParameterCode("PatternPivot", ref pivotFuncName, ref uniformParamCode, ref previousCalls, previousCallsSeen, uniformParams) == ParameterCodeResult.Function;
+            rotationIsFunc = GetParameterCode("Rotation", ref rotationFuncName, ref uniformParamCode, ref previousCalls, previousCallsSeen, uniformParams) == ParameterCodeResult.Function;
+            scaleIsFunc = GetParameterCode("Scale", ref scaleFuncName, ref uniformParamCode, ref previousCalls, previousCallsSeen, uniformParams) == ParameterCodeResult.Function;
+            translationIsFunc = GetParameterCode("Translation", ref translationFuncName, ref uniformParamCode, ref previousCalls, previousCallsSeen, uniformParams) == ParameterCodeResult.Function;
+            luminIsFunc = GetParameterCode("Luminosity", ref luminFuncName, ref uniformParamCode, ref previousCalls, previousCallsSeen, uniformParams) == ParameterCodeResult.Function;
+            luminRandomIsFunc = GetParameterCode("LuminosityRandomness", ref luminRandomFuncName, ref uniformParamCode, ref previousCalls, previousCallsSeen, uniformParams) == ParameterCodeResult.Function;
+            clampIsFunc = GetParameterCode("Clamp", ref clampFuncName, ref uniformParamCode, ref previousCalls, previousCallsSeen, uniformParams) == ParameterCodeResult.Function;
         }
 
         private float urot;
@@ -874,78 +368,29 @@ namespace Materia.Nodes.Atomic
         {
             if (quadsConnected == 0) return;
 
-            ublend = (int)blending;
-            upivot = (int)patternPivot;
-            urot = (float)rotation;
-            uscale = scale;
-            utranslate = translation;
-            ulumin = luminosity;
-            uluminrand = luminosityRandomness;
-            uclamp = clamp ? 1 : 0;
+            ublend = GetParameter("Blending", (int)blending, ParameterMode.NoFunction);
+            if (!blendIsFunc && rebuildShader) uniformParamCode += $"uniform float Blending = {ublend.ToCodeString()};\r\n";
 
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Blending"))
-            {
-                if (!ParentGraph.IsParameterValueFunction(Id, "Blending"))
-                {
-                    ublend = ParentGraph.GetParameterValue(Id, "Blending").ToInt();
-                }
-            }
+            upivot = GetParameter("PatternPivot", (int)patternPivot, ParameterMode.NoFunction);
+            if (!pivotIsFunc && rebuildShader) uniformParamCode += $"uniform float PatternPivot = {upivot.ToCodeString()};\r\n";
 
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Luminosity"))
-            {
-                if (!ParentGraph.IsParameterValueFunction(Id, "Luminosity"))
-                {
-                    ulumin = ParentGraph.GetParameterValue(Id, "Luminosity").ToFloat();
-                }
-            }
+            urot = GetParameter("Rotation", rotation, ParameterMode.NoFunction);
+            if (!rotationIsFunc && rebuildShader) uniformParamCode += $"uniform float Rotation = {urot.ToCodeString()};\r\n";
 
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "LuminosityRandomness"))
-            {
-                if (!ParentGraph.IsParameterValueFunction(Id, "LuminosityRandomness"))
-                {
-                    uluminrand = ParentGraph.GetParameterValue(Id, "LuminosityRandomness").ToFloat();
-                }
-            }
+            uscale = GetParameter("Scale", scale, ParameterMode.NoFunction);
+            if (!scaleIsFunc && rebuildShader) uniformParamCode += $"uniform vec2 Scale = vec2({uscale.X.ToCodeString()},{uscale.Y.ToCodeString()});\r\n";
 
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "PatternPivot"))
-            {
-                if (!ParentGraph.IsParameterValueFunction(Id, "PatternPivot"))
-                {
-                    upivot = ParentGraph.GetParameterValue(Id, "PatternPivot").ToInt();
-                }
-            }
+            utranslate = GetParameter("Translation", translation, ParameterMode.NoFunction);
+            if (!translationIsFunc && rebuildShader) uniformParamCode += $"uniform vec2 Translation = vec2({utranslate.X.ToCodeString()},{utranslate.Y.ToCodeString()});\r\n";
 
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Translation"))
-            {
-                if (!ParentGraph.IsParameterValueFunction(Id, "Translation"))
-                {
-                    utranslate = ParentGraph.GetParameterValue<MVector>(Id, "Translation");
-                }
-            }
+            ulumin = GetParameter("Luminosity", luminosity, ParameterMode.NoFunction);
+            if (!luminIsFunc && rebuildShader) uniformParamCode += $"uniform float Luminosity = {ulumin.ToCodeString()};\r\n";
 
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Scale"))
-            {
-                if (!ParentGraph.IsParameterValueFunction(Id, "Scale"))
-                {
-                     uscale = ParentGraph.GetParameterValue<MVector>(Id, "Scale");
-                }
-            }
+            uluminrand = GetParameter("LuminosityRandomness", luminosityRandomness, ParameterMode.NoFunction);
+            if (!luminRandomIsFunc && rebuildShader) uniformParamCode += $"uniform float LuminosityRandomness = {uluminrand.ToCodeString()};\r\n";
 
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Rotation"))
-            {
-                if (!ParentGraph.IsParameterValueFunction(Id, "Rotation"))
-                {
-                    urot = ParentGraph.GetParameterValue(Id, "Rotation").ToFloat();
-                }
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Clamp"))
-            {
-                if (!ParentGraph.IsParameterValueFunction(Id, "Clamp"))
-                {
-                    uclamp = ParentGraph.GetParameterValue(Id, "Clamp").ToFloat();
-                }
-            }
+            uclamp = GetParameter("Clamp", clamp, ParameterMode.NoFunction) ? 1 : 0;
+            if (!clampIsFunc && rebuildShader) uniformParamCode += $"uniform float Clamp = {uclamp.ToCodeString()};\r\n";
         }
 
         private void GetParams()
@@ -959,12 +404,7 @@ namespace Materia.Nodes.Atomic
 
             if (quadsConnected == 0) return;
 
-            pmaxIter = iterations;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Iterations"))
-            {
-                pmaxIter = ParentGraph.GetParameterValue(Id, "Iterations").ToFloat();
-            }
+            pmaxIter = GetParameter("Iterations", iterations);
 
             if (float.IsNaN(pmaxIter) || float.IsInfinity(pmaxIter))
             {
@@ -974,6 +414,15 @@ namespace Materia.Nodes.Atomic
             //also we are capping to a maximum of 512
             //for performance reasons
             pmaxIter = Math.Min(pmaxIter, 512);
+        }
+
+        private void NeedsUpdate()
+        {
+            if (rebuildShader) return;
+            if (IsParameterFunctionsModified(previousModified))
+            {
+                rebuildShader = true;
+            }
         }
 
         /// <summary>
@@ -999,11 +448,7 @@ namespace Materia.Nodes.Atomic
         {
             if (!rebuildShader) return;
 
-            if(shader != null)
-            {
-                shader.Dispose();
-                shader = null;
-            }
+            shader?.Dispose();
 
             GraphPixelType type = internalPixelType;
             string outputType = "rgba32f";
@@ -1051,10 +496,10 @@ namespace Materia.Nodes.Atomic
              + "vec4 BlendColors(float blendIdx, vec4 c1, vec4 c2) {\r\n"
                 + "vec4 fc = vec4(0);\r\n"
                 + "blendIdx = floor(blendIdx);\r\n"
-                + "if (blendIdx <= 0) { fc.rgb = clamp(c1.rgb + c2.rgb * (1.0 - clamp(c1.a, 0, 1)), vec3(0), vec3(1));  fc.a = clamp(c1.a + c2.a, 0, 1); fc.rgb *= fc.a; }\r\n"
-                + "else if(blendIdx <= 1) { fc.rgb = clamp(c1.rgb + c2.rgb, vec3(0), vec3(1)); fc.a = clamp(c1.a + c2.a, 0, 1); fc.rgb *= fc.a; }\r\n"
-                + "else if(blendIdx <= 2) { fc.rgb = vec3(max(c1.r, c2.r), max(c1.g, c2.g), max(c1.b, c2.b)); fc.a = clamp(c1.a + c2.a, 0, 1); fc.rgb *= fc.a; }\r\n"
-                + "else if(blendIdx <= 3) { fc.rgb = vec3(AddSub(c1.r, c2.r), AddSub(c1.g, c2.g), AddSub(c1.b, c2.b)); fc.a = clamp(c1.a + c2.a, 0, 1); fc.rgb *= fc.a;}\r\n"
+                + "if (blendIdx <= 0) { fc.rgb = clamp(c1.rgb + c2.rgb * (1.0 - clamp(c1.a, 0, 1)), vec3(0), vec3(1));  fc.a = clamp(c1.a + c2.a, 0, 1); }\r\n"
+                + "else if(blendIdx <= 1) { fc.rgb = clamp(c1.rgb + c2.rgb, vec3(0), vec3(1)); fc.a = clamp(c1.a + c2.a, 0, 1); }\r\n"
+                + "else if(blendIdx <= 2) { fc.rgb = clamp(vec3(max(c1.r, c2.r), max(c1.g, c2.g), max(c1.b, c2.b)), vec3(0), vec3(1)); fc.a = clamp(c1.a + c2.a, 0, 1); }\r\n"
+                + "else if(blendIdx <= 3) { fc.rgb = clamp(vec3(AddSub(c1.r, c2.r), AddSub(c1.g, c2.g), AddSub(c1.b, c2.b)), vec3(0), vec3(1)); fc.a = clamp(c1.a + c2.a, 0, 1);}\r\n"
                 + "return fc; }\r\n"
                 + $"{uniformParamCode}\r\n"
             + $"{previousCalls}\r\n";
@@ -1179,24 +624,30 @@ namespace Materia.Nodes.Atomic
                         + "p1 = ivec2(p1.x + pivotPoint.x * inWidth, p1.y + pivotPoint.y * inHeight);\r\n";
 
             fragMain += "vec4 c1 = texelFetch(Input0, p1, 0);\r\n"
-                        + "if (p1.x < 0 || p1.y < 0 || p1.x >= inWidth || p1.y >= inHeight) { c1 = vec4(0); }\r\n";
+                        + "if ((p1.x < 0 || p1.y < 0 || p1.x >= inWidth || p1.y >= inHeight) && cclamp > 0) { c1 = vec4(0); }\r\n"
+                        + "else if (cclamp == 0) {\r\n"
+                        + "\tif (p1.x < 0) { p1.x = int(mod(p1.x + inWidth, inWidth)); }\r\n"
+                        + "\telse if (p1.x >= inWidth) { p1.x = int(mod(p1.x, inWidth)); }\r\n"
+                        + "\tif (p1.y < 0) { p1.y = int(mod(p1.y + inHeight, inHeight)); }\r\n"
+                        + "\telse if (p1.y >= inHeight) { p1.y = int(mod(p1.y, inHeight)); }\r\n"
+                        + "\tc1 = texelFetch(Input0, p1, 0);\r\n"
+                        + "}\r\n";
 
             fragMain += "ivec2 finalpos = c_pos + ivec2(trans);\r\n";
-            fragMain += "if (finalpos.x > size.x && cclamp == 0) { finalpos.x = int(mod(finalpos.x, size.x)); }\r\n"
+            fragMain += "if (finalpos.x >= size.x && cclamp == 0) { finalpos.x = int(mod(finalpos.x, size.x)); }\r\n"
                        + "else if(finalpos.x < 0 && cclamp == 0) { finalpos.x = int(mod(size.x + finalpos.x, size.x)); }\r\n"
-                       + "if (finalpos.y > size.y && cclamp == 0) { finalpos.y = int(mod(finalpos.y, size.y)); }\r\n"
+                       + "if (finalpos.y >= size.y && cclamp == 0) { finalpos.y = int(mod(finalpos.y, size.y)); }\r\n"
                        + "else if(finalpos.y < 0 && cclamp == 0) { finalpos.y = int(mod(size.y + finalpos.y, size.y)); }\r\n";
 
             fragMain += "vec4 c2 = imageLoad(_out_put, finalpos);\r\n";
 
+            //calculate lumin
             fragMain += "float r1 = rand(vec2(luminRand + RandomSeed + iteration, luminRand + RandomSeed + iteration)) * luminRand;\r\n"
                      + "float flum = min(1, max(0, lumin + r1));\r\n"
                      + "c1.rgb = c1.rgb * flum;\r\n";
 
             //blending now!
             fragMain += "vec4 fc = BlendColors(blendIdx, c1, c2);\r\n";
-
-            //calculate lumin
 
             //store pixel and close main
             fragMain += "imageStore(_out_put, finalpos, fc);\r\n}\r\n";
@@ -1217,8 +668,9 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
+            NeedsUpdate();
             GetParams();
-            GetParamCode();
+            GetParameterCode();
             GetUniformValues();
             BuildShader();
             Process();
@@ -1243,7 +695,7 @@ namespace Materia.Nodes.Atomic
                     if (value is MVector)
                     {
                         MVector mv = (MVector)value;
-                        Vector2 vec2 = new Vector2(mv.X, mv.Y);
+                        Vector2 vec2 = mv.ToVector2();
                         shader.SetUniform2(k, ref vec2);
                     }
                 }
@@ -1252,7 +704,7 @@ namespace Materia.Nodes.Atomic
                     if (value is MVector)
                     {
                         MVector mv = (MVector)value;
-                        Vector3 vec3 = new Vector3(mv.X, mv.Y, mv.Z);
+                        Vector3 vec3 = mv.ToVector3();
                         shader.SetUniform3(k, ref vec3);
                     }
                 }
@@ -1261,7 +713,7 @@ namespace Materia.Nodes.Atomic
                     if (value is MVector)
                     {
                         MVector mv = (MVector)value;
-                        Vector4 vec4 = new Vector4(mv.X, mv.Y, mv.Z, mv.W);
+                        Vector4 vec4 = mv.ToVector4();
                         shader.SetUniform4(k, ref vec4);
                     }
                 }
@@ -1306,31 +758,26 @@ namespace Materia.Nodes.Atomic
             {
                 ParameterValue v = uniformParams[k] as ParameterValue;
 
-                if (v == null)
-                {
-                    continue;
-                }
+                if (v == null) continue;
 
                 object value = v.Value;
+
+                if (!v.IsFunction()) continue;
 
                 //we ignore functions on the FX node
                 //as we have already taken them into account
                 //for all the FX node variables
-                if (v.IsFunction())
-                {
-                    Function temp = value as Function;
+                Function temp = value as Function;
 
-                    if (temp.ParentNode != this)
-                    {
-                        if (temp.BuildAsShader)
-                        {
-                            temp.ComputeResult();
-                        }
-                        else
-                        {
-                            temp.TryAndProcess();
-                        }
-                    }
+                if (temp.ParentNode == this) continue;
+
+                if (temp.BuildAsShader)
+                {
+                    temp.ComputeResult();
+                }
+                else
+                {
+                    temp.TryAndProcess();
                 }
             }
 
@@ -1365,7 +812,7 @@ namespace Materia.Nodes.Atomic
 
             if(!rotationIsFunc)
             {
-                shader.SetUniform("Rotation", (float)urot);
+                shader.SetUniform("Rotation", urot);
             }
 
             if(!clampIsFunc)
@@ -1375,34 +822,34 @@ namespace Materia.Nodes.Atomic
 
             if(!blendIsFunc)
             {
-                shader.SetUniform("Blending", (float)ublend);
+                shader.SetUniform("Blending", ublend);
             }
 
             if(!translationIsFunc)
             {
-                Vector2 v2 = new Vector2(utranslate.X, utranslate.Y);
+                Vector2 v2 = utranslate.ToVector2();
                 shader.SetUniform2("Translation", ref v2);
             }
 
             if(!scaleIsFunc)
             {
-                Vector2 v2 = new Vector2(uscale.X, uscale.Y);
+                Vector2 v2 = uscale.ToVector2();
                 shader.SetUniform2("Scale", ref v2);
             }
 
             if (!luminIsFunc)
             {
-                shader.SetUniform("Luminosity", (float)ulumin);
+                shader.SetUniform("Luminosity", ulumin);
             }
 
             if(!luminRandomIsFunc)
             {
-                shader.SetUniform("LuminosityRandomness", (float)uluminrand);
+                shader.SetUniform("LuminosityRandomness", uluminrand);
             }
 
             if(!pivotIsFunc)
             {
-                shader.SetUniform("PatternPivot", (float)upivot);
+                shader.SetUniform("PatternPivot", upivot);
             }
 
             //set other uniform params
@@ -1411,29 +858,20 @@ namespace Materia.Nodes.Atomic
                 ParameterValue v = uniformParams[k] as ParameterValue;
 
                 //we ignore anything that isn't a parameter value
-                if (v == null)
-                {
-                    continue;
-                }
+                if (v == null) continue;
 
                 object value = v.Value;
+
+                if (!v.IsFunction()) continue;
 
                 //we ignore functions on the FX node
                 //as we have already taken them into account
                 //for all the FX node variables
-                if (v.IsFunction())
-                {
-                    Function temp = value as Function;
+                Function temp = value as Function;
 
-                    if(temp.ParentNode != this)
-                    {
-                        value = temp.Result;
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
+                if (temp.ParentNode == this) continue;
+
+                value = temp.Result;
 
                 SetUniform(k, value, v.Type);
             }

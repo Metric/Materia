@@ -15,8 +15,9 @@ namespace Materia.Graph.Exporters
             }
         }
 
-        public abstract void ExportSync(string path);
+        public abstract bool IsValid(Graph g);
 
-        public abstract Task Export(string path);
+        public abstract bool Next();
+        public abstract void Complete();
     }
 }

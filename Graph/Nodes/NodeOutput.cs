@@ -80,14 +80,12 @@ namespace Materia.Nodes
 
         /// <summary>
         /// Gets the preview.
-        /// A shortcut to Node?.GetPreview()
+        /// A shortcut to Node?.Export()
         /// </summary>
-        /// <param name="width">The width.</param>
-        /// <param name="height">The height.</param>
         /// <returns></returns>
-        public byte[] GetPreview(int width, int height)
+        public byte[] Export()
         {
-            return Node?.GetPreview(width, height);
+            return Node?.Export();
         }
 
         /// <summary>

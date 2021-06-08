@@ -101,32 +101,11 @@ namespace Materia.Nodes.Atomic
             return JsonConvert.SerializeObject(d);
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            pangle = angle;
-            pelevation = elevation;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Angle"))
-            {
-                pangle = ParentGraph.GetParameterValue(Id, "Angle").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Elevation"))
-            {
-                pelevation = ParentGraph.GetParameterValue(Id, "Elevation").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        float pangle;
-        float pelevation;
         void Process()
         {
             if (processor == null) return;
@@ -139,11 +118,11 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer);
+            processor.Tiling = GetTiling();
+            processor.Azimuth = GetParameter("Angle", angle) * MathHelper.Deg2Rad;
+            processor.Elevation = GetParameter("Elevation", elevation) * MathHelper.Deg2Rad;
 
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Azimuth = pangle * (float)(Math.PI / 180.0f);
-            processor.Elevation = pelevation * (float)(Math.PI / 180.0f);
+            processor.PrepareView(buffer);
             processor.Process(i1);
             processor.Complete();
 

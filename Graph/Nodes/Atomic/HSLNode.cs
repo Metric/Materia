@@ -97,37 +97,11 @@ namespace Materia.Nodes.Atomic
         }
 
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            h = hue;
-            s = saturation;
-            l = lightness;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Hue"))
-            {
-                h = ParentGraph.GetParameterValue(Id, "Hue").ToFloat();
-            }
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Saturation"))
-            {
-                s = ParentGraph.GetParameterValue(Id, "Saturation").ToFloat();
-            }
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Lightness"))
-            {
-                l = ParentGraph.GetParameterValue(Id, "Lightness").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        float h;
-        float s;
-        float l;
         void Process()
         {
             if (processor == null) return;
@@ -142,14 +116,13 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            processor.Tiling = GetTiling();
+
+            processor.Hue = GetParameter("Hue", hue) * 6.0f;
+            processor.Saturation = GetParameter("Saturation", saturation);
+            processor.Lightness = GetParameter("Lightness", lightness);
+
             processor.PrepareView(buffer);
-
-            processor.Tiling = new Vector2(TileX, TileY);
-
-            processor.Hue = h * 6.0f;
-            processor.Saturation = s;
-            processor.Lightness = l;
-
             processor.Process(i1);
             processor.Complete();
 

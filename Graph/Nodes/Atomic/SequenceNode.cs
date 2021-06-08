@@ -160,17 +160,17 @@ namespace Materia.Nodes.Atomic
         {
             if(input.HasInput)
             {
-                return input.Reference.Node.GetActiveBuffer();
+                return input.Reference.GetActiveBuffer();
             }
 
             return null;
         }
 
-        public override byte[] GetPreview(int width, int height)
+        public override byte[] Export()
         {
             if(input.HasInput)
             {
-                return input.Reference.Node.GetPreview(width, height);
+                return input.Reference.Export();
             }
 
             return null;

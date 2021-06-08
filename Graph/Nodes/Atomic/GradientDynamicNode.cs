@@ -68,25 +68,11 @@ namespace Materia.Nodes.Atomic
             processor = null;
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            horiz = horizontal;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Horizontal"))
-            {
-                horiz = ParentGraph.GetParameterValue(Id, "Horizontal").ToBool();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
-        bool horiz;
         void Process()
         {
             if (processor == null) return;
@@ -111,14 +97,13 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer);
-
-            processor.Tiling = new Vector2(TileX, TileY);
-
-            processor.Horizontal = horiz;
-
+            //setting params must go before PrepareView()
+            processor.Tiling = GetTiling();
+            processor.Horizontal = GetParameter("Horizontal", horizontal);
             processor.ColorLUT = i2;
             processor.Mask = i3;
+
+            processor.PrepareView(buffer);
             processor.Process(i1);
             processor.Complete();
 

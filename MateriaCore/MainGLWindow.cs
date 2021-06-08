@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using InfinityUI.Components;
 using InfinityUI.Core;
 using Materia.Graph;
+using Materia.Graph.Exporters;
 using Materia.Rendering.Fonts;
 using Materia.Rendering.Geometry;
 using Materia.Rendering.Hdr;
@@ -60,6 +61,8 @@ namespace MateriaCore
         private Parameters parameterPane;
 
         private bool isMinimized = false;
+
+        private Stack<Exporter> scheduledExports = new Stack<Exporter>();
 
         public MainGLWindow(NativeWindowSettings settings) : base(settings)
         {
@@ -255,6 +258,14 @@ namespace MateriaCore
             KeyUp += MainGLWindow_KeyUp;
             Closing += MainGLWindow_Closing;
             FileDrop += MainGLWindow_FileDrop;
+
+            GlobalEvents.On(GlobalEvent.ScheduleExport, (sender, export) =>
+            {
+                if (export is Exporter)
+                {
+                    scheduledExports.Push(export as Exporter);
+                }
+            });
         }
 
         private void MainGLWindow_FileDrop(OpenTK.Windowing.Common.FileDropEventArgs obj)
@@ -320,7 +331,7 @@ namespace MateriaCore
 
             pbrInitialized = true;
             BRDF.Create();
-            InitializeHDR();
+            InitializeHdr();
         }
 
         private void InitializeGL()
@@ -371,9 +382,13 @@ namespace MateriaCore
 
             UpdateSize();
 
-            //process hdr load
+            //process hdr load if needed
             ProcessHdr();
 
+            //poll exports to render and write to file
+            PollExport();
+
+            //poll graph nodes to render
             PollGraph();
 
             //next render 3d preview
@@ -386,12 +401,51 @@ namespace MateriaCore
 
         private void PollGraph()
         {
-            if (IsExiting || !IsVisible) return;
+            if (IsExiting || !IsVisible || activeGraph == null) return;
 
             FullScreenQuad.SharedVao?.Bind();
-            //poll graph updates if any
-            //and let them render first before anything else
-            activeGraph?.PollScheduled();
+
+            int maxNodesToPoll = 100;
+            int i = 0;
+
+            while (i++ < maxNodesToPoll && activeGraph.IsProcessing)
+            {
+                //poll graph updates if any
+                //and let them render first before anything else
+                activeGraph?.PollScheduled();
+            }
+
+            FullScreenQuad.SharedVao?.Unbind();
+        }
+
+        private void PollExport()
+        {
+            if (IsExiting || !IsVisible || activeGraph == null) return;
+
+            FullScreenQuad.SharedVao?.Bind();
+
+            if (scheduledExports.Count > 0)
+            {
+                var exporter = scheduledExports.Peek();
+                
+                if (exporter == null)
+                {
+                    scheduledExports.Pop();
+                    return;
+                }
+
+                if (!exporter.IsValid(activeGraph))
+                {
+                    scheduledExports.Pop();
+                    return;
+                }
+
+                if (!exporter.Next())
+                {
+                    exporter.Complete();
+                    scheduledExports.Pop();
+                }
+            }
 
             FullScreenQuad.SharedVao?.Unbind();
         }
@@ -410,7 +464,7 @@ namespace MateriaCore
         }
 
         //hdr test load
-        private void InitializeHDR()
+        private void InitializeHdr()
         {
             string dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hdr");
             IHdrFile f = null;
@@ -441,30 +495,6 @@ namespace MateriaCore
         protected virtual void Invalidate()
         {
             if (IsExiting || !IsVisible) return;
-
-            /*if (lastTick == 0)
-            {
-                lastTick = System.DateTime.Now.Ticks;
-                return;
-            }
-
-            if (fpsTick == 0)
-            {
-                fpsTick = 1.0f / TargetFPS;
-            }
-
-            float diff = (float)(new TimeSpan(System.DateTime.Now.Ticks - lastTick).TotalMilliseconds);
-            deltaTime += diff;
-
-            if (deltaTime >= fpsTick)
-            {
-                Render();
-                SwapBuffers();
-
-                deltaTime %= fpsTick;
-            }
-
-            lastTick = DateTime.Now.Ticks;*/
 
             try
             {

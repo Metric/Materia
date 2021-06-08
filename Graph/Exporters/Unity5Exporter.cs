@@ -4,179 +4,118 @@ using Materia.Nodes;
 using Materia.Nodes.Atomic;
 using Materia.Rendering.Imaging;
 using System.IO;
+using Materia.Rendering.Extensions;
 
 namespace Materia.Graph.Exporters
 {
     public class Unity5Exporter : Exporter
     {
+        string path;
         Graph graph;
-        public Unity5Exporter(Graph g)
+        int index;
+        int totalOutputs;
+        RawBitmap merge;
+        public Unity5Exporter(Graph g, string exportPath)
         {
+            if (g == null) return;
+
+            path = exportPath;
             graph = g;
-        }
+            index = 0;
+            totalOutputs = g.OutputNodes.Count;
 
-        public override void ExportSync(string path)
-        {
-            RawBitmap mr = null;
-            string name = graph.Name;
+            int maxWidth = 0;
+            int maxHeight = 0;
 
-            foreach (var s in graph.OutputNodes)
+            for (int i = 0; i < g.OutputNodes.Count; ++i)
             {
-                Node n = null;
-
-                if (graph.NodeLookup.TryGetValue(s, out n))
+                var id = g.OutputNodes[i];
+                if (g.NodeLookup.TryGetValue(id, out Node n))
                 {
-                    if (n is OutputNode)
+                    OutputNode on = n as OutputNode;
+                    if (on == null) continue;
+                    if (on.OutType == OutputType.metallic || on.OutType == OutputType.roughness)
                     {
-                        OutputNode on = n as OutputNode;
-
-                        if (on.OutType == OutputType.basecolor)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                bmp = new RawBitmap(on.Width, on.Height, bits);
-                                var src = bmp.ToBitmap();
-
-                                using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_color.png"), FileMode.OpenOrCreate))
-                                {
-                                    src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                }
-
-                                src.Dispose();
-                            }
-                        }
-                        else if (on.OutType == OutputType.normal)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                bmp = new RawBitmap(on.Width, on.Height, bits);
-                                var src = bmp.ToBitmap();
-
-                                using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_normal.png"), FileMode.OpenOrCreate))
-                                {
-                                    src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                }
-
-                                src.Dispose();
-                            }
-                        }
-                        else if (on.OutType == OutputType.metallic)
-                        {
-                            if (mr == null)
-                            {
-                                mr = new RawBitmap(on.Width, on.Height);
-                            }
-
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                RawBitmap tmp = new RawBitmap(on.Width, on.Height, bits);
-                                mr.CopyRedToRed(tmp);
-                            }
-                        }
-                        else if (on.OutType == OutputType.roughness)
-                        {
-                            if (mr == null)
-                            {
-                                mr = new RawBitmap(on.Width, on.Height);
-                            }
-
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                RawBitmap tmp = new RawBitmap(on.Width, on.Height, bits);
-                                mr.CopyRedToAlpha(tmp);
-                            }
-                        }
-                        else if (on.OutType == OutputType.occlusion)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                bmp = new RawBitmap(on.Width, on.Height, bits);
-                                var src = bmp.ToBitmap();
-
-                                using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_occlusion.png"), FileMode.OpenOrCreate))
-                                {
-                                    src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                }
-
-                                src.Dispose();
-                            }
-                        }
-                        else if (on.OutType == OutputType.height)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                bmp = new RawBitmap(on.Width, on.Height, bits);
-                                var src = bmp.ToBitmap();
-
-                                using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_height.png"), FileMode.OpenOrCreate))
-                                {
-                                    src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                }
-
-                                src.Dispose();
-                            }
-                        }
-                        else if (on.OutType == OutputType.thickness)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                bmp = new RawBitmap(on.Width, on.Height, bits);
-                                var src = bmp.ToBitmap();
-
-                                using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_thickness.png"), FileMode.OpenOrCreate))
-                                {
-                                    src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                }
-
-                                src.Dispose();
-                            }
-                        }
-                        else if(on.OutType == OutputType.emission)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                bmp = new RawBitmap(on.Width, on.Height, bits);
-                                var src = bmp.ToBitmap();
-
-                                using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_emission.png"), FileMode.OpenOrCreate))
-                                {
-                                    src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                }
-
-                                src.Dispose();
-                            }
-                        }
+                        maxWidth = n.Width.Max(maxWidth);
+                        maxHeight = n.Height.Max(maxHeight);
                     }
                 }
             }
 
-            if (mr != null)
-            {
-                var src = mr.ToBitmap();
+            merge = new RawBitmap(maxWidth, maxHeight);
+        }
 
-                using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_metrough.png"), FileMode.OpenOrCreate))
+        public override bool Next()
+        {
+            if (string.IsNullOrEmpty(path)) return false;
+            if (!Directory.Exists(path)) return false;
+            if (graph == null) return false;
+            if (totalOutputs <= 0) return false;
+            if (index >= totalOutputs) return false;
+
+            string name = graph.Name;
+            string nid = graph.OutputNodes[index++];
+
+            ProgressChanged(index, totalOutputs, (float)index / (float)totalOutputs);
+
+            Node n = null;
+            if (graph.NodeLookup.TryGetValue(nid, out n))
+            {
+                OutputNode on = n as OutputNode;
+
+                if (on == null) return true;
+
+                string extension = $"_{on.OutType}.png";
+
+                RawBitmap bmp = null;
+                byte[] bits = on.Export();
+
+                if (bits == null) return true;
+                bmp = new RawBitmap(on.Width, on.Height, bits);
+
+                switch (on.OutType)
+                {
+                    case OutputType.metallic:
+                        if (merge.Width >= bmp.Width && merge.Height >= bmp.Height)
+                        {
+                            merge.CopyRedToRed(bmp);
+                        }
+                        break;
+                    case OutputType.roughness:
+                        if (merge.Width >= bmp.Width && merge.Height >= bmp.Height)
+                        {
+                            merge.CopyRedToAlpha(bmp);
+                        }
+                        break;
+                    default:
+                        var src = bmp.ToBitmap();
+
+                        using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + extension), FileMode.OpenOrCreate))
+                        {
+                            src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
+                        }
+
+                        src.Dispose();
+                        break;
+                }
+            }
+
+            return true;
+        }
+
+        public override void Complete()
+        {
+            if (string.IsNullOrEmpty(path)) return;
+            if (!Directory.Exists(path)) return;
+            if (graph == null) return;
+
+            string name = graph.Name;
+
+            if (merge.Width > 0 && merge.Height > 0)
+            {
+                var src = merge.ToBitmap();
+
+                using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_metalrough.png"), FileMode.OpenOrCreate))
                 {
                     src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
                 }
@@ -185,211 +124,9 @@ namespace Materia.Graph.Exporters
             }
         }
 
-        public override Task Export(string path)
+        public override bool IsValid(Graph g)
         {
-            RawBitmap mr = null;
-
-            int i = 0;
-
-            string name = graph.Name;
-
-            Queue<Task> runningTasks = new Queue<Task>();
-
-            foreach (var s in graph.OutputNodes)
-            {
-                Node n = null;
-
-                if (graph.NodeLookup.TryGetValue(s, out n))
-                {
-                    if (n is OutputNode)
-                    {
-                        OutputNode on = n as OutputNode;
-
-                        if (on.OutType == OutputType.basecolor)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                var t = Task.Run(() =>
-                                {
-                                    bmp = new RawBitmap(on.Width, on.Height, bits);
-                                    var src = bmp.ToBitmap();
-
-                                    using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_color.png"), FileMode.OpenOrCreate))
-                                    {
-                                        src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                    }
-
-                                    src.Dispose();
-                                });
-                                runningTasks.Enqueue(t);
-                            }
-                        }
-                        else if (on.OutType == OutputType.normal)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                var t = Task.Run(() =>
-                                {
-                                    bmp = new RawBitmap(on.Width, on.Height, bits);
-                                    var src = bmp.ToBitmap();
-
-                                    using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_normal.png"), FileMode.OpenOrCreate))
-                                    {
-                                        src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                    }
-
-                                    src.Dispose();
-                                });
-                                runningTasks.Enqueue(t);
-                            }
-                        }
-                        else if (on.OutType == OutputType.metallic)
-                        {
-                            if (mr == null)
-                            {
-                                mr = new RawBitmap(on.Width, on.Height);
-                            }
-
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                var t = Task.Run(() =>
-                                {
-                                    RawBitmap tmp = new RawBitmap(on.Width, on.Height, bits);
-                                    mr.CopyRedToRed(tmp);
-                                });
-                                runningTasks.Enqueue(t);
-                            }
-                        }
-                        else if (on.OutType == OutputType.roughness)
-                        {
-                            if (mr == null)
-                            {
-                                mr = new RawBitmap(on.Width, on.Height);
-                            }
-
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                var t = Task.Run(() =>
-                                {
-                                    RawBitmap tmp = new RawBitmap(on.Width, on.Height, bits);
-                                    mr.CopyRedToAlpha(tmp);
-                                });
-                                runningTasks.Enqueue(t);
-                            }
-                        }
-                        else if (on.OutType == OutputType.occlusion)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                var t = Task.Run(() =>
-                                {
-                                    bmp = new RawBitmap(on.Width, on.Height, bits);
-                                    var src = bmp.ToBitmap();
-
-                                    using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_occlusion.png"), FileMode.OpenOrCreate))
-                                    {
-                                        src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                    }
-
-                                    src.Dispose();
-                                });
-                                runningTasks.Enqueue(t);
-                            }
-                        }
-                        else if (on.OutType == OutputType.height)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                var t = Task.Run(() =>
-                                {
-                                    bmp = new RawBitmap(on.Width, on.Height, bits);
-                                    var src = bmp.ToBitmap();
-
-                                    using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_height.png"), FileMode.OpenOrCreate))
-                                    {
-                                        src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                    }
-
-                                    src.Dispose();
-                                });
-                                runningTasks.Enqueue(t);
-                            }
-                        }
-                        else if(on.OutType == OutputType.thickness)
-                        {
-                            RawBitmap bmp = null;
-                            byte[] bits = on.GetPreview(on.Width, on.Height);
-
-                            if (bits != null)
-                            {
-                                var t = Task.Run(() =>
-                                {
-                                    bmp = new RawBitmap(on.Width, on.Height, bits);
-                                    var src = bmp.ToBitmap();
-
-                                    using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_thickness.png"), FileMode.OpenOrCreate))
-                                    {
-                                        src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                                    }
-
-                                    src.Dispose();
-                                });
-                                runningTasks.Enqueue(t);
-                            }
-                        }
-                    }
-                }
-            }
-
-            int extra = (mr != null) ? 1 : 0;
-            int totalTasks = runningTasks.Count + extra;
-
-            ProgressChanged(0, totalTasks, 0);
-
-            return Task.Run(async () =>
-            {
-                while (runningTasks.Count > 0)
-                {
-                    i = totalTasks - runningTasks.Count + 1;
-
-                    Task t = runningTasks.Dequeue();
-
-                    ProgressChanged(i, totalTasks, (float)i / (float)totalTasks);
-
-                    if (!t.IsCompleted && !t.IsCanceled)
-                    {
-                        await t;
-                    }
-                }
-
-                if (mr != null)
-                {
-                    var src = mr.ToBitmap();
-
-                    using (FileStream fs = new FileStream(System.IO.Path.Combine(path, name + "_metrough.png"), FileMode.OpenOrCreate))
-                    {
-                        src.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                    }
-
-                    src.Dispose();
-                }
-            });
+            return g == graph;
         }
     }
 }

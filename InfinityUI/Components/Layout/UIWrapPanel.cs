@@ -41,6 +41,8 @@ namespace InfinityUI.Components.Layout
 
         public UIObject Parent { get; set; }
 
+        protected Box2 lastVisibleArea;
+
         public virtual void Awake()
         {
             AddEvents();
@@ -102,16 +104,11 @@ namespace InfinityUI.Components.Layout
             if (Parent == null || !NeedsUpdate) return;
 
             var Children = Parent.Children;
-            var Size = Parent.AnchorSize;
-
-            UIObject prev = null;
+            var Size = Parent.ExtendedRect;
 
             float yOffset = 0;
             float xOffset = 0;
             float maxOffset = 0;
-
-            int rowCount = 0;
-            int prevRowCount = 0;
 
             for (int i = 0; i < Children.Count; ++i)
             {
@@ -119,69 +116,41 @@ namespace InfinityUI.Components.Layout
                 if (reverse) k = (Children.Count - 1) - i;
 
                 var child = Children[k];
-
                 if (!child.Visible) continue;
 
-                var csize = child.AnchorSize;
+                var previousAlignment = child.RelativeTo;
+                child.RelativeTo = Anchor.TopLeft;
+
+                var csize = child.ExtendedRect;
 
                 if (direction == Orientation.Horizontal)
                 {
-                    float marginOffset = 0;
-
-                    marginOffset = (prev != null ? prev.Margin.Right : Parent.Padding.Left) + child.Margin.Left;
-
-                    if (xOffset + csize.X + marginOffset > Size.X)
+                    if (xOffset + csize.Width > Size.Width)
                     {
-                        prevRowCount = rowCount;
-                        rowCount = 0;
-                        prev = null;
-                        xOffset = 0;
                         yOffset += maxOffset;
-                        maxOffset = csize.Y;
-                    }
-                    else
-                    {
-                        prev = Children[i];
+                        xOffset = 0;
+                        maxOffset = 0;
                     }
 
-                    int t = i - (prevRowCount - rowCount);
-                    if (reverse) t = (Children.Count - 1) - t;
-                    float verticalOffset = (prevRowCount == 0 ? Parent.Padding.Top : Children[t].Margin.Bottom) + child.Margin.Top;
-
-                    child.Position = new Vector2(xOffset + marginOffset, yOffset + verticalOffset);
-                    maxOffset = MathF.Max(maxOffset, csize.Y + verticalOffset);
-                    xOffset += csize.X + marginOffset;
+                    maxOffset = MathF.Max(csize.Height, maxOffset);
+                    child.Position = new Vector2(xOffset, yOffset);
+                    xOffset += csize.Width;
                 }
                 else
                 {
-                    float marginOffset = 0;
-
-                    marginOffset = (prev != null ? prev.Margin.Bottom : Parent.Padding.Top) + child.Margin.Top;
-
-                    if (yOffset + csize.Y + marginOffset > Size.Y)
+                    if (yOffset + csize.Height > Size.Height)
                     {
-                        prev = null;
-                        prevRowCount = rowCount;
-                        rowCount = 0;
-                        yOffset = 0;
                         xOffset += maxOffset;
-                        maxOffset = csize.X;
-                    }
-                    else
-                    {
-                        prev = Children[i];
+                        yOffset = 0;
+                        maxOffset = 0;
                     }
 
-                    int t = i - (prevRowCount - rowCount);
-                    if (reverse) t = (Children.Count - 1) - t;
-                    float verticalOffset = (prevRowCount == 0 ? Parent.Padding.Left : Children[t].Margin.Bottom) + child.Margin.Top;
-
-                    child.Position = new Vector2(xOffset + verticalOffset, yOffset + marginOffset);
-                    maxOffset = MathF.Max(maxOffset, csize.X + verticalOffset);
-                    yOffset += csize.Y + marginOffset;
+                    maxOffset = MathF.Max(csize.Width, maxOffset);
+                    child.Position = new Vector2(xOffset, yOffset);
+                    yOffset += csize.Height;
                 }
 
-                ++rowCount;
+                child.RelativeTo = previousAlignment;
             }
 
             NeedsUpdate = false;
@@ -194,7 +163,12 @@ namespace InfinityUI.Components.Layout
 
         public virtual void Update()
         {
-
+            if (Parent == null) return;
+            if (lastVisibleArea != Parent.VisibleRect)
+            {
+                lastVisibleArea = Parent.VisibleRect;
+                NeedsUpdate = true;
+            }
         }
     }
 }

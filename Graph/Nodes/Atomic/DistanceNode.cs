@@ -101,28 +101,9 @@ namespace Materia.Nodes.Atomic
             preshader?.Dispose();
             preshader = null;
         }
-        
-        void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            pmaxDistance = distance;
-            psourceonly = sourceOnly;
-
-            if(ParentGraph != null && ParentGraph.HasParameterValue(Id, "MaxDistance"))
-            {
-                pmaxDistance = ParentGraph.GetParameterValue(Id, "MaxDistance").ToFloat();
-            }
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "SourceOnly"))
-            {
-                psourceonly = ParentGraph.GetParameterValue(Id, "SourceOnly").ToBool();
-            }
-        }
 
         public override void TryAndProcess()
         {
-            GetParams();
             BuildShader();
             Process();
         }
@@ -208,8 +189,6 @@ namespace Materia.Nodes.Atomic
             rebuild = true;
         }
 
-        float pmaxDistance;
-        bool psourceonly;
         void Process()
         {
             if (processor == null) return;
@@ -230,14 +209,13 @@ namespace Materia.Nodes.Atomic
             if (shader == null) return;
             if (preshader == null) return;
 
-            processor.PrepareView(buffer);
-
-            processor.Tiling = new Vector2(TileX, TileY);
-
+            processor.Tiling = GetTiling();
             processor.Shader = shader;
             processor.PreShader = preshader;
-            processor.SourceOnly = psourceonly;
-            processor.Distance = pmaxDistance;
+            processor.SourceOnly = GetParameter("SourceOnly", sourceOnly);
+            processor.Distance = GetParameter("MaxDistance", distance);
+
+            processor.PrepareView(buffer);
             processor.Process(i1, i2);
             processor.Complete();
 

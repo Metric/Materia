@@ -22,7 +22,8 @@ namespace MateriaCore.Utils
         UpdateParameters,
         ClearViewParameters,
         HdriUpdate,
-        SkyboxUpdate
+        SkyboxUpdate,
+        ScheduleExport
     }
 
     public static class GlobalEvents

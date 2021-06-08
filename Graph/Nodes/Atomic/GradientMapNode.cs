@@ -120,17 +120,19 @@ namespace Materia.Nodes.Atomic
 
             colorLUT.Bind();
             colorLUT.SetData(LUT.Image, PixelFormat.Rgba, 256, 2);
-            colorLUT.SetFilter((int)TextureMinFilter.Linear, (int)TextureMagFilter.Linear);
+            colorLUT.Linear();
+            colorLUT.Repeat();
             GLTexture2D.Unbind();
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer);
-
-            processor.Tiling = new Vector2(TileX, TileY);
+            //setting params must go before PrepareView()
+            processor.Tiling = GetTiling();
 
             processor.ColorLUT = colorLUT;
             processor.Mask = i2;
+
+            processor.PrepareView(buffer);
             processor.Process(i1);
             processor.Complete();
 

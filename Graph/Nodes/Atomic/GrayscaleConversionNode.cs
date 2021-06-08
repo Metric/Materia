@@ -17,6 +17,7 @@ namespace Materia.Nodes.Atomic
         NodeOutput Output;
 
         float r;
+        [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Red")]
         public float Red
         {
@@ -32,6 +33,7 @@ namespace Materia.Nodes.Atomic
         }
 
         float g;
+        [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Green")]
         public float Green
         {
@@ -47,6 +49,7 @@ namespace Materia.Nodes.Atomic
         }
 
         float b;
+        [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Blue")]
         public float Blue
         {
@@ -62,6 +65,7 @@ namespace Materia.Nodes.Atomic
         }
 
         float a;
+        [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Alpha")]
         public float Alpha
         {
@@ -120,10 +124,15 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
-            processor.PrepareView(buffer);
+            processor.Tiling = GetTiling();
+            processor.Weight = new Vector4(
+                                    GetParameter("Red", r),
+                                    GetParameter("Green", g),
+                                    GetParameter("Blue", b),
+                                    GetParameter("Alpha", a)
+                                );
 
-            processor.Tiling = new Vector2(TileX, TileY);
-            processor.Weight = new Vector4(r, g, b, a);
+            processor.PrepareView(buffer);
             processor.Process(i1);
             processor.Complete();
 

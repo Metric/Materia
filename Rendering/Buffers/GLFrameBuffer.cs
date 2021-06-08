@@ -146,6 +146,14 @@ namespace Materia.Rendering.Buffers
             {
                 IGL.Primary.ReadPixels(0, 0, width, height, (int)PixelFormat.Bgr, (int)PixelType.UnsignedByte, buf);
             }
+            else if (bpp == 2)
+            {
+                IGL.Primary.ReadPixels(0, 0, width, height, (int)PixelFormat.Rg, (int)PixelType.UnsignedByte, buf);
+            }
+            else if (bpp == 1)
+            {
+                IGL.Primary.ReadPixels(0, 0, width, height, (int)PixelFormat.Red, (int)PixelType.UnsignedByte, buf);
+            }
 
             return buf;
         }
@@ -161,6 +169,14 @@ namespace Materia.Rendering.Buffers
             else if (bpp == 3)
             {
                 IGL.Primary.ReadPixels(x, y, width, height, (int)PixelFormat.Bgr, (int)PixelType.UnsignedByte, buf);
+            }
+            else if (bpp == 2)
+            {
+                IGL.Primary.ReadPixels(x, y, width, height, (int)PixelFormat.Rg, (int)PixelType.UnsignedByte, buf);
+            }
+            else if (bpp == 1)
+            {
+                IGL.Primary.ReadPixels(x, y, width, height, (int)PixelFormat.Red, (int)PixelType.UnsignedByte, buf);
             }
 
             return buf;

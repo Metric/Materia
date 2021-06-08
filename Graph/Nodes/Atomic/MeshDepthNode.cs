@@ -47,6 +47,7 @@ namespace Materia.Nodes.Atomic
         }
 
         MVector position;
+        [Promote(NodeType.Float3)]
         [Editable(ParameterInputType.Float3Input, "Position")]
         public MVector Position
         {
@@ -62,6 +63,7 @@ namespace Materia.Nodes.Atomic
         }
 
         MVector rotation;
+        [Promote(NodeType.Float3)]
         [Editable(ParameterInputType.Float3Slider, "Rotation", "Default", 0, 360)]
         public MVector Rotation
         {
@@ -77,6 +79,7 @@ namespace Materia.Nodes.Atomic
         }
 
         MVector scale;
+        [Promote(NodeType.Float3)]
         [Editable(ParameterInputType.Float3Input, "Scale")]
         public MVector Scale
         {
@@ -93,6 +96,7 @@ namespace Materia.Nodes.Atomic
 
         float cameraZoom;
 
+        [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Camera Z")]
         public float CameraZ
         {
@@ -215,32 +219,33 @@ namespace Materia.Nodes.Atomic
 
             mesh.Mat = mat;
 
-            float rx = (float)this.rotation.X * ((float)Math.PI / 180.0f);
-            float ry = (float)this.rotation.Y * ((float)Math.PI / 180.0f);
-            float rz = (float)this.rotation.Z * ((float)Math.PI / 180.0f);
+            MVector prot = GetParameter("Rotation", rotation) * MathHelper.Deg2Rad;
+            MVector pscale = GetParameter("Scale", scale);
+            MVector pposition = GetParameter("Position", position);
+            float pzoom = GetParameter("CameraZ", cameraZoom);
 
-            Quaternion rot = Quaternion.FromEulerAngles(rx, ry, rz);
-            Matrix4 rotation = Matrix4.CreateFromQuaternion(rot);
-            Matrix4 translation = Matrix4.CreateTranslation(position.X, position.Y, position.Z);
-            Matrix4 scale = Matrix4.CreateScale(this.scale.X, this.scale.Y, this.scale.Z);
+            Quaternion rot = Quaternion.FromEulerAngles(prot.ToVector3());
+            Matrix4 irot = Matrix4.CreateFromQuaternion(rot);
+            Matrix4 itrans = Matrix4.CreateTranslation(pposition.ToVector3());
+            Matrix4 iscale = Matrix4.CreateScale(pscale.ToVector3());
 
-            Matrix4 view = rotation * Matrix4.CreateTranslation(0, 0, -cameraZoom);
-            Vector3 pos = Vector3.Normalize((view * new Vector4(0, 0, 1, 1)).Xyz) * cameraZoom;
+            Matrix4 view = Matrix4.CreateTranslation(new Vector3(0, 0, pzoom));
 
             mesh.View = view;
-            mesh.CameraPosition = pos;
+            mesh.CameraPosition = new Vector3(0, 0, pzoom);
             mesh.Projection = Proj;
 
             //TRS
-            mesh.Model = scale * translation;
+            mesh.Model = iscale * irot * itrans;
 
             //light position currently doesn't do anything
             //just setting values to a default
             mesh.LightPosition = new Vector3(0, 0, 0);
             mesh.LightColor = new Vector3(1, 1, 1);
 
-            processor.Tiling = new Vector2(TileX, TileY);
+            processor.Tiling = GetTiling();
             processor.Mesh = mesh;
+
             processor.Process(buffer);
             processor.Complete();
 
