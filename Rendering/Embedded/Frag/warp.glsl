@@ -51,6 +51,6 @@ vec3 createNormal(vec2 uv) {
 
 void main() {
     vec2 uv = UV;
-    vec2 n = createNormal(uv).xy * 0.5;
-    FragColor = texture(MainTex, uv + n * intensity);
+    vec2 n = createNormal(uv).xy * intensity;
+    FragColor = texture(MainTex, uv + n);
 }

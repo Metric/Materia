@@ -12,8 +12,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public TransformProcessor() : base()
         {
-            Stretch = false;
-            shader = GetShader("raw.glsl", "transform.glsl");
+            shader = GetShader("image.glsl", "transform.glsl");
         }
 
         protected override void SetUniqueUniforms()
@@ -29,9 +28,10 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform3("translation", ref tr);
         }
 
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input);
             renderQuad?.Draw();

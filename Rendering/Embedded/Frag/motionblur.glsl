@@ -26,5 +26,6 @@ void main() {
     }
 
     vec4 final = result / magnitude;
-    FragColor = final;
+    //clamp it
+    FragColor = clamp(final, vec4(0), vec4(1));
 }

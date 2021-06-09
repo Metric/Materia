@@ -23,7 +23,11 @@ namespace MateriaCore.Utils
         ClearViewParameters,
         HdriUpdate,
         SkyboxUpdate,
-        ScheduleExport
+        ScheduleExport,
+        ArrangeNodesVertical,
+        ArrangeNodesHorizontal,
+        FitNodesIntoView,
+        ActualNodeViewSize
     }
 
     public static class GlobalEvents

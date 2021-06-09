@@ -14,7 +14,7 @@ namespace Materia.Rendering.Imaging.Processing
         public GradientMapProcessor()
         {
             Horizontal = true;
-            shader = GetShader("raw.glsl", "gradientmap.glsl");
+            shader = GetShader("image.glsl", "gradientmap.glsl");
             UseMask = false;
         }
 
@@ -32,10 +32,12 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform("Mask", 2);
         }
 
-        public void Process(GLTexture2D input)
+        //oops forgot to override
+        public override void Process(GLTexture2D input)
         {
             UseMask = Mask != null;
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input, ColorLUT, Mask);
             renderQuad?.Draw();

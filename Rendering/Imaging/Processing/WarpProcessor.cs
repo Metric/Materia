@@ -10,7 +10,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public WarpProcessor() : base()
         {
-            shader = GetShader("raw.glsl", "warp.glsl");
+            shader = GetShader("image.glsl", "warp.glsl");
             Intensity = 1;
         }
 
@@ -29,6 +29,7 @@ namespace Materia.Rendering.Imaging.Processing
         public void Process(GLTexture2D input, GLTexture2D warp)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input, warp);
             renderQuad?.Draw();

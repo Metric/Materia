@@ -14,6 +14,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public ChannelSwitchProcessor() : base()
         {
+            isMatrixBased = false;
             shader = GetShader("raw.glsl", "channelswitch.glsl");    
         }
 

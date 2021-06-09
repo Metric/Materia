@@ -87,7 +87,8 @@ namespace MateriaCore.Components.GL
         protected enum UIGraphMouseMode
         {
             Normal,
-            Select
+            Select,
+            Pan
         }
 
         protected const float ZOOM_SPEED = 1.0f / 10f;
@@ -99,6 +100,7 @@ namespace MateriaCore.Components.GL
         #region Components
         protected UIObject gridArea;
         protected UIImage grid;
+        protected UIObject selectArea;
         #endregion
 
         #region General
@@ -155,10 +157,11 @@ namespace MateriaCore.Components.GL
         #endregion
 
         #region Selection
-        protected HashSet<string> selectionStartedIn = new HashSet<string>();
         public List<IGraphNode> Selected { get; protected set; } = new List<IGraphNode>();
         public HashSet<string> SelectedIds { get; protected set; } = new HashSet<string>();
-        protected Box2 selectionRect = new Box2(0,0,0,0);
+
+        protected Vector2 selectStart; //helper to determine selectArea positioning
+        protected Vector2 selectSize; //helper to determine selectArea positioning
         #endregion
 
         #region Graph Stack
@@ -205,6 +208,9 @@ namespace MateriaCore.Components.GL
         {
             selectable.IsFocusable = false;
 
+            //add path preview for node point connecting
+            AddComponent<UIPathPreview>();
+
             RelativeTo = Anchor.Fill;
 
             //set it so children can always be raycast to
@@ -234,15 +240,23 @@ namespace MateriaCore.Components.GL
 
             selectable.Wheel += Selectable_Wheel;
             selectable.PointerUp += Selectable_PointerUp;
+            selectable.PointerDown += Selectable_PointerDown;
 
             Moved += UIGraph_Moved;
 
-            AddChild(gridArea);
-        }
+            //select area
+            selectArea = new UIObject
+            {
+                RelativeTo = Anchor.TopLeft,
+                Size = Vector2.Zero
+            };
+            var selectBG = selectArea.AddComponent<UIImage>();
+            selectArea.RaycastTarget = false;
+            selectBG.Color = new Vector4(0, 0.5f, 0.75f, 0.25f);
+            selectArea.Visible = false;
 
-        private void Selectable_PointerUp(UISelectable arg1, MouseEventArgs arg2)
-        {
-            ClearSelection();
+            AddChild(gridArea);
+            AddChild(selectArea);
         }
 
         private void Grid_BeforeDraw(UIDrawable obj)
@@ -1413,6 +1427,115 @@ namespace MateriaCore.Components.GL
             return n;
         }
 
+        #region PointerEvents
+        private void Selectable_PointerUp(UISelectable arg1, MouseEventArgs arg2)
+        {
+            if (mouseMode == UIGraphMouseMode.Normal)
+            {
+                ClearSelection();
+            }
+
+            PerformSelection();
+
+            mouseMode = UIGraphMouseMode.Normal;
+        }
+
+        private void Selectable_PointerDown(UISelectable arg1, MouseEventArgs e)
+        {
+            mouseMode = e.Button.HasFlag(MouseButton.Left) ? UIGraphMouseMode.Normal
+            : e.Button.HasFlag(MouseButton.Middle) ? UIGraphMouseMode.Pan
+            : UIGraphMouseMode.Normal;
+        }
+
+        private void PrepareToSelect(MouseEventArgs e)
+        {
+            if (selectArea.Visible || mouseMode != UIGraphMouseMode.Normal) return;
+
+            mouseMode = UIGraphMouseMode.Select;
+
+            selectArea.Visible = true;
+            selectArea.Position = selectStart = Canvas != null ? Canvas.ToCanvasSpace(e.Position) : e.Position;
+            selectArea.Size = selectSize = Vector2.Zero;
+
+            selectArea.ZOrder = mouseMode == UIGraphMouseMode.Select ? -100 : 0;
+
+            //register global handlers for accurate mosue up & mouse move
+            //and so we can drag over other nodes without
+            //worrying about focus loss for selecting
+            if (mouseMode == UIGraphMouseMode.Select)
+            {
+                UI.MouseMove += SelectGlobalMouseMove;
+                UI.MouseUp += SelectGlobalMouseUp;
+            }
+        }
+
+        private void SelectGlobalMouseUp(MouseEventArgs e)
+        {
+            UI.MouseMove -= SelectGlobalMouseMove;
+            UI.MouseUp -= SelectGlobalMouseUp;
+
+            //we have this here in case we are over an actual node
+            //otherwise if we are not, then this will have already been
+            //triggered in Selectable_PointerUp
+            PerformSelection();
+        }
+
+        private void PerformSelection()
+        {
+            if (mouseMode == UIGraphMouseMode.Select)
+            {
+                Box2 area = selectArea.Rect;
+
+                var nodes = GetNodesIn(area);
+
+                for (int i = 0; i < nodes.Count; ++i)
+                {
+                    if (UI.IsCtrlPressed)
+                    {
+                        Unselect(nodes[i]);
+                    }
+                    else
+                    {
+                        Select(nodes[i]);
+                    }
+                }
+
+                selectArea.Visible = false;
+                selectArea.ZOrder = 0;
+
+                mouseMode = UIGraphMouseMode.Normal;
+            }
+        }
+
+        private void SelectGlobalMouseMove(MouseEventArgs e)
+        {
+            if (mouseMode != UIGraphMouseMode.Select) return;
+
+            //use the normal zoom var here
+            //otherwise it will be inverted
+            //compared to actual zoom level if we use the invZoom
+            Vector2 scaledDelta = e.Delta * zoom;
+
+            selectSize += scaledDelta;
+            if (selectSize.X < 0 && selectSize.Y < 0)
+            {
+                selectArea.Position = selectStart + selectSize;
+            }
+            else if (selectSize.X < 0)
+            {
+                selectArea.Position = selectStart + new Vector2(selectSize.X, 0);
+            }
+            else if (selectSize.Y < 0)
+            {
+                selectArea.Position = selectStart + new Vector2(0, selectSize.Y);
+            }
+            else
+            {
+                selectArea.Position = selectStart;
+            }
+            selectArea.Size = new Vector2(MathF.Abs(selectSize.X), MathF.Abs(selectSize.Y));
+        }
+
         private void Selectable_Wheel(UISelectable arg1, MouseWheelArgs e)
         {
             zoom += e.Delta.Y * ZOOM_SPEED;
@@ -1425,13 +1548,19 @@ namespace MateriaCore.Components.GL
 
         private void UIGraph_Moved(MovablePane arg1, Vector2 delta, MouseEventArgs e)
         {
+            if (e.Button.HasFlag(MouseButton.Left) && mouseMode == UIGraphMouseMode.Normal && delta.Length >= 4)
+            {
+                PrepareToSelect(e);
+                return;
+            }
+
             //must reverse the delta as
             //otherwise camera pans in opposite direction
             Vector2 scaledDelta = -delta * invZoom;
 
             switch (mouseMode) 
             {
-                case UIGraphMouseMode.Normal:
+                case UIGraphMouseMode.Pan:
                     if (Canvas != null)
                     {
                         Canvas.Cam.LocalPosition += new Vector3(scaledDelta); 
@@ -1445,6 +1574,7 @@ namespace MateriaCore.Components.GL
                     break;
             }
         }
+        #endregion
 
         public override void Dispose(bool disposing = true)
         {

@@ -12,10 +12,10 @@ namespace Materia.Rendering.Imaging.Processing
 
         public MeshDepthProcessor() : base()
         {
-        
+            
         }
 
-        public void Process(GLTexture2D output)
+        public override void Process(GLTexture2D output)
         {
             GLTexture2D temp = output.Copy();
 
@@ -45,6 +45,7 @@ namespace Materia.Rendering.Imaging.Processing
             PrepareView(output);
 
             Identity();
+            Resize(temp);
             Bind();
             SetTextures(temp);
             renderQuad?.Draw();

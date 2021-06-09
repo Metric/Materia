@@ -119,7 +119,7 @@ namespace Materia.Nodes.Atomic
             }
 
             colorLUT.Bind();
-            colorLUT.SetData(LUT.Image, PixelFormat.Rgba, 256, 2);
+            colorLUT.SetData(LUT.Image, PixelFormat.Bgra, 256, 2);
             colorLUT.Linear();
             colorLUT.Repeat();
             GLTexture2D.Unbind();

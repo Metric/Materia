@@ -4,5 +4,5 @@ layout (location = 1) out vec4 Brightness;
 
 void main() {
     Brightness = vec4(0);
-    FragColor = vec4(vec3(gl_FragCoord.w), 1);
+    FragColor = clamp(vec4(vec3(gl_FragCoord.w), 1), vec4(0), vec4(1));
 }

@@ -30,5 +30,6 @@ void main() {
     float bmid = (bb.b * 255) / (bb.a * 255);
 
     //apply midtones and return as final color
-    FragColor = vec4(rr.r * rmid, gg.g * gmid, bb.b * bmid, c.a);
+    //forgot to clamp whoops
+    FragColor = clamp(vec4(rr.r * rmid, gg.g * gmid, bb.b * bmid, c.a), vec4(0), vec4(1));
 }

@@ -394,7 +394,7 @@ namespace Materia.Nodes
             }
         }
 
-        public virtual byte[] Export()
+        public virtual byte[] Export(int w = 0, int h = 0)
         {
             return null;
         }

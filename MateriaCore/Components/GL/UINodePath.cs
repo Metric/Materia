@@ -11,6 +11,33 @@ namespace MateriaCore.Components.GL
 {
     public class UINodePath : UIObject
     {
+        /// <summary>
+        /// Gets or sets the primary point.
+        /// </summary>
+        /// <value>
+        /// The primary point.
+        /// </value>
+        public UINodePoint PrimaryPoint
+        {
+            get => point1;
+            set => point1 = value;
+        }
+
+        protected Vector2 secondaryPoint;
+        /// <summary>
+        /// Gets or sets the secondary point.
+        /// Used for generating previews primarly
+        /// without knowing the secondary node
+        /// </summary>
+        /// <value>
+        /// The secondary point.
+        /// </value>
+        public Vector2 SecondaryPoint
+        {
+            get => secondaryPoint;
+            set => secondaryPoint = value;
+        }
+
         protected UINodePoint point1;
         protected UINodePoint point2;
         protected UIPath path;
@@ -45,26 +72,29 @@ namespace MateriaCore.Components.GL
         protected static Vector4 Red = new Vector4(1, 0.25f, 0.25f, 1);
         protected static Vector4 White = new Vector4(1, 1, 1, 1);
 
+        public UINodePath(bool execute = false) : base()
+        {
+            leftSide = new Line(new Vector3(0, 0, -2), new Vector3(10, 0, -2));
+            leftAngle = new Line(new Vector3(10, 0, -2), new Vector3(20, 5, -2));
+            center = new Line(new Vector3(20, 5, -2), new Vector3(20, 5, -2));
+            rightAngle = new Line(new Vector3(20, 5, -2), new Vector3(30, 0, -2));
+            rightSide = new Line(new Vector3(30, 0, -2), new Vector3(40, 0, -2));
+
+            isExecute = execute;
+
+            InitializeComponents();
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="UINodePath"/> class.
         /// </summary>
         /// <param name="p1">p1 should be the nodeoutput</param>
         /// <param name="p2">p2 should be the nodeinput</param>
         /// <param name="execute">if set to <c>true</c> [execute].</param>
-        public UINodePath(UINodePoint p1, UINodePoint p2, bool execute = false) : base()
+        public UINodePath(UINodePoint p1, UINodePoint p2, bool execute = false) : this(execute)
         {
             point1 = p1;
             point2 = p2;
-
-            leftSide = new Line(new Vector3(0,0,-2), new Vector3(10,0,-2));
-            leftAngle = new Line(new Vector3(10,0,-2), new Vector3(20,5,-2));
-            center = new Line(new Vector3(20,5,-2), new Vector3(20,5,-2));
-            rightAngle = new Line(new Vector3(20, 5, -2), new Vector3(30, 0,-2));
-            rightSide = new Line(new Vector3(30,0,-2), new Vector3(40,0,-2));
-
-            isExecute = execute;
-
-            InitializeComponents();
         }
 
         protected void InitializeComponents()
@@ -90,7 +120,7 @@ namespace MateriaCore.Components.GL
                 leftAngle.StartColor = leftAngle.EndColor = rightAngle.EndColor = rightAngle.StartColor = Red;
                 center.StartColor = center.EndColor = Red;
             }
-            else
+            else if (point1 != null && point2 != null)
             {
                 leftSide.StartColor = leftSide.EndColor = point1.Color;
                 rightSide.StartColor = rightSide.EndColor = point2.Color;
@@ -101,14 +131,31 @@ namespace MateriaCore.Components.GL
                 center.StartColor = point1.Color;
                 center.EndColor = point2.Color;
             }
+            else if(point1 != null && point2 == null)
+            {
+                leftSide.StartColor = leftSide.EndColor = point1.Color;
+                rightSide.StartColor = rightSide.EndColor = White;
+                leftAngle.StartColor = point1.Color;
+                leftAngle.EndColor = point1.Color;
+                rightAngle.StartColor = White;
+                rightAngle.EndColor = White;
+                center.StartColor = point1.Color;
+                center.EndColor = White;
+            }
         }
 
         private void Invalidate()
         {
-            if (point1 == null || point2 == null) return;
+            TryAndInvalidatesNodes();
+            TryAndInvalidatePositions();
+        }
+
+        private void TryAndInvalidatePositions()
+        {
+            if (point1 == null || point2 != null) return;
 
             Vector2 r1 = point1.WorldPosition;
-            Vector2 r2 = point2.WorldPosition;
+            Vector2 r2 = secondaryPoint;
 
             if (r1 == previousPoint1 && r2 == previousPoint2 && previousSelected == selected)
             {
@@ -120,11 +167,18 @@ namespace MateriaCore.Components.GL
             previousPoint1 = r1;
             previousPoint2 = r2;
 
+            CalculateLines(ref r1, ref r2);
+
+            path.NeedsUpdate = true;
+        }
+
+        private void CalculateLines(ref Vector2 r1, ref Vector2 r2)
+        {
             float midy = (r2.Y + r1.Y) * 0.5f;
             float midx = (r2.X + r1.X) * 0.5f;
 
             float horizDist = (r2.X - UINodePoint.DEFAULT_SIZE) - (r1.X + UINodePoint.DEFAULT_SIZE);
-            
+
             float xDir = MathF.Sign(horizDist);
 
             horizDist = MathF.Abs(horizDist);
@@ -144,8 +198,35 @@ namespace MateriaCore.Components.GL
             {
                 textArea.Position = new Vector2(midx, midy);
                 textArea.ZOrder = -2;
-                text.Text = (point1.GetOutIndex(point2) + 1).ToString();
+                if (point2 != null)
+                {
+                    text.Text = (point1.GetOutIndex(point2) + 1).ToString();
+                }
+                else
+                {
+                    text.Text = "";
+                }
             }
+        }
+
+        private void TryAndInvalidatesNodes()
+        {
+            if (point1 == null || point2 == null) return;
+
+            Vector2 r1 = point1.WorldPosition;
+            Vector2 r2 = point2.WorldPosition;
+
+            if (r1 == previousPoint1 && r2 == previousPoint2 && previousSelected == selected)
+            {
+                return;
+            }
+
+            previousSelected = selected;
+
+            previousPoint1 = r1;
+            previousPoint2 = r2;
+
+            CalculateLines(ref r1, ref r2);
 
             path.NeedsUpdate = true;
         }
@@ -153,6 +234,9 @@ namespace MateriaCore.Components.GL
         public override void Update()
         {
             base.Update();
+
+            if (!Visible) return;
+
             UpdateColors();
             Invalidate();
         }

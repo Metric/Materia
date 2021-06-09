@@ -18,13 +18,13 @@ namespace Materia.Rendering.Imaging.Processing
         protected IGLProgram shader;
         public IGLProgram Shader { get => shader; set => shader = value; }
 
-        protected bool isMatrixBased = false;
+        protected bool isMatrixBased = true;
 
         public ViewProcessor()
         {
             FlipY = false;
             Luminosity = 1.0f;
-            shader = GLShaderCache.GetShader("raw.glsl", "image.glsl");
+            shader = GLShaderCache.GetShader("image.glsl", "image.glsl");
         }
 
         public void Bind()

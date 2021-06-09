@@ -215,7 +215,7 @@ namespace Materia.Nodes.Atomic
             scale = new MVector(1, 1, 1);
             rotation = new MVector(0, 0, 0);
             position = new MVector(0, 0, 0);
-            cameraZoom = 3;
+            cameraZoom = -3;
 
             processor = new MeshProcessor();
 

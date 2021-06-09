@@ -13,7 +13,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public LevelsProcessor() : base()
         {
-            shader = GetShader("raw.glsl", "levels.glsl");
+            shader = GetShader("image.glsl", "levels.glsl");
         }
 
         protected override void SetUniqueUniforms()
@@ -31,9 +31,10 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform2("value", ref value);
         }
 
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input);
             renderQuad?.Draw();

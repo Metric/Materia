@@ -13,7 +13,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public DistanceProcessor() : base()
         {
-
+            isMatrixBased = false;
         }
 
         public void Process(GLTexture2D input, GLTexture2D source)

@@ -8,7 +8,7 @@ namespace Materia.Rendering.Imaging.Processing
     {
         public PixelShaderProcessor() : base()
         {
-
+            isMatrixBased = false;
         }
 
         public void Prepare(GLTexture2D tex, GLTexture2D tex2, GLTexture2D tex3, GLTexture2D tex4)

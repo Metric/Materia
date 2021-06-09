@@ -12,7 +12,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public NormalsProcessor() : base()
         {
-            shader = GetShader("raw.glsl", "normals.glsl");
+            shader = GetShader("image.glsl", "normals.glsl");
         }
 
         protected override void SetUniqueUniforms()
@@ -29,9 +29,10 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform("reduce", NoiseReduction);
         }
 
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input);
             renderQuad?.Draw();

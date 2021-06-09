@@ -184,6 +184,16 @@ namespace MateriaCore.Components
             channels.SelectedIndex = 0;
         }
 
+        public void SetBitmap(RawBitmap bitmap)
+        {
+            bmp = bitmap;
+            if (bmp != null)
+            {
+                histogram.Create(bmp);
+                bmp = null;
+            }
+        }
+
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);

@@ -149,15 +149,15 @@ namespace Materia.Nodes.Atomic
             TriggerTextureChange();
         }
 
-        public override byte[] Export()
+        public override byte[] Export(int w = 0, int h = 0)
         {
             switch (pinput)
             {
                 case SwitchInput.Input1:
-                    return input2.HasInput ? input2.Reference.Export() : null;
+                    return input2.HasInput ? input2.Reference.Export(w, h) : null;
                 case SwitchInput.Input0:
                 default:
-                    return input.HasInput ? input.Reference.Export() : null;
+                    return input.HasInput ? input.Reference.Export(w, h) : null;
             }
         }
 

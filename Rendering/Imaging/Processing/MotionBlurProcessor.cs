@@ -12,7 +12,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public MotionBlurProcessor() : base()
         {
-            shader = GetShader("raw.glsl", "motionblur.glsl");
+            shader = GetShader("image.glsl", "motionblur.glsl");
         }
 
         protected override void SetUniqueUniforms()
@@ -35,7 +35,7 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform("magnitude", mag);
         }
 
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             float[] boxes = Blur.BoxesForGaussian(Magnitude, 3);
 
@@ -56,6 +56,7 @@ namespace Materia.Rendering.Imaging.Processing
             GLTexture2D.Unbind();
 
             Identity();
+            Resize(input);
             Bind();
 
             //pass 1

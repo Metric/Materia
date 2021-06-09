@@ -42,5 +42,6 @@ void main() {
     }
 
     vec4 o = texture(MainTex, UV);
-    FragColor = o + (o - sum) * intensity;
+    //clamp it just in case
+    FragColor = clamp(o + (o - sum) * intensity, vec4(0), vec4(1));
 }

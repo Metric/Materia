@@ -119,7 +119,6 @@ void main() {
     hsl.g = min(1, max(0, hsl.g));
     hsl.b = min(1, max(0, hsl.b));
 
-    //ensure premultiplied
     c.rgb = FromHSL(hsl);
-    FragColor = c;
+    FragColor = clamp(c, vec4(0), vec4(1));
 }

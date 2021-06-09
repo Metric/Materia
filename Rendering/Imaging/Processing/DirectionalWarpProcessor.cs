@@ -11,7 +11,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public DirectionalWarpProcessor() : base()
         {
-            shader = GetShader("raw.glsl", "warpdirectional.glsl");
+            shader = GetShader("image.glsl", "warpdirectional.glsl");
             Intensity = 1;
         }
 
@@ -31,6 +31,7 @@ namespace Materia.Rendering.Imaging.Processing
         public void Process(GLTexture2D input, GLTexture2D warp)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input, warp);
             renderQuad?.Draw();

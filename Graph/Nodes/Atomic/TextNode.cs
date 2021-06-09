@@ -403,7 +403,8 @@ namespace Materia.Nodes.Atomic
                     //to apply the proper adjustment
                     //for right alignment all we need is the total
                     //for center we need the halfway point
-                    if (palignment == TextAlignment.Center || palignment == TextAlignment.Right)
+                    //we have to do left here otherwise it is reversed on the texture due to the transform on render
+                    if (palignment == TextAlignment.Center || palignment == TextAlignment.Left)
                     {
                         var data = map.Get(ch);
                         if (data != null)

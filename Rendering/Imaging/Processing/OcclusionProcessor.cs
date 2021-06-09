@@ -9,7 +9,7 @@ namespace Materia.Rendering.Imaging.Processing
     {
         public OcclusionProcessor() : base()
         {
-            shader = GetShader("raw.glsl", "occlusion.glsl");
+            shader = GetShader("image.glsl", "occlusion.glsl");
         }
 
         protected override void SetTexturePositions()
@@ -21,6 +21,7 @@ namespace Materia.Rendering.Imaging.Processing
         public void Process(GLTexture2D blur, GLTexture2D orig)
         {
             Identity();
+            Resize(orig);
             Bind();
             SetTextures(blur, orig);
             renderQuad?.Draw();

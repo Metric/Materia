@@ -26,12 +26,9 @@ namespace Materia.Rendering.Imaging.Processing
         protected int Width { get; set; }
         protected int Height { get; set; }
 
-        public bool Stretch { get; set; }
-
         public ImageProcessor() : base()
         {
             Luminosity = 1.0f;
-            Stretch = true;
         }
 
         protected void Transform(MVector translation, MVector scale, float angle, MVector pivot)
@@ -44,13 +41,10 @@ namespace Materia.Rendering.Imaging.Processing
             Matrix4 iPTrans = Matrix4.CreateTranslation(pivot.X, pivot.Y, 0);
             Matrix4 trans = Matrix4.CreateTranslation(translation.X, translation.Y, 0);
 
-            Matrix4 sm = pTrans * Matrix4.CreateScale(scale.X, scale.Y, 1) * iPTrans;
-            Matrix4 rot = pTrans * Matrix4.CreateRotationZ(angle) * iPTrans;
+            Matrix4 sm = Matrix4.CreateScale(scale.X, scale.Y, 1);
+            Matrix4 rot = Matrix4.CreateRotationZ(angle);
 
-            //note old method
-            //Matrix4 model = pTrans * sm * rot * iPTrans * trans;
-
-            Matrix4 model = sm * rot * trans;
+            Matrix4 model = pTrans * sm * rot * iPTrans * trans;
 
             Model = model;
             View = view;
@@ -67,13 +61,10 @@ namespace Materia.Rendering.Imaging.Processing
             Matrix4 iPTrans = Matrix4.CreateTranslation(pivot.X, pivot.Y, 0);
             Matrix4 trans = Matrix4.CreateTranslation(translation.X * inc.Width, translation.Y * inc.Height, 0);
             
-            Matrix4 sm = pTrans * Matrix4.CreateScale(((float)inc.Width * 0.5f) * scale.X, ((float)inc.Height * 0.5f) * scale.Y, 1) * iPTrans;
-            Matrix4 rot = pTrans * Matrix4.CreateRotationZ(angle) * iPTrans;
+            Matrix4 sm = Matrix4.CreateScale(((float)inc.Width * 0.5f) * scale.X, ((float)inc.Height * 0.5f) * scale.Y, 1);
+            Matrix4 rot = Matrix4.CreateRotationZ(angle);
 
-            //note old method
-            //Matrix4 model = pTrans * sm * rot * iPTrans * trans;
-
-            Matrix4 model = sm * rot * trans;
+            Matrix4 model = pTrans * sm * rot * iPTrans * trans;
 
             Model = model;
             View = view;
@@ -163,8 +154,11 @@ namespace Materia.Rendering.Imaging.Processing
             IGL.Primary.Clear((int)ClearBufferMask.ColorBufferBit | (int)ClearBufferMask.DepthBufferBit | (int)ClearBufferMask.StencilBufferBit);
         }
 
-        public void Process(GLTexture2D input)
+        //whoops forgot to make virtual so the child classes can override
+        public virtual void Process(GLTexture2D input)
         {
+            Identity();
+            Resize(input);
             Bind();
             SetTextures(input);
             renderQuad?.Draw();

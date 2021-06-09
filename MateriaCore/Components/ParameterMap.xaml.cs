@@ -11,6 +11,8 @@ using System;
 using System.Linq;
 using Materia.Nodes.Atomic;
 using Avalonia.Layout;
+using MateriaCore.Utils;
+using Materia.Graph.Exporters;
 
 namespace MateriaCore.Components
 {
@@ -725,16 +727,19 @@ namespace MateriaCore.Components
                 case ParameterInputType.Curves:
                     return new Curves(v, owner);
                 case ParameterInputType.Levels:
-                    Materia.Rendering.Imaging.RawBitmap raw = null;
+                    Levels levels = new Levels(null, owner, v);
                     if (owner is ImageNode)
                     {
-                        byte[] bits = (owner as ImageNode).GetPreview(256, 256);
-                        if (bits != null)
+                        GlobalEvents.Emit(GlobalEvent.ScheduleExport, this, new MemoryExporter(owner as ImageNode, 256, 256, (bits) =>
                         {
+                            if (bits == null) return;
+                            ImageNode n = owner as ImageNode;
+                            Materia.Rendering.Imaging.RawBitmap raw = null;
                             raw = new Materia.Rendering.Imaging.RawBitmap(256, 256, bits);
-                        }
+                            levels.SetBitmap(raw);
+                        }));
                     }
-                    return new Levels(raw, owner, v);
+                    return levels;
                 case ParameterInputType.Map:
                     object mo = v.GetValue(owner);
                     if (mo is Dictionary<string, ParameterValue> && owner is GraphInstanceNode)

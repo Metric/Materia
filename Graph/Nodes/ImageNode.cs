@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Materia.Graph;
 using Materia.Rendering.Imaging.Processing;
+using Materia.Rendering.Textures;
+using System;
 
 namespace Materia.Nodes
 {
@@ -26,18 +28,25 @@ namespace Materia.Nodes
             return JsonConvert.SerializeObject(d);
         }
 
-        public override byte[] Export()
+        public override byte[] Export(int w = 0, int h = 0)
         {
             if (previewProcessor == null) previewProcessor = new ImageProcessor();
             
             if (buffer == null) return null;
 
-            var temp = buffer.Copy();
-            if (temp == null) return null;
-            
+            int nwidth = w <= 0 ? width : w;
+            int nheight = h <= 0 ? height : h;
+
+            GLTexture2D temp = new GLTexture2D(buffer.InternalFormat);
+            temp.Bind();
+            temp.SetData(IntPtr.Zero, Rendering.Interfaces.PixelFormat.Bgra, nwidth, nheight);
+            temp.ClampToEdge();
+            temp.Linear();
+            GLTexture2D.Unbind();
+
             previewProcessor.PrepareView(temp);
             previewProcessor.Process(buffer);
-            byte[] data = previewProcessor.ReadByte(width, height);
+            byte[] data = previewProcessor.ReadByte(nwidth, nheight);
             previewProcessor.Complete();
             temp.Dispose();
 

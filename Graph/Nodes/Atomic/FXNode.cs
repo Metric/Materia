@@ -491,15 +491,15 @@ namespace Materia.Nodes.Atomic
              + "float iteration = 0;\r\n"
              + "vec2 uv = vec2(0,0);\r\n"
              + "float AddSub(float a, float b) {\r\n"
-                + "if (a >= 0.5) { return clamp(a + b, 0, 1); }\r\n"
-                + "else { return clamp(b - a, 0, 1); }\r\n}\r\n"
+                + "if (a >= 0.5) { return a + b; }\r\n"
+                + "else { return b - a; }\r\n}\r\n"
              + "vec4 BlendColors(float blendIdx, vec4 c1, vec4 c2) {\r\n"
                 + "vec4 fc = vec4(0);\r\n"
                 + "blendIdx = floor(blendIdx);\r\n"
-                + "if (blendIdx <= 0) { fc.rgb = clamp(c1.rgb + c2.rgb * (1.0 - clamp(c1.a, 0, 1)), vec3(0), vec3(1));  fc.a = clamp(c1.a + c2.a, 0, 1); }\r\n"
-                + "else if(blendIdx <= 1) { fc.rgb = clamp(c1.rgb + c2.rgb, vec3(0), vec3(1)); fc.a = clamp(c1.a + c2.a, 0, 1); }\r\n"
-                + "else if(blendIdx <= 2) { fc.rgb = clamp(vec3(max(c1.r, c2.r), max(c1.g, c2.g), max(c1.b, c2.b)), vec3(0), vec3(1)); fc.a = clamp(c1.a + c2.a, 0, 1); }\r\n"
-                + "else if(blendIdx <= 3) { fc.rgb = clamp(vec3(AddSub(c1.r, c2.r), AddSub(c1.g, c2.g), AddSub(c1.b, c2.b)), vec3(0), vec3(1)); fc.a = clamp(c1.a + c2.a, 0, 1);}\r\n"
+                + "if (blendIdx <= 0) { fc.rgb = c1.rgb + c2.rgb * (1.0 - clamp(c1.a, 0, 1));  fc.a = c1.a + c2.a; }\r\n"
+                + "else if(blendIdx <= 1) { fc.rgb = c1.rgb + c2.rgb; fc.a = c1.a + c2.a; }\r\n"
+                + "else if(blendIdx <= 2) { fc.rgb = vec3(max(c1.r, c2.r), max(c1.g, c2.g), max(c1.b, c2.b)); fc.a = c1.a + c2.a; }\r\n"
+                + "else if(blendIdx <= 3) { fc.rgb = vec3(AddSub(c1.r, c2.r), AddSub(c1.g, c2.g), AddSub(c1.b, c2.b)); fc.a = c1.a + c2.a; }\r\n"
                 + "return fc; }\r\n"
                 + $"{uniformParamCode}\r\n"
             + $"{previousCalls}\r\n";
@@ -624,14 +624,7 @@ namespace Materia.Nodes.Atomic
                         + "p1 = ivec2(p1.x + pivotPoint.x * inWidth, p1.y + pivotPoint.y * inHeight);\r\n";
 
             fragMain += "vec4 c1 = texelFetch(Input0, p1, 0);\r\n"
-                        + "if ((p1.x < 0 || p1.y < 0 || p1.x >= inWidth || p1.y >= inHeight) && cclamp > 0) { c1 = vec4(0); }\r\n"
-                        + "else if (cclamp == 0) {\r\n"
-                        + "\tif (p1.x < 0) { p1.x = int(mod(p1.x + inWidth, inWidth)); }\r\n"
-                        + "\telse if (p1.x >= inWidth) { p1.x = int(mod(p1.x, inWidth)); }\r\n"
-                        + "\tif (p1.y < 0) { p1.y = int(mod(p1.y + inHeight, inHeight)); }\r\n"
-                        + "\telse if (p1.y >= inHeight) { p1.y = int(mod(p1.y, inHeight)); }\r\n"
-                        + "\tc1 = texelFetch(Input0, p1, 0);\r\n"
-                        + "}\r\n";
+                        + "if ((p1.x < 0 || p1.y < 0 || p1.x >= inWidth || p1.y >= inHeight) && cclamp > 0) { c1 = vec4(0); }\r\n";
 
             fragMain += "ivec2 finalpos = c_pos + ivec2(trans);\r\n";
             fragMain += "if (finalpos.x >= size.x && cclamp == 0) { finalpos.x = int(mod(finalpos.x, size.x)); }\r\n"
@@ -646,8 +639,8 @@ namespace Materia.Nodes.Atomic
                      + "float flum = min(1, max(0, lumin + r1));\r\n"
                      + "c1.rgb = c1.rgb * flum;\r\n";
 
-            //blending now!
-            fragMain += "vec4 fc = BlendColors(blendIdx, c1, c2);\r\n";
+            //blending now + clamp!
+            fragMain += "vec4 fc = clamp(BlendColors(blendIdx, c1, c2), vec4(0), vec4(1));\r\n";
 
             //store pixel and close main
             fragMain += "imageStore(_out_put, finalpos, fc);\r\n}\r\n";

@@ -155,20 +155,26 @@ namespace Materia.Rendering.Fonts
 
             int w = BASE_TEX_WIDTH;
             int h = BASE_TEX_HEIGHT;
-            float quadSize = (UNICODE_BASE.Length * 0.25f);
+            float quadSize = UNICODE_BASE.Length;
 
             //determine max texture size we need based on font size
-            while (fontSize * quadSize >= w * h)
+            //previous formula was incorrect
+            //this formula is correct and works as expected
+            while (fontSize * fontSize * quadSize >= w * h)
             {
                 w *= 2;
                 h *= 2;
 
-                if (w >= 4096) break;
+                if (w >= 8192) break;
             }
 
-            //clamp to 4K for now
-            w = Math.Min(w, 4096);
-            h = Math.Min(h, 4096);
+            Debug.WriteLine($"required font sheet size: {w},{h}");
+
+            //TODO: separate out into multiple sheets if needed
+
+            //clamp to 8K for now
+            w = Math.Min(w, 8192);
+            h = Math.Min(h, 8192);
 
             using (Bitmap atlas = new Bitmap(w,h,System.Drawing.Imaging.PixelFormat.Format32bppArgb))
             using (Graphics g = Graphics.FromImage(atlas))

@@ -10,7 +10,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public GrayscaleConvProcessor() : base()
         {
-            shader = GetShader("raw.glsl", "grayscaleconv.glsl");
+            shader = GetShader("image.glsl", "grayscaleconv.glsl");
         }
 
         protected override void SetUniqueUniforms()
@@ -21,9 +21,10 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform4("weight", ref w);
         }
 
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input);
             renderQuad?.Draw();

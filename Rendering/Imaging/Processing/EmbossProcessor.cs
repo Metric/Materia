@@ -11,7 +11,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public EmbossProcessor() : base()
         {
-            shader = GetShader("raw.glsl", "emboss.glsl");
+            shader = GetShader("image.glsl", "emboss.glsl");
         }
 
         protected override void SetUniqueUniforms()
@@ -27,9 +27,10 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform("elevation", Elevation);
         }
 
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input);
             renderQuad?.Draw();

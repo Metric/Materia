@@ -9,7 +9,7 @@ namespace Materia.Rendering.Imaging.Processing
         GLTexture2D CurveLUT;
         public CurvesProcessor(GLTexture2D lut) : base()
         {
-            shader = GetShader("raw.glsl", "curve.glsl");
+            shader = GetShader("image.glsl", "curve.glsl");
             CurveLUT = lut;
         }
 
@@ -19,9 +19,10 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform("CurveLUT", 1);
         }
 
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input, CurveLUT);
             renderQuad?.Draw();

@@ -470,11 +470,11 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        public override byte[] Export()
+        public override byte[] Export(int w = 0, int h = 0)
         {
             if (Outputs.Count > 0)
             {
-                return Outputs[0]?.Export();
+                return Outputs[0]?.Export(w, h);
             }
 
             return null;

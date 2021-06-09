@@ -166,11 +166,11 @@ namespace Materia.Nodes.Atomic
             return null;
         }
 
-        public override byte[] Export()
+        public override byte[] Export(int w = 0, int h = 0)
         {
             if(input.HasInput)
             {
-                return input.Reference.Export();
+                return input.Reference.Export(w, h);
             }
 
             return null;

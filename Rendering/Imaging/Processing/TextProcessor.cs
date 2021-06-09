@@ -13,12 +13,12 @@ namespace Materia.Rendering.Imaging.Processing
 
         public TextProcessor()
         {
-            isMatrixBased = true;
             shader = GetShader("image.glsl", "image.glsl");
         }
 
         public void Process(GLTexture2D input, Vector4 uv)
         {
+            Identity(); //whoops forgot this
             Transform(Translation, Scale, Angle, Pivot);
             Bind();
             SetTextures(input);

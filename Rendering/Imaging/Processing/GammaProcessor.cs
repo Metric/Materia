@@ -11,7 +11,7 @@ namespace Materia.Rendering.Imaging.Processing
         public GammaProcessor()
         {
             Gamma = 1;
-            shader = GetShader("raw.glsl", "gamma.glsl");
+            shader = GetShader("image.glsl", "gamma.glsl");
         }
 
         protected override void SetUniqueUniforms()
@@ -20,9 +20,10 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform("gamma", Gamma);
         }
 
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input);
             renderQuad?.Draw();

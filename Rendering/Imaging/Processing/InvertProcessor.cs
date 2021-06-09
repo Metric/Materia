@@ -13,7 +13,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public InvertProcessor() : base()
         {
-            shader = GetShader("raw.glsl", "invert.glsl");
+            shader = GetShader("image.glsl", "invert.glsl");
         }
 
         protected override void SetUniqueUniforms()
@@ -25,9 +25,10 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform("invertAlpha", Alpha);
         }
 
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input);
             renderQuad?.Draw();

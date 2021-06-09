@@ -10,7 +10,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public SharpenProcessor()
         {
-            shader = GetShader("raw.glsl", "sharpen.glsl");
+            shader = GetShader("image.glsl", "sharpen.glsl");
         }
 
         protected override void SetUniqueUniforms()
@@ -19,9 +19,10 @@ namespace Materia.Rendering.Imaging.Processing
             shader?.SetUniform("intensity", Intensity);
         }
 
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             Identity();
+            Resize(input);
             Bind();
             SetTextures(input);
             renderQuad?.Draw();

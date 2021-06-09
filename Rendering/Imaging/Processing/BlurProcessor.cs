@@ -10,7 +10,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public BlurProcessor() : base()
         {
-            shader = GetShader("raw.glsl", "blur.glsl");
+            shader = GetShader("image.glsl", "blur.glsl");
         }
 
         protected void SetPass(bool horizontal, float intensity)
@@ -31,7 +31,7 @@ namespace Materia.Rendering.Imaging.Processing
         /// <param name="height"></param>
         /// <param name="tex"></param>
         /// <param name="output"></param>
-        public void Process(GLTexture2D input)
+        public override void Process(GLTexture2D input)
         {
             float[] boxes = Blur.BoxesForGaussian(Intensity, 3);
 
@@ -53,6 +53,7 @@ namespace Materia.Rendering.Imaging.Processing
             PrepareView(temp);
 
             Identity();
+            Resize(input);
             Bind();
 
             //pass 1

@@ -10,6 +10,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public UniformColorProcessor() : base()
         {
+            isMatrixBased = false;
             shader = GetShader("raw.glsl", "uniformcolor.glsl");
         }
 

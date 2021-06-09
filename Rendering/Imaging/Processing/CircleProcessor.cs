@@ -11,6 +11,7 @@ namespace Materia.Rendering.Imaging.Processing
 
         public CircleProcessor() : base()
         {
+            isMatrixBased = false;
             shader = GetShader("raw.glsl", "circle.glsl");
         }
 

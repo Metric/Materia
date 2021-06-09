@@ -83,9 +83,9 @@ namespace Materia.Nodes
         /// A shortcut to Node?.Export()
         /// </summary>
         /// <returns></returns>
-        public byte[] Export()
+        public byte[] Export(int w = 0, int h = 0)
         {
-            return Node?.Export();
+            return Node?.Export(w, h);
         }
 
         /// <summary>

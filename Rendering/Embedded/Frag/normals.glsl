@@ -60,5 +60,5 @@ void main() {
 
     norm = (norm + vec3(1)) * 0.5;
     
-    FragColor = vec4(norm.r, norm.g, norm.b, 1);
+    FragColor = vec4(norm.r, norm.g, norm.b, 1); //we do not clamp to allow for higher precision
 }

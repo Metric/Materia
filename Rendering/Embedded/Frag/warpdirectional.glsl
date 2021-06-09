@@ -14,6 +14,6 @@ void main() {
     float cs = cos(angle);
     float si = sin(angle);
     float r = texture(Warp, uv).r;
-    vec2 n = vec2(r * cs, r * si);
-    FragColor = texture(MainTex, uv + n * intensity);
+    vec2 n = vec2(r * cs, r * si) * intensity;
+    FragColor = texture(MainTex, uv + n);
 }
