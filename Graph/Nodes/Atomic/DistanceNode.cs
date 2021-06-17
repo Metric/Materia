@@ -8,6 +8,7 @@ using Materia.Rendering.Extensions;
 using Materia.Rendering.Shaders;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -21,7 +22,7 @@ namespace Materia.Nodes.Atomic
 
         DistanceProcessor processor;
 
-        protected float distance;
+        protected float distance = 0.2f;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Max Distance", "Default")]
         public float MaxDistance
@@ -37,7 +38,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected bool sourceOnly;
+        protected bool sourceOnly = false;
         [Promote(NodeType.Bool)]
         [Editable(ParameterInputType.Toggle, "Source Only")]
         public bool SourceOnly
@@ -56,16 +57,10 @@ namespace Materia.Nodes.Atomic
         public DistanceNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Distance";
-            Id = Guid.NewGuid().ToString();
+
             width = w;
             height = h;
 
-            tileX = tileY = 1;
-            distance = 0.2f;
-
-            processor = new DistanceProcessor();
-
-            //distance node requires RGBA32F to compute properly
             internalPixelType = GraphPixelType.RGBA32F;
 
             input = new NodeInput(NodeType.Gray, this, "Mask");
@@ -138,6 +133,7 @@ namespace Materia.Nodes.Atomic
         bool rebuild = true;
         void BuildShader()
         {
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             CreateBufferIfNeeded();
@@ -191,8 +187,10 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
+            if (shader == null) return;
+            if (preshader == null) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
             GLTexture2D i2 = null;
@@ -205,9 +203,7 @@ namespace Materia.Nodes.Atomic
             if (i1 == null) return;
             if (i1.Id == 0) return;
 
-            if (processor == null) return;
-            if (shader == null) return;
-            if (preshader == null) return;
+            processor ??= new DistanceProcessor();
 
             processor.Tiling = GetTiling();
             processor.Shader = shader;
@@ -227,6 +223,38 @@ namespace Materia.Nodes.Atomic
         {
             public float maxDistance;
             public bool sourceOnly;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(maxDistance);
+                w.Write(sourceOnly);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                maxDistance = r.NextFloat();
+                sourceOnly = r.NextBool();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            DistanceNodeData d = new DistanceNodeData();
+            FillBaseNodeData(d);
+            d.maxDistance = distance;
+            d.sourceOnly = sourceOnly;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            DistanceNodeData d = new DistanceNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            distance = d.maxDistance;
+            sourceOnly = d.sourceOnly;
         }
 
         public override string GetJson()

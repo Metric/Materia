@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -13,7 +14,7 @@ namespace Materia.Nodes.Atomic
     {
         MotionBlurProcessor processor;
 
-        int magnitude;
+        int magnitude = 10;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Intensity", "Default", 1, 128)]
         public int Intensity
@@ -29,7 +30,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        int direction;
+        int direction = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Direction", "Default", 0, 180)]
         public int Direction
@@ -52,19 +53,10 @@ namespace Materia.Nodes.Atomic
         {
             Name = "Motion Blur";
 
-            Id = Guid.NewGuid().ToString();
-
             width = w;
             height = h;
 
             internalPixelType = p;
-
-            processor = new MotionBlurProcessor();
-
-            tileX = tileY = 1;
-
-            direction = 0;
-            magnitude = 10;
 
             input = new NodeInput(NodeType.Color | NodeType.Gray, this, "Image Input");
             Inputs.Add(input);
@@ -79,7 +71,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -87,6 +79,8 @@ namespace Materia.Nodes.Atomic
             if (i1 == null) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new MotionBlurProcessor();
 
             processor.Tiling = GetTiling();
             processor.Direction = GetParameter("Direction", direction) * MathHelper.Deg2Rad;
@@ -104,6 +98,38 @@ namespace Materia.Nodes.Atomic
         {
             public int intensity;
             public int direction;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(intensity);
+                w.Write(direction);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                intensity = r.NextInt();
+                direction = r.NextInt();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            MotionBlurData d = new MotionBlurData();
+            FillBaseNodeData(d);
+            d.intensity = magnitude;
+            d.direction = direction;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            MotionBlurData d = new MotionBlurData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            magnitude = d.intensity;
+            direction = d.direction;
         }
 
         public override void FromJson(string data)

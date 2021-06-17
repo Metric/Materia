@@ -19,7 +19,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Distance";
-            Id = Guid.NewGuid().ToString();
+
             shaderId = "S" + Id.Split('-')[0];
 
             output = new NodeOutput(NodeType.Float, this);

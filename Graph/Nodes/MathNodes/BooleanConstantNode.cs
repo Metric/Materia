@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Materia.Rendering.Attributes;
 using Newtonsoft.Json;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -28,20 +29,19 @@ namespace Materia.Nodes.MathNodes
         public BooleanConstantNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
             //we ignore w,h,p
-
-            val = false;
-
             CanPreview = false;
 
             Name = "Boolean Constant";
-            Id = Guid.NewGuid().ToString();
+
             shaderId = "S" + Id.Split('-')[0];
 
+            //remove default exection pins
+            Inputs.Clear();
+            Outputs.Clear();
+
+            ExecuteInput = null;
+
             output = new NodeOutput(NodeType.Bool, this);
-
-            Inputs = new List<NodeInput>();
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -53,6 +53,34 @@ namespace Materia.Nodes.MathNodes
         public class BoolConstantData : NodeData
         {
             public bool val;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(val);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                val = r.NextBool();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            BoolConstantData d = new BoolConstantData();
+            FillBaseNodeData(d);
+            d.val = val;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            BoolConstantData d = new BoolConstantData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            val = d.val;
         }
 
         public override void FromJson(string data)

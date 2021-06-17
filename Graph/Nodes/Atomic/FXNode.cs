@@ -11,28 +11,10 @@ using Materia.Rendering.Mathematics;
 using Materia.Rendering.Extensions;
 using Materia.Rendering.Shaders;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
-    public enum FXPivot
-    {
-        Center = 0,
-        Min = 1,
-        Max = 2,
-        MinX = 3,
-        MaxX = 4,
-        MinY = 5,
-        MaxY = 6
-    }
-
-    public enum FXBlend
-    {
-        Blend = 0,
-        Add = 1,
-        Max = 2,
-        AddSub = 3
-    }
-
     public class FXNode : ImageNode
     {
         NodeInput q1;
@@ -42,7 +24,7 @@ namespace Materia.Nodes.Atomic
 
         NodeOutput Output;
 
-        protected int iterations;
+        protected int iterations = 1;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntInput, "Iterations")]
         public int Iterations
@@ -58,7 +40,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected MVector translation;
+        protected MVector translation = MVector.Zero;
         [Promote(NodeType.Float2)]
         [Editable(ParameterInputType.Float2Input, "Translation", "Transform")]
         public MVector Translation
@@ -74,7 +56,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected MVector scale;
+        protected MVector scale = new MVector(1,1);
         [Promote(NodeType.Float2)]
         [Editable(ParameterInputType.Float2Input, "Scale", "Transform")]
         public MVector Scale
@@ -90,7 +72,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected int rotation;
+        protected int rotation = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Rotation", "Transform", 0, 360)]
         public int Rotation
@@ -106,7 +88,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected FXPivot patternPivot;
+        protected FXPivot patternPivot = FXPivot.Center;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.Dropdown, "Pattern Pivot", "Transform")]
         public FXPivot PatternPivot
@@ -122,7 +104,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float luminosity;
+        protected float luminosity = 1;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Luminosity", "Effects")]
         public float Luminosity
@@ -138,7 +120,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float luminosityRandomness;
+        protected float luminosityRandomness = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Luminosity Randomness", "Effects")]
         public float LuminosityRandomness
@@ -154,7 +136,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected FXBlend blending;
+        protected FXBlend blending = FXBlend.Blend;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.Dropdown, "Blending", "Effects")]
         public FXBlend Blending
@@ -170,7 +152,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected bool clamp;
+        protected bool clamp = true;
         [Promote(NodeType.Bool)]
         [Editable(ParameterInputType.Toggle, "Clamp", "Effects")]
         public bool Clamp
@@ -254,25 +236,10 @@ namespace Materia.Nodes.Atomic
         {
             Name = "FX";
 
-            Id = Guid.NewGuid().ToString();
-
-            tileX = tileY = 1;
-
             width = w;
             height = h;
 
-            clamp = true;
-
             internalPixelType = p;
-            luminosity = 1.0f;
-            luminosityRandomness = 0.0f;
-
-            iterations = 1;
-            translation = new MVector();
-            scale = new MVector(1, 1);
-            rotation = 0;
-
-            blending = FXBlend.Blend;
 
             q1 = new NodeInput(NodeType.Color | NodeType.Gray, this, "Quadrant");
             q2 = new NodeInput(NodeType.Color | NodeType.Gray, this, "Quadrant");
@@ -290,6 +257,7 @@ namespace Materia.Nodes.Atomic
 
         void RebuildCustomFunctions()
         {
+            if (isDisposing) return;
             if (ParentGraph == null) return;
 
             string fcode;
@@ -335,6 +303,7 @@ namespace Materia.Nodes.Atomic
 
         void GetParameterCode()
         {
+            if (isDisposing) return;
             if (quadsConnected == 0) return;
 
             if (!rebuildShader) return;
@@ -366,6 +335,7 @@ namespace Materia.Nodes.Atomic
         private float uclamp;
         private void GetUniformValues()
         {
+            if (isDisposing) return;
             if (quadsConnected == 0) return;
 
             ublend = GetParameter("Blending", (int)blending, ParameterMode.NoFunction);
@@ -395,6 +365,8 @@ namespace Materia.Nodes.Atomic
 
         private void GetParams()
         {
+            if (isDisposing) return;
+
             quadsConnected = 0;
 
             if (q1.HasInput && q1.Reference.Data != null) quadsConnected++;
@@ -418,6 +390,7 @@ namespace Materia.Nodes.Atomic
 
         private void NeedsUpdate()
         {
+            if (isDisposing) return;
             if (rebuildShader) return;
             if (IsParameterFunctionsModified(previousModified))
             {
@@ -446,6 +419,7 @@ namespace Materia.Nodes.Atomic
 
         private void BuildShader()
         {
+            if (isDisposing) return;
             if (!rebuildShader) return;
 
             shader?.Dispose();
@@ -671,6 +645,7 @@ namespace Materia.Nodes.Atomic
 
         protected virtual void SetUniform(string k, object value, NodeType type)
         {
+            if (isDisposing) return;
             if (value == null || shader == null) return;
 
             try
@@ -710,6 +685,19 @@ namespace Materia.Nodes.Atomic
                         shader.SetUniform4(k, ref vec4);
                     }
                 }
+                else if(type == NodeType.Matrix)
+                {
+                    if (value is Matrix4)
+                    {
+                        Matrix4 m = (Matrix4)value;
+                        shader.SetUniformMatrix4(k, ref m);
+                    }
+                    else if(value is Matrix3)
+                    {
+                        Matrix3 m = (Matrix3)value;
+                        shader.SetUniformMatrix3(k, ref m);
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -721,8 +709,8 @@ namespace Materia.Nodes.Atomic
         float pmaxIter;
         void Process()
         {
+            if (isDisposing) return;
             if (quadsConnected == 0) return;
-
             if (shader == null) return;
 
             GLTexture2D i1 = null;
@@ -855,18 +843,15 @@ namespace Materia.Nodes.Atomic
 
                 object value = v.Value;
 
-                if (!v.IsFunction()) continue;
-
-                //we ignore functions on the FX node
-                //as we have already taken them into account
-                //for all the FX node variables
-                Function temp = value as Function;
-
-                if (temp.ParentNode == this) continue;
-
-                value = temp.Result;
-
-                SetUniform(k, value, v.Type);
+                if (v.IsFunction())
+                {
+                    Function f = value as Function;
+                    SetUniform(k, f.Result, v.Type);
+                }
+                else
+                {
+                    SetUniform(k, value, v.Type);
+                }
             }
 
             Vector2 rpos = new Vector2(0,0);
@@ -936,12 +921,38 @@ namespace Materia.Nodes.Atomic
             public int pivot;
             public int blending;
             public bool clamp;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(iterations);
+                w.Write(rotation);
+                w.Write(tx);
+                w.Write(ty);
+                w.Write(sx);
+                w.Write(sy);
+                w.Write(pivot);
+                w.Write(blending);
+                w.Write(clamp);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                iterations = r.NextInt();
+                rotation = r.NextInt();
+                tx = r.NextFloat();
+                ty = r.NextFloat();
+                sx = r.NextFloat();
+                sy = r.NextFloat();
+                pivot = r.NextInt();
+                blending = r.NextInt();
+                clamp = r.NextBool();
+            }
         }
 
-        public override string GetJson()
+        private void FillData(FXNodeData d)
         {
-            FXNodeData d = new FXNodeData();
-            FillBaseNodeData(d);
             d.iterations = iterations;
             d.rotation = rotation;
             d.tx = translation.X;
@@ -951,14 +962,10 @@ namespace Materia.Nodes.Atomic
             d.pivot = (int)patternPivot;
             d.blending = (int)blending;
             d.clamp = clamp;
-
-            return JsonConvert.SerializeObject(d);
         }
 
-        public override void FromJson(string data)
+        private void SetData(FXNodeData d)
         {
-            FXNodeData d = JsonConvert.DeserializeObject<FXNodeData>(data);
-            SetBaseNodeDate(d);
             iterations = d.iterations;
             rotation = d.rotation;
             translation = new MVector(d.tx, d.ty);
@@ -966,6 +973,37 @@ namespace Materia.Nodes.Atomic
             patternPivot = (FXPivot)d.pivot;
             blending = (FXBlend)d.blending;
             clamp = d.clamp;
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            FXNodeData d = new FXNodeData();
+            FillBaseNodeData(d);
+            FillData(d);
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            FXNodeData d = new FXNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            SetData(d);
+        }
+
+        public override string GetJson()
+        {
+            FXNodeData d = new FXNodeData();
+            FillBaseNodeData(d);
+            FillData(d);
+            return JsonConvert.SerializeObject(d);
+        }
+
+        public override void FromJson(string data)
+        {
+            FXNodeData d = JsonConvert.DeserializeObject<FXNodeData>(data);
+            SetBaseNodeDate(d);
+            SetData(d);
         }
     }
 }

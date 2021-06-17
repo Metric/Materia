@@ -9,6 +9,7 @@ namespace MateriaCore.Components
     {
         public delegate void ClickEvent(object sender, RoutedEventArgs e);
         public event ClickEvent Click;
+        public event ClickEvent SecondaryClick;
 
         Button primary;
         Button secondary;
@@ -39,6 +40,7 @@ namespace MateriaCore.Components
 
         private void Secondary_Click(object sender, RoutedEventArgs e)
         {
+            SecondaryClick?.Invoke(this, e);
             ContextMenu?.Open(this);
         }
 

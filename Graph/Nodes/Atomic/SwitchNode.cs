@@ -5,15 +5,10 @@ using Materia.Rendering.Imaging.Processing;
 using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
-    public enum SwitchInput
-    {
-        Input0 = 0,
-        Input1 = 1
-    }
-
     public class SwitchNode : ImageNode
     {
         protected NodeInput input;
@@ -21,7 +16,7 @@ namespace Materia.Nodes.Atomic
 
         NodeOutput Output;
 
-        protected SwitchInput selected;
+        protected SwitchInput selected = SwitchInput.Input0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.Dropdown, "Selected")]
         public SwitchInput Selected
@@ -111,14 +106,9 @@ namespace Materia.Nodes.Atomic
         public SwitchNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Switch";
-            Id = Guid.NewGuid().ToString();
 
             width = w;
             height = h;
-
-            selected = SwitchInput.Input0;
-
-            tileX = tileY = 1;
 
             internalPixelType = p;
 
@@ -139,6 +129,7 @@ namespace Materia.Nodes.Atomic
         SwitchInput pinput;
         void Process()
         {
+            if (isDisposing) return;
             pinput = (SwitchInput)GetParameter("Selected", (int)selected);
 
             GLTexture2D buff = GetActiveBuffer();
@@ -173,14 +164,41 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        public class NormalData : NodeData
+        public class SwitchData : NodeData
         {
             public int selected;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(selected);
+            }
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                selected = r.NextInt();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            SwitchData d = new SwitchData();
+            FillBaseNodeData(d);
+            d.selected = (int)selected;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            SwitchData d = new SwitchData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            selected = (SwitchInput)d.selected;
         }
 
         public override string GetJson()
         {
-            NormalData d = new NormalData();
+            SwitchData d = new SwitchData();
             FillBaseNodeData(d);
             d.selected = (int)selected;
 
@@ -189,7 +207,7 @@ namespace Materia.Nodes.Atomic
 
         public override void FromJson(string data)
         {
-            NormalData d = JsonConvert.DeserializeObject<NormalData>(data);
+            SwitchData d = JsonConvert.DeserializeObject<SwitchData>(data);
             SetBaseNodeDate(d);
             selected = (SwitchInput)d.selected;
         }

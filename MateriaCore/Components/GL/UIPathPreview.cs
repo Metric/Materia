@@ -10,7 +10,6 @@ namespace MateriaCore.Components.GL
 {
     public class UIPathPreview : IComponent
     {
-        protected Vector2 previousMousePosition;
         protected UINodePoint previousPoint;
 
         public UIObject Parent { get; set; }
@@ -40,24 +39,22 @@ namespace MateriaCore.Components.GL
         {
             if (Parent == null) return;
 
-            if (previousMousePosition != UI.MousePosition)
+            if (Parent.Canvas != null)
             {
-                if (UINodePoint.SelectedOrigin == previousPoint && previousPoint != null)
-                {
-                    path.Visible = true;
-                }
-                else if(UINodePoint.SelectedOrigin == null && previousPoint != null)
-                {
-                    path.Visible = false;
-                }
-                path.PrimaryPoint = previousPoint = UINodePoint.SelectedOrigin;
-                previousMousePosition = UI.MousePosition;
-
-                if (Parent.Canvas != null)
-                {
-                    path.SecondaryPoint = Parent.Canvas.ToCanvasSpace(previousMousePosition);
-                }
+                path.SecondaryPoint = Parent.Canvas.ToCanvasSpace(UI.MousePosition);
             }
+
+            if (UINodePoint.SelectedOrigin != previousPoint && previousPoint == null)
+            {
+                path.Visible = true;
+                path.Invalidate(); //we must invalidate on the same frame
+            }
+            else if (UINodePoint.SelectedOrigin == null && previousPoint != null)
+            {
+                path.Visible = false;
+            }
+
+            path.PrimaryPoint = previousPoint = UINodePoint.SelectedOrigin;
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Materia.Rendering.Attributes;
 using Newtonsoft.Json;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -62,11 +63,13 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Get Var";
-            Id = Guid.NewGuid().ToString();
+
             shaderId = "S" + Id.Split('-')[0];
 
-            Outputs = new List<NodeOutput>();
-            Inputs = new List<NodeInput>();
+            Outputs.Clear();
+            Inputs.Clear();
+
+            ExecuteInput = null;
 
             output = new NodeOutput(NodeType.Bool | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this);
             Outputs.Add(output);
@@ -121,6 +124,22 @@ namespace Materia.Nodes.MathNodes
         {
             output.Data = parentGraph.GetVar(VarName);
             result = output.Data?.ToString();
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            VarData d = new VarData();
+            FillBaseNodeData(d);
+            d.varName = varName;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            VarData d = new VarData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            varName = d.varName;
         }
 
         public override void FromJson(string data)

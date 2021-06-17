@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -13,12 +14,11 @@ namespace Materia.Nodes.Atomic
     {
         NodeInput input;
 
-        int angle;
-
         NodeOutput Output;
 
         EmbossProcessor processor;
 
+        int angle = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Angle", "Default", 0, 360)]
         public int Angle
@@ -34,8 +34,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        int elevation;
-
+        int elevation = 2;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Elevation", "Default", 0, 90)]
         public int Elevation
@@ -55,17 +54,8 @@ namespace Materia.Nodes.Atomic
         {
             Name = "Emboss";
 
-            Id = Guid.NewGuid().ToString();
-
             width = w;
             height = h;
-
-            elevation = 2;
-            angle = 0;
-
-            tileX = tileY = 1;
-
-            processor = new EmbossProcessor();
 
             internalPixelType = p;
 
@@ -80,6 +70,38 @@ namespace Materia.Nodes.Atomic
         {
             public int angle;
             public int elevation;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(angle);
+                w.Write(elevation);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                angle = r.NextInt();
+                elevation = r.NextInt();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            EmbossNodeData d = new EmbossNodeData();
+            FillBaseNodeData(d);
+            d.angle = angle;
+            d.elevation = elevation;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            EmbossNodeData d = new EmbossNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            angle = d.angle;
+            elevation = d.elevation;
         }
 
         public override void FromJson(string data)
@@ -108,7 +130,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -117,6 +139,8 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new EmbossProcessor();
 
             processor.Tiling = GetTiling();
             processor.Azimuth = GetParameter("Angle", angle) * MathHelper.Deg2Rad;

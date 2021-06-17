@@ -109,6 +109,7 @@ namespace MateriaCore.Components
         public void Set(object n, string[] ignore = null, bool showLabel = true, bool inlinePropertyLabels = false)
         {
             Clear();
+            if (n == null) return;
             PropertyInfo[] infos = n.GetType().GetProperties();
 
             Dictionary<string, List<Tuple<PropertyInfo, EditableAttribute>>> sorter = new Dictionary<string, List<Tuple<PropertyInfo, EditableAttribute>>>();
@@ -492,6 +493,7 @@ namespace MateriaCore.Components
         public void Set(Graph g, Dictionary<string, ParameterValue> values, bool showLabel = true, bool inlinePropertyLabels = false)
         {
             Clear();
+            if (g == null) return;
             Dictionary<string, List<Tuple<PropertyLabel, Control>>> sorter = new Dictionary<string, List<Tuple<PropertyLabel, Control>>>();
 
             foreach (var k in values.Keys)

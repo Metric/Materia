@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Log";
-            Id = Guid.NewGuid().ToString();
+  
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Float, this, "Float Input");

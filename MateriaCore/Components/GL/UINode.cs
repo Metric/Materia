@@ -112,6 +112,14 @@ namespace MateriaCore.Components.GL
             }
         }
 
+        public Box2 GetViewSpaceRect()
+        {
+            Box2 world = AnchoredRect;
+            if (Canvas == null || Graph == null) return world;
+            Vector2 pos = Position * Graph.InverseZoom - Canvas.Cam.LocalPosition.Xy;
+            return new Box2(pos, Size.X * Graph.InverseZoom, Size.Y * Graph.InverseZoom);
+        }
+
         public GLTexture2D GetActiveBuffer()
         {
             return Node?.GetActiveBuffer();
@@ -243,7 +251,7 @@ namespace MateriaCore.Components.GL
 
             if (previousNodePointParent != null)
             {
-                previousNodePointParent.Connect(inputpoint);
+                UINodePoint.Connect(previousNodePointParent, inputpoint);
             }
 
             if (previous != null)
@@ -261,7 +269,7 @@ namespace MateriaCore.Components.GL
             if (uinode == null) return;
             var input = uinode.inputs.Find(m => m.NodePoint == inp);
             if (input == null) return;
-            output?.Connect(input);
+            UINodePoint.Connect(output, input);
         }
 
         public void LoadConnections()
@@ -348,6 +356,8 @@ namespace MateriaCore.Components.GL
 
         private void InitializeComponents()
         {
+            RelativeTo = Anchor.TopLeft; //set as topleft by default
+
             SnapMode = MovablePaneSnapMode.Grid;
             SnapTolerance = 32;
 
@@ -512,7 +522,7 @@ namespace MateriaCore.Components.GL
             }
 
             bool selected = Graph.IsSelected(Id);
-            if (selected)
+            if (selected && Graph.Selected.Count > 1)
             {
                 return;
             }

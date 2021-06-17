@@ -56,7 +56,7 @@ namespace MateriaCore.Components.GL.Menu
 
         public UIMenuItem(string title) : base(title)
         {
-            selectable.NormalColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
+            selectable.NormalColor = new Vector4(0.075f, 0.075f, 0.075f, 1);
             InitializeComponents();
             InitializeEvents();
         }

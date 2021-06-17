@@ -4,12 +4,12 @@ using System.IO;
 using System.Drawing;
 using Materia.Rendering.Attributes;
 using Materia.Rendering.Imaging;
-using Materia.Rendering.Imaging.Processing;
 using Materia.Rendering.Interfaces;
 using Materia.Rendering.Textures;
 using Materia.Graph;
 using Newtonsoft.Json;
 using MLog;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -95,7 +95,7 @@ namespace Materia.Nodes.Atomic
         public new bool AbsoluteSize { get; set; }
 
         private Archive archive;
-        private new RawBitmap brush;
+        private RawBitmap brush;
 
         public BitmapNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
@@ -103,11 +103,7 @@ namespace Materia.Nodes.Atomic
 
             AbsoluteSize = true;
 
-            Id = Guid.NewGuid().ToString();
-
             internalPixelType = p;
-
-            tileX = tileY = 1;
 
             width = w;
             height = h;
@@ -158,9 +154,9 @@ namespace Materia.Nodes.Atomic
                         }
                     }
                 }
-                else if (!string.IsNullOrEmpty(relativePath) && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
+                else if (!string.IsNullOrEmpty(relativePath) && !string.IsNullOrEmpty(CurrentWorkingDirectory) && File.Exists(System.IO.Path.Combine(CurrentWorkingDirectory, relativePath)))
                 {
-                    using (Bitmap bmp = (Bitmap)Bitmap.FromFile(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
+                    using (Bitmap bmp = (Bitmap)Bitmap.FromFile(System.IO.Path.Combine(CurrentWorkingDirectory, relativePath)))
                     {
                         if (bmp != null && bmp.Width > 0 && bmp.Height > 0)
                         {
@@ -187,6 +183,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
+            if (isDisposing) return;
             if (brush == null) return;
 
             CreateBufferIfNeeded();
@@ -220,6 +217,38 @@ namespace Materia.Nodes.Atomic
             public string path;
             public string relativePath;
             public bool resource;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(path);
+                w.Write(relativePath);
+                w.Write(resource);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                path = r.NextString();
+                relativePath = r.NextString();
+                resource = r.NextBool();
+            }
+        }
+
+        public override void FromBinary(Reader r, Archive arch = null)
+        {
+            archive = arch;
+            FromBinary(r);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            BitmapNodeData d = new BitmapNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            path = d.path;
+            Resource = d.resource;
+            relativePath = d.relativePath;
         }
 
         public override void FromJson(string data, Archive arch = null)
@@ -235,6 +264,16 @@ namespace Materia.Nodes.Atomic
             path = d.path;
             Resource = d.resource;
             relativePath = d.relativePath;
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            BitmapNodeData d = new BitmapNodeData();
+            FillBaseNodeData(d);
+            d.path = Path;
+            d.relativePath = relativePath;
+            d.resource = Resource;
+            d.Write(w);
         }
 
         public override string GetJson()

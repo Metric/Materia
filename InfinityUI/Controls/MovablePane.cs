@@ -184,19 +184,21 @@ namespace InfinityUI.Controls
             {
                 case MovablePaneSnapMode.Panes:
                     if (Parent == null) break;
-                for (int i = 0; i < Parent.Children.Count; ++i)
-                {
-                    UIObject el = Parent.Children[i];
-                    if (el == this || !el.Visible) continue;
-                    if (!el.Rect.Intersects(Rect) || el.Rect.Contains(Rect)) continue;
-                    UI.SnapToElement(this, el, SnapTolerance);
-                }
+                    for (int i = 0; i < Parent.Children.Count; ++i)
+                    {
+                        UIObject el = Parent.Children[i];
+                        if (el == this || !el.Visible) continue;
+                        if (!el.Rect.Intersects(Rect) || el.Rect.Contains(Rect)) continue;
+                        UI.SnapToElement(this, el, SnapTolerance);
+                    }
 
-                break;
+                    break;
                 case MovablePaneSnapMode.Grid:
                     UI.SnapToGrid(this, (int)SnapTolerance);
-                break;
+                    break;
             }
+
+            MovedTo?.Invoke(this, Position);
         }
 
         protected virtual void OnMouseMove(UISelectable selectable,  MouseEventArgs e)

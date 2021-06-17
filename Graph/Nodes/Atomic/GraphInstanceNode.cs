@@ -6,12 +6,17 @@ using Materia.Rendering.Attributes;
 using Materia.Rendering.Textures;
 using MLog;
 using Materia.Graph;
+using Materia.Graph.IO;
+using Materia.Rendering.Extensions;
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Atomic
 {
     public class GraphInstanceNode : ImageNode
     {
         public Graph.Graph GraphInst { get; protected set; }
+
+        private string relativePath;
 
         protected string path;
         protected Dictionary<string, object> jsonParameters;
@@ -26,7 +31,6 @@ namespace Materia.Nodes.Atomic
         private Archive archive;
         private Archive child;
 
-        private bool isLayer;
         private bool isDirty;
 
         [ReadOnly]
@@ -115,7 +119,8 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected string GraphData { get; set; }
+        private Reader graphData;
+        private string rawGraphData;
 
         public GraphInstanceNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
@@ -149,6 +154,13 @@ namespace Materia.Nodes.Atomic
             GraphInst?.AssignSeed(seed);
         }
 
+        public override void SetCWD(string cwd)
+        {
+            base.SetCWD(cwd);
+            if (GraphInst == null) return;
+            GraphInst.CurrentWorkingDirectory = cwd;
+        }
+
         public bool Load(string path)
         {
             if (string.IsNullOrEmpty(path)) return false;
@@ -160,148 +172,194 @@ namespace Materia.Nodes.Atomic
                 GraphInst = null;
             }
 
-            nameMap = new Dictionary<string, ParameterValue>();
-
-            if (path.Contains("Materia::Layer::"))
-            {
-                isLayer = true;
-                return TryAndLoadLayer(path);
-            }
-
-            isLayer = false;
             return TryAndLoadFile(path);
         }
 
-        protected bool TryAndLoadLayer(string path)
+        public void GatherOutputs(HashSet<Node> inStack, Queue<Node> stack)
         {
-            string[] split = path.Split(new string[] { "::" }, StringSplitOptions.RemoveEmptyEntries);
-            if (split.Length < 3) return false;
-            string layerId = split[split.Length - 1];
-
-            if (string.IsNullOrEmpty(layerId)) return false;
-
-            Layer l = null;
-
-            if (parentGraph == null) return false;
-
-            Graph.Graph p = parentGraph;
-
-            //this is only possible if this graph instance
-            //actually belongs to a layer graph
-            while(p.ParentGraph != null)
+            if (GraphInst == null) return;
+            for (int i = 0; i < GraphInst.OutputNodes.Count; ++i)
             {
-                p = p.ParentGraph;
+                var id = GraphInst.OutputNodes[i];
+                if (GraphInst.NodeLookup.TryGetValue(id, out Node n))
+                {
+                    if (n == null) continue;
+                    if (n.IsScheduled) continue;
+                    if (n is OutputNode && !inStack.Contains(n))
+                    {
+                        stack.Enqueue(n);
+                        inStack.Add(n);
+                    }
+                }
             }
-            
-            if (p.LayerLookup.TryGetValue(layerId, out l))
+        }
+
+        private static List<string> shelfFiles = null;
+        private string ResolveToShelf(string shelfPath, string filename)
+        {
+            if (!Directory.Exists(shelfPath)) return null;
+            if (shelfFiles == null) shelfFiles = new List<string>(Directory.GetFiles(shelfPath, "*.*", SearchOption.AllDirectories));
+
+            for (int i = 0; i < shelfFiles.Count; ++i)
             {
-                loading = true;
-                this.path = path;
-                Name = l.Name;
-                GraphData = l.Core.GetJson();
-                PrepareGraph();
-                return true;
+                if (shelfFiles[i].EndsWith(filename))
+                {
+                    return shelfFiles[i];
+                }
             }
+
+            return null;
+        }
+
+        protected void LoadFromAbsolute(string path)
+        {
+            loading = true;
+            Name = Path.GetFileNameWithoutExtension(path);
+            graphData = new Reader(File.ReadAllBytes(path));
+            PrepareGraph();
+            loading = false;
+        }
+
+        protected bool LoadFromArchive(Archive child, Archive parent = null)
+        {
+            if (child == null) return false;
+
+            child.Open();
+            var childFiles = child.GetAvailableFiles();
+            if (childFiles != null)
+            {
+                var mtg = childFiles.Find(f => f.path.ToLower().EndsWith(".mtg"));
+                if (mtg != null)
+                {
+                    loading = true;
+                    Name = Path.GetFileNameWithoutExtension(path);
+                    
+                    graphData = new Reader(mtg.ExtractBinary());
+                    
+                    child.Close();
+                    PrepareGraph();
+                    parent?.Close();
+                   
+                    loading = false;
+                    return true;
+                }
+            }
+
+            child.Close();
+            parent?.Close();
 
             return false;
+        }
+
+        protected bool LoadFromArchive(string path, Archive parent = null)
+        {
+            child = new Archive(path);
+            return LoadFromArchive(child, parent);
         }
 
         protected bool TryAndLoadFile(string path)
         {
             isArchive = path.ToLower().EndsWith(".mtga");
+            
             //convert path to a relative resource path
-            string relative = Path.Combine("resources", Path.GetFileName(path));
+            string resourcePath = Path.Combine("resources", Path.GetFileName(path));
+            string absolutePath = path; //always base absolute
 
-            //handle archives within archives
-            if (isArchive && archive != null)
+            relativePath = resourcePath;
+
+            //only applies if the original file cannot be found
+            if (!File.Exists(path))
+            {
+                //try and resolve to a local shelf file first
+                if (!string.IsNullOrEmpty(ApplicationDirectory))
+                {
+                    string shelfPath = Path.Combine(ApplicationDirectory, "Shelf");
+                    string shelfFilePath = ResolveToShelf(shelfPath, Path.GetFileName(path));
+
+                    if (!string.IsNullOrEmpty(shelfFilePath) && File.Exists(shelfFilePath))
+                    {
+                        Log.Debug("Found Graph Instance File at shelf: " + shelfFilePath);
+                        absolutePath = shelfFilePath;
+                    }
+                }
+
+                //CWD / resources instance will always overwrite shelf instance
+                if (!string.IsNullOrEmpty(CurrentWorkingDirectory))
+                {
+                    string cwdFilePath = Path.Combine(CurrentWorkingDirectory, Path.GetFileName(path));
+                    string cwdResourceFilePath = Path.Combine(CurrentWorkingDirectory, resourcePath);
+
+                    if (File.Exists(cwdResourceFilePath))
+                    {
+                        Log.Debug("Found Graph Instance File at resources: " + cwdResourceFilePath);
+                        absolutePath = cwdResourceFilePath;
+                    }
+                    else if (File.Exists(cwdFilePath))
+                    {
+                        Log.Debug("Found Graph Instance File at CWD: " + cwdFilePath);
+                        absolutePath = cwdFilePath;
+                    }
+                }
+            }
+
+            //ensure propeer point place in the future
+            //for copytoresource
+            path = absolutePath;
+
+            //handle within active archive
+            if (archive != null)
             {
                 archive.Open();
+                Archive.ArchiveFile mtg = null;
                 var files = archive.GetAvailableFiles();
-                var m = files.Find(f => f.path.Equals(relative));
-                if (m != null)
+                mtg = files.Find(f => f.path.Equals(resourcePath));
+
+                //try and load from absolute path
+                //since it was not found in the archive resource path
+                if (mtg == null)
                 {
-                    loading = true;
-                    child = new Archive(relative, m.ExtractBinary());
-                    child.Open();
-                    var childFiles = child.GetAvailableFiles();
-                    if (childFiles != null)
+                    if (File.Exists(absolutePath))
                     {
-                        var mtg = childFiles.Find(f => f.path.ToLower().EndsWith(".mtg"));
-                        if (mtg != null)
+                        if (isArchive)
                         {
-                            loading = true;
-                            this.path = path;
-                            string nm = Path.GetFileNameWithoutExtension(path);
-                            Name = nm;
-                            GraphData = mtg.ExtractText();
-                            child.Close();
-                            PrepareGraph();
-                            archive.Close();
-                            loading = false;
-                            return true;
+                            return LoadFromArchive(absolutePath, archive);
                         }
+
+                        LoadFromAbsolute(absolutePath);
+                        
+                        archive.Close();
+                        return true;
                     }
+
+                    archive.Close();
+                    return false;
                 }
 
-                archive.Close();
-            }
-            //handle absolute path to archive when not in another archive
-            else if (File.Exists(path) && isArchive && archive == null)
-            {
-                loading = true;
-                child = new Archive(path);
-                child.Open();
-                var childFiles = child.GetAvailableFiles();
-                if (childFiles != null)
+                if (isArchive)
                 {
-                    var mtg = childFiles.Find(f => f.path.ToLower().EndsWith(".mtg"));
-                    if (mtg != null)
-                    {
-                        loading = true;
-                        this.path = path;
-                        string nm = Path.GetFileNameWithoutExtension(path);
-                        Name = nm;
-                        GraphData = mtg.ExtractText();
-                        child.Close();
-                        PrepareGraph();
-                        loading = false;
-                        return true;
-                    }
+                    child = new Archive(resourcePath, mtg.ExtractBinary());
+                    return LoadFromArchive(child, archive);                   
                 }
-            }
-            //otherwise try relative storage for the archive when not in another archive
-            else if (isArchive && archive == null && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(Path.Combine(ParentGraph.CWD, relative)))
-            {
-                string realPath = Path.Combine(ParentGraph.CWD, relative);
-                child = new Archive(realPath);
-                child.Open();
-                var childFiles = child.GetAvailableFiles();
-                if (childFiles != null)
-                {
-                    var mtg = childFiles.Find(f => f.path.ToLower().EndsWith(".mtg"));
-                    if (mtg != null)
-                    {
-                        loading = true;
-                        this.path = path;
-                        string nm = Path.GetFileNameWithoutExtension(path);
-                        Name = nm;
-                        GraphData = mtg.ExtractText();
-                        child.Close();
-                        PrepareGraph();
-                        loading = false;
-                        return true;
-                    }
-                }
-            }
-            else if (!isArchive && File.Exists(path) && Path.GetExtension(path).ToLower().EndsWith("mtg"))
-            {
+
                 loading = true;
-                this.path = path;
-                string nm = Path.GetFileNameWithoutExtension(path);
-                Name = nm;
-                GraphData = File.ReadAllText(path);
+                Name = Path.GetFileNameWithoutExtension(path);
+
+                graphData = new Reader(mtg.ExtractBinary());
                 PrepareGraph();
+                archive.Close();
                 loading = false;
+
+                return true;
+            }
+            //handle path to archive when not in another archive
+            else if (File.Exists(absolutePath))
+            {
+                if (isArchive)
+                {
+                    return LoadFromArchive(absolutePath);
+                }
+
+                LoadFromAbsolute(absolutePath);
                 return true;
             }
 
@@ -311,9 +369,28 @@ namespace Materia.Nodes.Atomic
         void PrepareGraph()
         {
             isDirty = true;
+
+            nameMap = new Dictionary<string, ParameterValue>();
+
             GraphInst = new Image(Name, width, height);
+
+            GraphInst.CurrentWorkingDirectory = CurrentWorkingDirectory;
             GraphInst.AssignParentNode(this);
-            GraphInst.FromJson(GraphData, child);
+
+            if (graphData != null && graphData.Length > 0)
+            {
+                GraphInst.FromBinary(graphData, child);
+            }
+            //this will only be triggered in the following case:
+            //the file does not exist from the known path
+            //in the shelf, cwd resource, or cwd
+            //as the graphData will not be created
+            //and the graph instance loaded was originally
+            //json based
+            else if (!string.IsNullOrEmpty(rawGraphData))
+            {
+                GraphInst.FromJson(rawGraphData, child);
+            }
 
             GraphInst.AssignParameters(jsonParameters);
             GraphInst.AssignCustomParameters(jsonCustomParameters);
@@ -328,27 +405,20 @@ namespace Materia.Nodes.Atomic
             AssignPixelType(GraphInst.DefaultTextureType);
 
             GraphInst.OnParameterUpdate += GraphInst_OnParameterUpdate;
+
             //now do real initial resize
             GraphInst.ResizeWith(width, height);
 
-            GraphInst.InitializeRenderTextures();
-            //mark as readonly
-            GraphInst.ReadOnly = true;
-
             //setup inputs and outputs
             Setup();
-            loading = false;
-        }
 
-        private void GraphInst_OnParameterUpdate(ParameterValue param)
-        {
-            TriggerValueChange();
+            loading = false;
         }
 
         void Setup()
         {
-            var inputsConnections = GetParentConnections();
-            var outputConnections = GetConnections();
+            var inputsConnections = GetInputConnections();
+            var outputConnections = GetOutputConnections();
 
             List<NodeInput> previousInputs = new List<NodeInput>();
             List<NodeOutput> previousOutputs = new List<NodeOutput>();
@@ -380,7 +450,7 @@ namespace Materia.Nodes.Atomic
                     {
                         InputNode inp = (InputNode)n;
                         inp.Inputs.Clear();
-                        NodeInput np = new NodeInput(NodeType.Color | NodeType.Gray, this, inp, inp.Name);
+                        NodeInput np = new NodeInput(NodeType.Color | NodeType.Gray, this, inp.Name);
                         Inputs.Add(np);
                         inp.Inputs.Add(np);
                     }
@@ -398,7 +468,7 @@ namespace Materia.Nodes.Atomic
                     {
                         OutputNode op = (OutputNode)n;
                         op.Outputs.Clear();
-                        NodeOutput ot = new NodeOutput(NodeType.Color | NodeType.Gray, n, this, op.Name);
+                        NodeOutput ot = new NodeOutput(NodeType.Color | NodeType.Gray, this, op.Name);
                         Outputs.Add(ot);
                         op.Outputs.Add(ot);
                     }
@@ -419,7 +489,7 @@ namespace Materia.Nodes.Atomic
             foreach(var con in inputsConnections)
             {
                 Node n = null;
-                if(parentGraph.NodeLookup.TryGetValue(con.parent, out n))
+                if(parentGraph.NodeLookup.TryGetValue(con.node, out n))
                 {
                     n.SetConnection(this, con, true);
                 }
@@ -445,6 +515,7 @@ namespace Materia.Nodes.Atomic
                     RemovedInput(previousInputs[i]);
                 }
             }
+            
             count = Outputs.Count;
             for (int i = 0; i < count; ++i)
             {
@@ -461,9 +532,15 @@ namespace Materia.Nodes.Atomic
 
         public void Reload()
         {
-            if (!this.Load(path) && !string.IsNullOrEmpty(GraphData))
-            { 
-                nameMap = new Dictionary<string, ParameterValue>();
+            if (!Load(path) 
+                && ((graphData != null && graphData.Length > 0)
+                || !string.IsNullOrEmpty(rawGraphData)))
+            {
+                if (graphData != null)
+                {
+                    graphData.Position = 0; //reset position
+                }
+
                 loading = true;
                 PrepareGraph();
                 loading = false;
@@ -472,9 +549,15 @@ namespace Materia.Nodes.Atomic
 
         public override byte[] Export(int w = 0, int h = 0)
         {
-            if (Outputs.Count > 0)
+            if (GraphInst == null) return null;
+
+            if (GraphInst.OutputNodes.Count > 0)
             {
-                return Outputs[0]?.Export(w, h);
+                var id = GraphInst.OutputNodes[0];
+                if (GraphInst.NodeLookup.TryGetValue(id, out Node n))
+                {
+                    return n?.Export(w, h);
+                }
             }
 
             return null;
@@ -482,9 +565,15 @@ namespace Materia.Nodes.Atomic
 
         public override GLTexture2D GetActiveBuffer()
         {
-            if(Outputs.Count > 0)
+            if (GraphInst == null) return null;
+
+            if(GraphInst.OutputNodes.Count > 0)
             {
-                return Outputs[0]?.GetActiveBuffer();
+                var id = GraphInst.OutputNodes[0];
+                if (GraphInst.NodeLookup.TryGetValue(id, out Node n))
+                {
+                    return n?.GetActiveBuffer();
+                }
             }
 
             return null;
@@ -505,21 +594,32 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        private void ParentGraph_OnParameterUpdate(ParameterValue param)
+        public override void TriggerValueChange()
         {
             isDirty = true;
-            PopulateGraphParams();
-            List<GraphInstanceNode> nodes = GraphInst.InstanceNodes;
 
-            if(nodes != null)
+            if (GraphInst != null)
             {
-                foreach(GraphInstanceNode n  in nodes)
+                List<GraphInstanceNode> nodes = GraphInst.InstanceNodes;
+                if (nodes != null)
                 {
-                    n.isDirty = true;
-                    n.PopulateGraphParams();
+                    for (int i = 0; i < nodes.Count; ++i)
+                    {
+                        nodes[i].isDirty = true;
+                    }
                 }
             }
 
+            base.TriggerValueChange();
+        }
+
+        private void GraphInst_OnParameterUpdate(ParameterValue param)
+        {
+            TriggerValueChange();
+        }
+
+        private void ParentGraph_OnParameterUpdate(ParameterValue param)
+        {
             TriggerValueChange();
         }
 
@@ -573,21 +673,168 @@ namespace Materia.Nodes.Atomic
         //the original graph file
         public class GraphInstanceNodeData : NodeData
         {
-            public List<string> inputIds;
-            public Dictionary<string, object> parameters;
-            public Dictionary<string, object> customParameters;
+            public Dictionary<string, object> parameters = new Dictionary<string, object>();
+            public Dictionary<string, object> customParameters = new Dictionary<string, object>();
             public int randomSeed;
-            public string rawData;
             public string path;
-            public bool isLayer;
+            public string rawData;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(randomSeed);
+                w.Write(path);
+
+                w.Write(parameters.Count);
+
+                foreach(string k in parameters.Keys)
+                {
+                    object o = parameters[k];
+                    w.Write(k);
+
+                    if (o.IsNumber())
+                    {
+                        w.Write((int)NodeType.Float);
+                        w.Write(o.ToFloat());
+                    }
+                    else if(o.IsBool())
+                    {
+                        w.Write((int)NodeType.Bool);
+                        w.Write(o.ToBool());
+                    }
+                    else if(o.IsVector())
+                    {
+                        w.Write((int)NodeType.Float4);
+                        MVector mv = (MVector)o;
+                        w.WriteObjectList(mv.ToArray());
+                    }
+                    else if(o.IsMatrix())
+                    {
+                        w.Write((int)NodeType.Matrix);
+                        Matrix4 m = (Matrix4)o;
+                        w.WriteObjectList(m.ToArray());
+                    }
+                    else
+                    {
+                        w.Write((int)NodeType.Float);
+                        w.Write((float)0);
+                    }
+                }
+
+                w.Write(customParameters.Count);
+
+                foreach(string k in customParameters.Keys)
+                {
+                    object o = parameters[k];
+                    w.Write(k);
+
+                    if (o.IsNumber())
+                    {
+                        w.Write((int)NodeType.Float);
+                        w.Write(o.ToFloat());
+                    }
+                    else if (o.IsBool())
+                    {
+                        w.Write((int)NodeType.Bool);
+                        w.Write(o.ToBool());
+                    }
+                    else if (o.IsVector())
+                    {
+                        w.Write((int)NodeType.Float4);
+                        MVector mv = (MVector)o;
+                        w.WriteObjectList(mv.ToArray());
+                    }
+                    else if (o.IsMatrix())
+                    {
+                        w.Write((int)NodeType.Matrix);
+                        Matrix4 m = (Matrix4)o;
+                        w.WriteObjectList(m.ToArray());
+                    }
+                    else
+                    {
+                        w.Write((int)NodeType.Float);
+                        w.Write((float)0);
+                    }
+                }
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                randomSeed = r.NextInt();
+                path = r.NextString();
+
+                parameters = new Dictionary<string, object>();
+                customParameters = new Dictionary<string, object>();
+
+                int pcount = r.NextInt();
+                for (int i = 0; i < pcount; ++i)
+                {
+                    string k = r.NextString();
+                    NodeType type = (NodeType)r.NextInt();
+
+                    switch (type)
+                    {
+                        case NodeType.Bool:
+                            parameters[k] = r.NextBool();
+                            break;
+                        case NodeType.Float:
+                            parameters[k] = r.NextFloat();
+                            break;
+                        case NodeType.Float2:
+                        case NodeType.Float3:
+                        case NodeType.Float4:
+                        case NodeType.Gray:
+                        case NodeType.Color:
+                            parameters[k] = MVector.FromArray(r.NextList<float>());
+                            break;
+                        case NodeType.Matrix:
+                            Matrix4 mv = Matrix4.Identity;
+                            float[] values = r.NextList<float>();
+                            mv.FromArray(values);
+                            parameters[k] = mv;
+                            break;
+                    }
+                }
+
+                pcount = r.NextInt();
+                for (int i = 0; i < pcount; ++i)
+                {
+                    string k = r.NextString();
+                    NodeType type = (NodeType)r.NextInt();
+
+                    switch (type)
+                    {
+                        case NodeType.Bool:
+                            customParameters[k] = r.NextBool();
+                            break;
+                        case NodeType.Float:
+                            customParameters[k] = r.NextFloat();
+                            break;
+                        case NodeType.Float2:
+                        case NodeType.Float3:
+                        case NodeType.Float4:
+                        case NodeType.Gray:
+                        case NodeType.Color:
+                            customParameters[k] = MVector.FromArray(r.NextList<float>());
+                            break;
+                        case NodeType.Matrix:
+                            Matrix4 mv = Matrix4.Identity;
+                            float[] values = r.NextList<float>();
+                            mv.FromArray(values);
+                            customParameters[k] = mv;
+                            break;
+                    }
+                }
+            }
         }
 
         public override void CopyResources(string CWD)
         {
-            if(isArchive && archive == null && !string.IsNullOrEmpty(path))
+            if (!string.IsNullOrEmpty(path) 
+                && !string.IsNullOrEmpty(relativePath) && File.Exists(path))
             {
-                string relative = Path.Combine("resources", Path.GetFileName(path));
-                CopyResourceTo(CWD, relative, path);
+                CopyResourceTo(CWD, relativePath, path);
             }
         }
 
@@ -613,20 +860,55 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        public override void GetBinary(Writer w)
+        {
+            GraphInstanceNodeData d = new GraphInstanceNodeData();
+            FillBaseNodeData(d);
+            d.path = path;
+            d.rawData = string.IsNullOrEmpty(rawGraphData) ? GraphInst?.GetJson() : rawGraphData;
+            
+            if (GraphInst != null)
+            {
+                d.parameters = GraphInst.GetConstantParameters();
+                d.customParameters = GraphInst.GetCustomParameters();
+            }
+
+            d.randomSeed = randomSeed;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r, Archive arch = null)
+        {
+            archive = arch;
+            FromBinary(r);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            GraphInstanceNodeData d = new GraphInstanceNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            path = d.path;
+            randomSeed = d.randomSeed;
+            jsonParameters = d.parameters;
+            jsonCustomParameters = d.customParameters;
+
+            ValidatePixelType();
+
+            Load(path);
+        }
+
         public override void FromJson(string data)
         {
             GraphInstanceNodeData d = JsonConvert.DeserializeObject<GraphInstanceNodeData>(data);
             SetBaseNodeDate(d);
-            GraphData = d.rawData;
+            rawGraphData = d.rawData;
             path = d.path;
             jsonParameters = d.parameters;
             jsonCustomParameters = d.customParameters;
             randomSeed = d.randomSeed;
-            isLayer = d.isLayer;
 
             ValidatePixelType();
-
-            bool didLoad = false;
 
             //we do this incase 
             //the original graph was updated
@@ -637,13 +919,15 @@ namespace Materia.Nodes.Atomic
             //also we do this
             //to try and load from 
             //archive first
-            didLoad = Load(path);
+            //this only applies to the JSON format
+            //otherwise the binary expects the actual graph
+            //file is included in resources folder or is a shelf file
+            bool didLoad = Load(path);
 
             //if path not found or could not load
             //fall back to last instance data saved
-            if (!didLoad && !string.IsNullOrEmpty(GraphData))
+            if (!didLoad && !string.IsNullOrEmpty(rawGraphData))
             {
-                nameMap = new Dictionary<string, ParameterValue>();
                 loading = true;
                 PrepareGraph();
                 loading = false;
@@ -654,7 +938,6 @@ namespace Materia.Nodes.Atomic
         {
             GraphInstanceNodeData d = new GraphInstanceNodeData();
             FillBaseNodeData(d);
-            d.rawData = GraphData;
             d.path = path;
             
             if (GraphInst != null)
@@ -664,7 +947,6 @@ namespace Materia.Nodes.Atomic
             }
            
             d.randomSeed = RandomSeed;
-            d.isLayer = isLayer;
 
             return JsonConvert.SerializeObject(d);
         }

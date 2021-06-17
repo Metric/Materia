@@ -5,21 +5,10 @@ using Newtonsoft.Json;
 using Materia.Rendering.Textures;
 using Materia.Rendering.Imaging.Processing;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
-    public enum OutputType
-    {
-        basecolor,
-        height,
-        occlusion,
-        roughness,
-        metallic,
-        normal,
-        thickness,
-        emission
-    }
-
     /// <summary>
     /// An output node simply takes in 
     /// an input to distribute to other graphs
@@ -104,18 +93,14 @@ namespace Materia.Nodes.Atomic
 
             Name = "Output";
 
-            Id = Guid.NewGuid().ToString();
-
             width = height = 16;
-            tileX = tileY = 1;
 
-            processor = new ImageProcessor();
             internalPixelType = p;
 
             input = new NodeInput(NodeType.Color | NodeType.Gray, this);
             Inputs.Add(input);
 
-            Outputs = new List<NodeOutput>();
+            Outputs.Clear();
         }
 
         public override void TryAndProcess()
@@ -130,26 +115,34 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
-            if (processor == null) return;
 
             height = i1.Height;
             width = i1.Width;
 
             CreateBufferIfNeeded();
 
+            processor ??= new ImageProcessor();
+
             processor.PrepareView(buffer);
             processor.Process(i1);
             processor.Complete();
 
-            for (int i = 0; i < Outputs.Count; ++i)
+            //there should only ever ben 1 nodeoutput
+            //on an output node if it is part of a graph instance
+            //otherwise it will have none
+            if (Outputs.Count > 0)
             {
-                Outputs[i].Data = buffer;
+                Outputs[0].Data = buffer;
+                //do this here for the parent graph instance
+                //so we don't have to worry about it later
+                Outputs[0]?.Node.TriggerTextureChange();
             }
 
             TriggerTextureChange();
@@ -159,6 +152,34 @@ namespace Materia.Nodes.Atomic
         public class OutputNodeData : NodeData
         {
             public OutputType outType;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write((int)outType);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                outType = (OutputType)r.NextInt();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            OutputNodeData d = new OutputNodeData();
+            FillBaseNodeData(d);
+            d.outType = outtype;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            OutputNodeData d = new OutputNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            outtype = d.outType;
         }
 
         public override void FromJson(string data)

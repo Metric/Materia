@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Min";
-            Id = Guid.NewGuid().ToString();
+    
             shaderId = "S" + Id.Split('-')[0];
 
             output = new NodeOutput(NodeType.Float, this);
@@ -109,7 +109,7 @@ namespace Materia.Nodes.MathNodes
             float result = float.PositiveInfinity;
             foreach (NodeInput inp in Inputs)
             {
-                if (inp != executeInput && inp.IsValid)
+                if (inp != ExecuteInput && inp.IsValid)
                 {
                     float f = inp.Data.ToFloat();
                     result = Math.Min(result, f);

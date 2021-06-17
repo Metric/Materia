@@ -6,6 +6,7 @@ using Materia.Graph;
 using MateriaCore.Components.Dialogs;
 using MateriaCore.Localization;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace MateriaCore.Components
 {
@@ -16,7 +17,7 @@ namespace MateriaCore.Components
 
         Button removeParam;
         Button collapseButton;
-        StackPanel defaultStack;
+        ParameterMap parameters;
         TextInput paramName;
 
         public ParameterValue Param { get; protected set; }
@@ -30,7 +31,7 @@ namespace MateriaCore.Components
         /// </summary>
         public bool IsReadOnly { get; protected set; }
 
-        static Local local = new Local("ParameterName");
+        static Local local = new Local();
 
         public ParameterListItem()
         {
@@ -55,7 +56,6 @@ namespace MateriaCore.Components
         {
             Param = v;
             IsReadOnly = isReadOnly;
-            //add setting to Params.Set()
             Id = id;
             InitNameField();
             DisplayDefaultParam();
@@ -75,14 +75,19 @@ namespace MateriaCore.Components
 
         protected void DisplayDefaultParam()
         {
-            defaultStack.Children.Clear();
-            //var p = new ParameterMap(null, new List<GraphParameterValue>(new GraphParameterValue[] { Param }), false, true);
-            //defaultStack.Children.Add(p);
+            if (Param == null)
+            {
+                parameters.Clear();
+            }
+            else
+            {
+                parameters.Set(null, new List<ParameterValue>(new ParameterValue[] { Param }), false, true);
+            }
         }
 
         private void CollapseButton_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            if (defaultStack.IsVisible)
+            if (parameters.IsVisible)
             {
                 Collapse();
             }
@@ -94,7 +99,7 @@ namespace MateriaCore.Components
 
         private void Collapse()
         {
-            defaultStack.IsVisible = false;
+            parameters.IsVisible = false;
             //Params.IsVisible = false;
             var transform = collapseButton.RenderTransform as RotateTransform;
             if (transform != null)
@@ -105,7 +110,7 @@ namespace MateriaCore.Components
 
         private void Expand()
         {
-            defaultStack.IsVisible = true;
+            parameters.IsVisible = true;
             //Params.IsVisible = true;
             var transform = collapseButton.RenderTransform as RotateTransform;
             if (transform != null)
@@ -116,6 +121,9 @@ namespace MateriaCore.Components
 
         private void RemoveParam_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
+            //todo: create a custom message box
+            //the default avalonia one is fucking retarded
+
             Task<MessageBox.MessageBoxResult> resulter = MessageBox.Show(MainWindow.Instance, local.Get("RemoveParameter") + ": " + Param.Name, "", MessageBox.MessageBoxButtons.OkCancel);
             MessageBox.MessageBoxResult result = MessageBox.MessageBoxResult.No;
             Task.Run(async () =>
@@ -136,7 +144,7 @@ namespace MateriaCore.Components
 
             if (Param != null) 
             {
-                Param.OnGraphParameterTypeChanged += Param_OnGraphParameterTypeChanged;
+                Param.OnParameterTypeChanged += Param_OnGraphParameterTypeChanged;
             }
         }
 
@@ -146,7 +154,7 @@ namespace MateriaCore.Components
 
             if (Param != null)
             {
-                Param.OnGraphParameterTypeChanged -= Param_OnGraphParameterTypeChanged;
+                Param.OnParameterTypeChanged -= Param_OnGraphParameterTypeChanged;
             }
         }
 
@@ -163,7 +171,7 @@ namespace MateriaCore.Components
             AvaloniaXamlLoader.Load(this);
             removeParam = this.FindControl<Button>("RemoveParam");
             collapseButton = this.FindControl<Button>("CollapsedButton");
-            defaultStack = this.FindControl<StackPanel>("ParamDefaultStack");
+            parameters = this.FindControl<ParameterMap>("Params");
             paramName = this.FindControl<TextInput>("ParamName");
         }
     }

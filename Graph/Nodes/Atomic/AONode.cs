@@ -7,6 +7,7 @@ using Materia.Rendering.Textures;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -20,7 +21,7 @@ namespace Materia.Nodes.Atomic
 
         NodeOutput Output;
 
-        int rays;
+        int rays = 4;
 
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Rays", "Default", 1, 128)]
@@ -39,20 +40,16 @@ namespace Materia.Nodes.Atomic
 
         public AONode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
+            //Do not create processors here as it can hurt loading times
+            //also it allows us to load on another thread if needed
+            //and not worry about GL calls
+
             Name = "AO";
-
-            Id = Guid.NewGuid().ToString();
-
-            tileX = tileY = 1;
 
             width = w;
             height = h;
-            rays = 4;
 
             internalPixelType = p;
-
-            processor = new OcclusionProcessor();
-            blur = new BlurProcessor();
 
             input = new NodeInput(NodeType.Gray, this, "Gray Input");
             Output = new NodeOutput(NodeType.Gray, this);
@@ -67,6 +64,27 @@ namespace Materia.Nodes.Atomic
         public class AOData : NodeData
         {
             public int rays;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(rays);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                rays = r.NextInt();
+            }
+        }
+
+        public override void FromBinary(Reader r)
+        {
+
+            AOData d = new AOData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            rays = d.rays;
         }
 
         public override void FromJson(string data)
@@ -74,6 +92,14 @@ namespace Materia.Nodes.Atomic
             AOData d = JsonConvert.DeserializeObject<AOData>(data);
             SetBaseNodeDate(d);
             rays = d.rays;
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            AOData d = new AOData();
+            FillBaseNodeData(d);
+            d.rays = rays;
+            d.Write(w);
         }
 
         public override string GetJson()
@@ -114,6 +140,7 @@ namespace Materia.Nodes.Atomic
         protected override void CreateBufferIfNeeded()
         {
             base.CreateBufferIfNeeded();
+            if (isDisposing) return;
             if (buffer2 == null || buffer2.Id == 0)
             {
                 buffer2 = buffer.Copy();
@@ -122,7 +149,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null || blur == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -131,6 +158,9 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new OcclusionProcessor();
+            blur ??= new BlurProcessor();
 
             blur.Tiling = GetTiling();
             blur.Intensity = GetParameter("Rays", rays);

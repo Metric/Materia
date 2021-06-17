@@ -5,6 +5,7 @@ using Materia.Rendering.Mathematics;
 using Materia.Rendering.Textures;
 using Materia.Graph;
 using Newtonsoft.Json;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -16,7 +17,7 @@ namespace Materia.Nodes.Atomic
 
         NodeOutput Output;
 
-        float r;
+        float r = 1;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Red")]
         public float Red
@@ -32,7 +33,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        float g;
+        float g = 1;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Green")]
         public float Green
@@ -48,7 +49,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        float b;
+        float b = 1;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Blue")]
         public float Blue
@@ -64,7 +65,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        float a;
+        float a = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Alpha")]
         public float Alpha
@@ -84,19 +85,8 @@ namespace Materia.Nodes.Atomic
         {
             Name = "Grayscale Conversion";
 
-            Id = Guid.NewGuid().ToString();
-
             width = w;
             height = h;
-
-            r = 1;
-            g = 1;
-            b = 1;
-            a = 0;
-
-            tileX = tileY = 1;
-
-            processor = new GrayscaleConvProcessor();
 
             internalPixelType = p;
 
@@ -114,7 +104,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -123,6 +113,8 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new GrayscaleConvProcessor();
 
             processor.Tiling = GetTiling();
             processor.Weight = new Vector4(
@@ -146,6 +138,46 @@ namespace Materia.Nodes.Atomic
             public float green;
             public float blue;
             public float alpha;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(red);
+                w.Write(green);
+                w.Write(blue);
+                w.Write(alpha);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                red = r.NextFloat();
+                green = r.NextFloat();
+                blue = r.NextFloat();
+                alpha = r.NextFloat();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            GrayscaleConversionNodeData d = new GrayscaleConversionNodeData();
+            FillBaseNodeData(d);
+            d.red = r;
+            d.green = g;
+            d.blue = b;
+            d.alpha = a;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader rd)
+        {
+            GrayscaleConversionNodeData d = new GrayscaleConversionNodeData();
+            d.Parse(rd);
+            SetBaseNodeDate(d);
+            r = d.red;
+            g = d.green;
+            b = d.blue;
+            a = d.alpha;
         }
 
         public override void FromJson(string data)

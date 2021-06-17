@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -18,7 +19,7 @@ namespace Materia.Nodes.Atomic
 
         GradientMapProcessor processor;
 
-        protected bool horizontal;
+        protected bool horizontal = true;
         [Promote(NodeType.Bool)]
         [Editable(ParameterInputType.Toggle, "Horizontal")]
         public bool Horizontal
@@ -37,17 +38,11 @@ namespace Materia.Nodes.Atomic
         public GradientDynamicNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
             Name = "Gradient Dynamic";
-            Id = Guid.NewGuid().ToString();
+
             width = w;
             height = h;
 
-            tileX = tileY = 1;
-
-            processor = new GradientMapProcessor();
-
             internalPixelType = p;
-
-            horizontal = true;
 
             input = new NodeInput(NodeType.Gray, this, "Image Input");
             input2 = new NodeInput(NodeType.Color, this, "Gradient Input");
@@ -75,7 +70,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput || !input2.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -97,6 +92,8 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            processor ??= new GradientMapProcessor();
+
             //setting params must go before PrepareView()
             processor.Tiling = GetTiling();
             processor.Horizontal = GetParameter("Horizontal", horizontal);
@@ -114,6 +111,33 @@ namespace Materia.Nodes.Atomic
         public class GradientMapData : NodeData
         {
             public bool horizontal;
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(horizontal);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                horizontal = r.NextBool();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            GradientMapData d = new GradientMapData();
+            FillBaseNodeData(d);
+            d.horizontal = horizontal;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            GradientMapData d = new GradientMapData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            horizontal = d.horizontal;
         }
 
         public override void FromJson(string data)

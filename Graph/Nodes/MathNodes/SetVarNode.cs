@@ -3,14 +3,10 @@ using Materia.Rendering.Attributes;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.MathNodes
 {
-    public class VarData : Node.NodeData
-    {
-        public string varName;
-    }
-
     public class SetVarNode : MathNode
     {
         NodeInput input;
@@ -49,7 +45,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Set Var";
-            Id = Guid.NewGuid().ToString();
+
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Bool | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Matrix, this, "Any");
@@ -165,6 +161,22 @@ namespace Materia.Nodes.MathNodes
             }
 
             base.Dispose();
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            VarData d = new VarData();
+            FillBaseNodeData(d);
+            d.varName = varName;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            VarData d = new VarData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            varName = d.varName;
         }
 
         public override void FromJson(string data)

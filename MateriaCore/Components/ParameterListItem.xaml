@@ -21,13 +21,6 @@
       </Button>
       <m:TextInput VerticalAlignment="Center" Height="32" x:Name="ParamName" Margin="34,1,82,0" />
     </Grid>
-    <!--
-    <local:ParameterMap x:Name="Params" />
-    -->
-    <StackPanel Orientation="Vertical">
-      <StackPanel Name="ParamDefaultStack">
-
-      </StackPanel>
-    </StackPanel>
+    <m:ParameterMap x:Name="Params" />
   </StackPanel>
 </UserControl>

@@ -7,10 +7,8 @@ namespace Materia.Nodes.Items
     {
         public PinNode()
         {
-            Id = Guid.NewGuid().ToString();
-            Outputs = new List<NodeOutput>();
-            Inputs = new List<NodeInput>();
             name = "Pin";
+
             //just storing the color as a content string
             content = "255,255,255,255";
         }

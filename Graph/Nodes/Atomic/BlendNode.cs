@@ -6,48 +6,10 @@ using Materia.Rendering.Extensions;
 using Materia.Rendering.Textures;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
-    public enum BlendType
-    {
-        AddSub = 0,
-        Copy = 1,
-        Multiply = 2,
-        Screen = 3,
-        Overlay = 4,
-        HardLight = 5,
-        SoftLight = 6,
-        ColorDodge = 7,
-        LinearDodge = 8,
-        ColorBurn = 9,
-        LinearBurn = 10,
-        VividLight = 11,
-        Divide = 12,
-        Subtract = 13,
-        Difference = 14,
-        Darken = 15,
-        Lighten = 16,
-        Hue = 17,
-        Saturation = 18,
-        Color = 19,
-        Luminosity = 20,
-        LinearLight = 21,
-        PinLight = 22,
-        HardMix = 23,
-        Exclusion = 24
-    }
-
-    public enum AlphaModeType
-    {
-        Background = 0,
-        Foreground = 1,
-        Min = 2,
-        Max = 3,
-        Average = 4,
-        Add = 5
-    }
-
     public class BlendNode : ImageNode
     {
         NodeInput first;
@@ -111,22 +73,16 @@ namespace Materia.Nodes.Atomic
 
         public BlendNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
+            //Do not create processors here as it can hurt loading times
+            //also it allows us to load on another thread if needed
+            //and not worry about GL calls
+
             Name = "Blend";
 
             width = w;
             height = h;
 
-            alpha = 1;
-            alphaMode = AlphaModeType.Add;
-            mode = BlendType.Copy;
-
-            processor = new BlendProcessor();
-
             internalPixelType = p;
-
-            tileX = tileY = 1;
-
-            Id = Guid.NewGuid().ToString();
 
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
             first = new NodeInput(NodeType.Color | NodeType.Gray, this, "Foreground");
@@ -146,7 +102,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!first.HasInput || !second.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)first.Reference.Data;
@@ -163,6 +119,8 @@ namespace Materia.Nodes.Atomic
             if (i2.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new BlendProcessor();
 
             processor.Tiling = GetTiling();
             processor.Alpha = GetParameter("Alpha", alpha);
@@ -190,6 +148,42 @@ namespace Materia.Nodes.Atomic
             public string mode;
             public float alpha;
             public string alphaMode;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(mode);
+                w.Write(alpha);
+                w.Write(alphaMode);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                mode = r.NextString();
+                alpha = r.NextFloat();
+                alphaMode = r.NextString();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            BlendData d = new BlendData();
+            FillBaseNodeData(d);
+            d.mode = mode.ToString(); //todo: eventually convert to integer
+            d.alphaMode = alphaMode.ToString(); //todo: convert to integer
+            d.alpha = alpha;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            BlendData d = new BlendData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            Enum.TryParse<AlphaModeType>(d.alphaMode, out alphaMode);
+            Enum.TryParse<BlendType>(d.mode, out mode);
+            alpha = d.alpha;
         }
 
         public override string GetJson()

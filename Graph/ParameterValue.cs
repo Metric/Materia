@@ -5,6 +5,7 @@ using Materia.Rendering.Mathematics;
 using Newtonsoft.Json;
 using Materia.Nodes;
 using Materia.Rendering.Extensions;
+using Materia.Graph.IO;
 
 namespace Materia.Graph
 {
@@ -13,9 +14,9 @@ namespace Materia.Graph
         public const string CODE_PREFIX = "p_";
         public const string CUSTOM_CODE_PREFIX = "c_";
 
-        public delegate void GraphParameterUpdate(ParameterValue param);
-        public event GraphParameterUpdate OnGraphParameterUpdate;
-        public event GraphParameterUpdate OnGraphParameterTypeChanged;
+        public delegate void ParameterUpdate(ParameterValue param);
+        public event ParameterUpdate OnParameterUpdate;
+        public event ParameterUpdate OnParameterTypeChanged;
 
         [JsonIgnore]
         public Graph ParentGraph
@@ -62,10 +63,7 @@ namespace Materia.Graph
             {
                 type = value;
                 ValidateValue();
-                if (OnGraphParameterTypeChanged != null)
-                {
-                    OnGraphParameterTypeChanged.Invoke(this);
-                }
+                OnParameterTypeChanged?.Invoke(this);
             }
         }
 
@@ -82,11 +80,7 @@ namespace Materia.Graph
             set
             {
                 inputType = value;
-
-                if (OnGraphParameterTypeChanged != null)
-                {
-                    OnGraphParameterTypeChanged.Invoke(this);
-                }
+                OnParameterTypeChanged?.Invoke(this);
             }
         }
 
@@ -104,10 +98,7 @@ namespace Materia.Graph
             set
             {
                 min = value;
-                if (OnGraphParameterTypeChanged != null)
-                {
-                    OnGraphParameterTypeChanged.Invoke(this);
-                }
+                OnParameterTypeChanged?.Invoke(this);
             }
         }
 
@@ -122,10 +113,7 @@ namespace Materia.Graph
             set
             {
                 max = value;
-                if (OnGraphParameterTypeChanged != null)
-                {
-                    OnGraphParameterTypeChanged.Invoke(this);
-                }
+                OnParameterTypeChanged?.Invoke(this);
             }
         }
 
@@ -139,13 +127,8 @@ namespace Materia.Graph
             set
             {
                 v = value;
-
                 ValidateValue();
-
-                if (OnGraphParameterUpdate != null)
-                {
-                    OnGraphParameterUpdate.Invoke(this);
-                }
+                OnParameterUpdate?.Invoke(this);
             }
         }
 
@@ -203,33 +186,7 @@ namespace Materia.Graph
             }
         }
 
-        public Matrix2 Matrix2Value
-        {
-            get
-            {
-                if(v is Matrix2)
-                {
-                    return (Matrix2)v;
-                }
-
-                return Matrix2.Identity;
-            }
-        }
-
-        public Matrix3 Matrix3Value
-        {
-            get
-            {
-                if(v is Matrix3)
-                {
-                    return (Matrix3)v;
-                }
-
-                return Matrix3.Identity;
-            }
-        }
-
-        public Matrix4 Matrix4Value
+        public Matrix4 MatrixValue
         {
             get
             {
@@ -254,6 +211,116 @@ namespace Materia.Graph
             public int inputType;
             public string id;
             public string section;
+
+            public void Write(Writer w)
+            {
+                w.Write(isFunction);
+                w.Write(id);
+                w.Write(name);
+                w.Write(section);
+                w.Write(description);
+                w.Write((int)type);
+                w.Write((int)inputType);
+                w.Write(min);
+                w.Write(max);
+
+                if (isFunction && value is Function)
+                {
+                    Function f = value as Function;
+                    //handle graph writer to binary
+                    //f?.GetBinary(w);
+                }
+                else
+                {
+                    NodeType ntype = (NodeType)type;
+                    switch(ntype)
+                    {
+                        case NodeType.Bool:
+                            w.Write(value.ToBool());
+                            break;
+                        case NodeType.Color:
+                        case NodeType.Gray:
+                        case NodeType.Float4:
+                        case NodeType.Float3:
+                        case NodeType.Float2:
+                            
+                            if (value is MVector)
+                            {
+                                MVector mv = (MVector)value;
+                                w.WriteObjectList(mv.ToArray());
+                            }
+                            else
+                            {
+                                w.WriteObjectList(new float[4]);
+                            }
+
+                            break;
+                        case NodeType.Float:
+                            w.Write(value.ToFloat());
+                            break;
+                        case NodeType.Matrix:
+                            if (value is Matrix4)
+                            {
+                                Matrix4 mt = (Matrix4)value;
+                                w.WriteObjectList(mt.ToArray());
+                            }
+                            else
+                            {
+                                w.WriteObjectList(new float[16]);
+                            }
+                            break;
+                    }
+                }
+            }
+
+            public void Parse(Reader r, Node n)
+            {
+                isFunction = r.NextBool();
+                id = r.NextString();
+                name = r.NextString();
+                section = r.NextString();
+                description = r.NextString();
+                type = r.NextInt();
+                inputType = r.NextInt();
+                min = r.NextFloat();
+                max = r.NextFloat();
+
+                if (isFunction)
+                {
+                    Function t = new Function("temp");
+                    t.AssignParentNode(n);
+                    t.FromBinary(r);
+                    t.ExpectedOutput = (NodeType)type;
+                    t.SetConnections();
+                    value = t;
+                }
+                else
+                {
+                    NodeType ntype = (NodeType)type;
+                    switch(ntype)
+                    {
+                        case NodeType.Bool:
+                            value = r.NextBool();
+                            break;
+                        case NodeType.Color:
+                        case NodeType.Gray:
+                        case NodeType.Float2:
+                        case NodeType.Float3:
+                        case NodeType.Float4:
+                            value = MVector.FromArray(r.NextList<float>());
+                            break;
+                        case NodeType.Float:
+                            value = r.NextFloat();
+                            break;
+                        case NodeType.Matrix:
+                            Matrix4 mv = Matrix4.Identity;
+                            float[] values = r.NextList<float>();
+                            mv.FromArray(values);
+                            value = mv;
+                            break;
+                    }
+                }
+            }
         }
 
         public ParameterValue(string name, object value,
@@ -460,13 +527,52 @@ namespace Materia.Graph
             ValidateValue();
         }
 
+        public void GetBinary(Writer w)
+        {
+            GraphParameterValueData d = new GraphParameterValueData();
+            d.name = Name;
+            d.isFunction = IsFunction();
+            d.description = Description;
+            d.type = (int)type;
+            d.min = Min;
+            d.max = Max;
+            d.inputType = (int)inputType;
+            d.id = Id;
+            d.section = Section;
+            d.value = v;
+            d.Write(w);
+        }
+
+        public virtual void SetBinary(GraphParameterValueData d)
+        {
+            Name = d.name;
+
+            type = (NodeType)d.type;
+            inputType = (ParameterInputType)d.inputType;
+            Id = d.id;
+            min = d.min;
+            max = d.max;
+
+            Description = d.description;
+            Section = d.section;
+
+            if (string.IsNullOrEmpty(Section))
+            {
+                Section = "Default";
+            }
+
+            v = d.value;
+
+            ValidateValue();
+        }
+
         public string GetJson()
         {
             GraphParameterValueData d = new GraphParameterValueData();
             d.name = Name;
             d.isFunction = IsFunction();
             d.description = Description;
-            d.type = (int)Type;
+            d.type = (int)type;
             d.min = Min;
             d.max = Max;
             d.inputType = (int)inputType;
@@ -476,7 +582,6 @@ namespace Materia.Graph
             if (d.isFunction)
             {
                 Function g = Value as Function;
-
                 d.value = g.GetJson();
             }
             else
@@ -492,6 +597,15 @@ namespace Materia.Graph
             }
 
             return JsonConvert.SerializeObject(d);
+        }
+
+        public static ParameterValue FromBinary(Reader r, Node n)
+        {
+            GraphParameterValueData d = new GraphParameterValueData();
+            d.Parse(r, n);
+            var g = new ParameterValue(d.name, 0);
+            g.SetBinary(d);
+            return g;
         }
 
         public static ParameterValue FromJson(string data, Node n)

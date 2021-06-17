@@ -6,6 +6,7 @@ using Materia.Rendering.Imaging.Processing;
 using Materia.Rendering.Mathematics;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -15,7 +16,7 @@ namespace Materia.Nodes.Atomic
 
         protected float xoffset;
 
-        protected MVector offset;
+        protected MVector offset = MVector.Zero;
         [Promote(NodeType.Float2)]
         [Editable(ParameterInputType.Float2Input, "Offset")]
         public MVector Offset
@@ -31,7 +32,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float angle;
+        protected float angle = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Angle", "Default", 0, 360)]
         public float Angle
@@ -47,7 +48,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected MVector scale;
+        protected MVector scale = new MVector(1,1);
         [Promote(NodeType.Float2)]
         [Editable(ParameterInputType.Float2Input, "Scale")]
         public MVector Scale
@@ -70,18 +71,8 @@ namespace Materia.Nodes.Atomic
         {
             Name = "Transform";
 
-            Id = Guid.NewGuid().ToString();
-
-            angle = 0;
-            offset = new MVector(0, 0);
-            scale = new MVector(1, 1);
-
-            tileX = tileY = 1;
-
             width = w;
             height = h;
-
-            processor = new TransformProcessor();
 
             internalPixelType = p;
 
@@ -99,7 +90,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -116,6 +107,8 @@ namespace Materia.Nodes.Atomic
             Matrix3 irot = Matrix3.CreateRotationZ(pangle);
             Matrix3 iscale = Matrix3.CreateScale(1.0f / pscale.X, 1.0f / pscale.Y, 1);
             Vector3 itrans = new Vector3(poffset.X * width, poffset.Y * height, 0);
+
+            processor ??= new TransformProcessor();
 
             processor.Tiling = GetTiling();
             processor.Rotation = irot;
@@ -147,17 +140,67 @@ namespace Materia.Nodes.Atomic
             public float angle;
             public float scaleX;
             public float scaleY;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(xOffset);
+                w.Write(yOffset);
+                w.Write(angle);
+                w.Write(scaleX);
+                w.Write(scaleY);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                xOffset = r.NextFloat();
+                yOffset = r.NextFloat();
+                angle = r.NextFloat();
+                scaleX = r.NextFloat();
+                scaleY = r.NextFloat();
+            }
+        }
+
+        private void FillData(TransformData d)
+        {
+            d.xOffset = offset.X;
+            d.yOffset = offset.Y;
+            d.angle = angle;
+            d.scaleX = scale.X;
+            d.scaleY = scale.Y;
+        }
+
+        private void SetData(TransformData d)
+        { 
+            offset.X = d.xOffset;
+            offset.Y = d.yOffset;
+            angle = d.angle;
+            scale.X = d.scaleX;
+            scale.Y = d.scaleY;
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            TransformData d = new TransformData();
+            FillBaseNodeData(d);
+            FillData(d);
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            TransformData d = new TransformData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            SetData(d);
         }
 
         public override string GetJson()
         {
             TransformData d = new TransformData();
             FillBaseNodeData(d);
-            d.xOffset = offset.X;
-            d.yOffset = offset.Y;
-            d.angle = angle;
-            d.scaleX = scale.X;
-            d.scaleY = scale.Y;
+            FillData(d);
 
             return JsonConvert.SerializeObject(d);
         }
@@ -166,12 +209,7 @@ namespace Materia.Nodes.Atomic
         {
             TransformData d = JsonConvert.DeserializeObject<TransformData>(data);
             SetBaseNodeDate(d);
-
-            offset.X = d.xOffset;
-            offset.Y = d.yOffset;
-            angle = d.angle;
-            scale.X = d.scaleX;
-            scale.Y = d.scaleY;
+            SetData(d);
         }
     }
 }

@@ -10,7 +10,6 @@ namespace Materia.Nodes.MathNodes
     public class MultiplyNode : MathNode
     {
         NodeOutput output;
-        
 
         public MultiplyNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
@@ -19,7 +18,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Multiply";
-            Id = Guid.NewGuid().ToString();
+ 
             shaderId = "S" + Id.Split('-')[0];
      
             output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Matrix, this);

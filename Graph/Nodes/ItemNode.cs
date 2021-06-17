@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Materia.Rendering.Attributes;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes
 {
@@ -31,11 +32,10 @@ namespace Materia.Nodes
             }
             set
             {
-                content = value;
-
-                if (OnItemContentChanged != null)
+                if (content != value)
                 {
-                    OnItemContentChanged.Invoke(this);
+                    content = value;
+                    OnItemContentChanged?.Invoke(this);
                 }
             }
         }
@@ -43,6 +43,17 @@ namespace Materia.Nodes
         public class ItemNodeData : NodeData
         {
             public string content;
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(content);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                content = r.NextString();
+            }
         }
 
         /// <summary>
@@ -53,6 +64,27 @@ namespace Materia.Nodes
         public void SetContent(string d)
         {
             content = d;
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            ItemNodeData d = new ItemNodeData();
+            FillBaseNodeData(d);
+            d.content = content;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r, Archive archive = null)
+        {
+            FromBinary(r);
+        }
+
+        public virtual void FromBinary(Reader r)
+        {
+            ItemNodeData d = new ItemNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            content = d.content;
         }
 
         public override void FromJson(string data, Archive archive = null)

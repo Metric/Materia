@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -14,7 +15,7 @@ namespace Materia.Nodes.Atomic
     {
         protected NodeInput input;
 
-        protected float gamma;
+        protected float gamma = 2.2f;
 
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Gamma")]
@@ -37,15 +38,9 @@ namespace Materia.Nodes.Atomic
         public GammaNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
             Name = "Gamma";
-            Id = Guid.NewGuid().ToString();
 
             width = w;
             height = h;
-            gamma = 2.2f;
-
-            tileX = tileY = 1;
-
-            processor = new GammaProcessor();
 
             internalPixelType = p;
 
@@ -63,7 +58,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -72,6 +67,8 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new GammaProcessor();
 
             processor.Tiling = GetTiling();
             processor.Gamma = GetParameter("Gamma", gamma);
@@ -87,6 +84,32 @@ namespace Materia.Nodes.Atomic
         public class GammaData : NodeData
         {
             public float gamma;
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(gamma);
+            }
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                gamma = r.NextFloat();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            GammaData d = new GammaData();
+            FillBaseNodeData(d);
+            d.gamma = gamma;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            GammaData d = new GammaData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            gamma = d.gamma;
         }
 
         public override string GetJson()

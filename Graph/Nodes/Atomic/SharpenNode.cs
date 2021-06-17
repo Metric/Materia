@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -16,7 +17,7 @@ namespace Materia.Nodes.Atomic
 
         SharpenProcessor processor;
 
-        protected float intensity;
+        protected float intensity = 1;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Intensity", "Default", 1, 10)]
         public float Intensity
@@ -35,15 +36,9 @@ namespace Materia.Nodes.Atomic
         public SharpenNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Sharpen";
-            Id = Guid.NewGuid().ToString();
+
             width = w;
             height = h;
-
-            tileX = tileY = 1;
-
-            processor = new SharpenProcessor();
-
-            intensity = 1;
 
             internalPixelType = p;
 
@@ -62,28 +57,15 @@ namespace Materia.Nodes.Atomic
             processor = null;
         }
 
-        private void GetParams()
-        {
-            if (!input.HasInput) return;
-
-            pintensity = intensity;
-
-            if (ParentGraph != null && ParentGraph.HasParameterValue(Id, "Intensity"))
-            {
-                pintensity = ParentGraph.GetParameterValue(Id, "Intensity").ToFloat();
-            }
-        }
-
         public override void TryAndProcess()
         {
-            GetParams();
             Process();
         }
 
         float pintensity;
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -92,6 +74,8 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new SharpenProcessor();
 
             processor.Tiling = GetTiling();
             processor.Intensity = GetParameter("Intensity", intensity);
@@ -107,6 +91,34 @@ namespace Materia.Nodes.Atomic
         public class SharpenData : NodeData
         {
             public float intensity;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(intensity);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                intensity = r.NextFloat();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            SharpenData d = new SharpenData();
+            FillBaseNodeData(d);
+            d.intensity = intensity;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            SharpenData d = new SharpenData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            intensity = d.intensity;
         }
 
         public override void FromJson(string data)

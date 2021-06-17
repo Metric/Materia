@@ -2,6 +2,7 @@
 using Materia.Rendering.Attributes;
 using Materia.Graph;
 using Newtonsoft.Json;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -10,7 +11,7 @@ namespace Materia.Nodes.MathNodes
         protected NodeInput input;
         protected NodeOutput output;
 
-        protected int sampleIndex;
+        protected int sampleIndex = 0;
 
         [Dropdown(null, false, "Input0", "Input1", "Input2", "Input3")]
         [Editable(ParameterInputType.Dropdown, "Image Input")]
@@ -32,15 +33,12 @@ namespace Materia.Nodes.MathNodes
 
             Name = "Sampler";
 
-            Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Float2, this, "Pos");
             output = new NodeOutput(NodeType.Float4, this);
 
-            sampleIndex = 0;
             Inputs.Add(input);
-
             Outputs.Add(output);
         }
 
@@ -60,6 +58,34 @@ namespace Materia.Nodes.MathNodes
         public class SamplerNodeData : NodeData
         {
             public int sampleIndex;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(sampleIndex);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                sampleIndex = r.NextInt();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            SamplerNodeData d = new SamplerNodeData();
+            FillBaseNodeData(d);
+            d.sampleIndex = sampleIndex;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            SamplerNodeData d = new SamplerNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            sampleIndex = d.sampleIndex;
         }
 
         public override string GetJson()

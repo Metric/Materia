@@ -20,7 +20,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Random2";
-            Id = Guid.NewGuid().ToString();
+
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Float2, this, "Float2 Input");

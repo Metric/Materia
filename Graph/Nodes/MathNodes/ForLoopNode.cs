@@ -26,7 +26,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "For Loop";
-            Id = Guid.NewGuid().ToString();
+
             shaderId = "S" + Id.Split('-')[0];
 
             startInput = new NodeInput(NodeType.Float, this, "Start");

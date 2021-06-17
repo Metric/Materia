@@ -7,14 +7,6 @@ namespace Materia.Nodes
 {
     public struct NodeConnection
     {
-        //we ignore parent and order
-        //as those are only used for
-        //the undo redo system
-        //so no need to save the
-        //extra data on export
-        [JsonIgnore]
-        public string parent;
-
         public string node;
         public int index;
         public int outIndex;
@@ -22,9 +14,8 @@ namespace Materia.Nodes
         [JsonIgnore]
         public int order;
 
-        public NodeConnection(string p, string n, int oi, int i, int ord)
+        public NodeConnection(string n, int oi, int i, int ord)
         {
-            parent = p;
             node = n;
             outIndex = oi;
             index = i;
@@ -40,8 +31,6 @@ namespace Materia.Nodes
         public List<NodeInput> To { get; protected set; }
 
         public NodeType Type { get; set; }
-
-        public Node ParentNode { get; protected set; }
 
         public Node Node { get; protected set; }
 
@@ -64,16 +53,6 @@ namespace Materia.Nodes
         {
             Type = t;
             Node = n;
-            ParentNode = n;
-            Name = name;
-            To = new List<NodeInput>();
-        }
-
-        public NodeOutput(NodeType t, Node n, Node parent, string name = "")
-        {
-            Type = t;
-            Node = n;
-            ParentNode = parent;
             Name = name;
             To = new List<NodeInput>();
         }
@@ -154,6 +133,16 @@ namespace Materia.Nodes
 
                 OnOutputChanged?.Invoke(this);
             }
+        }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < To.Count; ++i)
+            {
+                //clear reference
+                To[i].AssignReference(null);
+            }
+            To.Clear();
         }
     }
 }

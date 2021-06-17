@@ -79,7 +79,6 @@ namespace Materia.Nodes.Atomic
             CanPreview = false;
 
             Name = "Sequence";
-            Id = Guid.NewGuid().ToString();
 
             input = new NodeInput(NodeType.Bool | NodeType.Color | NodeType.Gray | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Input");
 
@@ -135,6 +134,7 @@ namespace Materia.Nodes.Atomic
         }
         void Process()
         {
+            if (isDisposing) return;
             if (!input.HasInput) return;
             if (input.Reference.Data == null) return;
 
@@ -174,20 +174,6 @@ namespace Materia.Nodes.Atomic
             }
 
             return null;
-        }
-
-        public override string GetJson()
-        {
-            NodeData d = new NodeData();
-            FillBaseNodeData(d);
-
-            return JsonConvert.SerializeObject(d);
-        }
-
-        public override void FromJson(string data)
-        {
-            NodeData d = JsonConvert.DeserializeObject<NodeData>(data);
-            SetBaseNodeDate(d);
         }
     }
 }

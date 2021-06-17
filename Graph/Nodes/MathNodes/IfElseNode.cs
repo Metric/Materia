@@ -20,7 +20,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "If Else";
-            Id = Guid.NewGuid().ToString();
+
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Bool, this, "Comparison");

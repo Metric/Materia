@@ -11,16 +11,10 @@ using Materia.Rendering.Interfaces;
 using Materia.Rendering.Fonts;
 using Materia.Graph;
 using static Materia.Rendering.Fonts.FontManager;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
-    public enum TextAlignment
-    {
-        Left = 0,
-        Center = 1,
-        Right = 2
-    }
-
     //todo: fix this node since we changed font manager
     //to a atlas based approach
     public class TextNode : ImageNode
@@ -66,7 +60,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected FontStyle style;
+        protected FontStyle style = FontStyle.Regular;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.Dropdown, "Style")]
         public FontStyle Style
@@ -85,7 +79,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected TextAlignment alignment;
+        protected TextAlignment alignment = TextAlignment.Center;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.Dropdown, "Alignment")]
         public TextAlignment Alignment
@@ -101,7 +95,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float spacing;
+        protected float spacing = 1;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Spacing")]
         public float Spacing
@@ -117,7 +111,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected MVector position;
+        protected MVector position = MVector.Zero;
         [Promote(NodeType.Float2)]
         [Editable(ParameterInputType.Float2Input, "Position")]
         public MVector Position
@@ -133,7 +127,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float rotation;
+        protected float rotation = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Rotation", "Default", 0, 360)]
         public float Rotation
@@ -149,7 +143,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected MVector scale;
+        protected MVector scale = new MVector(1,1);
         [Promote(NodeType.Float2)]
         [Editable(ParameterInputType.Float2Input, "Scale")]
         public MVector Scale
@@ -165,7 +159,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected string fontFamily;
+        protected string fontFamily = "Arial";
         public string FontFamily
         {
             get
@@ -179,7 +173,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float fontSize;
+        protected float fontSize = 32;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Font Size")]
         public float FontSize
@@ -196,7 +190,7 @@ namespace Materia.Nodes.Atomic
         }
 
         //TODO: add in a string node to Function based Nodes
-        protected string text;
+        protected string text = "";
         [Editable(ParameterInputType.MultiText, "Text")]
         public string Text
         {
@@ -218,25 +212,10 @@ namespace Materia.Nodes.Atomic
         {
             Name = "Text";
 
-            Id = Guid.NewGuid().ToString();
-
-            tileX = tileY = 1;
-
             width = w;
             height = h;
 
-            fontSize = 32;
-            fontFamily = "Arial";
-            text = "";
-            fonts = FontManager.FamilyNames;
-            position = new MVector();
-            rotation = 0;
-            scale = new MVector(1, 1);
-            style = FontStyle.Regular;
-            alignment = TextAlignment.Center;
-            spacing = 1;       
-
-            processor = new TextProcessor();
+            fonts = FontManager.FamilyNames;       
 
             internalPixelType = p;
 
@@ -257,12 +236,42 @@ namespace Materia.Nodes.Atomic
             public int style;
             public int alignment;
             public float spacing;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(text);
+                w.Write(fontFamily);
+                w.Write(style);
+                w.Write(alignment);
+                w.Write(fontSize);
+                w.Write(spacing);
+                w.Write(rotation);
+                w.Write(positionX);
+                w.Write(positionY);
+                w.Write(scaleX);
+                w.Write(scaleY);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                text = r.NextString();
+                fontFamily = r.NextString();
+                style = r.NextInt();
+                alignment = r.NextInt();
+                fontSize = r.NextFloat();
+                spacing = r.NextFloat();
+                rotation = r.NextFloat();
+                positionX = r.NextFloat();
+                positionY = r.NextFloat();
+                scaleX = r.NextFloat();
+                scaleY = r.NextFloat();
+            }
         }
 
-        public override void FromJson(string data)
+        private void SetData(TextNodeData d)
         {
-            TextNodeData d = JsonConvert.DeserializeObject<TextNodeData>(data);
-            SetBaseNodeDate(d);
             text = d.text;
             fontSize = d.fontSize;
             fontFamily = d.fontFamily;
@@ -274,10 +283,8 @@ namespace Materia.Nodes.Atomic
             spacing = d.spacing;
         }
 
-        public override string GetJson()
+        private void FillData(TextNodeData d)
         {
-            TextNodeData d = new TextNodeData();
-            FillBaseNodeData(d);
             d.fontFamily = fontFamily;
             d.fontSize = fontSize;
             d.text = text;
@@ -289,6 +296,36 @@ namespace Materia.Nodes.Atomic
             d.scaleY = scale.Y;
             d.alignment = (int)alignment;
             d.spacing = spacing;
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            TextNodeData d = new TextNodeData();
+            FillBaseNodeData(d);
+            FillData(d);
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            TextNodeData d = new TextNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            SetData(d);
+        }
+
+        public override void FromJson(string data)
+        {
+            TextNodeData d = JsonConvert.DeserializeObject<TextNodeData>(data);
+            SetBaseNodeDate(d);
+            SetData(d);
+        }
+
+        public override string GetJson()
+        {
+            TextNodeData d = new TextNodeData();
+            FillBaseNodeData(d);
+            FillData(d);
 
             return JsonConvert.SerializeObject(d);
         }
@@ -303,6 +340,7 @@ namespace Materia.Nodes.Atomic
 
         void TryAndGenerateCharacters()
         {
+            if (isDisposing) return;
             if (string.IsNullOrEmpty(text)
                 || string.IsNullOrEmpty(fontFamily)
                 || pfontSize <= 0)
@@ -319,6 +357,7 @@ namespace Materia.Nodes.Atomic
 
         private void GetParams()
         {
+            if (isDisposing) return;
             pfontSize = GetParameter("FontSize", fontSize);
             palignment = (TextAlignment)GetParameter("Alignment", (int)alignment);
             pstyle = (FontStyle)GetParameter("Style", (int)style);
@@ -336,6 +375,7 @@ namespace Materia.Nodes.Atomic
 
         private void GetTransforms()
         {
+            if (isDisposing) return;
             if (map == null) return;
 
             transforms.Clear();
@@ -433,10 +473,12 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null || lines == null 
+            if (isDisposing || lines == null 
                 || characters == null || map == null) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new TextProcessor();
 
             processor.PrepareView(buffer);
 

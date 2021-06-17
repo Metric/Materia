@@ -4,6 +4,7 @@ using Materia.Rendering.Attributes;
 using Materia.Rendering.Mathematics;
 using Materia.Graph;
 using Newtonsoft.Json;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -11,7 +12,7 @@ namespace Materia.Nodes.MathNodes
     {
         NodeOutput output;
 
-        MVector vec;
+        MVector vec = MVector.Zero;
         [Editable(ParameterInputType.Float2Input, "Vector")]
         public MVector Vector
         {
@@ -30,19 +31,18 @@ namespace Materia.Nodes.MathNodes
         {
             //we ignore w,h,p
 
-            vec = new MVector(0,0);
-
             CanPreview = false;
 
             Name = "Float2 Constant";
-            Id = Guid.NewGuid().ToString();
+
             shaderId = "S" + Id.Split('-')[0];
 
+            Outputs.Clear();
+            Inputs.Clear();
+
+            ExecuteInput = null;
+
             output = new NodeOutput(NodeType.Float2, this);
-
-            Inputs = new List<NodeInput>();
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -55,6 +55,38 @@ namespace Materia.Nodes.MathNodes
         {
             public float x;
             public float y;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(x);
+                w.Write(y);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                x = r.NextFloat();
+                y = r.NextFloat();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            Float2ConstantData d = new Float2ConstantData();
+            FillBaseNodeData(d);
+            d.x = vec.X;
+            d.y = vec.Y;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            Float2ConstantData d = new Float2ConstantData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            vec.X = d.x;
+            vec.Y = d.y;
         }
 
         public override void FromJson(string data)

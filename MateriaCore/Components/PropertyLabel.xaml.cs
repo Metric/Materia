@@ -9,20 +9,29 @@ using System.Reflection;
 using MLog;
 using Materia.Nodes.Atomic;
 using System;
+using MateriaCore.Utils;
+using Avalonia.LogicalTree;
 
 namespace MateriaCore.Components
 {
     public class PropertyLabel : UserControl
     {
-        public class FuncMenuItem : MenuItem
+        public class FuncMenuItem
         {
+            public event Action<FuncMenuItem> Selected;
+
+            public string Name { get => Graph == null ? "" : Graph.Name; }
             public string Key { get; protected set; }
             public Function Graph { get; protected set; }
-            public FuncMenuItem(Function g, string k) : base()
+            public FuncMenuItem(Function g, string k)
             {
                 Graph = g;
                 Key = k;
-                Header = g.Name;
+            }
+
+            public void Click()
+            {
+                Selected?.Invoke(this);
             }
         }
 
@@ -59,6 +68,63 @@ namespace MateriaCore.Components
             functionVar.Click += FunctionVar_Click;
             defaultVar.Click += DefaultVar_Click;
             editVar.Click += EditVar_Click;
+            editVar.SecondaryClick += EditVar_SecondaryClick;
+        }
+
+        protected override void OnDetachedFromLogicalTree(LogicalTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromLogicalTree(e);
+            GlobalEvents.Off(GlobalEvent.UpdateParameters, OnUpdateParameters);
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+            GlobalEvents.Off(GlobalEvent.UpdateParameters, OnUpdateParameters);
+        }
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            GlobalEvents.On(GlobalEvent.UpdateParameters, OnUpdateParameters);
+        }
+
+        private void OnUpdateParameters(object sender, object node)
+        {
+            if (Node == node)
+            {
+                UpdateViews();
+            }
+        }
+
+        private void EditVar_SecondaryClick(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (Node == null)
+            {
+                assignVar.Items = null;
+                return;
+            }
+
+            var functionsAvailable = Node.ParentGraph.ParameterFunctions;
+
+            List<FuncMenuItem> items = new List<FuncMenuItem>();
+
+            foreach (string k in functionsAvailable.Keys)
+            {
+                Function f = functionsAvailable[k];
+                FuncMenuItem mitem = new FuncMenuItem(f, k);
+                mitem.Selected += FuncMenuItem_Selected;
+                items.Add(mitem);
+            }
+
+            if (items.Count > 0)
+            {
+                assignVar.Items = items;
+            }
+            else
+            {
+                assignVar.Items = null;
+            }
         }
 
         private void EditVar_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -102,8 +168,22 @@ namespace MateriaCore.Components
                 fIcon.Opacity = 0.25;
                 constantVar.IsEnabled = true;
                 functionVar.IsEnabled = true;
+                assignVar.IsEnabled = true;
                 defaultVar.IsEnabled = false;
             }
+        }
+
+        private void FuncMenuItem_Selected(FuncMenuItem fmenu)
+        {
+            if (Node == null || string.IsNullOrEmpty(Parameter)) return;
+
+            Function g = fmenu.Graph;
+            Graph parent = g.ParentNode != null ? g.ParentNode.ParentGraph : g.ParentGraph;
+            parent.RemoveParameterValueNoDispose(fmenu.Key);
+            g.Name = Node.Name + " - " + Parameter.Replace("$Custom.", "") + " Function";
+
+            CreateFunctionParameter(g);
+            GlobalEvents.Emit(GlobalEvent.UpdateParameters, this, Node);
         }
 
         private void FunctionVar_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -143,6 +223,7 @@ namespace MateriaCore.Components
 
                                 fIcon.Opacity = 1;
                                 defaultVar.IsEnabled = true;
+                                assignVar.IsEnabled = false;
                                 constantVar.IsEnabled = false;
                                 functionVar.IsEnabled = false;
                             }
@@ -188,6 +269,7 @@ namespace MateriaCore.Components
 
                         fIcon.Opacity = 1;
                         defaultVar.IsEnabled = true;
+                        assignVar.IsEnabled = false;
                         constantVar.IsEnabled = false;
                         functionVar.IsEnabled = false;
                     }
@@ -242,6 +324,7 @@ namespace MateriaCore.Components
 
                                 fIcon.Opacity = 0.25;
                                 defaultVar.IsEnabled = true;
+                                assignVar.IsEnabled = false;
                                 constantVar.IsEnabled = false;
                                 functionVar.IsEnabled = false;
                             }
@@ -287,6 +370,7 @@ namespace MateriaCore.Components
 
                             fIcon.Opacity = 0.25;
                             defaultVar.IsEnabled = true;
+                            assignVar.IsEnabled = false;
                             constantVar.IsEnabled = false;
                             functionVar.IsEnabled = false;
                         }
@@ -317,63 +401,7 @@ namespace MateriaCore.Components
 
             if (Node != null && !string.IsNullOrEmpty(Parameter))
             {
-                if (!Parameter.StartsWith("$Custom."))
-                {
-                    var prop = Node.GetType().GetProperty(Parameter);
-                    if (prop != null && prop.GetCustomAttribute<PromoteAttribute>() == null)
-                    {
-                        editVar.IsVisible = false;
-                        return;
-                    }
-                }
-
-                editVar.IsVisible = true;
-
-                var p = Node.ParentGraph;
-
-                p = p.ParentNode != null ? p.ParentNode.ParentGraph : p;
-
-                if (p != null)
-                {
-                    if (p.HasParameterValue(Node.Id, Parameter.Replace("$Custom.", "")))
-                    {
-                        if (p.IsParameterValueFunction(Node.Id, Parameter.Replace("$Custom.", "")))
-                        {
-                            fIcon.Opacity = 1;
-                        }
-                        else
-                        {
-                            fIcon.Opacity = 0.25;
-                        }
-
-                        constantVar.IsEnabled = false;
-                        functionVar.IsEnabled = false;
-                        assignVar.IsEnabled = false;
-                        defaultVar.IsEnabled = true;
-                    }
-                    else
-                    {
-                        fIcon.Opacity = 0.25;
-                        defaultVar.IsEnabled = false;
-                        assignVar.IsEnabled = true;
-                        constantVar.IsEnabled = true;
-                        functionVar.IsEnabled = true;
-                    }
-                }
-
-                var functionsAvailable = Node.ParentGraph.ParameterFunctions;
-
-                List<MenuItem> items = new List<MenuItem>();
-
-                foreach (string k in functionsAvailable.Keys)
-                {
-                    Function f = functionsAvailable[k];
-                    MenuItem mitem = new FuncMenuItem(f, k);
-                    mitem.Click += Mitem_Click;
-                    items.Add(mitem);
-                }
-
-                assignVar.Items = items;
+                UpdateViews();
             }
             else
             {
@@ -381,17 +409,53 @@ namespace MateriaCore.Components
             }
         }
 
-        private void Mitem_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void UpdateViews()
         {
             if (Node == null || string.IsNullOrEmpty(Parameter)) return;
 
-            FuncMenuItem fmenu = sender as FuncMenuItem;
-            Function g = fmenu.Graph;
-            Graph parent = g.ParentNode != null ? g.ParentNode.ParentGraph : g.ParentGraph;
-            parent.RemoveParameterValueNoDispose(fmenu.Key);
-            g.Name = Node.Name + " - " + Parameter.Replace("$Custom.", "") + " Function";
+            if (!Parameter.StartsWith("$Custom."))
+            {
+                var prop = Node.GetType().GetProperty(Parameter);
+                if (prop != null && prop.GetCustomAttribute<PromoteAttribute>() == null)
+                {
+                    editVar.IsVisible = false;
+                    return;
+                }
+            }
 
-            CreateFunctionParameter(g);
+            editVar.IsVisible = true;
+
+            var p = Node.ParentGraph;
+
+            p = p.ParentNode != null ? p.ParentNode.ParentGraph : p;
+
+            if (p != null)
+            {
+                if (p.HasParameterValue(Node.Id, Parameter.Replace("$Custom.", "")))
+                {
+                    if (p.IsParameterValueFunction(Node.Id, Parameter.Replace("$Custom.", "")))
+                    {
+                        fIcon.Opacity = 1;
+                    }
+                    else
+                    {
+                        fIcon.Opacity = 0.25;
+                    }
+
+                    constantVar.IsEnabled = false;
+                    functionVar.IsEnabled = false;
+                    assignVar.IsEnabled = false;
+                    defaultVar.IsEnabled = true;
+                }
+                else
+                {
+                    fIcon.Opacity = 0.25;
+                    defaultVar.IsEnabled = false;
+                    assignVar.IsEnabled = true;
+                    constantVar.IsEnabled = true;
+                    functionVar.IsEnabled = true;
+                }
+            }
         }
 
         private void InitializeComponent()
@@ -404,6 +468,11 @@ namespace MateriaCore.Components
             functionVar = this.FindControl<MenuItem>("FunctionVar");
             defaultVar = this.FindControl<MenuItem>("DefaultVar");
             editVar = this.FindControl<SplitButton>("EditVar");
+        }
+
+        ~PropertyLabel()
+        {
+            GlobalEvents.Off(GlobalEvent.UpdateParameters, OnUpdateParameters);
         }
     }
 }

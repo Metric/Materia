@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -17,7 +18,7 @@ namespace Materia.Nodes.Atomic
         protected NodeInput input2;
         protected NodeOutput output;
 
-        protected int redChannel;
+        protected int redChannel = 0;
 
         [Promote(NodeType.Float)]
         [Dropdown(null, false, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
@@ -35,7 +36,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected int greenChannel;
+        protected int greenChannel = 1;
 
         [Promote(NodeType.Float)]
         [Dropdown(null, false, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
@@ -53,7 +54,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected int blueChannel;
+        protected int blueChannel = 2;
 
         [Promote(NodeType.Float)]
         [Dropdown(null, false, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
@@ -71,7 +72,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected int alphaChannel;
+        protected int alphaChannel = 3;
 
         [Promote(NodeType.Float)]
         [Dropdown(null, false, "Input0 Red", "Input0 Green", "Input0 Blue", "Input0 Alpha", "Input1 Red", "Input1 Green", "Input1 Blue", "Input1 Alpha")]
@@ -92,19 +93,9 @@ namespace Materia.Nodes.Atomic
         public ChannelSwitchNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Channel Switch";
-            Id = Guid.NewGuid().ToString();
 
             width = w;
             height = h;
-
-            redChannel = 0;
-            greenChannel = 1;
-            blueChannel = 2;
-            alphaChannel = 3;
-
-            tileX = tileY = 1;
-
-            processor = new ChannelSwitchProcessor();
 
             internalPixelType = p;
 
@@ -124,7 +115,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput || !input2.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -134,6 +125,8 @@ namespace Materia.Nodes.Atomic
             if (i2 == null || i2.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new ChannelSwitchProcessor();
 
             processor.Tiling = GetTiling();
             processor.RedChannel = GetParameter("RedChannel", redChannel);
@@ -155,6 +148,46 @@ namespace Materia.Nodes.Atomic
             public int green;
             public int blue;
             public int alpha;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(red);
+                w.Write(green);
+                w.Write(blue);
+                w.Write(alpha);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                red = r.NextInt();
+                green = r.NextInt();
+                blue = r.NextInt();
+                alpha = r.NextInt();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            ChannelSwitchData d = new ChannelSwitchData();
+            FillBaseNodeData(d);
+            d.red = redChannel;
+            d.green = greenChannel;
+            d.blue = blueChannel;
+            d.alpha = alphaChannel;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            ChannelSwitchData d = new ChannelSwitchData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            redChannel = d.red;
+            greenChannel = d.green;
+            blueChannel = d.blue;
+            alphaChannel = d.alpha; 
         }
 
         public override string GetJson()

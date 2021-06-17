@@ -6,6 +6,7 @@ using Materia.Rendering.Textures;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -13,7 +14,7 @@ namespace Materia.Nodes.Atomic
     {
         protected NodeInput input;
 
-        protected float intensity;
+        protected float intensity = 8;
 
         NodeOutput Output;
 
@@ -40,7 +41,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        bool directx;
+        bool directx = false;
         [Promote(NodeType.Bool)]
         [Editable(ParameterInputType.Toggle, "DirectX")]
         public bool DirectX
@@ -56,7 +57,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        float noiseReduction;
+        float noiseReduction = 0.004f;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Noise Reduction")]
         public float NoiseReduction
@@ -75,19 +76,9 @@ namespace Materia.Nodes.Atomic
         public NormalNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Normal";
-            Id = Guid.NewGuid().ToString();
-
-            directx = false;
-            noiseReduction = 0.004f;
 
             width = w;
             height = h;
-
-            intensity = 8;
-
-            tileX = tileY = 1;
-
-            processor = new NormalsProcessor();
 
             internalPixelType = p;
 
@@ -105,7 +96,7 @@ namespace Materia.Nodes.Atomic
 
         void Process() 
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -114,6 +105,8 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new NormalsProcessor();
 
             processor.Tiling = GetTiling();
             processor.DirectX = GetParameter("DirectX", directx);
@@ -133,6 +126,42 @@ namespace Materia.Nodes.Atomic
             public float intensity;
             public bool directx;
             public float noiseReduction = 0.004f;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(intensity);
+                w.Write(directx);
+                w.Write(noiseReduction);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                intensity = r.NextFloat();
+                directx = r.NextBool();
+                noiseReduction = r.NextFloat();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            NormalData d = new NormalData();
+            FillBaseNodeData(d);
+            d.intensity = intensity;
+            d.directx = directx;
+            d.noiseReduction = noiseReduction;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            NormalData d = new NormalData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            intensity = d.intensity;
+            directx = d.directx;
+            noiseReduction = d.noiseReduction;
         }
 
         public override string GetJson()

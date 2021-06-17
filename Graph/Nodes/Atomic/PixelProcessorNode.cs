@@ -6,6 +6,7 @@ using Materia.Rendering.Textures;
 using Materia.Rendering.Imaging;
 using Materia.Rendering.Interfaces;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -26,24 +27,23 @@ namespace Materia.Nodes.Atomic
             }
         }
 
+        //hide TileX / TileY from UI
+        public new float TileX { get => tileX; set => tileX = value; }
+        public new float TileY { get => tileY; set => tileY = value; }
+
         bool isRebuildRequired = false;
 
         public PixelProcessorNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Pixel Processor";
-            Id = Guid.NewGuid().ToString();
 
             width = w;
             height = h;
-
-            tileX = tileY = 1;
 
             function = new Function("Pixel Processor Function", w, h);
             function.AssignParentNode(this);
 
             function.ExpectedOutput = NodeType.Float4 | NodeType.Float;
-
-            processor = new PixelShaderProcessor();
 
             internalPixelType = p;
 
@@ -59,6 +59,7 @@ namespace Materia.Nodes.Atomic
 
         public override void TryAndProcess()
         {
+            if (isDisposing) return;
             if (function != null && (function.Shader == null || function.Modified || isRebuildRequired))
             {
                 Prepare();
@@ -74,6 +75,7 @@ namespace Materia.Nodes.Atomic
 
         private void Prepare()
         {
+            if (isDisposing) return;
             if(function != null)
             {
                 function.PrepareShader(internalPixelType, false);
@@ -94,6 +96,7 @@ namespace Materia.Nodes.Atomic
 
         private void BuildShader()
         {
+            if (isDisposing) return;
             if (function != null)
             {
                 shaderBuilt = function.BuildShader();
@@ -111,7 +114,7 @@ namespace Materia.Nodes.Atomic
         bool shaderBuilt;
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
 
             GLTexture2D i1 = null;
             GLTexture2D i2 = null;
@@ -145,6 +148,9 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+
+            processor ??= new PixelShaderProcessor();
+
             processor.Shader = function.Shader;
 
             //prepare uniforms first here
@@ -170,6 +176,23 @@ namespace Materia.Nodes.Atomic
         public class PixelProcessorData : NodeData
         {
             public string functionGraph;
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            base.GetBinary(w);
+            function.GetBinary(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            base.FromBinary(r);
+
+            function = new Function("Pixel Processor Function");
+            function.ExpectedOutput = NodeType.Float4 | NodeType.Float;
+            function.AssignParentNode(this);
+            function.FromBinary(r);
+            function.SetConnections();
         }
 
         public override void FromJson(string data)

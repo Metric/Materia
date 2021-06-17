@@ -16,7 +16,14 @@
           <ContextMenu>
             <MenuItem Name="ConstantVar" Header="{p:Local PromoteToConstant}" />
             <MenuItem Name="FunctionVar" Header="{p:Local PromoteToFunction}" />
-            <MenuItem Name="AssignVar" Header="{p:Local AssignFunction}" />
+            <MenuItem Name="AssignVar" Header="{p:Local AssignFunction}" Classes="SubItems">
+              <MenuItem.Styles>
+                <Style Selector="MenuItem.SubItems MenuItem">
+                  <Setter Property="Header" Value="{Binding Name}" />
+                  <Setter Property="Command" Value="{Binding Click}" />
+                </Style>
+              </MenuItem.Styles>
+            </MenuItem>
             <MenuItem Name="DefaultVar" Header="{p:Local ResetToDefault}" />
           </ContextMenu>
       </m:SplitButton.ContextMenu>

@@ -222,7 +222,7 @@ namespace Materia.Rendering.Fonts
 
                     if (c.render != null)
                     {
-                        g.DrawImage(c.render, new PointF(x, y));
+                        g.DrawImage(c.render, new System.Drawing.PointF(x, y));
                         c.render.Dispose();
                         c.render = null;
                     }
@@ -298,7 +298,7 @@ namespace Materia.Rendering.Fonts
                 g.TextRenderingHint = TextRenderingHint.AntiAlias;
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                 g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                g.DrawString(data.c + "", group.font, WhiteColor, new PointF(0, 0), format);
+                g.DrawString(data.c + "", group.font, WhiteColor, new System.Drawing.PointF(0, 0), format);
             }
             data.render = b;
         }

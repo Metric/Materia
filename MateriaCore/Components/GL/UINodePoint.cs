@@ -91,7 +91,10 @@ namespace MateriaCore.Components.GL
         public string Id { get; protected set; } = Guid.NewGuid().ToString();
 
         protected List<UINodePoint> to = new List<UINodePoint>();
-        protected Dictionary<string, UINodePath> paths = new Dictionary<string, UINodePath>();
+        
+        //making this static, so all nodes have access to it at any point
+        //when adding / removing paths
+        protected static Dictionary<string, UINodePath> paths = new Dictionary<string, UINodePath>();
 
         //for debugging purposes only
         static ulong nodeCount = 0;
@@ -200,7 +203,7 @@ namespace MateriaCore.Components.GL
                 }
                 else if(SelectedOrigin != this && SelectedOrigin != null)
                 {
-                    Connect(SelectedOrigin, true);
+                    Connect(SelectedOrigin, this, true);
                     SelectedOrigin = null;
                 }
                 else
@@ -226,71 +229,76 @@ namespace MateriaCore.Components.GL
             return p.Node == Node;
         }
 
-        public void Disconnect(bool removeFromGraph = true)
+        public void Disconnect(bool removeFromGraph = true, bool autoRemove = true)
         {
-            ParentNode?.Disconnect(this, removeFromGraph);
-            for (int i = 0; i < to.Count; ++i)
+            if (NodePoint is NodeOutput)
             {
-                Disconnect(to[i], removeFromGraph);
+                for (int i = 0; i < to.Count; ++i)
+                {
+                    to[i]?.Disconnect(removeFromGraph, false);
+                }
+                to.Clear();
             }
-        }
-
-        public void Disconnect(UINodePoint p, bool removeFromGraph = true)
-        {
-            if (p == null) return;
-
-            //todo: reimplement node paths
-            if (paths.TryGetValue(p.Id, out UINodePath path))
+            else if(NodePoint is NodeInput)
             {
-                paths.Remove(p.Id);
-                Node?.Graph?.RemoveChild(path);
-                path?.Dispose();
-            }
+                if (paths.TryGetValue(Id, out UINodePath path))
+                {
+                    paths.Remove(Id);
+                    Node?.Graph?.RemoveChild(path);
+                    path?.Dispose();
+                }
 
-            if (p.ParentNode != this) return;
-            if (p.NodePoint is NodeInput)
-            {
-                NodeInput input = p.NodePoint as NodeInput;
                 if (removeFromGraph)
                 {
+                    NodeInput input = NodePoint as NodeInput;
                     input.Reference?.Remove(input);
                 }
+
+                if (autoRemove)
+                {
+                    ParentNode?.to?.Remove(this);
+                }
+
+                ParentNode = null;
             }
-            to.Remove(p);
-            p.ParentNode = null;
         }
 
-        public void Connect(UINodePoint p, bool applyToGraph = false)
+        public static void Connect(UINodePoint from, UINodePoint to, bool applyToGraph = false)
         {
-            if (p.ParentNode == this) return;
+            //null check
+            if (to == null || from == null) return;
 
-            ParentNode?.Disconnect(this);
-            p.ParentNode?.Disconnect(p);
+            //forgot to do an or check originally on the other
+            if (to.ParentNode == from || from.ParentNode == to) return;
 
-            if (p.NodePoint is NodeOutput && NodePoint is NodeInput)
+            //flip the incoming values
+            if (to.NodePoint is NodeOutput && from.NodePoint is NodeInput)
             {
-                ParentNode = p;
-                p.to.Add(this);
-                UINodePath path = new UINodePath(p, this, NodePoint.Type == NodeType.Execute);
-                Node?.Graph?.AddChild(path);
-                p.paths[Id] = path;
-
-                if (applyToGraph)
-                {
-                    (p.NodePoint as NodeOutput).Add(NodePoint as NodeInput);
-                }
+                var temp = to;
+                to = from;
+                from = temp;
             }
-            else if(p.NodePoint is NodeInput && NodePoint is NodeOutput)
+
+            //validate
+            if (from.NodePoint is NodeOutput && to.NodePoint is NodeInput)
             {
-                p.ParentNode = this;
-                to.Add(p);
-                UINodePath path = new UINodePath(this, p, NodePoint.Type == NodeType.Execute);
-                Node?.Graph?.AddChild(path);
-                paths[p.Id] = path;
+                //disconnect from previous node
+                to.Disconnect(applyToGraph);
+
+                to.ParentNode = from;
+                
+                //extra check
+                if (from.to.Contains(to)) return;
+
+                from.to.Add(to);
+                UINodePath path = new UINodePath(from, to, from.NodePoint.Type == NodeType.Execute);
+                from.Node?.Graph?.AddChild(path);
+                paths[to.Id] = path;
 
                 if (applyToGraph)
                 {
-                    (NodePoint as NodeOutput).Add(p.NodePoint as NodeInput);
+                    NodeOutput output = from.NodePoint as NodeOutput;
+                    output.Add(to.NodePoint as NodeInput);
                 }
             }
         }

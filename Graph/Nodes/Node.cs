@@ -13,6 +13,7 @@ using MLog;
 using Materia.Rendering.Extensions;
 using Materia.Rendering.Mathematics;
 using Materia.Nodes.MathNodes;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes
 {
@@ -30,8 +31,13 @@ namespace Materia.Nodes
             NoFunction
         }
 
+        protected bool isDisposing { get; private set; }
+
+        //helper for nodes like graph instances that may need to know
+        //the actual executing application directory.
+        public static string ApplicationDirectory { get; set; }
+
         public static TaskScheduler Context { get; set; }
-        public static SynchronizationContext SyncContext { get; set; }
 
         public delegate void NodeChanged(Node n);
         public delegate void InputChanged(Node n, NodeInput inp, NodeInput previous = null);
@@ -51,9 +57,10 @@ namespace Materia.Nodes
 
         public bool CanPreview = true;
 
-        public double ViewOriginX = 0;
-        public double ViewOriginY = 0;
+        public float ViewOriginX = 0;
+        public float ViewOriginY = 0;
 
+        public string CurrentWorkingDirectory { get; protected set; }
 
         protected GLTexture2D buffer;
         public GLTexture2D Buffer
@@ -74,10 +81,18 @@ namespace Materia.Nodes
             set
             {
                 parentGraph = value;
+                if (parentGraph != null)
+                {
+                    CurrentWorkingDirectory = parentGraph.CurrentWorkingDirectory;
+                }
+                else
+                {
+                    CurrentWorkingDirectory = "";
+                }
             }
         }
 
-        public string Id { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
         protected string name;
 
@@ -100,34 +115,7 @@ namespace Materia.Nodes
             get; set;
         }
 
-        public class NodeData
-        {
-            public string id;
-            public int width;
-            public int height;
-            public bool absoluteSize;
-            public string type;
-            public List<NodeConnection> outputs;
-            public float tileX;
-            public float tileY;
-            public string name;
-            public GraphPixelType internalPixelType;
-            public int inputCount;
-            public int outputCount;
-            public double viewOriginX;
-            public double viewOriginY;
-        }
-
-        protected FloatBitmap brush;
-        public FloatBitmap Brush
-        {
-            get
-            {
-                return brush;
-            }
-        }
-
-        protected int width;
+        protected int width = 512;
 
         [Editable(ParameterInputType.IntSlider, "Width", "Basic", 8, 8192, new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
         public int Width
@@ -145,7 +133,7 @@ namespace Materia.Nodes
             }
         }
 
-        protected int height;
+        protected int height = 512;
         [Editable(ParameterInputType.IntSlider, "Height", "Basic", 8, 8192, new float[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 })]
         public int Height
         {
@@ -163,10 +151,10 @@ namespace Materia.Nodes
         }
 
         [Editable(ParameterInputType.Toggle, "Absolute Size", "Basic")]
-        public bool AbsoluteSize { get; set; }
+        public bool AbsoluteSize { get; set; } = false;
 
-        protected float tileX;
-        protected float tileY;
+        protected float tileX = 1;
+        protected float tileY = 1;
 
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Tile X", "Basic")]
@@ -198,7 +186,7 @@ namespace Materia.Nodes
             }
         }
 
-        protected GraphPixelType internalPixelType;
+        protected GraphPixelType internalPixelType = GraphPixelType.RGBA;
       
         [Editable(ParameterInputType.Dropdown, "Texture Format", "Basic")]
         public GraphPixelType InternalPixelFormat
@@ -231,17 +219,13 @@ namespace Materia.Nodes
             }
         }
 
-        protected static uint Count = 0;
-        public List<NodeInput> Inputs { get; protected set; }
-        public List<NodeOutput> Outputs { get; protected set; }
+        protected static ulong Count = 0;
+        public List<NodeInput> Inputs { get; protected set; } = new List<NodeInput>();
+        public List<NodeOutput> Outputs { get; protected set; } = new List<NodeOutput>();
 
         protected List<NodeConnection> rawNodeConnections = null;
 
-        public Node()
-        {
-            Outputs = new List<NodeOutput>();
-            Inputs = new List<NodeInput>();
-        }
+        public Node() { }
 
         public virtual string GetDescription()
         {
@@ -276,59 +260,92 @@ namespace Materia.Nodes
 
         public virtual void TriggerValueChange()
         {
+            //don't trigger if we are disposed
+            if (isDisposing) return;
+
             OnValueUpdated?.Invoke(this);
 
-            if(parentGraph != null)
+            if (parentGraph == null || parentGraph is Function) return;
+
+            //schedule parent node instead
+            //because this means it is a node inside
+            //of a graph instance
+            if (parentGraph.ParentNode != null 
+                && parentGraph.State == GraphState.Ready)
             {
-                if ((parentGraph.ParentNode == null || parentGraph is Function) 
-                    && parentGraph.State == GraphState.Ready)
+                //schedule up all the way to the top
+                Node n = parentGraph.ParentNode;
+                while (n != null && n.parentGraph != null)
                 {
-                    parentGraph.Schedule(this);
-                }
-                else if(parentGraph.ParentNode != null)
-                {
-                    //go up heirachy to trigger real parent node
-                    Node n = parentGraph.ParentNode;
-                    while(n.parentGraph.ParentNode != null)
+                    //hit root graph
+                    if (n.parentGraph.ParentNode == null)
                     {
-                        Node tmp = n.parentGraph.ParentNode;
-                        if (tmp == null)
-                        {
-                            break;
-                        }
-
-                        n = tmp;
+                        break;
                     }
 
-                    if (n.parentGraph.State == GraphState.Ready)
-                    {
-                        n.TriggerValueChange();
-                    }
+                    n = parentGraph.ParentNode;
                 }
+
+                n?.parentGraph?.Schedule(n);
+            }
+            //otherwise schedule self - as we are at the root graph
+            else if (parentGraph.State == GraphState.Ready)
+            {
+                parentGraph.Schedule(this);
             }
         }
 
         public virtual void TriggerTextureChange()
         {
+            //don't trigger if disposed
+            if (isDisposing) return;
             OnTextureChanged?.Invoke(this);
         }
 
         public virtual void Dispose()
         {
+            isDisposing = true;
+
             RemoveParameters();
 
             ParentGraph = null;
+
+            //Need to also cleanup underlying connections
+            //on dispose
+            for (int i = 0; i < Outputs.Count; ++i)
+            {
+                Outputs[i]?.Dispose();
+            }
+
+            Outputs.Clear();
+
+            for (int i = 0; i < Inputs.Count; ++i)
+            {
+                Inputs[i]?.Dispose();
+            }
+
+            Inputs.Clear();
 
             buffer?.Dispose();
             buffer = null;
         }
 
+        public abstract void GetBinary(Writer w);
         public abstract string GetJson();
+        public abstract void FromBinary(Reader r, Archive archive = null);
         public abstract void FromJson(string data, Archive archive = null);
 
         public virtual void AssignParentGraph(Graph.Graph g)
         {
             parentGraph = g;
+            if (parentGraph != null)
+            {
+                CurrentWorkingDirectory = parentGraph.CurrentWorkingDirectory;
+            }
+            else
+            {
+                CurrentWorkingDirectory = "";
+            }
         }
 
         public virtual void AssignParentNode(Node n)
@@ -346,7 +363,6 @@ namespace Materia.Nodes
         {
             width = w;
             height = h;
-
             ReleaseBuffer();
         }
 
@@ -377,9 +393,9 @@ namespace Materia.Nodes
             {
                 System.IO.File.Copy(from, cpath);
             }
-            else if (!string.IsNullOrEmpty(ParentGraph.CWD))
+            else if (!string.IsNullOrEmpty(CurrentWorkingDirectory))
             {
-                string opath = System.IO.Path.Combine(ParentGraph.CWD, relative);
+                string opath = System.IO.Path.Combine(CurrentWorkingDirectory, relative);
 
                 //if the paths are the same do nothing!
                 if(opath.Equals(cpath))
@@ -444,7 +460,7 @@ namespace Materia.Nodes
             d.absoluteSize = AbsoluteSize;
             d.internalPixelType = internalPixelType;
             d.name = name;
-            d.outputs = GetConnections();
+            d.outputs = GetOutputConnections();
             d.tileX = tileX;
             d.tileY = tileY;
             d.type = GetType().ToString();
@@ -504,6 +520,8 @@ namespace Materia.Nodes
 
         protected virtual void CreateBufferIfNeeded()
         {
+            //exit here if we have been disposed
+            if (isDisposing) return;
             if (buffer == null || buffer.Id == 0)
             {
                 buffer = new GLTexture2D((PixelInternalFormat)((int)internalPixelType));
@@ -532,7 +550,7 @@ namespace Materia.Nodes
             buffer = null;
         }
 
-        public List<NodeConnection> GetConnections()
+        public List<NodeConnection> GetOutputConnections()
         {
             List<NodeConnection> outputs = new List<NodeConnection>();
 
@@ -546,7 +564,7 @@ namespace Materia.Nodes
 
                     if (index > -1)
                     {
-                        NodeConnection nc = new NodeConnection(Id, n.Node.Id, i, index, k);
+                        NodeConnection nc = new NodeConnection(n.Node.Id, i, index, k);
                         outputs.Add(nc);
                     }
                     ++k;
@@ -557,12 +575,7 @@ namespace Materia.Nodes
             return outputs;
         }
 
-
-        /// <summary>
-        /// This is used in the Undo / Redo System
-        /// </summary>
-        /// <returns></returns>
-        public List<NodeConnection> GetParentConnections()
+        public List<NodeConnection> GetInputConnections()
         {
             List<NodeConnection> connections = new List<NodeConnection>();
             int i = 0;
@@ -575,7 +588,7 @@ namespace Materia.Nodes
                     {
                         NodeOutput no = n.Reference.Node.Outputs[idx];
                         int ord = no.To.IndexOf(n);
-                        NodeConnection nc = new NodeConnection(n.Reference.Node.Id, Id, idx, i, ord);
+                        NodeConnection nc = new NodeConnection(Id, idx, i, ord);
                         connections.Add(nc);
                     }
                 }
@@ -668,6 +681,11 @@ namespace Materia.Nodes
         public virtual bool IsEnd()
         {
             return Outputs == null || Outputs.Count == 0 || Outputs.Find(m => m.To.Count != 0) == null;
+        }
+
+        public virtual void SetCWD(string cwd)
+        {
+            CurrentWorkingDirectory = cwd;
         }
 
         protected ParameterCodeResult GetParameterCode(string prop, ref string fname, ref string uniforms, ref string previousCode, HashSet<string> seenParameter, Dictionary<string, object> seenUniforms)

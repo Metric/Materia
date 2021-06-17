@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Imaging.Processing;
 using Materia.Rendering.Textures;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -63,8 +64,6 @@ namespace Materia.Nodes.Atomic
 
         public InputNode(GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Id = Guid.NewGuid().ToString();
-
             Name = "Input";
 
             internalPixelType = p;
@@ -72,9 +71,6 @@ namespace Materia.Nodes.Atomic
             //this actually does nothing for this node
             width = 16;
             height = 16;
-            tileX = tileY = 1;
-
-            processor = new ImageProcessor();
 
             //only an output is present
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
@@ -93,18 +89,20 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
+            if (isDisposing) return;
             if (Inputs.Count == 0 || !Inputs[0].HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)Inputs[0].Reference.Data;
 
             if (i1 == null) return;
             if (i1.Id == 0) return;
-            if (processor == null) return;
 
             width = i1.Width;
             height = i1.Height;
 
             CreateBufferIfNeeded();
+
+            processor ??= new ImageProcessor();
 
             processor.PrepareView(buffer);
             processor.Process(i1);
@@ -112,24 +110,6 @@ namespace Materia.Nodes.Atomic
 
             Output.Data = buffer;
             TriggerTextureChange();
-        }
-
-        public override void FromJson(string data)
-        {
-            NodeData d = JsonConvert.DeserializeObject<NodeData>(data);
-            SetBaseNodeDate(d);
-
-            Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
-            Outputs.Clear();
-            Outputs.Add(Output);
-        }
-
-        public override string GetJson()
-        {
-            NodeData d = new NodeData();
-            FillBaseNodeData(d);
-
-            return JsonConvert.SerializeObject(d);
         }
 
         public override void Dispose()

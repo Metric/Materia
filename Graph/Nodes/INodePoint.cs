@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Materia.Nodes
 {
-    public interface INodePoint
+    public interface INodePoint : IDisposable
     {
         NodeType Type { get; }
         string Name { get; }

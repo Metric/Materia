@@ -6,8 +6,8 @@ namespace MateriaCore.Utils
 {
     public enum GlobalEvent
     {
-        Preview2D,
-        Preview2DUV,
+        Preview2D, //used by UI2DWindow
+        Preview2DUV, //used by UI2DWindow, UI3DWindow
         Preview3DColor,
         Preview3DNormal,
         Preview3DHeight,
@@ -15,19 +15,22 @@ namespace MateriaCore.Utils
         Preview3DMetallic,
         Preview3DRoughness,
         Preview3DOcclusion,
-        Preview3DEmission,
-        MoveSelected,
-        MoveComplete,
-        ViewParameters,
-        UpdateParameters,
-        ClearViewParameters,
-        HdriUpdate,
-        SkyboxUpdate,
-        ScheduleExport,
-        ArrangeNodesVertical,
-        ArrangeNodesHorizontal,
-        FitNodesIntoView,
-        ActualNodeViewSize
+        Preview3DEmission, //used by UINode, Renderer
+        MoveSelected, //used by UINode, UIGraph
+        MoveComplete, //used by UINode, UIGraph
+        ViewParameters, //used by Parameters pane
+        UpdateParameters, //used by Settings Classes, Parameters pane
+        ClearViewParameters, //used by Parameters pane
+        HdriUpdate, //used by GLMainWindow, Renderer
+        SkyboxUpdate, //used by GLMainWindow, Renderer
+        ScheduleExport, //used by UIGraph, GLMainWindow
+        ArrangeNodesVertical, //used by UIGraph
+        ArrangeNodesHorizontal, //used by UIGraph
+        FitNodesIntoView, //used by UIGraph
+        ActualNodeViewSize, //used by UIGraph
+        UpdateTrackedNode, //used by UIGraph, Parameters Pane
+        HideParameters, //used by UIGraphEvents, Parameters Pane
+        ShowParameters, //used by UIGraphEvents, Parameters Pane
     }
 
     public static class GlobalEvents

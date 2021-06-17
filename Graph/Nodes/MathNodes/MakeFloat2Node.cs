@@ -15,18 +15,14 @@ namespace Materia.Nodes.MathNodes
         NodeInput input2;
         NodeOutput output;
 
-        MVector vec;
-
         public MakeFloat2Node(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
 
             CanPreview = false;
 
-            vec = new MVector();
-
             Name = "Make Float2";
-            Id = Guid.NewGuid().ToString();
+    
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Float, this, "X (Float)");

@@ -20,7 +20,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Break Float4";
-            Id = Guid.NewGuid().ToString();
+       
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Float4, this, "Float4 Type");

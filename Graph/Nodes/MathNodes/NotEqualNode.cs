@@ -18,7 +18,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Not Equal";
-            Id = Guid.NewGuid().ToString();
+    
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Bool | NodeType.Float, this, "A");

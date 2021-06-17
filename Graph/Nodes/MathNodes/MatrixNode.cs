@@ -18,7 +18,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Matrix";
-            Id = Guid.NewGuid().ToString();
+ 
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Float | NodeType.Float2, this, "Float Input");

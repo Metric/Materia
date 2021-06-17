@@ -18,8 +18,8 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Arc Tangent 2";
-            Id = Guid.NewGuid().ToString();
+            Name = "Arc Tangent";
+ 
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Float, this, "X (Float)");

@@ -6,6 +6,7 @@ using Materia.Rendering.Attributes;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -21,7 +22,7 @@ namespace Materia.Nodes.Atomic
 
         protected GLTexture2D buffer2;
 
-        protected float intensity;
+        protected float intensity = 1;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Intensity")]
         public float Intensity
@@ -37,7 +38,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float blurIntensity;
+        protected float blurIntensity = 1;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Blur Intensity", "Default", 0, 128)]
         public float BlurIntensity
@@ -56,17 +57,9 @@ namespace Materia.Nodes.Atomic
         public WarpNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Warp";
-            Id = Guid.NewGuid().ToString();
 
             width = w;
             height = h;
-
-            intensity = 1;
-
-            tileX = tileY = 1;
-
-            processor = new WarpProcessor();
-            blur = new BlurProcessor();
 
             internalPixelType = p;
 
@@ -93,6 +86,7 @@ namespace Materia.Nodes.Atomic
         protected override void CreateBufferIfNeeded()
         {
             base.CreateBufferIfNeeded();
+            if (isDisposing) return;
             if (buffer2 == null || buffer2.Id == 0)
             {
                 buffer2 = buffer.Copy();
@@ -101,7 +95,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null || blur == null) return;
+            if (isDisposing) return;
             if (!input.HasInput || !input1.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -114,6 +108,9 @@ namespace Materia.Nodes.Atomic
             if (i2.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new WarpProcessor();
+            blur ??= new BlurProcessor();
 
             processor.Tiling = GetTiling();
             processor.Intensity = GetParameter("Intensity", intensity).Max(0);
@@ -137,6 +134,38 @@ namespace Materia.Nodes.Atomic
         {
             public float intensity;
             public float blurIntensity;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(intensity);
+                w.Write(blurIntensity);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                intensity = r.NextFloat();
+                blurIntensity = r.NextFloat();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            WarpData d = new WarpData();
+            FillBaseNodeData(d);
+            d.intensity = intensity;
+            d.blurIntensity = blurIntensity;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            WarpData d = new WarpData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            intensity = d.intensity;
+            blurIntensity = d.blurIntensity;
         }
 
         public override string GetJson()

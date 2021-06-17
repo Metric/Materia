@@ -6,6 +6,7 @@ using Materia.Rendering.Attributes;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -13,7 +14,7 @@ namespace Materia.Nodes.Atomic
     {
         NodeInput input;
 
-        int intensity;
+        int intensity = 10;
 
         NodeOutput Output;
 
@@ -38,18 +39,10 @@ namespace Materia.Nodes.Atomic
         {
             Name = "Blur";
 
-            Id = Guid.NewGuid().ToString();
-
-            tileX = tileY = 1;
-
             width = w;
             height = h;
 
-            intensity = 10;
-
             internalPixelType = p;
-
-            processor = new BlurProcessor();
 
             input = new NodeInput(NodeType.Color | NodeType.Gray, this, "Image Input");
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
@@ -65,7 +58,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -74,6 +67,8 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new BlurProcessor();
 
             processor.Tiling = GetTiling();
             processor.Intensity = GetParameter("Intensity", intensity);
@@ -99,6 +94,34 @@ namespace Materia.Nodes.Atomic
         public class BlurData : NodeData
         {
             public int intensity;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(intensity);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                intensity = r.NextInt();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            BlurData d = new BlurData();
+            FillBaseNodeData(d);
+            d.intensity = intensity;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            BlurData d = new BlurData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            intensity = d.intensity;
         }
 
         public override string GetJson()

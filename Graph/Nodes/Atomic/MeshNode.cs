@@ -10,6 +10,7 @@ using Materia.Rendering.Textures;
 using Newtonsoft.Json;
 using Materia.Rendering.Mathematics;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -87,7 +88,7 @@ namespace Materia.Nodes.Atomic
             get; set;
         }
 
-        MVector position;
+        MVector position = MVector.Zero;
         [Promote(NodeType.Float3)]
         [Editable(ParameterInputType.Float3Input, "Position")]
         public MVector Position
@@ -103,7 +104,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        MVector rotation;
+        MVector rotation = MVector.Zero;
         [Promote(NodeType.Float3)]
         [Editable(ParameterInputType.Float3Slider, "Rotation", "Default", 0, 360)]
         public MVector Rotation
@@ -119,7 +120,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        MVector scale;
+        MVector scale = new MVector(1,1,1);
         [Promote(NodeType.Float3)]
         [Editable(ParameterInputType.Float3Input, "Scale")]
         public MVector Scale
@@ -135,7 +136,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        float cameraZoom;
+        float cameraZoom = -3;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Camera Z")]
         public float CameraZ
@@ -151,8 +152,8 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        float meshtileX;
-        float meshtileY;
+        float meshtileX = 1;
+        float meshtileY = 1;
 
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatInput, "Mesh Texture Tile X")]
@@ -203,21 +204,9 @@ namespace Materia.Nodes.Atomic
         {
             Name = "Mesh";
 
-            Id = Guid.NewGuid().ToString();
 
             width = w;
             height = h;
-
-            tileX = tileY = 1;
-
-            meshtileX = meshtileY = 1;
-
-            scale = new MVector(1, 1, 1);
-            rotation = new MVector(0, 0, 0);
-            position = new MVector(0, 0, 0);
-            cameraZoom = -3;
-
-            processor = new MeshProcessor();
 
             internalPixelType = p;
 
@@ -243,6 +232,7 @@ namespace Materia.Nodes.Atomic
 
         private void ReadMeshFile()
         {
+            if (isDisposing) return;
             if (mesh == null && meshes == null)
             {
                 if(archive != null && !string.IsNullOrEmpty(relativePath) && Resource)
@@ -270,9 +260,9 @@ namespace Materia.Nodes.Atomic
                     Importer imp = new Importer();
                     meshes = imp.Parse(path);
                 }
-                else if (!string.IsNullOrEmpty(relativePath) && ParentGraph != null && !string.IsNullOrEmpty(ParentGraph.CWD) && File.Exists(System.IO.Path.Combine(ParentGraph.CWD, relativePath)))
+                else if (!string.IsNullOrEmpty(relativePath) && !string.IsNullOrEmpty(CurrentWorkingDirectory) && File.Exists(System.IO.Path.Combine(CurrentWorkingDirectory, relativePath)))
                 {
-                    var p = System.IO.Path.Combine(ParentGraph.CWD, relativePath);
+                    var p = System.IO.Path.Combine(CurrentWorkingDirectory, relativePath);
 
                     Importer imp = new Importer();
                     meshes = imp.Parse(p);
@@ -282,6 +272,7 @@ namespace Materia.Nodes.Atomic
 
         private void LoadMesh()
         {
+            if (isDisposing) return;
             if (string.IsNullOrEmpty(path))
             {
                 if (mesh != null)
@@ -310,7 +301,7 @@ namespace Materia.Nodes.Atomic
         List<Mesh> meshes;
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (mesh == null) return;
 
             CreateBufferIfNeeded();
@@ -395,6 +386,8 @@ namespace Materia.Nodes.Atomic
             mesh.LightPosition = new Vector3(0, 0, 0);
             mesh.LightColor = new Vector3(1, 1, 1);
 
+            processor ??= new MeshProcessor();
+
             processor.Tiling = GetTiling();
             processor.Mesh = mesh;
           
@@ -427,19 +420,50 @@ namespace Materia.Nodes.Atomic
 
             public float meshTileX;
             public float meshTileY;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(path);
+                w.Write(relativePath);
+                w.Write(resource);
+                w.Write(translateX);
+                w.Write(translateY);
+                w.Write(translateZ);
+                w.Write(scaleX);
+                w.Write(scaleY);
+                w.Write(scaleZ);
+                w.Write(rotationX);
+                w.Write(rotationY);
+                w.Write(rotationZ);
+                w.Write(cameraZoom);
+                w.Write(meshTileX);
+                w.Write(meshTileY);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                path = r.NextString();
+                relativePath = r.NextString();
+                resource = r.NextBool();
+                translateX = r.NextFloat();
+                translateY = r.NextFloat();
+                translateZ = r.NextFloat();
+                scaleX = r.NextFloat();
+                scaleY = r.NextFloat();
+                scaleZ = r.NextFloat();
+                rotationX = r.NextFloat();
+                rotationY = r.NextFloat();
+                rotationZ = r.NextFloat();
+                cameraZoom = r.NextFloat();
+                meshTileX = r.NextFloat();
+                meshTileY = r.NextFloat();
+            }
         }
 
-        public override void FromJson(string data, Archive arch = null)
+        private void SetData(MeshNodeData d)
         {
-            archive = arch;
-            FromJson(data);
-        }
-
-        public override void FromJson(string data)
-        {
-            MeshNodeData d = JsonConvert.DeserializeObject<MeshNodeData>(data);
-            SetBaseNodeDate(d);
-
             path = d.path;
             Resource = d.resource;
             relativePath = d.relativePath;
@@ -454,10 +478,8 @@ namespace Materia.Nodes.Atomic
             meshtileY = d.meshTileY;
         }
 
-        public override string GetJson()
+        private void FillData(MeshNodeData d)
         {
-            MeshNodeData d = new MeshNodeData();
-            FillBaseNodeData(d);
             d.path = path;
             d.relativePath = relativePath;
             d.resource = Resource;
@@ -477,7 +499,48 @@ namespace Materia.Nodes.Atomic
             d.cameraZoom = cameraZoom;
             d.meshTileX = meshtileX;
             d.meshTileY = meshtileY;
+        }
 
+        public override void GetBinary(Writer w)
+        {
+            MeshNodeData d = new MeshNodeData();
+            FillBaseNodeData(d);
+            FillData(d);
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            MeshNodeData d = new MeshNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            SetData(d);
+        }
+
+        public override void FromBinary(Reader r, Archive arch = null)
+        {
+            archive = arch;
+            FromBinary(r);
+        }
+
+        public override void FromJson(string data, Archive arch = null)
+        {
+            archive = arch;
+            FromJson(data);
+        }
+
+        public override void FromJson(string data)
+        {
+            MeshNodeData d = JsonConvert.DeserializeObject<MeshNodeData>(data);
+            SetBaseNodeDate(d);
+            SetData(d);
+        }
+
+        public override string GetJson()
+        {
+            MeshNodeData d = new MeshNodeData();
+            FillBaseNodeData(d);
+            FillData(d);
 
             return JsonConvert.SerializeObject(d);
         }

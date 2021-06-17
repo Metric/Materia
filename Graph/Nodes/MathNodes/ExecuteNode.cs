@@ -10,7 +10,6 @@ namespace Materia.Nodes.MathNodes
         {
             //we ignore w,h,p
 
-            Id = Guid.NewGuid().ToString();
             shaderId = "S" + Id.Split('-')[0];
 
             CanPreview = false;
@@ -18,7 +17,7 @@ namespace Materia.Nodes.MathNodes
 
             //remove execute input nodes
             Inputs.Clear();
-            executeInput = null;
+            ExecuteInput = null;
         }
 
         public override string GetDescription()

@@ -7,9 +7,6 @@ namespace Materia.Nodes.Items
     {
         public CommentNode()
         {
-            Id = Guid.NewGuid().ToString();
-            Outputs = new List<NodeOutput>();
-            Inputs = new List<NodeInput>();
             name = "Comment";
             content = "Comment...";
         }

@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Materia.Rendering.Attributes;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes
 {
@@ -19,7 +20,7 @@ namespace Materia.Nodes
             }
         }
 
-        public NodeInput executeInput;
+        public NodeInput ExecuteInput { get; protected set; }
 
         protected Node parentNode;
         public Node ParentNode
@@ -112,12 +113,9 @@ namespace Materia.Nodes
             //since we ignore their size competely already
             AbsoluteSize = true;
             CanPreview = false;
+            ExecuteInput = new NodeInput(NodeType.Execute, this);
 
-            Inputs = new List<NodeInput>();
-            Outputs = new List<NodeOutput>();
-
-            executeInput = new NodeInput(NodeType.Execute, this);
-            Inputs.Add(executeInput);
+            Inputs.Add(ExecuteInput);
             Outputs.Add(new NodeOutput(NodeType.Execute, this));
         }
 
@@ -139,6 +137,18 @@ namespace Materia.Nodes
             return p;
         }
 
+        public override void FromBinary(Reader r, Archive archive = null)
+        {
+            FromBinary(r);
+        }
+
+        public virtual void FromBinary(Reader r)
+        {
+            NodeData d = new NodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+        }
+
         public override void FromJson(string data, Archive archive = null)
         {
             FromJson(data);
@@ -158,6 +168,13 @@ namespace Materia.Nodes
             return JsonConvert.SerializeObject(d);
         }
 
+        public override void GetBinary(Writer w)
+        {
+            NodeData d = new NodeData();
+            FillBaseNodeData(d);
+            d.Write(w);
+        }
+
         public virtual void UpdateOutputType()
         {
 
@@ -165,7 +182,7 @@ namespace Materia.Nodes
 
         public override bool IsRoot()
         {
-            return executeInput == null || !executeInput.HasInput;
+            return ExecuteInput == null || !ExecuteInput.HasInput;
         }
 
         public virtual string GetShaderPart(string currentFrag)

@@ -67,6 +67,12 @@ namespace MateriaCore
         public MainGLWindow(NativeWindowSettings settings) : base(settings)
         {
             InitializeEvents();
+            InitializeShortcuts();
+
+            //initialize app path for Graph Instance Nodes
+            //so it can locate shelf graph instance files
+            Materia.Nodes.Node.ApplicationDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
             parameterPane = new Parameters(this);
             parameterPane.Show();
         }
@@ -268,6 +274,127 @@ namespace MateriaCore
             });
         }
 
+        private void InitializeShortcuts()
+        {
+            ShortcutInputManager.Initialize();
+            ShortcutInputManager.AddAction(ShortcutCommand.Clear, (e) =>
+            {
+                if (Application.Current.FocusManager.Current != null) return;
+
+                if (UINodePoint.SelectedOrigin != null)
+                {
+                    UINodePoint.SelectedOrigin = null;
+                    e.IsHandled = true;
+                    return;
+                }
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.Comment, (e) =>
+            {
+                if (Application.Current.FocusManager.Current != null) return;
+
+                if (UI.Focus.Parent == activeDocument)
+                {
+                    activeDocument?.TryAndComment();
+                    e.IsHandled = true;
+                    return;
+                }
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.Pin, (e) =>
+            {
+                if (Application.Current.FocusManager.Current != null) return;
+
+                if (UI.Focus.Parent == activeDocument)
+                {
+                    activeDocument?.TryAndPin();
+                    e.IsHandled = true;
+                    return;
+                }
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.NextPin, (e) =>
+            {
+                if (Application.Current.FocusManager.Current != null) return;
+
+                if (UI.Focus.Parent == activeDocument)
+                {
+                    activeDocument?.GotoNextPin();
+                    e.IsHandled = true;
+                    return;
+                }
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.Copy, (e) =>
+            {
+                if (Application.Current.FocusManager.Current != null) return;
+
+                if (UI.Focus.Parent is UINode || UI.Focus.Parent is UIGraph)
+                {
+                    string data = activeDocument?.TryAndCopy();
+                    e.SetClipboardContent?.Invoke(data);
+                    e.IsHandled = true;
+                    return;
+                }
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.Paste, (e) =>
+            {
+                if (Application.Current.FocusManager.Current != null) return;
+
+                if (UI.Focus.Parent == activeDocument)
+                {
+                    activeDocument?.TryAndPaste(e.GetClipboardContent?.Invoke()?.ToString());
+                    e.IsHandled = true;
+                    return;
+                }
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.Undo, (e) =>
+            {
+                if (Application.Current.FocusManager.Current != null) return;
+
+                if (UI.Focus.Parent is UIGraph || UI.Focus.Parent is UINode)
+                {
+                    activeDocument?.TryAndUndo();
+                    e.IsHandled = true;
+                    return;
+                }
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.Redo, (e) =>
+            {
+                if (Application.Current.FocusManager.Current != null) return;
+
+                if (UI.Focus.Parent is UIGraph || UI.Focus.Parent is UINode)
+                {
+                    activeDocument?.TryAndRedo();
+                    e.IsHandled = true;
+                    return;
+                }
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.Delete, (e) =>
+            {
+                if (Application.Current.FocusManager.Current != null) return;
+
+                if (UI.Focus.Parent is UINode || UI.Focus.Parent is UIGraph)
+                {
+                    activeDocument?.TryAndDelete();
+                    e.IsHandled = true;
+                    return;
+                }
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.New, (e) =>
+            {
+                //todo: Add new handler
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.Save, (e) =>
+            {
+                //todo: add save handler
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.SaveAs, (e) =>
+            {
+                //todo: add save as handler
+            });
+            ShortcutInputManager.AddAction(ShortcutCommand.Shelf, (e) =>
+            {
+                //todo: add pop up shelf handler
+            });
+        }
+
         private void MainGLWindow_FileDrop(OpenTK.Windowing.Common.FileDropEventArgs obj)
         {
             UI.OnFileDrop(obj.FileNames);
@@ -317,7 +444,7 @@ namespace MateriaCore
             rootArea.AddChild(shelf);
 
             //GraphTemplate.PBRFull(activeGraph);
-            activeDocument.Load(activeGraph.GetJson(), "");
+            activeDocument.Load(activeGraph);
             activeGraph = activeDocument.Current;
             Debug.WriteLine("UI Initialize: " + (Environment.TickCount - ms) + "ms");
         }
@@ -412,7 +539,7 @@ namespace MateriaCore
             {
                 //poll graph updates if any
                 //and let them render first before anything else
-                activeGraph?.PollScheduled();
+                activeGraph?.Poll();
             }
 
             FullScreenQuad.SharedVao?.Unbind();

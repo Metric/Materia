@@ -14,6 +14,8 @@ using System.Runtime.InteropServices;
 using Materia.Nodes;
 using Materia.Rendering.Extensions;
 using System.Reflection;
+using Materia.Graph.IO;
+using Materia.Nodes.Atomic;
 
 namespace Materia.Graph
 {
@@ -93,7 +95,7 @@ namespace Materia.Graph
             get; set;
         }
 
-        protected List<ArgNode> args;
+        protected List<ArgNode> args = new List<ArgNode>();
         public List<ArgNode> Args
         {
             get
@@ -102,7 +104,7 @@ namespace Materia.Graph
             }
         }
 
-        protected List<CallNode> calls;
+        protected List<CallNode> calls = new List<CallNode>();
         public List<CallNode> Calls
         {
             get
@@ -111,7 +113,7 @@ namespace Materia.Graph
             }
         }
 
-        protected List<ForLoopNode> forLoops;
+        protected List<ForLoopNode> forLoops = new List<ForLoopNode>();
         public List<ForLoopNode> ForLoops
         {
             get
@@ -120,7 +122,7 @@ namespace Materia.Graph
             }
         }
 
-        protected List<SamplerNode> samplers;
+        protected List<SamplerNode> samplers = new List<SamplerNode>();
         public List<SamplerNode> Samplers
         {
             get
@@ -146,18 +148,8 @@ namespace Materia.Graph
             set
             {
                 parentGraph = value;
-
-                if(OnParentGraphSet != null)
-                {
-                    OnParentGraphSet.Invoke(this);
-                }
-                
-                if(parentGraph != null)
-                {
-                    //update randomSeed
-                    randomSeed = parentGraph.RandomSeed;
-                    SetVar("RandomSeed", randomSeed, NodeType.Float);
-                }
+                AssignParentGraph(parentGraph);
+                OnParentGraphSet?.Invoke(this);
             }
         }
 
@@ -170,19 +162,8 @@ namespace Materia.Graph
             set
             {
                 parentNode = value;
-
-                if(OnParentNodeSet != null)
-                {
-                    OnParentNodeSet.Invoke(this);
-                }
-
-                var g = parentNode.ParentGraph;
-                if(g != null)
-                {
-                    //update randomSeed
-                    randomSeed = g.RandomSeed;
-                    SetVar("RandomSeed", randomSeed, NodeType.Float);
-                }
+                AssignParentNode(parentNode);
+                OnParentNodeSet?.Invoke(this);
             }
         }
 
@@ -222,16 +203,10 @@ namespace Materia.Graph
             }
         }
         
-        protected Dictionary<string, object> uniforms; 
+        protected Dictionary<string, object> uniforms = new Dictionary<string, object>(); 
 
         public Function(string name, int w = 256, int h = 256) : base(name, w, h)
         {
-            samplers = new List<SamplerNode>();
-            forLoops = new List<ForLoopNode>();
-            uniforms = new Dictionary<string, object>();
-            orderCache = new List<Node>();
-            calls = new List<CallNode>();
-            args = new List<ArgNode>();
             Name = name;
             isDirty = true;
             SetBaseVars();
@@ -247,11 +222,12 @@ namespace Materia.Graph
             OnVariablesSet?.Invoke(this);
         }
 
+        //why does this take so long?
         public virtual void SetBaseVars()
         {
-            SetVar("PI", 3.14159265359f, NodeType.Float);
-            SetVar("Rad2Deg", (180.0f / 3.14159265359f), NodeType.Float);
-            SetVar("Deg2Rad", (3.14159265359f / 180.0f), NodeType.Float);
+            SetVar("PI", MathF.PI, NodeType.Float);
+            SetVar("Rad2Deg", MathHelper.Rad2Deg, NodeType.Float);
+            SetVar("Deg2Rad", MathHelper.Deg2Rad, NodeType.Float);
             SetVar("RandomSeed", randomSeed, NodeType.Float);
 
             //just set these so they are available
@@ -1277,10 +1253,16 @@ namespace Materia.Graph
         public void AssignParentGraph(Graph g)
         {
             parentGraph = g;
+            
+            if (g != null)
+            {
+                AssignSeed(g.RandomSeed);
+            }
+
             SetParentGraphVars(parentGraph);
             OnVariablesSet?.Invoke(this);
         }
-
+       
         public override void AssignParentNode(Node n)
         {
             base.AssignParentNode(n);
@@ -1288,8 +1270,14 @@ namespace Materia.Graph
             Graph g = null;
             if (n != null) g = n.ParentGraph;
 
+            if (g != null)
+            {
+                AssignSeed(g.RandomSeed);
+            }
+
             SetParentNodeVars(g);
             SetParentGraphVars(g);
+
             OnVariablesSet?.Invoke(this);
         }
 
@@ -1675,19 +1663,7 @@ namespace Materia.Graph
 
         protected void SetVar(Dictionary<string, VariableDefinition> vars, string key, object value, NodeType type)
         {
-
-            VariableDefinition vd;
-
-            if (vars.TryGetValue(key, out vd))
-            {
-                vd.Type = type;
-                vd.Value = value;
-            }
-            else
-            {
-                vd = new VariableDefinition(value, type);
-                vars[key] = vd;
-            }
+            vars[key] = new VariableDefinition(value, type);
         }
 
         protected void SetParentGraphVars(Graph g)
@@ -1696,11 +1672,11 @@ namespace Materia.Graph
 
             try
             {
-                //parameters can be function or constant
-                foreach (var k in g.Parameters.Keys)
+                var parameters = g.Parameters;
+                var pValues = parameters.Values;
+
+                foreach (var param in pValues)
                 {
-                    var param = g.Parameters[k];
-                    if (param.Value == this) continue;
                     if (!param.IsFunction())
                     {
                         SetVar(param.CodeName, param.Value, param.Type);
@@ -1712,10 +1688,11 @@ namespace Materia.Graph
                     }
                 }
 
-                int count = g.CustomParameters.Count;
+                var customParameters = g.CustomParameters;
+                int count = customParameters.Count;
                 for(int i = 0; i < count; ++i)
                 {
-                    ParameterValue param = g.CustomParameters[i];
+                    ParameterValue param = customParameters[i];
                     if (param.Value == this) continue;
                     SetVar(param.CustomCodeName, param.Value, param.Type);
                 }
@@ -1731,6 +1708,10 @@ namespace Materia.Graph
         protected void SetParentNodeVars(Graph g)
         {
             if (parentNode == null) return;
+
+            //slight optimization but we can ignore the pixelprocessor node itself
+            //as it has no variables that can be tracked
+            if (parentNode is PixelProcessorNode) return;
 
             var props = parentNode.GetType().GetProperties();
 
@@ -1800,7 +1781,16 @@ namespace Materia.Graph
             }
         }
 
-        public override void TryAndProcess()
+        public override void Schedule()
+        {
+            //we ignore scheduling in a function graph
+            //instead we consider it like a normal node
+            //with a TryAndProcess()
+            //since it must operate sequential in real time
+            //via gpu or cpu
+        }
+
+        public virtual void TryAndProcess()
         {
             SetAllVars();
             List<Node> nodes = OrderNodesForShader();
@@ -1834,6 +1824,57 @@ namespace Materia.Graph
         public class FunctionGraphData : GraphData
         {
             public string outputNode;
+        }
+
+        /// <summary>
+        /// Writes the extended data associated with this graph
+        /// </summary>
+        /// <param name="w">The w.</param>
+        protected override void WriteExtended(Writer w)
+        {
+            w.Write(OutputNode == null ? "" : OutputNode.Id);
+        }
+
+        /// <summary>
+        /// Reads the extended data associated with this graph
+        /// </summary>
+        /// <param name="r">The r.</param>
+        protected override void ReadExtended(Reader r)
+        {
+            foreach (ArgNode arg in args)
+            {
+                object temp = 0;
+                if (arg.InputType == NodeType.Float || arg.InputType == NodeType.Bool)
+                {
+                    temp = 0;
+                }
+                else if (arg.InputType == NodeType.Matrix)
+                {
+                    temp = Matrix4.Identity;
+                }
+                else
+                {
+                    temp = new MVector();
+                }
+
+                SetVar(arg.InputName, temp, arg.InputType);
+            }
+
+            try
+            {
+                var id = r.NextString();
+                if (string.IsNullOrEmpty(id))
+                {
+                    OutputNode = null;
+                    return;
+                }
+                NodeLookup.TryGetValue(id, out Node n);
+                OutputNode = n;
+            }
+            catch
+            {
+                Log.Error("Failed to read extended graph data");
+            }
         }
 
         public override string GetJson()
@@ -1871,7 +1912,7 @@ namespace Materia.Graph
 
             Node n = null;
 
-            if (d.outputNode != null)
+            if (!string.IsNullOrEmpty(d.outputNode))
             {
                 NodeLookup.TryGetValue(d.outputNode, out n);
                 OutputNode = n;
@@ -1918,11 +1959,8 @@ namespace Materia.Graph
 
         public override void Dispose()
         {
-            if(Shader != null)
-            {
-                Shader.Dispose();
-                Shader = null;
-            }
+            Shader?.Dispose();
+            Shader = null;
 
             base.Dispose();
         }

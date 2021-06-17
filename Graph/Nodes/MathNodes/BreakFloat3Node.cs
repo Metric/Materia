@@ -19,7 +19,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Break Float3";
-            Id = Guid.NewGuid().ToString();
+
             shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Float3, this, "Float3 Type");

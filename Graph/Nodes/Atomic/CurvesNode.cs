@@ -9,6 +9,7 @@ using Materia.Rendering.Mathematics;
 using Materia.Rendering.Interfaces;
 using Materia.Graph;
 using MLog;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -22,9 +23,9 @@ namespace Materia.Nodes.Atomic
 
         NodeOutput Output;
 
-        Dictionary<int, List<PointD>> points;
+        Dictionary<int, List<PointF>> points = new Dictionary<int, List<PointF>>();
         [Editable(ParameterInputType.Curves, "Points")]
-        public Dictionary<int, List<PointD>> Points
+        public Dictionary<int, List<PointF>> Points
         {
             get
             {
@@ -39,7 +40,7 @@ namespace Materia.Nodes.Atomic
 
         //TODO: come back and make minValue editable via function graph
 
-        float minValue;
+        float minValue = 0;
         public float MinValue
         {
             get
@@ -50,7 +51,7 @@ namespace Materia.Nodes.Atomic
             {
                 if (minValue != value)
                 {
-                    minValue = Math.Min(1, Math.Max(0, value));
+                    minValue = value.Clamp(0, 1);
                 }
 
                 TriggerValueChange();
@@ -59,7 +60,7 @@ namespace Materia.Nodes.Atomic
 
         //TODO: come back and make maxValue editable via function graph
 
-        float maxValue;
+        float maxValue = 1;
         public float MaxValue
         {
             get
@@ -70,7 +71,7 @@ namespace Materia.Nodes.Atomic
             {
                 if (maxValue != value)
                 {
-                    maxValue = Math.Min(1, Math.Max(0, value));
+                    maxValue = value.Clamp(0, 1);
                 }
                 TriggerValueChange();
             }
@@ -79,34 +80,18 @@ namespace Materia.Nodes.Atomic
         public CurvesNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Curves";
-            Id = Guid.NewGuid().ToString();
 
             width = w;
             height = h;
-
-            minValue = 0;
-            maxValue = 1;
-
-            points = new Dictionary<int, List<PointD>>();
-
-            tileX = tileY = 1;
 
             lutBrush = new FloatBitmap(256, 2);
 
             internalPixelType = p;
 
-            curveLUT = new GLTexture2D(PixelInternalFormat.Rgba8);
-            curveLUT.Bind();
-            curveLUT.Nearest();
-            curveLUT.Repeat();
-            GLTexture2D.Unbind();
-
-            processor = new CurvesProcessor(curveLUT);
-
             //set defaults
-            List<PointD> pts = new List<PointD>();
-            pts.Add(new PointD(0, 1)); 
-            pts.Add(new PointD(1, 0));
+            List<PointF> pts = new List<PointF>();
+            pts.Add(new PointF(0, 1)); 
+            pts.Add(new PointF(1, 0));
 
             points[0] = pts;
             points[1] = pts;
@@ -120,73 +105,73 @@ namespace Materia.Nodes.Atomic
             Outputs.Add(Output);
         }
 
-        List<PointD> GetNormalizedCurve(List<PointD> pts)
+        List<PointF> GetNormalizedCurve(List<PointF> pts)
         {
-            List<PointD> points = new List<PointD>();
-            List<PointD> normalized = new List<PointD>();
+            List<PointF> points = new List<PointF>();
+            List<PointF> normalized = new List<PointF>();
 
             int w = 255;
             int h = 255;
 
             for(int i = 0; i < pts.Count; ++i)
             {
-                PointD p = pts[i];
-                points.Add(new PointD(p.x * w, p.y * h));
+                PointF p = pts[i];
+                points.Add(new PointF(p.x * w, p.y * h));
             }
 
-            points.Sort((PointD p1, PointD p2) =>
+            points.Sort((PointF p1, PointF p2) =>
             {
                 return (int)p1.x - (int)p2.x;
             });
 
-            List<PointD> curve = new List<PointD>();
+            List<PointF> curve = new List<PointF>();
 
             //make sure we have x points on edges
             if (points.Count >= 2)
             {
-                PointD f = points[0];
+                PointF f = points[0];
 
                 if (f.x > 0)
                 {
-                    points.Insert(0, new PointD(0, f.y));
+                    points.Insert(0, new PointF(0, f.y));
                 }
 
-                PointD l = points[points.Count - 1];
+                PointF l = points[points.Count - 1];
 
                 if (l.x < w)
                 {
-                    points.Add(new PointD(w, l.y));
+                    points.Add(new PointF(w, l.y));
                 }
             }
 
-            double[] sd = Curves.SecondDerivative(points.ToArray());
+            float[] sd = Curves.SecondDerivative(points.ToArray());
 
             for (int i = 0; i < points.Count - 1; ++i)
             {
-                PointD cur = points[i];
-                PointD next = points[i + 1];
+                PointF cur = points[i];
+                PointF next = points[i + 1];
 
-                for (double x = cur.x; x < next.x; ++x)
+                for (float x = cur.x; x < next.x; ++x)
                 {
-                    double t = (double)(x - cur.x) / (next.x - cur.x);
+                    float t = (float)(x - cur.x) / (next.x - cur.x);
 
-                    double a = 1 - t;
-                    double b = t;
-                    double hn = next.x - cur.x;
+                    float a = 1 - t;
+                    float b = t;
+                    float hn = next.x - cur.x;
 
-                    double y = a * cur.y + b * next.y + (hn * hn / 6) * ((a * a * a - a) * sd[i] + (b * b * b - b) * sd[i + 1]);
+                    float y = a * cur.y + b * next.y + (hn * hn / 6) * ((a * a * a - a) * sd[i] + (b * b * b - b) * sd[i + 1]);
 
 
                     if (y < 0) y = 0;
                     if (y > h) y = h;
 
-                    normalized.Add(new PointD(x / w, y / h));
+                    normalized.Add(new PointF(x / w, y / h));
                 }
             }
 
-            PointD lp = points[points.Count - 1];
+            PointF lp = points[points.Count - 1];
 
-            normalized.Add(new PointD(lp.x / w, lp.y / h));
+            normalized.Add(new PointF(lp.x / w, lp.y / h));
 
             return normalized;
         }
@@ -197,13 +182,13 @@ namespace Materia.Nodes.Atomic
 
             try
             {
-                List<PointD> mids = GetNormalizedCurve(points[0]);
-                List<PointD> reds = GetNormalizedCurve(points[1]);
-                List<PointD> greens = GetNormalizedCurve(points[2]);
-                List<PointD> blues = GetNormalizedCurve(points[3]);
+                List<PointF> mids = GetNormalizedCurve(points[0]);
+                List<PointF> reds = GetNormalizedCurve(points[1]);
+                List<PointF> greens = GetNormalizedCurve(points[2]);
+                List<PointF> blues = GetNormalizedCurve(points[3]);
                 for (int j = 0; j < reds.Count; ++j)
                 {
-                    PointD p = reds[j];
+                    PointF p = reds[j];
                     int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.x * 255)));
                     for (int i = 0; i < 2; ++i)
                     {
@@ -214,7 +199,7 @@ namespace Materia.Nodes.Atomic
 
                 for (int j = 0; j < greens.Count; ++j)
                 {
-                    PointD p = greens[j];
+                    PointF p = greens[j];
                     int x = 255 -(int)Math.Floor(Math.Min(255, Math.Max(0, p.x * 255)));
                     for (int i = 0; i < 2; i++)
                     {
@@ -225,7 +210,7 @@ namespace Materia.Nodes.Atomic
 
                 for (int j = 0; j < blues.Count; ++j)
                 {
-                    PointD p = blues[j];
+                    PointF p = blues[j];
                     int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.x * 255)));
                     for (int i = 0; i < 2; i++)
                     {
@@ -236,7 +221,7 @@ namespace Materia.Nodes.Atomic
 
                 for (int j = 0; j < mids.Count; ++j)
                 {
-                    PointD p = mids[j];
+                    PointF p = mids[j];
                     int x = 255 - (int)Math.Floor(Math.Min(255, Math.Max(0, p.x * 255)));
                     for (int i = 0; i < 2; i++)
                     {
@@ -259,7 +244,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -269,8 +254,13 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+            processor ??= new CurvesProcessor(curveLUT);
+
+            curveLUT ??= new GLTexture2D(PixelInternalFormat.Rgba8);
             curveLUT.Bind();
             curveLUT.SetData(lutBrush.Image, PixelFormat.Rgba, 256, 2);
+            curveLUT.Nearest();
+            curveLUT.Repeat();
             GLTexture2D.Unbind();
 
             processor.Tiling = GetTiling();
@@ -296,9 +286,66 @@ namespace Materia.Nodes.Atomic
 
         public class CurvesData : NodeData
         {
-            public Dictionary<int, List<PointD>> points;
+            public Dictionary<int, List<PointF>> points;
             public float min = 0;
             public float max = 1;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(min);
+                w.Write(max);
+                w.Write(points.Count);
+
+                foreach(int k in points.Keys)
+                {
+                    var list = points[k];
+                    w.Write(k);
+                    w.WriteObjectList(list.ToArray());
+                }
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                min = r.NextFloat();
+                max = r.NextFloat();
+
+                int maxGroups = r.NextInt();
+
+                points = new Dictionary<int, List<PointF>>();
+                for (int i = 0; i < maxGroups; ++i)
+                {
+                    int k = r.NextInt();
+                    points[k] = new List<PointF>(r.NextList<PointF>());
+                }
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            CurvesData d = new CurvesData();
+            FillBaseNodeData(d);
+            d.points = points;
+            d.min = minValue;
+            d.max = maxValue;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            CurvesData d = new CurvesData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            points = new Dictionary<int, List<PointF>>();
+            minValue = d.min;
+            maxValue = d.max;
+
+            foreach (int k in d.points.Keys)
+            {
+                List<PointF> pts = d.points[k];
+                points[k] = pts ?? new List<PointF>();
+            }
         }
 
         public override void FromJson(string data)
@@ -306,14 +353,14 @@ namespace Materia.Nodes.Atomic
             CurvesData d = JsonConvert.DeserializeObject<CurvesData>(data);
             SetBaseNodeDate(d);
 
-            points = new Dictionary<int, List<PointD>>();
+            points = new Dictionary<int, List<PointF>>();
             minValue = d.min;
             maxValue = d.max;
 
             foreach(int k in d.points.Keys)
             {
-                List<PointD> pts = d.points[k];
-                points[k] = pts ?? new List<PointD>();
+                List<PointF> pts = d.points[k];
+                points[k] = pts ?? new List<PointF>();
             }
         }
 

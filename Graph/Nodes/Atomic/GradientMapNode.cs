@@ -10,6 +10,7 @@ using Materia.Nodes.Containers;
 using Materia.Nodes.Helpers;
 using Materia.Rendering.Mathematics;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -25,7 +26,7 @@ namespace Materia.Nodes.Atomic
         GLTexture2D colorLUT;
         FloatBitmap LUT;
 
-        protected Containers.Gradient gradient;
+        protected Containers.Gradient gradient = new Containers.Gradient();
         [Editable(ParameterInputType.Gradient, "Gradient")]
         public Containers.Gradient Gradient
         {
@@ -43,15 +44,9 @@ namespace Materia.Nodes.Atomic
         public GradientMapNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Gradient Map";
-            Id = Guid.NewGuid().ToString();
+
             width = w;
             height = h;
-
-            gradient = new Containers.Gradient();
-
-            tileX = tileY = 1;
-
-            processor = new GradientMapProcessor();
 
             internalPixelType = p;
 
@@ -80,6 +75,7 @@ namespace Materia.Nodes.Atomic
 
         private void FillLUT()
         {
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             if (LUT == null)
@@ -99,7 +95,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -126,6 +122,9 @@ namespace Materia.Nodes.Atomic
 
             CreateBufferIfNeeded();
 
+
+            processor ??= new GradientMapProcessor();
+
             //setting params must go before PrepareView()
             processor.Tiling = GetTiling();
 
@@ -144,40 +143,45 @@ namespace Materia.Nodes.Atomic
         {
             public List<float[]> colors;
             public float[] positions;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+
+                w.Write(colors.Count);
+
+                for (int i = 0; i < colors.Count; ++i)
+                {
+                    w.WriteObjectList(colors[i]);
+                }
+
+                w.WriteObjectList(positions);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+
+                int count = r.NextInt();
+
+                colors = new List<float[]>();
+
+                for (int i = 0; i < count; ++i)
+                {
+                    colors.Add(r.NextList<float>());
+                }
+
+                positions = r.NextList<float>();
+            }
         }
 
-        public override void FromJson(string data)
+        private void FillData(GradientMapData d)
         {
-            GradientMapData d = JsonConvert.DeserializeObject<GradientMapData>(data);
-            SetBaseNodeDate(d);
-
-            gradient = new Containers.Gradient();
-
-            if(d.colors != null)
-            {
-                gradient.colors = new MVector[d.colors.Count];
-            }
-
-            for(int i = 0; i < d.colors.Count; ++i)
-            {
-                gradient.colors[i] = MVector.FromArray(d.colors[i]);
-            }
-
-            if(d.positions != null && d.positions.Length == d.colors.Count)
-            {
-                gradient.positions = d.positions;
-            }
-        }
-
-        public override string GetJson()
-        {
-            GradientMapData d = new GradientMapData();
-            FillBaseNodeData(d);
             d.colors = new List<float[]>();
 
             if (gradient != null)
             {
-                for(int j = 0; j < gradient.colors.Length; ++j)
+                for (int j = 0; j < gradient.colors.Length; ++j)
                 {
                     MVector m = gradient.colors[j];
                     d.colors.Add(m.ToArray());
@@ -185,6 +189,56 @@ namespace Materia.Nodes.Atomic
 
                 d.positions = gradient.positions;
             }
+        }
+
+        private void SetData(GradientMapData d)
+        {
+            gradient = new Containers.Gradient();
+
+            if (d.colors != null)
+            {
+                gradient.colors = new MVector[d.colors.Count];
+            }
+
+            for (int i = 0; i < d.colors.Count; ++i)
+            {
+                gradient.colors[i] = MVector.FromArray(d.colors[i]);
+            }
+
+            if (d.positions != null && d.positions.Length == d.colors.Count)
+            {
+                gradient.positions = d.positions;
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            GradientMapData d = new GradientMapData();
+            FillBaseNodeData(d);
+            FillData(d);
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            GradientMapData d = new GradientMapData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            SetData(d);
+        }
+
+        public override void FromJson(string data)
+        {
+            GradientMapData d = JsonConvert.DeserializeObject<GradientMapData>(data);
+            SetBaseNodeDate(d);
+            SetData(d);
+        }
+
+        public override string GetJson()
+        {
+            GradientMapData d = new GradientMapData();
+            FillBaseNodeData(d);
+            FillData(d);
 
             return JsonConvert.SerializeObject(d);
         }

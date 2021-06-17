@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Materia.Rendering.Attributes;
 using Newtonsoft.Json;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -119,7 +120,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Call";
-            Id = Guid.NewGuid().ToString();
+ 
             shaderId = "S" + Id.Split('-')[0];
 
             output = new NodeOutput(NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4 | NodeType.Bool, this);
@@ -211,24 +212,24 @@ namespace Materia.Nodes.MathNodes
                 {
                     if (idx == -1)
                     {
-                        prevEx.Add(executeInput);
+                        prevEx.Add(ExecuteInput);
                     }
                     else
                     {
-                        prevEx.InsertAt(idx, executeInput);
+                        prevEx.InsertAt(idx, ExecuteInput);
                     }
                 }
             }
 
-            Inputs.Add(executeInput);
+            Inputs.Add(ExecuteInput);
 
             if (previous.Count > 0)
             {
-                AddedInput(executeInput, previous[0]);
+                AddedInput(ExecuteInput, previous[0]);
             }
             else
             {
-                AddedInput(executeInput);
+                AddedInput(ExecuteInput);
             }
 
             if(selectedFunction != null)
@@ -331,7 +332,7 @@ namespace Materia.Nodes.MathNodes
 
             foreach (var i in Inputs)
             {
-                if (i != executeInput)
+                if (i != ExecuteInput)
                 {
                     if (!i.HasInput)
                     {
@@ -379,7 +380,7 @@ namespace Materia.Nodes.MathNodes
 
             foreach(var i in Inputs)
             {
-                if (i != executeInput)
+                if (i != ExecuteInput)
                 {
                     var nid = (i.Reference.Node as MathNode).ShaderId;
                     var index = i.Reference.Node.Outputs.IndexOf(i.Reference);
@@ -405,7 +406,7 @@ namespace Materia.Nodes.MathNodes
 
             foreach(NodeInput inp in Inputs)
             {
-                if(inp != executeInput && inp.IsValid)
+                if(inp != ExecuteInput && inp.IsValid)
                 {
                     selectedFunction.SetVar(inp.Name, inp.Data, inp.Type);
                 }
@@ -426,6 +427,40 @@ namespace Materia.Nodes.MathNodes
         {
             public int selectedIndex;
             public string selectedName;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(selectedIndex);
+                w.Write(selectedName);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                selectedIndex = r.NextInt();
+                selectedName = r.NextString();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            CallNodeData d = new CallNodeData();
+            FillBaseNodeData(d);
+            d.selectedIndex = selectedIndex;
+            d.selectedName = selectedName;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            CallNodeData d = new CallNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            selectedIndex = d.selectedIndex;
+            selectedName = d.selectedName;
+
+            OnParentSet();
         }
 
         public override string GetJson()

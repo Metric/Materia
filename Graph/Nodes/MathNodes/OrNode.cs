@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Or";
-            Id = Guid.NewGuid().ToString();
+  
             shaderId = "S" + Id.Split('-')[0];
 
             output = new NodeOutput(NodeType.Bool, this);
@@ -78,7 +78,7 @@ namespace Materia.Nodes.MathNodes
 
             foreach(var inp in Inputs)
             {
-                if (inp != executeInput && inp.HasInput)
+                if (inp != ExecuteInput && inp.HasInput)
                 { 
                     var index = inp.Reference.Node.Outputs.IndexOf(inp.Reference);
                     var n1id = (inp.Reference.Node as MathNode).ShaderId;
@@ -100,7 +100,7 @@ namespace Materia.Nodes.MathNodes
             bool result = false;
             foreach(NodeInput inp in Inputs)
             {
-                if (inp != executeInput && inp.IsValid)
+                if (inp != ExecuteInput && inp.IsValid)
                 {
                     float f = inp.Data.ToFloat();
                     if (f > 0)

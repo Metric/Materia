@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Attributes;
 using Materia.Rendering.Mathematics;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.MathNodes
 {
@@ -11,7 +12,7 @@ namespace Materia.Nodes.MathNodes
     {
         NodeOutput output;
 
-        MVector vec;
+        MVector vec = MVector.Zero;
 
         protected float x;
         [Editable(ParameterInputType.Float4Input, "Vector")]
@@ -34,17 +35,16 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            vec = new MVector(0,0,0,0);
-
             Name = "Float4 Constant";
-            Id = Guid.NewGuid().ToString();
+
             shaderId = "S" + Id.Split('-')[0];
 
+            Outputs.Clear();
+            Inputs.Clear();
+
+            ExecuteInput = null;
+
             output = new NodeOutput(NodeType.Float4, this);
-
-            Inputs = new List<NodeInput>();
-
-            Outputs = new List<NodeOutput>();
             Outputs.Add(output);
         }
 
@@ -59,6 +59,46 @@ namespace Materia.Nodes.MathNodes
             public float y;
             public float z;
             public float w;
+
+            public override void Write(Writer wr)
+            {
+                base.Write(wr);
+                wr.Write(x);
+                wr.Write(y);
+                wr.Write(z);
+                wr.Write(w);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                x = r.NextFloat();
+                y = r.NextFloat();
+                z = r.NextFloat();
+                w = r.NextFloat();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            Float4ConstantData d = new Float4ConstantData();
+            FillBaseNodeData(d);
+            d.x = vec.X;
+            d.y = vec.Y;
+            d.z = vec.Z;
+            d.w = vec.W;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            Float4ConstantData d = new Float4ConstantData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            vec.X = d.x;
+            vec.Y = d.y;
+            vec.Z = d.z;
+            vec.W = d.w;
         }
 
         public override void FromJson(string data)

@@ -6,18 +6,19 @@ using Materia.Rendering.Imaging.Processing;
 using Materia.Rendering.Textures;
 using Materia.Rendering.Mathematics;
 using Materia.Graph;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
     public class LevelsNode : ImageNode
     {
         NodeInput input;
-        MultiRange range;
 
         NodeOutput Output;
 
         LevelsProcessor processor;
 
+        MultiRange range = new MultiRange();
         [Promote(NodeType.Float4)]
         [Editable(ParameterInputType.Levels, "Range")]
         public MultiRange Range
@@ -36,21 +37,14 @@ namespace Materia.Nodes.Atomic
         public LevelsNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "Levels";
-            Id = Guid.NewGuid().ToString();
+
             width = w;
             height = h;
-
-            tileX = tileY = 1;
-
-            range = new MultiRange();
-
-            processor = new LevelsProcessor();
 
             internalPixelType = p;
 
             input = new NodeInput(NodeType.Color | NodeType.Gray, this, "Image Input");
             Output = new NodeOutput(NodeType.Color | NodeType.Gray, this);
-
 
             Inputs.Add(input);
             Outputs.Add(Output);
@@ -66,6 +60,7 @@ namespace Materia.Nodes.Atomic
 
         private void GetParams()
         {
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             prange = range;
@@ -116,7 +111,7 @@ namespace Materia.Nodes.Atomic
         MultiRange prange;
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -125,6 +120,8 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new LevelsProcessor();
 
             processor.Tiling = GetTiling();
             processor.Min = new Vector3(prange.min[0], prange.min[1], prange.min[2]);
@@ -143,6 +140,41 @@ namespace Materia.Nodes.Atomic
         public class LevelsData : NodeData
         {
             public MultiRange range;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.WriteObjectList(range.min);
+                w.WriteObjectList(range.mid);
+                w.WriteObjectList(range.max);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                range = new MultiRange
+                {
+                    min = r.NextList<float>(),
+                    mid = r.NextList<float>(),
+                    max = r.NextList<float>()
+                };
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            LevelsData d = new LevelsData();
+            FillBaseNodeData(d);
+            d.range = range;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            LevelsData d = new LevelsData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            range = d.range;
         }
 
         public override void FromJson(string data)

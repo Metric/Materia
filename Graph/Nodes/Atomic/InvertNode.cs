@@ -6,6 +6,7 @@ using Materia.Rendering.Attributes;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -14,10 +15,10 @@ namespace Materia.Nodes.Atomic
         NodeInput input;
         NodeOutput output;
 
-        bool red;
-        bool green;
-        bool blue;
-        bool alpha;
+        bool red = true;
+        bool green = true;
+        bool blue = true;
+        bool alpha = false;
 
         InvertProcessor processor;
 
@@ -85,18 +86,8 @@ namespace Materia.Nodes.Atomic
         {
             Name = "Invert";
 
-            Id = Guid.NewGuid().ToString();
-
             width = w;
             height = h;
-            red = true;
-            blue = true;
-            green = true;
-            alpha = false;
-
-            tileX = tileY = 1;
-
-            processor = new InvertProcessor();
 
             internalPixelType = p;
 
@@ -115,7 +106,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -124,6 +115,8 @@ namespace Materia.Nodes.Atomic
             if (i1.Id == 0) return;
 
             CreateBufferIfNeeded();
+
+            processor ??= new InvertProcessor();
 
             processor.Tiling = GetTiling();
             processor.Red = GetParameter("Red", red); ;
@@ -150,9 +143,50 @@ namespace Materia.Nodes.Atomic
         public class InvertNodeData : NodeData
         {
             public bool red;
-            public bool blue;
             public bool green;
+            public bool blue;
             public bool alpha;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(red);
+                w.Write(green);
+                w.Write(blue);
+                w.Write(alpha);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                red = r.NextBool();
+                green = r.NextBool();
+                blue = r.NextBool();
+                alpha = r.NextBool();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            InvertNodeData d = new InvertNodeData();
+            FillBaseNodeData(d);
+            d.red = red;
+            d.green = green;
+            d.blue = blue;
+            d.alpha = alpha;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            InvertNodeData d = new InvertNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+
+            red = d.red;
+            green = d.green;
+            blue = d.blue;
+            alpha = d.alpha;
         }
 
         public override void FromJson(string data)

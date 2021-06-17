@@ -14,8 +14,6 @@ namespace Materia.Nodes.MathNodes
         NodeInput input4;
         NodeOutput output;
 
-        MVector vec;
-
         public MakeFloat4Node(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             //we ignore w,h,p
@@ -23,10 +21,8 @@ namespace Materia.Nodes.MathNodes
             CanPreview = false;
 
             Name = "Make Float4";
-            Id = Guid.NewGuid().ToString();
-            shaderId = "S" + Id.Split('-')[0];
 
-            vec = new MVector();
+            shaderId = "S" + Id.Split('-')[0];
 
             input = new NodeInput(NodeType.Float, this, "X (Float)");
             input2 = new NodeInput(NodeType.Float, this, "Y (Float)");

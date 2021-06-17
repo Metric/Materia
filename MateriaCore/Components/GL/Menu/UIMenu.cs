@@ -59,7 +59,7 @@ namespace MateriaCore.Components.GL.Menu
         {
             RelativeTo = Anchor.TopHorizFill;
             background = AddComponent<UIImage>();
-            background.Color = new Vector4(0.1f, 0.1f, 0.1f, 1);
+            background.Color = new Vector4(0.075f, 0.075f, 0.075f, 1);
             selectable = AddComponent<UISelectable>();
             selectable.IsFocusable = false;
             stack = AddComponent<UIStackPanel>();

@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Materia.Rendering.Extensions;
 using Materia.Graph;
 using Materia.Rendering.Mathematics;
+using Materia.Graph.IO;
 
 namespace Materia.Nodes.Atomic
 {
@@ -16,7 +17,7 @@ namespace Materia.Nodes.Atomic
 
         HSLProcessor processor;
 
-        protected float hue;
+        protected float hue = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Hue")]
         public float Hue
@@ -32,7 +33,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float saturation;
+        protected float saturation = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Saturation", "Default", -1, 1)]
         public float Saturation
@@ -48,7 +49,7 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float lightness;
+        protected float lightness = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.FloatSlider, "Lightness", "Default", -1, 1)]
         public float Lightness
@@ -67,17 +68,9 @@ namespace Materia.Nodes.Atomic
         public HSLNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
             Name = "HSL";
-            Id = Guid.NewGuid().ToString();
+
             width = w;
             height = h;
-
-            tileX = tileY = 1;
-
-            processor = new HSLProcessor();
-
-            hue = 0;
-            saturation = 0;
-            lightness = 0;
 
             internalPixelType = p;
 
@@ -104,7 +97,7 @@ namespace Materia.Nodes.Atomic
 
         void Process()
         {
-            if (processor == null) return;
+            if (isDisposing) return;
             if (!input.HasInput) return;
 
             GLTexture2D i1 = (GLTexture2D)input.Reference.Data;
@@ -112,9 +105,9 @@ namespace Materia.Nodes.Atomic
             if (i1 == null) return;
             if (i1.Id == 0) return;
 
-            if (processor == null) return;
-
             CreateBufferIfNeeded();
+
+            processor ??= new HSLProcessor();
 
             processor.Tiling = GetTiling();
 
@@ -135,6 +128,42 @@ namespace Materia.Nodes.Atomic
             public float hue;
             public float saturation;
             public float lightness;
+
+            public override void Write(Writer w)
+            {
+                base.Write(w);
+                w.Write(hue);
+                w.Write(saturation);
+                w.Write(lightness);
+            }
+
+            public override void Parse(Reader r)
+            {
+                base.Parse(r);
+                hue = r.NextFloat();
+                saturation = r.NextFloat();
+                lightness = r.NextFloat();
+            }
+        }
+
+        public override void GetBinary(Writer w)
+        {
+            HSLData d = new HSLData();
+            FillBaseNodeData(d);
+            d.hue = hue;
+            d.saturation = saturation;
+            d.lightness = lightness;
+            d.Write(w);
+        }
+
+        public override void FromBinary(Reader r)
+        {
+            HSLData d = new HSLData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            hue = d.hue;
+            saturation = d.saturation;
+            lightness = d.lightness;
         }
 
         public override void FromJson(string data)

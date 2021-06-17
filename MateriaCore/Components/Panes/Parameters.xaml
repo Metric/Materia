@@ -7,7 +7,7 @@
         x:Class="MateriaCore.Components.Panes.Parameters"
         Title="Parameters" Topmost="True" CanResize="True" SystemDecorations="None" Width="256" Height="450" MinWidth="256" MinHeight="450" ShowInTaskbar="False">
   <Grid Background="{StaticResource Surface}">
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Margin="2,2,2,2">
+    <ScrollViewer Name="ScrollView" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Margin="2,2,2,2">
       <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch">
         <Grid Background="{StaticResource Overlay5}" Height="32" HorizontalAlignment="Stretch">
           <TextBlock Name="Title" Foreground="White" Text="Properties" FontSize="16" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" />
