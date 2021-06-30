@@ -240,6 +240,27 @@ namespace MateriaCore.Components.Panes
 
         private void OnViewParameters(object sender, object n)
         {
+            //allow toggling of view
+            //since we now only trigger this event
+            //on double click of a node
+            if (sender == trackedNode 
+                && trackedNode != null && sender != null)
+            {
+                if (IsVisible)
+                {
+                    Hide();
+                }
+                else
+                {
+                    AlignToNode();
+                    Show();
+                    Set(n);
+                }
+
+                return;
+            }
+
+            //otherwise set new tracked node
             if (sender is IGraphNode)
             {
                 trackedNode = sender as IGraphNode;
@@ -248,6 +269,7 @@ namespace MateriaCore.Components.Panes
             {
                 trackedNode = null;
             }
+
             Set(n);
         }
 

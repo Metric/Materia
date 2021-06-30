@@ -205,10 +205,10 @@ namespace Materia.Graph
             public object value;
             public bool isFunction;
             public string description;
-            public int type;
+            public NodeType type;
             public float min;
             public float max;
-            public int inputType;
+            public ParameterInputType inputType;
             public string id;
             public string section;
 
@@ -219,8 +219,34 @@ namespace Materia.Graph
                 w.Write(name);
                 w.Write(section);
                 w.Write(description);
-                w.Write((int)type);
-                w.Write((int)inputType);
+
+                InternalNodeType intype = InternalNodeType.Float;
+                switch (type)
+                {
+                    case NodeType.Bool:
+                        intype = InternalNodeType.Bool;
+                        break;
+                    case NodeType.Float3:
+                        intype = InternalNodeType.Float3;
+                        break;
+                    case NodeType.Float2:
+                        intype = InternalNodeType.Float2;
+                        break;
+                    case NodeType.Color:
+                    case NodeType.Gray:
+                    case NodeType.Float4:
+                        intype = InternalNodeType.Float4;
+                        break;
+                    case NodeType.Float:
+                        intype = InternalNodeType.Float;
+                        break;
+                    case NodeType.Matrix:
+                        intype = InternalNodeType.Matrix;
+                        break;
+                }
+
+                w.Write((byte)intype);
+                w.Write((byte)inputType);
                 w.Write(min);
                 w.Write(max);
 
@@ -228,12 +254,12 @@ namespace Materia.Graph
                 {
                     Function f = value as Function;
                     //handle graph writer to binary
-                    //f?.GetBinary(w);
+                    f?.GetBinary(w);
                 }
                 else
                 {
-                    NodeType ntype = (NodeType)type;
-                    switch(ntype)
+                  
+                    switch(type)
                     {
                         case NodeType.Bool:
                             w.Write(value.ToBool());
@@ -242,8 +268,7 @@ namespace Materia.Graph
                         case NodeType.Gray:
                         case NodeType.Float4:
                         case NodeType.Float3:
-                        case NodeType.Float2:
-                            
+                        case NodeType.Float2:                  
                             if (value is MVector)
                             {
                                 MVector mv = (MVector)value;
@@ -280,8 +305,31 @@ namespace Materia.Graph
                 name = r.NextString();
                 section = r.NextString();
                 description = r.NextString();
-                type = r.NextInt();
-                inputType = r.NextInt();
+
+                InternalNodeType intype = (InternalNodeType)r.NextByte();
+                switch (intype)
+                {
+                    case InternalNodeType.Bool:
+                        type = NodeType.Bool;
+                        break;
+                    case InternalNodeType.Float3:
+                        type = NodeType.Float3;
+                        break;
+                    case InternalNodeType.Float2:
+                        type = NodeType.Float2;
+                        break;
+                    case InternalNodeType.Float4:
+                        type = NodeType.Float4;
+                        break;
+                    case InternalNodeType.Float:
+                        type = NodeType.Float;
+                        break;
+                    case InternalNodeType.Matrix:
+                        type = NodeType.Matrix;
+                        break;
+                }
+
+                inputType = (ParameterInputType)r.NextByte();
                 min = r.NextFloat();
                 max = r.NextFloat();
 
@@ -290,14 +338,13 @@ namespace Materia.Graph
                     Function t = new Function("temp");
                     t.AssignParentNode(n);
                     t.FromBinary(r);
-                    t.ExpectedOutput = (NodeType)type;
+                    t.ExpectedOutput = type;
                     t.SetConnections();
                     value = t;
                 }
                 else
                 {
-                    NodeType ntype = (NodeType)type;
-                    switch(ntype)
+                    switch(type)
                     {
                         case NodeType.Bool:
                             value = r.NextBool();
@@ -458,8 +505,8 @@ namespace Materia.Graph
         {
             Name = d.name;
 
-            type = (NodeType)d.type;
-            inputType = (ParameterInputType)d.inputType;
+            type = d.type;
+            inputType = d.inputType;
             Id = d.id;
             min = d.min;
             max = d.max;
@@ -533,22 +580,29 @@ namespace Materia.Graph
             d.name = Name;
             d.isFunction = IsFunction();
             d.description = Description;
-            d.type = (int)type;
+            d.type = type;
             d.min = Min;
             d.max = Max;
-            d.inputType = (int)inputType;
+            d.inputType = inputType;
             d.id = Id;
             d.section = Section;
             d.value = v;
             d.Write(w);
         }
 
+        public virtual void RestoreBinary(Reader r, Node n)
+        {
+            GraphParameterValueData d = new GraphParameterValueData();
+            d.Parse(r, n);
+            SetBinary(d);
+        }
+
         public virtual void SetBinary(GraphParameterValueData d)
         {
             Name = d.name;
 
-            type = (NodeType)d.type;
-            inputType = (ParameterInputType)d.inputType;
+            type = d.type;
+            inputType = d.inputType;
             Id = d.id;
             min = d.min;
             max = d.max;
@@ -572,10 +626,10 @@ namespace Materia.Graph
             d.name = Name;
             d.isFunction = IsFunction();
             d.description = Description;
-            d.type = (int)type;
+            d.type = type;
             d.min = Min;
             d.max = Max;
-            d.inputType = (int)inputType;
+            d.inputType = inputType;
             d.id = Id;
             d.section = Section;
 

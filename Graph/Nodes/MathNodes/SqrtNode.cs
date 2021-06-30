@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Square Root";
+            defaultName = Name = "Square Root";
 
             shaderId = "S" + Id.Split('-')[0];
 

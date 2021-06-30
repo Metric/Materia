@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Fraction";
+            defaultName = Name = "Fraction";
    
             shaderId = "S" + Id.Split('-')[0];
 

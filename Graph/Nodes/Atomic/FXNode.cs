@@ -234,7 +234,7 @@ namespace Materia.Nodes.Atomic
 
         public FXNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "FX";
+            defaultName = Name = "FX";
 
             width = w;
             height = h;
@@ -918,8 +918,8 @@ namespace Materia.Nodes.Atomic
             public float ty;
             public float sx;
             public float sy;
-            public int pivot;
-            public int blending;
+            public byte pivot;
+            public byte blending;
             public bool clamp;
 
             public override void Write(Writer w)
@@ -945,8 +945,8 @@ namespace Materia.Nodes.Atomic
                 ty = r.NextFloat();
                 sx = r.NextFloat();
                 sy = r.NextFloat();
-                pivot = r.NextInt();
-                blending = r.NextInt();
+                pivot = r.NextByte();
+                blending = r.NextByte();
                 clamp = r.NextBool();
             }
         }
@@ -959,8 +959,8 @@ namespace Materia.Nodes.Atomic
             d.ty = translation.Y;
             d.sx = scale.X;
             d.sy = scale.Y;
-            d.pivot = (int)patternPivot;
-            d.blending = (int)blending;
+            d.pivot = (byte)patternPivot;
+            d.blending = (byte)blending;
             d.clamp = clamp;
         }
 

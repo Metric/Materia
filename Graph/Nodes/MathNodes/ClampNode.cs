@@ -22,7 +22,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Clamp";
+            defaultName = Name = "Clamp";
   
             shaderId = "S" + Id.Split('-')[0];
 

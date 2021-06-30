@@ -10,7 +10,7 @@ namespace Materia.Nodes.MathNodes
     {
         public RotateMatrixNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base(w,h,p)
         {
-            name = "Rotate Matrix";
+            defaultName = name = "Rotate Matrix";
             input.Type = NodeType.Float;
             input.Name = "Degrees";
         }

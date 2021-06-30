@@ -77,7 +77,7 @@ namespace Materia.Nodes.Atomic
             //also it allows us to load on another thread if needed
             //and not worry about GL calls
 
-            Name = "Blend";
+            defaultName = Name = "Blend";
 
             width = w;
             height = h;
@@ -145,24 +145,24 @@ namespace Materia.Nodes.Atomic
 
         public class BlendData : NodeData
         {
-            public string mode;
+            public BlendType mode;
             public float alpha;
-            public string alphaMode;
+            public AlphaModeType alphaMode;
 
             public override void Write(Writer w)
             {
                 base.Write(w);
-                w.Write(mode);
+                w.Write((byte)mode);
                 w.Write(alpha);
-                w.Write(alphaMode);
+                w.Write((byte)alphaMode);
             }
 
             public override void Parse(Reader r)
             {
                 base.Parse(r);
-                mode = r.NextString();
+                mode = (BlendType)r.NextByte();
                 alpha = r.NextFloat();
-                alphaMode = r.NextString();
+                alphaMode = (AlphaModeType)r.NextByte();
             }
         }
 
@@ -170,8 +170,8 @@ namespace Materia.Nodes.Atomic
         {
             BlendData d = new BlendData();
             FillBaseNodeData(d);
-            d.mode = mode.ToString(); //todo: eventually convert to integer
-            d.alphaMode = alphaMode.ToString(); //todo: convert to integer
+            d.mode = mode; //todo: eventually convert to integer
+            d.alphaMode = alphaMode; //todo: convert to integer
             d.alpha = alpha;
             d.Write(w);
         }
@@ -181,8 +181,8 @@ namespace Materia.Nodes.Atomic
             BlendData d = new BlendData();
             d.Parse(r);
             SetBaseNodeDate(d);
-            Enum.TryParse<AlphaModeType>(d.alphaMode, out alphaMode);
-            Enum.TryParse<BlendType>(d.mode, out mode);
+            mode = d.mode;
+            alphaMode = d.alphaMode;
             alpha = d.alpha;
         }
 
@@ -190,8 +190,8 @@ namespace Materia.Nodes.Atomic
         {
             BlendData d = new BlendData();
             FillBaseNodeData(d);
-            d.mode = mode.ToString();
-            d.alphaMode = alphaMode.ToString();
+            d.mode = mode;
+            d.alphaMode = alphaMode;
             d.alpha = alpha;
 
             return JsonConvert.SerializeObject(d);
@@ -201,8 +201,8 @@ namespace Materia.Nodes.Atomic
         {
             BlendData d = JsonConvert.DeserializeObject<BlendData>(data);
             SetBaseNodeDate(d);
-            Enum.TryParse<AlphaModeType>(d.alphaMode, out alphaMode);
-            Enum.TryParse<BlendType>(d.mode, out mode);
+            mode = d.mode;
+            alphaMode = d.alphaMode;
             alpha = d.alpha;
         }
     }

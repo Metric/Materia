@@ -56,7 +56,7 @@ namespace Materia.Nodes.Atomic
 
         public DistanceNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Distance";
+            defaultName = Name = "Distance";
 
             width = w;
             height = h;

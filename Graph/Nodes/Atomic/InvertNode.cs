@@ -84,7 +84,7 @@ namespace Materia.Nodes.Atomic
 
         public InvertNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Invert";
+            defaultName = Name = "Invert";
 
             width = w;
             height = h;

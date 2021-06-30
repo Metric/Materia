@@ -91,7 +91,7 @@ namespace Materia.Nodes.Atomic
         {
             OutType = OutputType.basecolor;
 
-            Name = "Output";
+            defaultName = Name = "Output";
 
             width = height = 16;
 
@@ -156,13 +156,13 @@ namespace Materia.Nodes.Atomic
             public override void Write(Writer w)
             {
                 base.Write(w);
-                w.Write((int)outType);
+                w.Write((byte)outType);
             }
 
             public override void Parse(Reader r)
             {
                 base.Parse(r);
-                outType = (OutputType)r.NextInt();
+                outType = (OutputType)r.NextByte();
             }
         }
 

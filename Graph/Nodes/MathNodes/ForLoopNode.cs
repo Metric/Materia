@@ -25,7 +25,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "For Loop";
+            defaultName = Name = "For Loop";
 
             shaderId = "S" + Id.Split('-')[0];
 

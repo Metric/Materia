@@ -16,7 +16,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Tangent";
+            defaultName = Name = "Tangent";
  
             shaderId = "S" + Id.Split('-')[0];
 

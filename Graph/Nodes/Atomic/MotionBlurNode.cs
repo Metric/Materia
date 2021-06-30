@@ -16,7 +16,7 @@ namespace Materia.Nodes.Atomic
 
         int magnitude = 10;
         [Promote(NodeType.Float)]
-        [Editable(ParameterInputType.IntSlider, "Intensity", "Default", 1, 128)]
+        [Editable(ParameterInputType.IntSlider, "Intensity", "Default", 0, 255)]
         public int Intensity
         {
             get
@@ -51,7 +51,7 @@ namespace Materia.Nodes.Atomic
 
         public MotionBlurNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Motion Blur";
+            defaultName = Name = "Motion Blur";
 
             width = w;
             height = h;
@@ -96,8 +96,8 @@ namespace Materia.Nodes.Atomic
 
         public class MotionBlurData : NodeData
         {
-            public int intensity;
-            public int direction;
+            public byte intensity;
+            public byte direction;
 
             public override void Write(Writer w)
             {
@@ -109,8 +109,8 @@ namespace Materia.Nodes.Atomic
             public override void Parse(Reader r)
             {
                 base.Parse(r);
-                intensity = r.NextInt();
-                direction = r.NextInt();
+                intensity = r.NextByte();
+                direction = r.NextByte();
             }
         }
 
@@ -118,8 +118,8 @@ namespace Materia.Nodes.Atomic
         {
             MotionBlurData d = new MotionBlurData();
             FillBaseNodeData(d);
-            d.intensity = magnitude;
-            d.direction = direction;
+            d.intensity = (byte)magnitude;
+            d.direction = (byte)direction;
             d.Write(w);
         }
 
@@ -144,8 +144,8 @@ namespace Materia.Nodes.Atomic
         {
             MotionBlurData d = new MotionBlurData();
             FillBaseNodeData(d);
-            d.intensity = magnitude;
-            d.direction = direction;
+            d.intensity = (byte)magnitude;
+            d.direction = (byte)direction;
 
             return JsonConvert.SerializeObject(d);
         }

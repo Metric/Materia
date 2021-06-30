@@ -20,7 +20,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Make Float4";
+            defaultName = Name = "Make Float4";
 
             shaderId = "S" + Id.Split('-')[0];
 

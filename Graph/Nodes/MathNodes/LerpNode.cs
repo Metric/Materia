@@ -19,7 +19,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Linear Interpolation";
+            defaultName = Name = "Lerp";
 
             shaderId = "S" + Id.Split('-')[0];
 

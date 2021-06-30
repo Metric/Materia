@@ -134,13 +134,13 @@ namespace MateriaCore.Components.GL
             shelfSourceView = new UIShelfSourceView()
             {
                 Size = new Vector2(384, 1),
-                RelativeTo = Anchor.RightVerticalFill,
-                Margin = new Box2(0,32,0,0),
+                RelativeTo = Anchor.Fill,
+                Margin = new Box2(384,32,0,0),
             };
           
             content.AddChild(searchInput);
-            content.AddChild(shelfSourceView);
             content.AddChild(shelfCategories);
+            content.AddChild(shelfSourceView);
         }
 
         private void SearchInput_OnClear(InfinityUI.Controls.TextInput obj)

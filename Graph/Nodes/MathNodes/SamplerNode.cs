@@ -31,7 +31,7 @@ namespace Materia.Nodes.MathNodes
         {
             CanPreview = false;
 
-            Name = "Sampler";
+            defaultName = Name = "Sampler";
 
             shaderId = "S" + Id.Split('-')[0];
 

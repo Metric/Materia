@@ -210,7 +210,7 @@ namespace Materia.Nodes.Atomic
 
         public TextNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Text";
+            defaultName = Name = "Text";
 
             width = w;
             height = h;
@@ -233,8 +233,8 @@ namespace Materia.Nodes.Atomic
             public float positionY;
             public float scaleX;
             public float scaleY;
-            public int style;
-            public int alignment;
+            public byte style;
+            public byte alignment;
             public float spacing;
 
             public override void Write(Writer w)
@@ -258,8 +258,8 @@ namespace Materia.Nodes.Atomic
                 base.Parse(r);
                 text = r.NextString();
                 fontFamily = r.NextString();
-                style = r.NextInt();
-                alignment = r.NextInt();
+                style = r.NextByte();
+                alignment = r.NextByte();
                 fontSize = r.NextFloat();
                 spacing = r.NextFloat();
                 rotation = r.NextFloat();
@@ -288,13 +288,13 @@ namespace Materia.Nodes.Atomic
             d.fontFamily = fontFamily;
             d.fontSize = fontSize;
             d.text = text;
-            d.style = (int)style;
+            d.style = (byte)style;
             d.rotation = rotation;
             d.positionX = position.X;
             d.positionY = position.Y;
             d.scaleX = scale.X;
             d.scaleY = scale.Y;
-            d.alignment = (int)alignment;
+            d.alignment = (byte)alignment;
             d.spacing = spacing;
         }
 

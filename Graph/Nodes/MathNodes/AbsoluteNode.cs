@@ -19,7 +19,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Absolute";
+            defaultName = Name = "Absolute";
 
             shaderId = "S" + Id.Split('-')[0];
 

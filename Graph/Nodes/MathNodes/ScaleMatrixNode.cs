@@ -8,7 +8,7 @@ namespace Materia.Nodes.MathNodes
     {
         public ScaleMatrixNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base(w, h, p)
         {
-            name = "Scale Matrix";
+            defaultName = name = "Scale Matrix";
             input.Type = NodeType.Float2;
             input.Name = "Scale";
         }

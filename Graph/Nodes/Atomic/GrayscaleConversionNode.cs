@@ -83,7 +83,7 @@ namespace Materia.Nodes.Atomic
 
         public GrayscaleConversionNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Grayscale Conversion";
+            defaultName = Name = "Grayscale Conversion";
 
             width = w;
             height = h;

@@ -22,10 +22,10 @@ namespace Materia.Nodes.Atomic
 
         protected GLTexture2D buffer2;
 
-        protected float intensity = 1;
+        protected int intensity = 1;
         [Promote(NodeType.Float)]
-        [Editable(ParameterInputType.FloatSlider, "Intensity")]
-        public float Intensity
+        [Editable(ParameterInputType.IntSlider, "Intensity", "Default", 0, 255)]
+        public int Intensity
         {
             get
             {
@@ -38,10 +38,10 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float blurIntensity = 1;
+        protected int blurIntensity = 1;
         [Promote(NodeType.Float)]
-        [Editable(ParameterInputType.IntSlider, "Blur Intensity", "Default", 0, 128)]
-        public float BlurIntensity
+        [Editable(ParameterInputType.IntSlider, "Blur Intensity", "Default", 1, 255)]
+        public int BlurIntensity
         {
             get
             {
@@ -56,7 +56,7 @@ namespace Materia.Nodes.Atomic
 
         public WarpNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Warp";
+            defaultName = Name = "Warp";
 
             width = w;
             height = h;
@@ -132,8 +132,8 @@ namespace Materia.Nodes.Atomic
 
         public class WarpData : NodeData
         {
-            public float intensity;
-            public float blurIntensity;
+            public byte intensity;
+            public byte blurIntensity;
 
             public override void Write(Writer w)
             {
@@ -145,8 +145,8 @@ namespace Materia.Nodes.Atomic
             public override void Parse(Reader r)
             {
                 base.Parse(r);
-                intensity = r.NextFloat();
-                blurIntensity = r.NextFloat();
+                intensity = r.NextByte();
+                blurIntensity = r.NextByte();
             }
         }
 
@@ -154,8 +154,8 @@ namespace Materia.Nodes.Atomic
         {
             WarpData d = new WarpData();
             FillBaseNodeData(d);
-            d.intensity = intensity;
-            d.blurIntensity = blurIntensity;
+            d.intensity = (byte)intensity;
+            d.blurIntensity = (byte)blurIntensity;
             d.Write(w);
         }
 
@@ -172,8 +172,8 @@ namespace Materia.Nodes.Atomic
         {
             WarpData d = new WarpData();
             FillBaseNodeData(d);
-            d.intensity = intensity;
-            d.blurIntensity = blurIntensity;
+            d.intensity = (byte)intensity;
+            d.blurIntensity = (byte)blurIntensity;
 
             return JsonConvert.SerializeObject(d);
         }

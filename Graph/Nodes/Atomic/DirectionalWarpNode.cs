@@ -22,10 +22,10 @@ namespace Materia.Nodes.Atomic
 
         protected NodeOutput output;
 
-        protected float angle = 0;
+        protected int angle = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Angle", "Default", 0, 360)]
-        public float Angle
+        public int Angle
         {
             get
             {
@@ -38,10 +38,10 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float intensity = 1;
+        protected int intensity = 0;
         [Promote(NodeType.Float)]
-        [Editable(ParameterInputType.FloatSlider, "Intensity")]
-        public float Intensity
+        [Editable(ParameterInputType.IntSlider, "Intensity", "Default", 0, 255)]
+        public int Intensity
         {
             get
             {
@@ -54,10 +54,10 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float blurIntensity = 1;
+        protected int blurIntensity = 1;
         [Promote(NodeType.Float)]
-        [Editable(ParameterInputType.IntSlider, "Blur Intensity", "Default", 0, 128)]
-        public float BlurIntensity
+        [Editable(ParameterInputType.IntSlider, "Blur Intensity", "Default", 1, 255)]
+        public int BlurIntensity
         {
             get
             {
@@ -72,7 +72,7 @@ namespace Materia.Nodes.Atomic
 
         public DirectionalWarpNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Directional Warp";
+            defaultName = Name = "Directional Warp";
 
             width = w;
             height = h;
@@ -150,9 +150,9 @@ namespace Materia.Nodes.Atomic
 
         public class WarpData : NodeData
         {
-            public float intensity;
-            public float blurIntensity;
-            public float angle;
+            public byte intensity;
+            public byte blurIntensity;
+            public ushort angle;
 
             public override void Write(Writer w)
             {
@@ -165,9 +165,9 @@ namespace Materia.Nodes.Atomic
             public override void Parse(Reader r)
             {
                 base.Parse(r);
-                intensity = r.NextFloat();
-                blurIntensity = r.NextFloat();
-                angle = r.NextFloat();
+                intensity = r.NextByte();
+                blurIntensity = r.NextByte();
+                angle = r.NextUShort();
             }
         }
 
@@ -175,9 +175,9 @@ namespace Materia.Nodes.Atomic
         {
             WarpData d = new WarpData();
             FillBaseNodeData(d);
-            d.intensity = intensity;
-            d.blurIntensity = blurIntensity;
-            d.angle = angle;
+            d.intensity = (byte)intensity;
+            d.blurIntensity = (byte)blurIntensity;
+            d.angle = (ushort)angle;
             d.Write(w);
         }
 
@@ -195,9 +195,9 @@ namespace Materia.Nodes.Atomic
         {
             WarpData d = new WarpData();
             FillBaseNodeData(d);
-            d.intensity = intensity;
-            d.blurIntensity = blurIntensity;
-            d.angle = angle;
+            d.intensity = (byte)intensity;
+            d.blurIntensity = (byte)blurIntensity;
+            d.angle = (ushort)angle;
 
             return JsonConvert.SerializeObject(d);
         }

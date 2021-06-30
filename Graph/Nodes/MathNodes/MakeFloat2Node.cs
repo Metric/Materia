@@ -21,7 +21,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Make Float2";
+            defaultName = Name = "Make Float2";
     
             shaderId = "S" + Id.Split('-')[0];
 

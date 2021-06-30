@@ -23,9 +23,5 @@ void main()
     WorldPos = (modelMatrix * vec4(pos, 1)).xyz;
     ObjectPos = pos;
     UV = uv0;
-
-    //flip y for opengl textures
-    UV.y = 1.0 - UV.y;
-
     UV *= tiling;
 }

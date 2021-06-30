@@ -18,7 +18,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Break Float3";
+            defaultName = Name = "Break Float3";
 
             shaderId = "S" + Id.Split('-')[0];
 

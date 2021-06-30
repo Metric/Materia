@@ -75,7 +75,7 @@ namespace Materia.Nodes.Atomic
 
         public NormalNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Normal";
+            defaultName = Name = "Normal";
 
             width = w;
             height = h;

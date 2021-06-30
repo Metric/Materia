@@ -79,7 +79,7 @@ namespace Materia.Nodes.Atomic
 
         public CurvesNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Curves";
+            defaultName = Name = "Curves";
 
             width = w;
             height = h;

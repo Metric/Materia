@@ -51,7 +51,7 @@ namespace MateriaCore.Components.Dialogs
             }
 
             int sizeIndex = defaultNodeSize.SelectedIndex;
-            int size = Graph.DEFAULT_SIZE;
+            ushort size = Graph.DEFAULT_SIZE;
 
             if (sizeIndex > -1 && sizeIndex < Graph.GRAPH_SIZES.Length)
             {

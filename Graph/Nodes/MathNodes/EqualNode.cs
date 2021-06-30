@@ -16,7 +16,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Equal";
+            defaultName = Name = "Equal";
 
             shaderId = "S" + Id.Split('-')[0];
 

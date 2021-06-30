@@ -18,7 +18,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Ceil";
+            defaultName = Name = "Ceil";
  
             shaderId = "S" + Id.Split('-')[0];
 

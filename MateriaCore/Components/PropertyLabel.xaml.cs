@@ -190,7 +190,7 @@ namespace MateriaCore.Components
         {
             if (Node == null || string.IsNullOrEmpty(Parameter)) return;
 
-            Function g = new Function(Node.Name + " - " + Parameter.Replace("$Custom.", "") + " Function", Node.Width, Node.Height);
+            Function g = new Function(Node.Name + " - " + Parameter.Replace("$Custom.", "") + " Function", (ushort)Node.Width, (ushort)Node.Height);
             CreateFunctionParameter(g);
         }
 

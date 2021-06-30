@@ -21,6 +21,8 @@ namespace InfinityUI.Components
 
         public override void Draw(DrawEvent e)
         {
+            StencilStage = UIRenderer.StencilStage;
+
             if (Parent == null || Texture == null) return;
             if (!Parent.Visible) return;
             if (Shader == null) return;
@@ -59,26 +61,27 @@ namespace InfinityUI.Components
             IGL.Primary.ActiveTexture((int)TextureUnit.Texture0);
             Texture.Bind();
 
+            AdjustStencil(e);
+
             if (!Clip)
             {
-                AdjustStencil(e);
                 UIRenderer.Draw();
                 return;
             }
 
             UIRenderer.StencilStage++;
+
             //wrap stencil stage as max is 255 for stencil
             UIRenderer.StencilStage %= 255;
 
-            IGL.Primary.StencilOp((int)StencilOp.Keep, (int)StencilOp.Keep, (int)StencilOp.Replace);
+            StencilStage = UIRenderer.StencilStage;
 
+            IGL.Primary.StencilOp((int)StencilOp.Keep, (int)StencilOp.Keep, (int)StencilOp.Replace);
             IGL.Primary.StencilFunc((int)StencilFunction.Always, UIRenderer.StencilStage, UIRenderer.StencilStage);
-            IGL.Primary.StencilMask(0xFF);
 
             UIRenderer.Draw();
 
             IGL.Primary.StencilFunc((int)StencilFunction.Equal, UIRenderer.StencilStage, UIRenderer.StencilStage);
-            IGL.Primary.StencilMask(0x00);
         }
     }
 }

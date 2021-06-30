@@ -9,12 +9,12 @@ namespace Materia.Graph
 {
     public class Image : Graph
     {
-        public Image(string name, int w = 256, int h = 256) : base (name, w, h)
+        public Image(string name, ushort w = 256, ushort h = 256) : base (name, w, h)
         {
 
         }
 
-        public Image(string name, int w = 256, int h = 256, Graph parent = null) : base(name, w, h)
+        public Image(string name, ushort w = 256, ushort h = 256, Graph parent = null) : base(name, w, h)
         {
             parentGraph = parent;
         }

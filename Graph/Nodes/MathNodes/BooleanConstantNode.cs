@@ -31,7 +31,7 @@ namespace Materia.Nodes.MathNodes
             //we ignore w,h,p
             CanPreview = false;
 
-            Name = "Boolean Constant";
+            defaultName = Name = "Boolean Constant";
 
             shaderId = "S" + Id.Split('-')[0];
 

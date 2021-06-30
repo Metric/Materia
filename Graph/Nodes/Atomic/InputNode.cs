@@ -64,7 +64,7 @@ namespace Materia.Nodes.Atomic
 
         public InputNode(GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Input";
+            defaultName = Name = "Input";
 
             internalPixelType = p;
 

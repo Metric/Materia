@@ -7,7 +7,7 @@ namespace Materia.Nodes.Items
     {
         public PinNode()
         {
-            name = "Pin";
+            defaultName = name = "Pin";
 
             //just storing the color as a content string
             content = "255,255,255,255";

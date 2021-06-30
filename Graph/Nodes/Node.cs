@@ -94,6 +94,7 @@ namespace Materia.Nodes
 
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
+        protected string defaultName; //this is a helper for determining if we even need to store the name
         protected string name;
 
         [Editable(ParameterInputType.Text, "Name", "Basic")]
@@ -422,11 +423,11 @@ namespace Materia.Nodes
 
         protected virtual void SetBaseNodeDate(NodeData d)
         {
-            width = d.width;
-            height = d.height;
+            //width = d.width;
+            //height = d.height;
             AbsoluteSize = d.absoluteSize;
             internalPixelType = d.internalPixelType;
-            name = d.name;
+            name = string.IsNullOrEmpty(d.name) ? defaultName : d.name;
             tileX = d.tileX;
             tileY = d.tileY;
             ViewOriginX = d.viewOriginX;
@@ -459,11 +460,12 @@ namespace Materia.Nodes
             d.height = height;
             d.absoluteSize = AbsoluteSize;
             d.internalPixelType = internalPixelType;
-            d.name = name;
+            d.name = name == defaultName ? "" : name;
             d.outputs = GetOutputConnections();
             d.tileX = tileX;
             d.tileY = tileY;
             d.type = GetType().ToString();
+            d.dataType = GetTypeEnum();
             d.id = Id;
             d.inputCount = Inputs == null ? 0 : Inputs.Count;
             d.outputCount = Outputs == null ? 0 : Outputs.Count;
@@ -564,7 +566,7 @@ namespace Materia.Nodes
 
                     if (index > -1)
                     {
-                        NodeConnection nc = new NodeConnection(n.Node.Id, i, index, k);
+                        NodeConnection nc = new NodeConnection(n.Node.Id, i, index);
                         outputs.Add(nc);
                     }
                     ++k;
@@ -587,8 +589,7 @@ namespace Materia.Nodes
                     if (idx > -1)
                     {
                         NodeOutput no = n.Reference.Node.Outputs[idx];
-                        int ord = no.To.IndexOf(n);
-                        NodeConnection nc = new NodeConnection(Id, idx, i, ord);
+                        NodeConnection nc = new NodeConnection(Id, idx, i);
                         connections.Add(nc);
                     }
                 }
@@ -610,7 +611,7 @@ namespace Materia.Nodes
                 var inp = n.Inputs[connection.index];
                 if(connection.outIndex >= 0 && connection.outIndex < Outputs.Count)
                 {
-                    Outputs[connection.outIndex].InsertAt(connection.order, inp, assign);
+                    Outputs[connection.outIndex].Add(inp, assign);
                 }
             }
             else
@@ -629,6 +630,13 @@ namespace Materia.Nodes
         public void RestoreConnections(Dictionary<string, Node> nodes, bool assign)
         {
             if (rawNodeConnections == null || rawNodeConnections.Count == 0) return;
+            
+            //clear previous connections if any
+            for (int i = 0; i < Outputs.Count; ++i)
+            {
+                Outputs[i]?.Dispose();
+            }
+
             SetConnections(nodes, rawNodeConnections, assign);
             rawNodeConnections = null;
         }
@@ -838,6 +846,14 @@ namespace Materia.Nodes
             }
 
             return different;
+        }
+
+        protected NodeDataType GetTypeEnum()
+        {
+            string t = GetType().ToString();
+            string[] typeSplit = t.Split(".");
+            Enum.TryParse(typeSplit[2] + typeSplit[3], out NodeDataType ntype);
+            return ntype;
         }
     }
 }

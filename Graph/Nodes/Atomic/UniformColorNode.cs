@@ -57,7 +57,7 @@ namespace Materia.Nodes.Atomic
 
         public UniformColorNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Uniform Color";
+            defaultName = Name = "Uniform Color";
 
             width = w;
             height = h;

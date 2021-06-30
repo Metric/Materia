@@ -30,6 +30,43 @@ namespace MateriaCore.Components.GL.Menu
             return this;
         }
 
+        public UIMenuBuilder DynamicSubMenu(Func<List<UIMenuItem>> dataSource)
+        {
+            var sub = new UIMenu();
+            var menuItem = (menu.Children.Last() as UIMenuItem);
+            sub.Visible = false;
+            sub.Direction = InfinityUI.Core.Orientation.Vertical;
+            sub.ChildAlignment = InfinityUI.Core.Anchor.TopHorizFill;
+            if (submenus.Count == 1)
+            {
+                menuItem.SubMenuAnchor = InfinityUI.Core.Anchor.Bottom;
+            }
+            else if (submenus.Count > 1)
+            {
+                menuItem.SubMenuAnchor = InfinityUI.Core.Anchor.Right;
+            }
+            menuItem.SubMenu = sub;
+            menuItem.Focused += (a,b) =>
+            {
+                //clear previous children
+                for (int i = 0; i < sub.Children.Count; ++i)
+                {
+                    var child = sub.Children[i];
+                    if (child == null) continue;
+                    sub.RemoveChild(child);
+                    child.Dispose();
+                    --i;
+                }
+
+                var newItems = dataSource?.Invoke();
+                for (int i = 0; i < newItems.Count; ++i)
+                {
+                    sub.AddChild(newItems[i]);
+                }
+            };
+            return this;
+        }
+
         public UIMenuBuilder Separator()
         {
             menu.AddChild(new UIMenuSeparator());

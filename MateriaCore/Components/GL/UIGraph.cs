@@ -7,6 +7,7 @@ using Materia.Graph.IO;
 using Materia.Nodes;
 using Materia.Nodes.Atomic;
 using Materia.Nodes.Items;
+using Materia.Rendering.Geometry;
 using Materia.Rendering.Mathematics;
 using Materia.Rendering.Spatial;
 using MateriaCore.Utils;
@@ -83,6 +84,8 @@ namespace MateriaCore.Components.GL
 
     public class UIGraph : MovablePane, IDropTarget
     {
+        const int MAX_NODES_TO_POLL = 100;
+
         public event Action<UIGraph,Graph> Undo;
         public event Action<UIGraph,Graph> Redo;
         public event Action<UIGraph,Graph> GraphChanged;
@@ -135,18 +138,7 @@ namespace MateriaCore.Components.GL
             get => Current != null && Current.ReadOnly;
         }
 
-        public bool Modified
-        {
-            get
-            {
-                if (Root != null)
-                {
-                    return Root.Modified;
-                }
-
-                return false;
-            }
-        }
+        public bool Modified { get; protected set; }
 
         public string GraphName
         {
@@ -180,6 +172,8 @@ namespace MateriaCore.Components.GL
         public string RawRootCWD { get; protected set; }
         public string[] RawStack { get; protected set; }
 
+        public Dictionary<string, UndoRedoData> RawUndoRedo { get; protected set; }
+
         protected Stack<GraphStackItem> graphStack = new Stack<GraphStackItem>();
         #endregion
 
@@ -196,6 +190,7 @@ namespace MateriaCore.Components.GL
         #endregion
 
         protected Dictionary<string, IGraphNode> nodes = new Dictionary<string, IGraphNode>();
+
 
         public UIGraph() : base(Vector2.Zero) 
         {
@@ -272,10 +267,15 @@ namespace MateriaCore.Components.GL
             AddChild(selectArea);
         }
 
+        public void Focus()
+        {
+            selectable?.OnFocus(new FocusEvent());
+        }
+
         private void UIGraph_DoubleClick(MovablePane obj)
         {
-            if (Current == null) return;
-            GlobalEvents.Emit(GlobalEvent.ViewParameters, this, Current);   
+            if (Root == null || Root != Current) return;
+            GlobalEvents.Emit(GlobalEvent.ViewParameters, this, Root);   
         }
 
         private void Grid_BeforeDraw(UIDrawable obj)
@@ -294,31 +294,46 @@ namespace MateriaCore.Components.GL
         }
 
         #region Save Handlers
-        private bool WriteToFile(string path)
+
+        protected virtual bool WriteToFile(string path)
         {
-            if (Root == null && RawRoot != null && RawRoot.Length > 0)
+            bool isArchive = path.EndsWith(".mtga");
+            bool disposeRoot = false;
+            bool saveAs = path != Filename;
+
+            if (Root == null && RawRoot != null && RawRoot.Length == 0)
             {
-                System.IO.File.WriteAllBytes(path, RawRoot);
-                return true;
-            }
-            else if (Root != null)
-            {
-                using (Writer w = new Writer())
-                {
-                    Root.GetBinary(w);
-                    var buffer = w.Buffer;
-                    using (var stream = System.IO.File.Open(path, 
-                                        System.IO.FileMode.OpenOrCreate | System.IO.FileMode.Truncate, 
-                                        System.IO.FileAccess.Write))
-                    {
-                        stream.Write(buffer.Array, buffer.Offset, buffer.Count);
-                        stream.Flush();
-                    }
-                }
-                return true;
+                disposeRoot = true;
+                Root = new Graph("Temp");
+                Root.CurrentWorkingDirectory = RawRootCWD;
+                Root.FromBinary(new Reader(RawRoot), archive);
             }
 
-            return false;
+            if (Root == null) return false;
+
+            bool success = Graph.WriteToFile(Root, System.IO.Path.GetDirectoryName(path), path, saveAs);
+
+            if (success)
+            {
+                RawRootName = Root.Name;
+                Filename = path;
+            }
+
+            if (disposeRoot)
+            {
+                Root.Dispose();
+                Root = null;
+            }
+
+            //store local copy of new archive
+            //not opened just the C# object of it
+            if (isArchive && success)
+            {
+                archive?.Dispose();
+                archive = new Archive(path);
+            }
+
+            return success;
         }
 
         public bool Save(string path = null)
@@ -332,7 +347,9 @@ namespace MateriaCore.Components.GL
 
             if (!string.IsNullOrEmpty(path))
             {
-                return WriteToFile(path);
+                bool success = WriteToFile(path);
+                if (success) Modified = false;
+                return success;
             }
             else if (!string.IsNullOrEmpty(Filename))
             {
@@ -341,7 +358,9 @@ namespace MateriaCore.Components.GL
                     return false;
                 }
 
-                return WriteToFile(Filename);
+                bool success = WriteToFile(Filename);
+                if (success) Modified = false;
+                return success;
             }
 
             return false;
@@ -497,8 +516,6 @@ namespace MateriaCore.Components.GL
         {
             if (Current == null || Canvas == null) return;
 
-            Current?.Snapshot();
-
             Box2 bounds = GetSelectedBounds();
             if (bounds.Width <= 0 || bounds.Height <= 0)
             {
@@ -523,6 +540,8 @@ namespace MateriaCore.Components.GL
 
             IGraphNode unode = CreateUINode(n);
             comments.Add(unode);
+
+            Current?.Snapshot();
         }
 
         public void TryAndUndo()
@@ -539,8 +558,6 @@ namespace MateriaCore.Components.GL
         {
             if (Current == null) return;
 
-            Current.Snapshot();
-
             for (int i= 0; i < Selected.Count; ++i)
             {
                 var n = Selected[i];
@@ -553,7 +570,14 @@ namespace MateriaCore.Components.GL
                 unode?.Dispose();
             }
 
+            Current?.Snapshot();
+
             Current.Schedule();
+
+            if (Selected.Count > 0)
+            {
+                Modified = true;
+            }
 
             Selected.Clear();
             SelectedIds.Clear();
@@ -650,8 +674,6 @@ namespace MateriaCore.Components.GL
 
                 if (cd.nodes == null || cd.nodes.Count == 0) return;
 
-                Current.Snapshot();
-
                 List<Node> addedNodes = new List<Node>();
                 List<IGraphNode> addedUINodes = new List<IGraphNode>();
                 Dictionary<string, Node> lookup = new Dictionary<string, Node>();
@@ -695,11 +717,18 @@ namespace MateriaCore.Components.GL
                     addedUINodes.Add(unode);
                 }
 
+                if (addedNodes.Count > 0)
+                {
+                    Modified = true;
+                }
+
                 //load ui connections
                 for (int i = 0; i < addedUINodes.Count; ++i)
                 {
                     addedUINodes[i]?.LoadConnections();
                 }
+
+                Current?.Snapshot();
 
                 //schdule newely added nodes
                 for (int i = 0; i < addedUINodes.Count; ++i)
@@ -716,8 +745,6 @@ namespace MateriaCore.Components.GL
         public void TryAndInsertNode(string type)
         {
             if (Current == null || Canvas == null) return;
-
-            Current.Snapshot();
 
             Vector2 m = UI.MousePosition;
             Vector2 wp = Canvas.ToCanvasSpace(m);
@@ -766,7 +793,11 @@ namespace MateriaCore.Components.GL
 
             unode = CreateUINode(n);
             unode.LoadConnections();
-            Current.Schedule();
+
+            Modified = true;
+
+            Current?.Snapshot();
+            Current.Schedule(n);
         }
 
         public void GotoNextPin()
@@ -843,18 +874,12 @@ namespace MateriaCore.Components.GL
 
                 //update output requirements text
                 //hide node resize ui
-
                 //update context menu
             }
             else
             {
                 //show node resize ui
                 //update output requirement label / hide it
-                if (Current.ParentGraph == null)
-                {
-                    //todo: reimplement layers
-                }
-
                 //update context menu
             }
 
@@ -1066,6 +1091,7 @@ namespace MateriaCore.Components.GL
         {
             if (g != Current) return;
             MergeUndoRedo();
+            GlobalEvents.Emit(GlobalEvent.ClearViewParameters, this, null);
             Redo?.Invoke(this, Current);
             Current?.Schedule();
         }
@@ -1073,6 +1099,7 @@ namespace MateriaCore.Components.GL
         private void Current_OnUndo(Graph g)
         {
             if (g != Current) return;
+            GlobalEvents.Emit(GlobalEvent.ClearViewParameters, this, null);
             MergeUndoRedo();
             Undo?.Invoke(this, Current);
             Current?.Schedule();
@@ -1081,11 +1108,13 @@ namespace MateriaCore.Components.GL
         private void Current_OnGraphNameChanged(Graph g)
         {
             NameChanged?.Invoke(this);
+            Modified = true;
         }
 
         private void Current_OnGraphUpdated(Graph g)
         {
-            
+            if (graphState != UIGraphState.None) return;
+            Modified = true;
         }
 
         private void OnMoveComplete(object sender, object arg)
@@ -1103,6 +1132,7 @@ namespace MateriaCore.Components.GL
                     UI.SnapToGrid(pane, (int)pane.SnapTolerance);
                 }
 
+                Modified = true;
                 GlobalEvents.Emit(GlobalEvent.UpdateTrackedNode, this, null);
             }
         }
@@ -1134,18 +1164,26 @@ namespace MateriaCore.Components.GL
         public void Store()
         {
             if (Root == null) return;
+            //export undo redo for entireo graph
+            RawUndoRedo = Root.ExportUndoRedo();
+            //capture stack
             CaptureStack();
+            //dispose
             InternalDispose();
         }
 
-        //todo: implement restore of undo / redo
-        //from graph
-        //otherwise when we store it the undo / redo will be gone
         public void Restore()
         {
             if (RawRoot == null || RawRoot.Length == 0) return;
             Load(new Reader(RawRoot), archive, RawRootCWD, false); //we do not schedule the moment we reload this
             RawRoot = null;
+
+            if (RawUndoRedo != null)
+            {
+                Root?.ImportUndoRedo(RawUndoRedo);
+                RawUndoRedo = null;
+            }
+
             RestoreStack();
 
             if (Canvas != null && Current != null)
@@ -1412,7 +1450,7 @@ namespace MateriaCore.Components.GL
 
         /// <summary>
         /// Merges the undo redo changes for the UI
-        /// It determines removed nodes and missing nodes
+        /// It determines removed nodes and missing nodes 
         /// also clears previous UI connections
         /// </summary>
         protected void MergeUndoRedo()
@@ -1468,6 +1506,8 @@ namespace MateriaCore.Components.GL
             {
                 toRestore[i]?.LoadConnections();
             }
+
+            Modified = true;
         }
 
         private void UpdateZoomDetails()
@@ -1531,8 +1571,6 @@ namespace MateriaCore.Components.GL
             RemoveCurrentEvents();
 
             Clear();
-
-            //dispose layers here
 
             Current?.Dispose();
             Current = null;
@@ -1743,14 +1781,13 @@ namespace MateriaCore.Components.GL
             base.Dispose(disposing);
         }
 
+        #region Drop Handlers
         public void OnFileDrop(UIFileDropEvent e)
         {
             e.IsHandled = true;
             var data = e.files;
 
             if (data == null) return;
-
-            Current?.Snapshot();
 
             int totalValid = 0;
             for (int i = 0; i < data.Length; ++i)
@@ -1772,18 +1809,24 @@ namespace MateriaCore.Components.GL
 
                     pos += new Vector2(totalValid * UINode.DEFAULT_WIDTH, 0);
 
+                    Modified = true;
+                    ++totalValid;
                     CreateUINode(n, pos);
                     Current?.Schedule(n);
                 }
+            }
+
+            if (totalValid > 0)
+            {
+                Current?.Snapshot();
             }
         }
 
         public void OnDrop(UIDropEvent e)
         {
             var data = e.dragDrop.DropData;
-            if (data is UINodeSource) //todo: check for string type file stuff
+            if (data is UINodeSource)
             {
-                Current?.Snapshot();
                 e.IsHandled = true;
                 UINodeSource src = data as UINodeSource;
                 long stamp = Environment.TickCount;
@@ -1798,7 +1841,9 @@ namespace MateriaCore.Components.GL
                     pos = Canvas.ToCanvasSpace(pos);
                 }
 
+                Modified = true;
                 CreateUINode(n, pos);
+                Current?.Snapshot();
                 Current?.Schedule(n);
             }
             else if (data is string)
@@ -1807,7 +1852,6 @@ namespace MateriaCore.Components.GL
                 string v = (string)data;
                 if (!string.IsNullOrEmpty(v))
                 {
-                    Current?.Snapshot();
                     var n = CreateNode(v);
                     if (n == null) return;
 
@@ -1818,10 +1862,34 @@ namespace MateriaCore.Components.GL
                         pos = Canvas.ToCanvasSpace(pos);
                     }
 
+                    Modified = true;
                     CreateUINode(n, pos);
+                    Current?.Snapshot();
                     Current?.Schedule(n);
                 }
             }
         }
+        #endregion
+
+        #region Render Poll
+        public virtual void Poll()
+        {
+            if (Root == null || !Root.IsProcessing) return;
+
+            FullScreenQuad.SharedVao?.Bind();
+
+            int i = 0;
+
+            while (i++ < MAX_NODES_TO_POLL
+                && Root != null && Root.IsProcessing)
+            {
+                //poll graph updates if any
+                //and let them render first before anything else
+                Root.Poll();
+            }
+
+            FullScreenQuad.SharedVao?.Unbind();
+        }
+        #endregion
     }
 }

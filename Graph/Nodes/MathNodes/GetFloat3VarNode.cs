@@ -7,7 +7,7 @@ namespace Materia.Nodes.MathNodes
     {
         public GetFloat3VarNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base(w, h, p)
         {
-            Name = "Get Float3 Var";
+            defaultName = Name = "Get Float3 Var";
             output.Type = NodeType.Float3;
         }
     }

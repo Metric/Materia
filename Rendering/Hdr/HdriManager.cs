@@ -26,7 +26,10 @@ namespace Materia.Rendering.Hdr
     }
 
     public static class HdriManager
-    { 
+    {
+        private static IHdrFile fileToProcess = null;
+        public static HdrMap Map { get; private set; }
+
         private static readonly List<string> available = new List<string>();
         public static List<string> Available { get => available.ToList();  }
         public static void Scan(string directory)
@@ -48,6 +51,8 @@ namespace Materia.Rendering.Hdr
 
         public static IHdrFile Load(string f)
         {
+            if (fileToProcess != null) return null;
+
             IHdrFile file;
             if (string.IsNullOrEmpty(f)) return null;
             if (!File.Exists(f)) return null;
@@ -61,12 +66,23 @@ namespace Materia.Rendering.Hdr
             }
 
             file.Load();
+            fileToProcess = file;
             return file;
         }
 
-        public static HdrMap Process(IHdrFile f)
+        public static bool Process()
         {
-            if (f == null || f.Width == 0 || f.Height == 0 || f.Pixels == null) return new HdrMap();
+            if (fileToProcess == null) return false;
+
+            IHdrFile f = fileToProcess;
+
+            if (f.Width == 0 || f.Height == 0 || f.Pixels == null)
+            {
+                fileToProcess = null;
+                return false;
+            }
+
+            Map.Dispose();
 
             Converter cv = new Converter();
             GLTexture2D hdMap = f.GetTexture();
@@ -78,13 +94,24 @@ namespace Materia.Rendering.Hdr
             f.Dispose();
             cv.Dispose();
 
-            return new HdrMap
+            Map = new HdrMap
             {
                 //testing cube map generator from equi
                 prefilter = prefilter,
                 irradiance = irradiance,
                 environment = cubeSky
             };
+
+            fileToProcess = null;
+            return true;
+        }
+
+        public static void Dispose()
+        {
+            fileToProcess?.Dispose();
+            fileToProcess = null;
+
+            Map.Dispose();
         }
     }
 }

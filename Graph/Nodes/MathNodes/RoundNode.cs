@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Round";
+            defaultName = Name = "Round";
 
             shaderId = "S" + Id.Split('-')[0];
 

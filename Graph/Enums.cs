@@ -77,6 +77,35 @@ namespace Materia.Graph
         Add = 5
     }
 
+    //this is used for binary storage
+    //in some places where NodeType should
+    //just be stored as byte as it can only
+    //be a single value, rather than a ulong
+    public enum InternalNodeType
+    {
+        Float = 0,
+        Float2 = 1,
+        Float3 = 2,
+        Float4 = 3,
+        Bool = 4,
+        Matrix = 5,
+    }
+
+    //this is used for binary storage
+    //to represent the below GraphPixelType in a single
+    //byte instead
+    public enum InternalGraphPixelType
+    {
+        RGBA = 0,
+        RGBA16F = 1,
+        RGBA32F = 2,
+        RGB = 4,
+        RGB16F = 5,
+        RGB32F = 6,
+        Luminance16F = 7,
+        Luminance32F = 8,
+    }
+
     public enum GraphPixelType
     {
         RGBA = PixelInternalFormat.Rgba8,
@@ -97,14 +126,14 @@ namespace Materia.Graph
 
     public enum OutputType
     {
-        basecolor,
-        height,
-        occlusion,
-        roughness,
-        metallic,
-        normal,
-        thickness,
-        emission
+        basecolor = 0,
+        height = 1,
+        occlusion = 2,
+        roughness = 3,
+        metallic = 4,
+        normal = 5,
+        thickness = 6,
+        emission = 7
     }
 
     public enum NodeDataType

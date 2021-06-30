@@ -34,6 +34,19 @@ namespace Materia.Graph
         }
     }
 
+    public struct UndoRedoData
+    {
+        public List<byte[]> undos;
+        public List<byte[]> redos;
+        public byte[] previousState;
+
+        public UndoRedoData(List<byte[]> undo, List<byte[]> redo, byte[] previous)
+        {
+            undos = undo;
+            redos = redo;
+            previousState = previous;
+        }
+    }
 
 
     public class Graph : IDisposable
@@ -42,8 +55,8 @@ namespace Materia.Graph
 
         public static bool ShaderLogging { get; set; } = true; //for debugging right now
 
-        public static int[] GRAPH_SIZES = new int[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
-        public const int DEFAULT_SIZE = 512;
+        public static ushort[] GRAPH_SIZES = new ushort[] { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
+        public const ushort DEFAULT_SIZE = 512;
 
         public delegate void GraphUpdate(Graph g);
         public delegate void ParameterUpdate(ParameterValue p);
@@ -54,6 +67,8 @@ namespace Materia.Graph
         public event GraphUpdate OnLoad;
         public event GraphUpdate OnUndo;
         public event GraphUpdate OnRedo;
+
+        public string Id { get; protected set; } = Guid.NewGuid().ToString();
 
         public GraphState State { get; protected set; } = GraphState.Ready;
 
@@ -101,8 +116,11 @@ namespace Materia.Graph
         /// <summary>
         /// Stores the new vcdiff values of the graph for undo / redo
         /// </summary>
-        protected ConcurrentQueue<byte[]> undo = new ConcurrentQueue<byte[]>();
-        protected ConcurrentQueue<byte[]> redo = new ConcurrentQueue<byte[]>();
+        protected ConcurrentStack<byte[]> undo = new ConcurrentStack<byte[]>();
+        protected ConcurrentStack<byte[]> redo = new ConcurrentStack<byte[]>();
+
+        public int UndoCount { get => undo.Count; }
+        public int RedoCount { get => redo.Count; }
 
         /// <summary>
         /// Gets or sets the undo stack. Getting is not thread safe.
@@ -119,10 +137,12 @@ namespace Materia.Graph
             set
             {
                 var stack = value;
+                if (stack == null) return;
+                stack.Reverse();
                 undo.Clear();
                 for (int i = 0; i < stack.Count; ++i)
                 {
-                    undo.Enqueue(stack[i]);
+                    undo.Push(stack[i]);
                 }
             }
         }
@@ -142,10 +162,12 @@ namespace Materia.Graph
             set
             {
                 var stack = value;
+                if (stack == null) return;
+                stack.Reverse();
                 redo.Clear();
                 for (int i = 0; i < stack.Count; ++i)
                 {
-                    redo.Enqueue(stack[i]);
+                    redo.Push(stack[i]);
                 }
             }
         }
@@ -284,10 +306,10 @@ namespace Materia.Graph
             }
         }
 
-        protected int width = DEFAULT_SIZE;
-        protected int height = DEFAULT_SIZE;
+        protected ushort width = DEFAULT_SIZE;
+        protected ushort height = DEFAULT_SIZE;
 
-        public int Width
+        public ushort Width
         {
             get
             {
@@ -303,7 +325,7 @@ namespace Materia.Graph
             }
         }
 
-        public int Height
+        public ushort Height
         {
             get
             {
@@ -380,7 +402,7 @@ namespace Materia.Graph
         /// <param name="w"></param>
         /// <param name="h"></param>
         /// <param name="async"></param>
-        public Graph(string graphName, int w = DEFAULT_SIZE, int h = DEFAULT_SIZE)
+        public Graph(string graphName, ushort w = DEFAULT_SIZE, ushort h = DEFAULT_SIZE)
         {
             if (Node.Context == null)
             {
@@ -913,13 +935,21 @@ namespace Materia.Graph
             GraphData d = new GraphData();
             d.name = Name;
             d.version = GRAPH_VERSION;
-            d.outputs = OutputNodes ?? new List<string>();
-            d.inputs = InputNodes ?? new List<string>();
+            d.id = Id;
+            
+            //d.outputs = OutputNodes ?? new List<string>();
+            //d.inputs = InputNodes ?? new List<string>();
+            
             d.defaultTextureType = defaultTextureType;
+            
             d.shiftX = ShiftX;
             d.shiftY = ShiftY;
             d.zoom = Zoom;
+
             d.absoluteSize = absoluteSize;
+            
+            d.width = width;
+            d.height = height;
 
             //write header info
             d.Write(w);
@@ -942,7 +972,7 @@ namespace Materia.Graph
 
         protected virtual void ReadExtended(Reader r)
         {
-            //do nothing in th is one
+            //do nothing in this one
         }
 
         protected virtual void WriteExtended(Writer w)
@@ -965,15 +995,22 @@ namespace Materia.Graph
 
             d.name = Name;
             d.nodes = data;
-            d.outputs = OutputNodes;
-            d.inputs = InputNodes;
+            d.id = Id;
+            
+            //d.outputs = OutputNodes;
+            //d.inputs = InputNodes;
+            
             d.defaultTextureType = defaultTextureType;
+            
             d.shiftX = ShiftX;
             d.shiftY = ShiftY;
             d.zoom = Zoom;
+
             d.parameters = GetJsonReadyParameters();
+            
             d.width = width;
             d.height = height;
+            
             d.absoluteSize = AbsoluteSize;
             d.customParameters = GetJsonReadyCustomParameters();
             d.customFunctions = GetJsonReadyCustomFunctions();
@@ -1090,6 +1127,46 @@ namespace Materia.Graph
                     //set connections
                     g.SetConnections();
                 }
+            }
+        }
+
+        protected virtual void RestoreBinaryCustomFunctions(Reader r)
+        {
+            try
+            {
+                int count = r.NextInt();
+                for (int i = 0; i < count; ++i)
+                {
+                    if (i >= CustomFunctions.Count)
+                    {
+                        Function g = new Function("temp");
+                        CustomFunctions.Add(g);
+                        g.AssignParentGraph(this);
+                        g.FromBinary(r);
+                        continue;
+                    }
+
+                    Function existing = CustomFunctions[i];
+                    existing?.Restore(r);
+                }
+
+                int diff = CustomFunctions.Count - count;
+                for (int i = 0; i < diff; ++i)
+                {
+                    CustomFunctions[count]?.Dispose();
+                    CustomFunctions.RemoveAt(count);
+                }
+
+                for (int i = 0; i < count; ++i)
+                {
+                    Function g = CustomFunctions[i];
+                    g.ParentGraph = this;
+                    g.SetConnections();
+                }
+            }
+            catch
+            {
+                Log.Error("Failed to restore custom functions");
             }
         }
 
@@ -1224,6 +1301,66 @@ namespace Materia.Graph
             }
         }
 
+        protected virtual void RestoreBinaryParameters(Reader r) 
+        {
+            try
+            {
+                HashSet<string> restored = new HashSet<string>();
+                int count = r.NextInt();
+                for (int i = 0; i < count; ++i)
+                {
+                    string k = r.NextString();
+                    restored.Add(k);
+                    string[] split = k.Split('.');
+                    NodeLookup.TryGetValue(split[0], out Node n);
+                    if (!Parameters.TryGetValue(k, out ParameterValue param)) 
+                    {
+                        param = ParameterValue.FromBinary(r, n);
+                        Parameters[k] = param;
+                        param.Key = k;
+                        param.ParentGraph = this;
+                        param.OnParameterTypeChanged += Graph_OnGraphParameterTypeChanged;
+                        param.OnParameterUpdate += Graph_OnGraphParameterUpdate;
+
+                        if (param.IsFunction())
+                        {
+                            var f = param.Value as Function;
+                            f.AssignParentGraph(this);
+                            ParameterFunctions[k] = f;
+                        }
+
+                        continue;
+                    }
+
+                    ParameterFunctions.Remove(k); //reset
+
+                    if (param == null) continue;
+                    param.RestoreBinary(r, n);
+                    if (param.IsFunction())
+                    {
+                        var f = param.Value as Function;
+                        f.AssignParentGraph(this);
+                        ParameterFunctions[k] = f;
+                    }
+                }
+
+                string[] keys = Parameters.Keys.ToArray();
+                for (int i = 0; i < keys.Length; ++i)
+                {
+                    var k = keys[i];
+                    if (!restored.Contains(k))
+                    {
+                        Parameters.Remove(k);
+                        ParameterFunctions.Remove(k);
+                    }
+                }
+            }
+            catch
+            {
+                Log.Error("Failed to restore binary parameters");
+            }
+        }
+
         protected virtual void SetBinaryParameters(Reader r)
         {
             try
@@ -1328,6 +1465,40 @@ namespace Materia.Graph
                     param.OnParameterUpdate += Graph_OnGraphParameterUpdate;
                     CustomParameters.Add(param);
                 }
+            }
+        }
+
+        protected virtual void RestoreBinaryCustomParameters(Reader r)
+        {
+            try
+            {
+                int count = r.NextInt();
+                for (int i = 0; i < count; ++i)
+                {
+                    if (i >= CustomParameters.Count)
+                    {
+                        var param = ParameterValue.FromBinary(r, null);
+                        param.ParentGraph = this;
+                        param.OnParameterTypeChanged += Graph_OnGraphParameterTypeChanged;
+                        param.OnParameterUpdate += Graph_OnGraphParameterUpdate;
+                        CustomParameters.Add(param);
+                        continue;
+                    }
+
+                    var existingParam = CustomParameters[i];
+                    existingParam?.RestoreBinary(r, null);
+                }
+
+                //remove unneeded params
+                int diff = CustomParameters.Count - count;
+                for (int i = 0; i < diff; ++i)
+                {
+                    CustomParameters.RemoveAt(count);
+                }
+            }
+            catch
+            {
+                Log.Error("Failed to restore binary custom parameters");
             }
         }
 
@@ -1446,20 +1617,8 @@ namespace Materia.Graph
             return CreateNodeFromType(type, Width, Height, defaultTextureType);
         }
 
-        //todo: Create a Unit Test Function for the return types
-        //to verify these all return what we expect for the expected string
-        protected static Node CreateNodeFromType(string type, int w, int h, GraphPixelType pixel)
+        protected static Node CreateNodeFromType(NodeDataType ntype, int w, int h, GraphPixelType pixel)
         {
-            if (string.IsNullOrEmpty(type)) return null;
-
-            if (type.Contains("/") || type.Contains("\\") || type.Contains("Materia::Layer::")) return new GraphInstanceNode(w, h, pixel);
-
-            string[] typeSplit = type.Split(".");
-
-            if (typeSplit.Length < 4) return null;
-
-            Enum.TryParse(typeSplit[2] + typeSplit[3], out NodeDataType ntype);
-
             switch (ntype)
             {
                 case NodeDataType.AtomicAONode:
@@ -1676,6 +1835,23 @@ namespace Materia.Graph
 
             return null;
         }
+
+        //todo: Create a Unit Test Function for the return types
+        //to verify these all return what we expect for the expected string
+        protected static Node CreateNodeFromType(string type, int w, int h, GraphPixelType pixel)
+        {
+            if (string.IsNullOrEmpty(type)) return null;
+
+            if (type.Contains("/") || type.Contains("\\")) return new GraphInstanceNode(w, h, pixel);
+
+            string[] typeSplit = type.Split(".");
+
+            if (typeSplit.Length < 4) return null;
+
+            Enum.TryParse(typeSplit[2] + typeSplit[3], out NodeDataType ntype);
+
+            return CreateNodeFromType(ntype, w, h, pixel);
+        }
         #endregion
 
         #region Binary Loading
@@ -1731,6 +1907,127 @@ namespace Materia.Graph
             Log.Warn("Invalid MTG File");
         }
 
+        protected virtual void Restore(Reader r)
+        {
+            GraphData d = new GraphData();
+            d.Parse(r); //parse header info
+
+            //keeps track of restored nodes
+            //if the node does not exist in this
+            //then that means we must dispose of it
+            HashSet<string> restored = new HashSet<string>();
+
+            State = GraphState.Loading;
+
+            Name = d.name;
+            Id = d.id;
+
+            defaultTextureType = d.defaultTextureType;
+            ShiftX = d.shiftX;
+            ShiftY = d.shiftY;
+            Zoom = d.zoom;
+
+            width = d.width;
+            height = d.height;
+
+            AbsoluteSize = d.absoluteSize;
+
+            Version = d.version ?? GRAPH_VERSION;
+
+            if (width <= 0 || width == ushort.MaxValue) width = DEFAULT_SIZE;
+            if (height <= 0 || height == ushort.MaxValue) height = DEFAULT_SIZE;
+
+            RestoreBinaryCustomParameters(r);
+            RestoreBinaryCustomFunctions(r);
+
+            int count = r.NextInt();
+
+            try
+            {
+                for (int i = 0; i < count; ++i)
+                {
+                    NodeDataType type = (NodeDataType)r.NextUShort();
+
+                    int w = r.NextUShort();
+                    int h = r.NextUShort();
+
+                    string id = r.NextString();
+
+                    restored.Add(id);
+
+                    if (NodeLookup.TryGetValue(id, out Node n))
+                    {
+                        if (n != null)
+                        {
+                            n.SetSize(w, h);
+                            RestoreNode(n, r, Archive);
+                            continue;
+                        }
+                    }
+
+                    n = CreateNodeFromType(type, w, h, defaultTextureType);
+                    if (n == null)
+                    {
+                        Log.Debug("Node type does not exist: " + type);
+                        continue;
+                    }
+
+                    n.AssignParentGraph(this);
+                    n.Id = id;
+                    NodeLookup[id] = n;
+                    Nodes.Add(n);
+
+                    if (n is GraphInstanceNode)
+                    {
+                        InstanceNodes.Add(n as GraphInstanceNode);
+                    }
+                    else if (n is PixelProcessorNode)
+                    {
+                        PixelNodes.Add(n as PixelProcessorNode);
+                    }
+                    else if (n is InputNode)
+                    {
+                        InputNodes.Add(n.Id);
+                    }
+                    else if (n is OutputNode)
+                    {
+                        OutputNodes.Add(n.Id);
+                    }
+
+                    LoadNode(n, r, Archive);
+                }
+
+                string[] keys = NodeLookup.Keys.ToArray();
+                for (int i = 0; i < keys.Length; ++i)
+                {
+                    var k = keys[i];
+                    if (!restored.Contains(k))
+                    {
+                        //node no longer exists
+                        var n = NodeLookup[k];
+                        Remove(n);
+                    }
+                }
+            }
+            catch
+            {
+                Log.Error("Failed to restore all nodes");
+            }
+
+            RestoreBinaryParameters(r);
+
+            //for different graph types
+            //that may have written extra needed data
+            ReadExtended(r);
+
+            if (!(this is Function))
+            {
+                SetConnections();
+            }
+
+            State = GraphState.Ready;
+        }
+
 
         /// <summary>
         /// Only use this method if you have already parsed
@@ -1751,18 +2048,26 @@ namespace Materia.Graph
             Archive = archive;
 
             Name = d.name;
-            OutputNodes = d.outputs;
-            InputNodes = d.inputs;
+            Id = d.id;
+            
+            //OutputNodes = d.outputs;
+            //InputNodes = d.inputs;
+            
             defaultTextureType = d.defaultTextureType;
+
             ShiftX = d.shiftX;
             ShiftY = d.shiftY;
             Zoom = d.zoom;
+            
             width = d.width;
             height = d.height;
+            
             AbsoluteSize = d.absoluteSize;
+
             Version = d.version ?? GRAPH_VERSION;
-            if (width <= 0 || width == int.MaxValue) width = 256;
-            if (height <= 0 || height == int.MaxValue) height = 256;
+
+            if (width <= 0 || width == ushort.MaxValue) width = DEFAULT_SIZE;
+            if (height <= 0 || height == ushort.MaxValue) height = DEFAULT_SIZE;
 
             SetBinaryCustomParameters(r);
             SetBinaryCustomFunctions(r);
@@ -1773,10 +2078,10 @@ namespace Materia.Graph
             {
                 for (int i = 0; i < count; ++i)
                 {
-                    string type = r.NextString();
+                    NodeDataType type = (NodeDataType)r.NextUShort();
                     
-                    int w = r.NextInt();
-                    int h = r.NextInt();
+                    int w = r.NextUShort();
+                    int h = r.NextUShort();
 
                     string id = r.NextString();
 
@@ -1800,6 +2105,14 @@ namespace Materia.Graph
                     {
                         PixelNodes.Add(n as PixelProcessorNode);
                     }
+                    else if(n is InputNode)
+                    {
+                        InputNodes.Add(n.Id);
+                    }
+                    else if(n is OutputNode)
+                    {
+                        OutputNodes.Add(n.Id);
+                    }
 
                     LoadNode(n, r, archive);
                 }
@@ -1809,16 +2122,20 @@ namespace Materia.Graph
                 Log.Error("Failed to read all nodes");
             }
 
+            //set node lookup here
+            //for params / ReadExtended
+            NodeLookup = lookup;
+
             SetBinaryParameters(r);
+
+            //for different graph types
+            //that may have written extra needed data
+            ReadExtended(r);
 
             if (!(this is Function))
             {
                 SetConnections();
             }
-
-            //for different graph types
-            //that may have written extra needed data
-            ReadExtended(r);
 
             State = GraphState.Ready;
         }
@@ -1840,19 +2157,26 @@ namespace Materia.Graph
             Archive = archive;
 
             Name = d.name;
-            OutputNodes = d.outputs;
-            InputNodes = d.inputs;
+            Id = string.IsNullOrEmpty(d.id) ? Id : d.id;
+
+            //still trying to figure out why we stored these?
+            //OutputNodes = d.outputs;
+            //InputNodes = d.inputs;
+
             defaultTextureType = d.defaultTextureType;
+            
             ShiftX = d.shiftX;
             ShiftY = d.shiftY;
             Zoom = d.zoom;
+            
             width = d.width;
             height = d.height;
+
             AbsoluteSize = d.absoluteSize;
             Version = d.version ?? GRAPH_VERSION;
 
-            if (width <= 0 || width == int.MaxValue) width = 256;
-            if (height <= 0 || height == int.MaxValue) height = 256;
+            if (width <= 0 || width == ushort.MaxValue) width = DEFAULT_SIZE;
+            if (height <= 0 || height == ushort.MaxValue) height = DEFAULT_SIZE;
 
             SetJsonReadyCustomParameters(d.customParameters);
             SetJsonReadyCustomFunctions(d.customFunctions);
@@ -1891,6 +2215,14 @@ namespace Materia.Graph
                     else if (n is PixelProcessorNode)
                     {
                         PixelNodes.Add(n as PixelProcessorNode);
+                    }
+                    else if (n is InputNode)
+                    {
+                        InputNodes.Add(n.Id);
+                    }
+                    else if (n is OutputNode)
+                    {
+                        OutputNodes.Add(n.Id);
                     }
 
                     //deserialize again in the node load
@@ -1954,20 +2286,52 @@ namespace Materia.Graph
             }
             if (n is ArgNode)
             {
-                fg.Args.Add(n as ArgNode);
+                if (!fg.Args.Contains(n as ArgNode))
+                {
+                    fg.Args.Add(n as ArgNode);
+                }
             }
             else if (n is CallNode)
             {
-                fg.Calls.Add(n as CallNode);
+                if (!fg.Calls.Contains(n as CallNode))
+                {
+                    fg.Calls.Add(n as CallNode);
+                }
             }
             else if (n is SamplerNode)
             {
-                fg.Samplers.Add(n as SamplerNode);
+                if (!fg.Samplers.Contains(n))
+                {
+                    fg.Samplers.Add(n as SamplerNode);
+                }
             }
             else if (n is ForLoopNode)
             {
-                fg.ForLoops.Add(n as ForLoopNode);
+                if (!fg.ForLoops.Contains(n))
+                {
+                    fg.ForLoops.Add(n as ForLoopNode);
+                }
             }
+        }
+
+        private void RestoreNode(Node n, Reader r, Archive arch = null)
+        {
+            if (n is MathNode && this is Function)
+            {
+                RegisterFunctionNode(n);
+            }
+
+            if (n is GraphInstanceNode)
+            {
+                var gi = n as GraphInstanceNode;
+                gi.Restore(r, arch);
+            }
+            else
+            {
+                n.FromBinary(r, arch);
+            }
+
+            originSizes[n.Id] = new PointF(n.Width, n.Height);
         }
 
         private void LoadNode(Node n, Reader r, Archive archive = null)
@@ -2345,7 +2709,7 @@ namespace Materia.Graph
         #region Undo / Redo
         public void Undo()
         {
-            string jsonData = null;
+            byte[] binaryData = null;
             Task.Run(() =>
             {
                 if (previousByteData == null || previousByteData.Length == 0)
@@ -2360,46 +2724,64 @@ namespace Materia.Graph
 
                 byte[] diff = null;
 
-                if (undo.TryDequeue(out diff))
+                if (undo.TryPop(out diff))
                 {
-                    //undo the diff
+                    //we only ever store the last 100 redos
+                    if (redo.Count >= 100)
+                    {
+                        List<byte[]> queue = redo.ToList();
+                        queue.Reverse();
+                        redo.Clear();
 
+                        //delete the first 10 redos
+                        for (int i = 10; i < queue.Count; ++i)
+                        {
+                            redo.Push(queue[i]);
+                        }
+                    }
+
+                    var redoPrevious = previousByteData;
+
+                    //undo the diff
                     using (MemoryStream output = new MemoryStream())
                     using (ByteBuffer dict = new ByteBuffer(previousByteData))
                     using (ByteBuffer delta = new ByteBuffer(diff))
                     {
                         long bytesWritten = 0;
                         VCDecoder decoder = new VCDecoder(dict, delta, output);
-                        if (decoder.Decode(out bytesWritten) == VCDiffResult.SUCCESS)
+                        var result = decoder.Start();
+                        while (result == VCDiffResult.SUCCESS)
                         {
-                            previousByteData = output.ToArray();
-                            jsonData = Encoding.UTF8.GetString(previousByteData);
+                            result = decoder.Decode(out bytesWritten);
                         }
+
+                        previousByteData = output.ToArray();
+                        binaryData = previousByteData;
                     }
 
-                    //we only ever store the last 100 redos
-                    if (redo.Count >= 100)
+                    //create the proper redo diff
+                    using (MemoryStream output = new MemoryStream())
+                    using (ByteBuffer target = new ByteBuffer(redoPrevious))
+                    using (ByteBuffer dict = new ByteBuffer(previousByteData))
                     {
-                        byte[][] queue = redo.ToArray();
-                        redo.Clear();
-
-                        //delete the first 10 redos
-                        for (int i = 10; i < queue.Length; ++i)
+                        VCCoder coder = new VCCoder(dict, target, output);
+                        if (coder.Encode(false, true) == VCDiffResult.SUCCESS)
                         {
-                            redo.Enqueue(queue[i]);
+                            redo.Push(output.ToArray());
                         }
                     }
-
-                    redo.Enqueue(diff);
                 }
             }).ContinueWith(t =>
             {
-                if (!string.IsNullOrEmpty(jsonData))
-                {
-                    Dispose();
-                    FromJson(jsonData, Archive);
-                    OnUndo?.Invoke(this);
-                }
+                if (binaryData == null || binaryData.Length == 0) return;
+                //do not dispose instead do a restore
+                //restore is differiental for the graph
+                //it will update / add / remove as needed
+                //it will also prevent reloading entire graph
+                //instances and instead just transfer the data
+                //back to the graph instance
+                Restore(new Reader(binaryData));
+                OnUndo?.Invoke(this);
             }, Node.Context);
         }
 
@@ -2420,8 +2802,10 @@ namespace Materia.Graph
 
                 byte[] diff = null;
 
-                if (redo.TryDequeue(out diff))
+                if (redo.TryPop(out diff))
                 {
+                    var undoPrevious = previousByteData;
+
                     //redo the diff
                     using (MemoryStream output = new MemoryStream())
                     using (ByteBuffer dict = new ByteBuffer(previousByteData))
@@ -2429,26 +2813,43 @@ namespace Materia.Graph
                     {
                         long bytesWritten = 0;
                         VCDecoder decoder = new VCDecoder(dict, delta, output);
-                        if (decoder.Decode(out bytesWritten) == VCDiffResult.SUCCESS)
+                        var result = decoder.Start();
+                        while (result == VCDiffResult.SUCCESS)
                         {
-                            previousByteData = output.ToArray();
-                            binaryData = previousByteData;
+                            result = decoder.Decode(out bytesWritten);
                         }
+
+                        previousByteData = output.ToArray();
+                        binaryData = previousByteData;
                     }
 
-                    //store the diff in undo
-                    undo.Enqueue(diff);
+                    //create the proper undo diff
+                    using (MemoryStream output = new MemoryStream())
+                    using (ByteBuffer target = new ByteBuffer(undoPrevious))
+                    using (ByteBuffer dict = new ByteBuffer(previousByteData))
+                    {
+                        VCCoder coder = new VCCoder(dict, target, output);
+                        if (coder.Encode(false, true) == VCDiffResult.SUCCESS)
+                        {
+                            undo.Push(output.ToArray());
+                        }
+                    }
                 }
             }).ContinueWith(t =>
             {
                 if (binaryData == null || binaryData.Length == 0) return;
-                Dispose();
-                FromBinary(new Reader(binaryData), Archive);
+                //do not dispose instead do a restore
+                //restore is differiental for the graph
+                //it will update / add / remove as needed
+                //it will also prevent reloading entire graph
+                //instances and instead just transfer the data
+                //back to the graph instance
+                Restore(new Reader(binaryData));
                 OnRedo?.Invoke(this);
             }, Node.Context);
         }
 
-        public void Snapshot(int maxStore = 100)
+        public void Snapshot()
         {
             Task.Run(() =>
             {
@@ -2469,15 +2870,16 @@ namespace Materia.Graph
                     //compared to previous graph using vcdiff
 
                     //verify max storage
-                    if (undo.Count >= maxStore)
+                    if (undo.Count >= 100)
                     {
-                        byte[][] queue = undo.ToArray();
+                        List<byte[]> queue = undo.ToList();
+                        queue.Reverse();
                         undo.Clear();
 
                         //delete the first 10 undos
-                        for (int i = 10; i < queue.Length; ++i)
+                        for (int i = 10; i < queue.Count; ++i)
                         {
-                            undo.Enqueue(queue[i]);
+                            undo.Push(queue[i]);
                         }
                     }
 
@@ -2488,7 +2890,7 @@ namespace Materia.Graph
                         VCCoder coder = new VCCoder(dict, target, output);
                         if (coder.Encode(false, true) == VCDiffResult.SUCCESS)
                         {
-                            undo.Enqueue(output.ToArray());
+                            undo.Push(output.ToArray());
                         }
                     }
 
@@ -2496,6 +2898,106 @@ namespace Materia.Graph
                 }
             });
         }
+
+        /// <summary>
+        /// exports all undo redo stacks for the entire graph, params, pixel nodes etc
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<string, UndoRedoData> ExportUndoRedo()
+        {
+            Dictionary<string, UndoRedoData> data = new Dictionary<string, UndoRedoData>();
+            data[Id] = new UndoRedoData(UndoStack, RedoStack, previousByteData);
+
+            var cfuncs = CustomFunctions;
+            for (int i = 0; i < cfuncs.Count; ++i)
+            {
+                var f = cfuncs[i];
+                data[f.Id] = new UndoRedoData(f.UndoStack, f.RedoStack, f.previousByteData);
+            }
+
+            var pfuncs = PixelNodes;
+
+            for (int i = 0; i < pfuncs.Count; ++i)
+            {
+                var n = pfuncs[i];
+                var f = n.Function;
+                data[f.Id] = new UndoRedoData(f.UndoStack, f.RedoStack, f.previousByteData);
+            }
+
+            try
+            {
+                foreach (var f in ParameterFunctions.Values)
+                {
+                    data[f.Id] = new UndoRedoData(f.UndoStack, f.RedoStack, f.previousByteData);
+                }
+            }
+            catch { }
+
+            return data;
+        }
+
+        /// <summary>
+        /// imports alll undo / redo stacks
+        /// </summary>
+        /// <param name="data"></param>
+        public void ImportUndoRedo(Dictionary<string, UndoRedoData> data)
+        {
+            try
+            {
+                if (data.TryGetValue(Id, out UndoRedoData rootData))
+                {
+                    UndoStack = rootData.undos;
+                    RedoStack = rootData.redos;
+                    previousByteData = rootData.previousState;
+                }
+
+                //lookup table
+                Dictionary<string, Function> lookup = new Dictionary<string, Function>();
+
+                //we do this so we are not continually accessing the getter method
+                //of the CustomFunction property
+                List<Function> cfuncs = CustomFunctions;
+
+                for (int i = 0; i < cfuncs.Count; ++i)
+                {
+                    var f = cfuncs[i];
+                    lookup[f.Id] = f;
+                }
+
+                var pfuncs = PixelNodes;
+                for (int i = 0; i < pfuncs.Count; ++i)
+                {
+                    var n = pfuncs[i];
+                    var f = n.Function;
+                    lookup[f.Id] = f;
+                }
+
+                try
+                {
+                    foreach (var f in ParameterFunctions.Values)
+                    {
+                        lookup[f.Id] = f;
+                    }
+                }
+                catch { }
+
+                foreach (string k in data.Keys)
+                {
+                    //we have already taken care of this one above
+                    if (k == Id) continue;
+                    var stackData = data[k];
+                    if (lookup.TryGetValue(k, out var f))
+                    {
+                        f.UndoStack = stackData.undos;
+                        f.RedoStack = stackData.redos;
+                        f.previousByteData = stackData.previousState;
+                    }
+                }
+            }
+            catch { }
+        }
+
+
         #endregion
 
         #region Sub Events
@@ -2512,6 +3014,46 @@ namespace Materia.Graph
         protected virtual void Updated()
         {
             OnUpdate?.Invoke(this);
+        }
+        #endregion
+
+        #region Save Helper Accessible Without UI
+        public static bool WriteToFile(Graph g, string cwd, string path, bool saveAs = false)
+        {
+            bool isArchive = Path.GetExtension(path).EndsWith("mtga");
+            string archivePath = path;
+            path = path.Replace(".mtga", ".mtg");
+
+            if (g == null) return false;
+
+            g.CopyResources(cwd, saveAs);
+
+            using (Writer w = new Writer())
+            {
+                g.GetBinary(w);
+                var buffer = w.Buffer;
+                using (var stream = File.Open(path,
+                                    FileMode.OpenOrCreate | FileMode.Truncate,
+                                    FileAccess.Write))
+                {
+                    stream.Write(buffer.Array, buffer.Offset, buffer.Count);
+                    stream.Flush();
+                }
+            }
+
+            if (isArchive)
+            {
+                var arch = new Archive(archivePath);
+                if (!arch.Create(path))
+                {
+                    Log.Error("Failed to create materia graph archive file");
+                    return false;
+                }
+            }
+
+            g.Name = saveAs ? Path.GetFileNameWithoutExtension(path) : g.name;
+
+            return true;
         }
         #endregion
 

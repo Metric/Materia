@@ -105,7 +105,7 @@ namespace Materia.Nodes.Atomic
 
         public SwitchNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Switch";
+            defaultName = Name = "Switch";
 
             width = w;
             height = h;
@@ -166,7 +166,7 @@ namespace Materia.Nodes.Atomic
 
         public class SwitchData : NodeData
         {
-            public int selected;
+            public byte selected;
 
             public override void Write(Writer w)
             {
@@ -176,7 +176,7 @@ namespace Materia.Nodes.Atomic
             public override void Parse(Reader r)
             {
                 base.Parse(r);
-                selected = r.NextInt();
+                selected = r.NextByte();
             }
         }
 
@@ -184,7 +184,7 @@ namespace Materia.Nodes.Atomic
         {
             SwitchData d = new SwitchData();
             FillBaseNodeData(d);
-            d.selected = (int)selected;
+            d.selected = (byte)selected;
             d.Write(w);
         }
 
@@ -200,7 +200,7 @@ namespace Materia.Nodes.Atomic
         {
             SwitchData d = new SwitchData();
             FillBaseNodeData(d);
-            d.selected = (int)selected;
+            d.selected = (byte)selected;
 
             return JsonConvert.SerializeObject(d);
         }

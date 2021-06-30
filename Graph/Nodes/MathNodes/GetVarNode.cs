@@ -62,7 +62,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Get Var";
+            defaultName = Name = "Get Var";
 
             shaderId = "S" + Id.Split('-')[0];
 

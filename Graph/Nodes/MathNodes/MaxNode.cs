@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Max";
+            defaultName = Name = "Max";
   
             shaderId = "S" + Id.Split('-')[0];
 

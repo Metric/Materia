@@ -14,6 +14,7 @@ using Materia.Rendering.Mathematics;
 using Materia.Rendering.Shaders;
 using Materia.Rendering.Textures;
 using MateriaCore.Components.GL;
+using MateriaCore.Components.GL.Menu;
 using MateriaCore.Components.Panes;
 using MateriaCore.Utils;
 using OpenTK.Windowing.Desktop;
@@ -62,8 +63,6 @@ namespace MateriaCore
 
         private bool isMinimized = false;
 
-        private Stack<Exporter> scheduledExports = new Stack<Exporter>();
-
         public MainGLWindow(NativeWindowSettings settings) : base(settings)
         {
             InitializeEvents();
@@ -85,9 +84,10 @@ namespace MateriaCore
             (Application.Current.ApplicationLifetime as IControlledApplicationLifetime)?.Shutdown();
         }
 
-        private void MainGLWindow_KeyUp(OpenTK.Windowing.Common.KeyboardKeyEventArgs obj)
+        private InfinityUI.Interfaces.KeyboardEventArgs BuildKeyboardEvent(Keys key, string textInput)
         {
-            currentKey = obj.Key;
+            currentKey = key;
+            currentTextInput = textInput;
 
             InfinityUI.Interfaces.KeyboardEventArgs kevent = new InfinityUI.Interfaces.KeyboardEventArgs()
             {
@@ -119,44 +119,24 @@ namespace MateriaCore
                 }
             };
 
+            return kevent;
+        }
+
+        private void MainGLWindow_KeyUp(OpenTK.Windowing.Common.KeyboardKeyEventArgs obj)
+        {
+            var kevent = BuildKeyboardEvent(obj.Key, currentTextInput);
             UI.OnKeyUp(kevent);
         }
 
         private void MainGLWindow_KeyDown(OpenTK.Windowing.Common.KeyboardKeyEventArgs obj)
         {
-            currentKey = obj.Key;
-
-            InfinityUI.Interfaces.KeyboardEventArgs kevent = new InfinityUI.Interfaces.KeyboardEventArgs()
-            {
-                Key = currentKey,
-                Char = currentTextInput,
-                IsAlt = IsKeyDown(Keys.LeftAlt) || IsKeyDown(Keys.RightAlt),
-                IsLeftAlt = IsKeyDown(Keys.LeftAlt),
-                IsRightAlt = IsKeyDown(Keys.RightAlt),
-                IsCtrl = IsKeyDown(Keys.LeftControl) || IsKeyDown(Keys.RightControl),
-                IsLeftCtrl = IsKeyDown(Keys.LeftControl),
-                IsRightCtrl = IsKeyDown(Keys.RightControl),
-                IsShift = IsKeyDown(Keys.LeftShift) || IsKeyDown(Keys.RightShift),
-                IsLeftShift = IsKeyDown(Keys.LeftShift),
-                IsRightShift = IsKeyDown(Keys.RightShift),
-                IsCapsLock = IsKeyDown(Keys.CapsLock),
-                GetClipboardContent = () =>
-                {
-                    return ClipboardString;
-                },
-                SetClipboardContent = (o) => {
-                    if (o == null)
-                    {
-                        ClipboardString = "";
-                    }
-                    else
-                    {
-                        ClipboardString = o.ToString();
-                    }
-                }
-            };
-
+            var kevent = BuildKeyboardEvent(obj.Key, currentTextInput);
             UI.OnKeyDown(kevent);
+        }
+        private void MainGLWindow_TextInput(OpenTK.Windowing.Common.TextInputEventArgs obj)
+        {
+            var kevent = BuildKeyboardEvent(currentKey, obj.AsString);
+            UI.OnTextInput(kevent);
         }
 
         private void MainGLWindow_MouseUp(OpenTK.Windowing.Common.MouseButtonEventArgs obj)
@@ -215,42 +195,6 @@ namespace MateriaCore
             }
         }
 
-        private void MainGLWindow_TextInput(OpenTK.Windowing.Common.TextInputEventArgs obj)
-        {
-            currentTextInput = obj.AsString;
-
-            InfinityUI.Interfaces.KeyboardEventArgs kevent = new InfinityUI.Interfaces.KeyboardEventArgs()
-            {
-                Key = currentKey,
-                Char = currentTextInput,
-                IsAlt = IsKeyDown(Keys.LeftAlt) || IsKeyDown(Keys.RightAlt),
-                IsLeftAlt = IsKeyDown(Keys.LeftAlt),
-                IsRightAlt = IsKeyDown(Keys.RightAlt),
-                IsCtrl = IsKeyDown(Keys.LeftControl) || IsKeyDown(Keys.RightControl),
-                IsLeftCtrl = IsKeyDown(Keys.LeftControl),
-                IsRightCtrl = IsKeyDown(Keys.RightControl),
-                IsShift = IsKeyDown(Keys.LeftShift) || IsKeyDown(Keys.RightShift),
-                IsLeftShift = IsKeyDown(Keys.LeftShift),
-                IsRightShift = IsKeyDown(Keys.RightShift),
-                IsCapsLock = IsKeyDown(Keys.CapsLock),
-                GetClipboardContent = () =>
-                {
-                    return ClipboardString;
-                },
-                SetClipboardContent = (o) => {
-                    if (o == null)
-                    {
-                        ClipboardString = "";
-                    }
-                    else
-                    {
-                        ClipboardString = o.ToString();
-                    }
-                }
-            };
-
-            UI.OnTextInput(kevent);
-        }
 
         private void InitializeEvents()
         {
@@ -269,7 +213,7 @@ namespace MateriaCore
             {
                 if (export is Exporter)
                 {
-                    scheduledExports.Push(export as Exporter);
+                    ExporterQueue.Enqueue(export as Exporter);
                 }
             });
         }
@@ -292,9 +236,9 @@ namespace MateriaCore
             {
                 if (Application.Current.FocusManager.Current != null) return;
 
-                if (UI.Focus.Parent == activeDocument)
+                if (UI.Focus.Parent is IGraphNode || UI.Focus.Parent is UIGraph)
                 {
-                    activeDocument?.TryAndComment();
+                    UIDocuments.Current?.ActiveGraph?.TryAndComment();
                     e.IsHandled = true;
                     return;
                 }
@@ -303,9 +247,9 @@ namespace MateriaCore
             {
                 if (Application.Current.FocusManager.Current != null) return;
 
-                if (UI.Focus.Parent == activeDocument)
+                if (UI.Focus.Parent is IGraphNode || UI.Focus.Parent is UIGraph)
                 {
-                    activeDocument?.TryAndPin();
+                    UIDocuments.Current?.ActiveGraph?.TryAndPin();
                     e.IsHandled = true;
                     return;
                 }
@@ -314,9 +258,9 @@ namespace MateriaCore
             {
                 if (Application.Current.FocusManager.Current != null) return;
 
-                if (UI.Focus.Parent == activeDocument)
+                if (UI.Focus.Parent is IGraphNode || UI.Focus.Parent is UIGraph)
                 {
-                    activeDocument?.GotoNextPin();
+                    UIDocuments.Current?.ActiveGraph?.GotoNextPin();
                     e.IsHandled = true;
                     return;
                 }
@@ -325,9 +269,9 @@ namespace MateriaCore
             {
                 if (Application.Current.FocusManager.Current != null) return;
 
-                if (UI.Focus.Parent is UINode || UI.Focus.Parent is UIGraph)
+                if (UI.Focus.Parent is IGraphNode || UI.Focus.Parent is UIGraph)
                 {
-                    string data = activeDocument?.TryAndCopy();
+                    string data = UIDocuments.Current?.ActiveGraph?.TryAndCopy();
                     e.SetClipboardContent?.Invoke(data);
                     e.IsHandled = true;
                     return;
@@ -337,9 +281,9 @@ namespace MateriaCore
             {
                 if (Application.Current.FocusManager.Current != null) return;
 
-                if (UI.Focus.Parent == activeDocument)
+                if (UI.Focus.Parent is IGraphNode || UI.Focus.Parent is UIGraph)
                 {
-                    activeDocument?.TryAndPaste(e.GetClipboardContent?.Invoke()?.ToString());
+                    UIDocuments.Current?.ActiveGraph?.TryAndPaste(e.GetClipboardContent?.Invoke()?.ToString());
                     e.IsHandled = true;
                     return;
                 }
@@ -348,9 +292,9 @@ namespace MateriaCore
             {
                 if (Application.Current.FocusManager.Current != null) return;
 
-                if (UI.Focus.Parent is UIGraph || UI.Focus.Parent is UINode)
+                if (UI.Focus.Parent is IGraphNode || UI.Focus.Parent is UINode)
                 {
-                    activeDocument?.TryAndUndo();
+                    UIDocuments.Current?.ActiveGraph?.TryAndUndo();
                     e.IsHandled = true;
                     return;
                 }
@@ -359,9 +303,9 @@ namespace MateriaCore
             {
                 if (Application.Current.FocusManager.Current != null) return;
 
-                if (UI.Focus.Parent is UIGraph || UI.Focus.Parent is UINode)
+                if (UI.Focus.Parent is IGraphNode || UI.Focus.Parent is UINode)
                 {
-                    activeDocument?.TryAndRedo();
+                    UIDocuments.Current?.ActiveGraph?.TryAndRedo();
                     e.IsHandled = true;
                     return;
                 }
@@ -370,28 +314,39 @@ namespace MateriaCore
             {
                 if (Application.Current.FocusManager.Current != null) return;
 
-                if (UI.Focus.Parent is UINode || UI.Focus.Parent is UIGraph)
+                if (UI.Focus.Parent is IGraphNode || UI.Focus.Parent is UIGraph)
                 {
-                    activeDocument?.TryAndDelete();
+                    UIDocuments.Current?.ActiveGraph?.TryAndDelete();
                     e.IsHandled = true;
                     return;
                 }
             });
-            ShortcutInputManager.AddAction(ShortcutCommand.New, (e) =>
+            ShortcutInputManager.AddAction(ShortcutCommand.New, async (e) =>
             {
-                //todo: Add new handler
+                //do not do this if menu is focused
+                if (UI.Focus.Parent is UIMenuItem) return;
+                await UIDocuments.TryAndCreate();
             });
-            ShortcutInputManager.AddAction(ShortcutCommand.Save, (e) =>
+            ShortcutInputManager.AddAction(ShortcutCommand.Save, async (e) =>
             {
+                //do not do this if menu is focused
+                if (UI.Focus.Parent is UIMenuItem) return;
                 //todo: add save handler
+                //await UIDocuments.TryAndSave();
             });
-            ShortcutInputManager.AddAction(ShortcutCommand.SaveAs, (e) =>
+            ShortcutInputManager.AddAction(ShortcutCommand.SaveAs, async (e) =>
             {
+                //do not do this if menu is focused
+                if (UI.Focus.Parent is UIMenuItem) return;
                 //todo: add save as handler
+                //await UIDocuments.TryAndSaveAs();
             });
             ShortcutInputManager.AddAction(ShortcutCommand.Shelf, (e) =>
             {
-                //todo: add pop up shelf handler
+                if (UI.Focus.Parent is IGraphNode || UI.Focus.Parent is UIGraph)
+                {
+                    //todo: add pop up shelf handler
+                }
             });
         }
 
@@ -424,6 +379,10 @@ namespace MateriaCore
 
             graphCanvas = graphArea.AddComponent<UICanvas>();
             rootCanvas = rootArea.AddComponent<UICanvas>();
+            
+            //allow auto scale of UI windows
+            rootCanvas.ScaleWidthBase = 4096;
+            rootCanvas.AutoScale = true;
 
             activeDocument = new UIGraph();
 
@@ -443,7 +402,7 @@ namespace MateriaCore
             shelf = new UIShelf();
             rootArea.AddChild(shelf);
 
-            //GraphTemplate.PBRFull(activeGraph);
+            GraphTemplate.PBRFull(activeGraph);
             activeDocument.Load(activeGraph);
             activeGraph = activeDocument.Current;
             Debug.WriteLine("UI Initialize: " + (Environment.TickCount - ms) + "ms");
@@ -512,80 +471,27 @@ namespace MateriaCore
             //process hdr load if needed
             ProcessHdr();
 
-            //poll exports to render and write to file
-            PollExport();
+            //poll exports to render and write to file / memory buffer
+            ExporterQueue.Poll(activeDocument?.Root);
 
-            //poll graph nodes to render
-            PollGraph();
+            //poll graph nodes to rende
+            activeDocument?.Poll();
 
             //next render 3d preview
             preview3D?.Render();
             
             InitializeViewport();
+
             //draw UI last
             UI.Draw();
         }
 
-        private void PollGraph()
-        {
-            if (IsExiting || !IsVisible || activeGraph == null) return;
-
-            FullScreenQuad.SharedVao?.Bind();
-
-            int maxNodesToPoll = 100;
-            int i = 0;
-
-            while (i++ < maxNodesToPoll && activeGraph.IsProcessing)
-            {
-                //poll graph updates if any
-                //and let them render first before anything else
-                activeGraph?.Poll();
-            }
-
-            FullScreenQuad.SharedVao?.Unbind();
-        }
-
-        private void PollExport()
-        {
-            if (IsExiting || !IsVisible || activeGraph == null) return;
-
-            FullScreenQuad.SharedVao?.Bind();
-
-            if (scheduledExports.Count > 0)
-            {
-                var exporter = scheduledExports.Peek();
-                
-                if (exporter == null)
-                {
-                    scheduledExports.Pop();
-                    return;
-                }
-
-                if (!exporter.IsValid(activeGraph))
-                {
-                    scheduledExports.Pop();
-                    return;
-                }
-
-                if (!exporter.Next())
-                {
-                    exporter.Complete();
-                    scheduledExports.Pop();
-                }
-            }
-
-            FullScreenQuad.SharedVao?.Unbind();
-        }
-
         private void ProcessHdr()
         {
-            if (hdrToLoad == null) return;
+            if (!HdriManager.Process()) return;
+            
+            var hdrMap = HdriManager.Map;
 
-            hdrMap.Dispose();
-            
-            hdrMap = HdriManager.Process(hdrToLoad);
-            hdrToLoad = null;
-            
             GlobalEvents.Emit(GlobalEvent.HdriUpdate, hdrMap.irradiance, hdrMap.prefilter);
             GlobalEvents.Emit(GlobalEvent.SkyboxUpdate, this, hdrMap.environment);
         }
@@ -594,7 +500,6 @@ namespace MateriaCore
         private void InitializeHdr()
         {
             string dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hdr");
-            IHdrFile f = null;
             Task.Run(() =>
             {
                 HdriManager.Scan(dir);
@@ -605,17 +510,15 @@ namespace MateriaCore
                     return;
                 }
 
-                f = HdriManager.Load(available[0]);
-            }).ContinueWith(t =>
-            {
-                if (f == null) return;
-                hdrToLoad = f;
-            }, TaskScheduler.FromCurrentSynchronizationContext());
+                HdriManager.Load(available[0]);
+            });
         }
+               
 
         public virtual void Process()
         {
             ProcessEvents();
+            GlobalEvents.Poll();
             Invalidate();
         }
 
@@ -657,10 +560,9 @@ namespace MateriaCore
 
         private void InternalDispose()
         {
-            hdrToLoad?.Dispose();
-            //testing here only
-            hdrMap.Dispose();
-
+            ExporterQueue.Clear();
+            GlobalEvents.Clear();
+            HdriManager.Dispose();
             GridGenerator.Dispose();
 
             UI.Dispose();

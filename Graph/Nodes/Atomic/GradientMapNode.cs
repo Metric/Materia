@@ -43,7 +43,7 @@ namespace Materia.Nodes.Atomic
 
         public GradientMapNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Gradient Map";
+            defaultName = Name = "Gradient Map";
 
             width = w;
             height = h;

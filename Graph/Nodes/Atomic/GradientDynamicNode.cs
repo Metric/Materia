@@ -37,7 +37,7 @@ namespace Materia.Nodes.Atomic
 
         public GradientDynamicNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
-            Name = "Gradient Dynamic";
+            defaultName = Name = "Gradient Dynamic";
 
             width = w;
             height = h;

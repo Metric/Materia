@@ -533,5 +533,9 @@ namespace Materia.Rendering.Interfaces
         public override void AlphaFunc(int mode, float threshold) { }
 
         public override void LineWidth(float width) { }
+
+        //masking
+        public override void ColorMask(bool red, bool green, bool blue, bool alpha) { }
+        public override void DepthMask(bool depth) { }
     }
 }

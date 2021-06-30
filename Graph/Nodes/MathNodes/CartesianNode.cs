@@ -18,7 +18,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Cartesian";
+            defaultName = Name = "Cartesian";
 
             shaderId = "S" + Id.Split('-')[0];
 

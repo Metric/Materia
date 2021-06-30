@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Sine";
+            defaultName = Name = "Sine";
 
             shaderId = "S" + Id.Split('-')[0];
 

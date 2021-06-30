@@ -31,7 +31,7 @@ namespace Materia.Rendering.Material
 
         public bool UseDisplacement { get; set; }
 
-        public float IOR { get; set; }
+        public float IOR { get; set; } = 0.04f;
         public float HeightScale { get; set; }
 
         public bool ClipHeight { get; set; }

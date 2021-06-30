@@ -8,7 +8,7 @@ namespace Materia.Nodes.MathNodes
     {
         public TranslateMatrixNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base(w, h, p)
         {
-            name = "Translate Matrix";
+            defaultName = name = "Translate Matrix";
             input.Type = NodeType.Float2;
             input.Name = "Position";
         }

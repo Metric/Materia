@@ -26,6 +26,8 @@ namespace InfinityUI.Components
         public IGLProgram Shader { get; set; } = GLShaderCache.GetShader("pointui.glsl", "pointui.glsl", "pointui.glsl");
         public Vector4 Color { get; set; } = Vector4.One;
 
+        protected int StencilStage = 0;
+
         protected virtual bool IsInClipBounds()
         {
             if (Parent == null) return false;
@@ -43,7 +45,7 @@ namespace InfinityUI.Components
 
             if (adjustStencil)
             {
-                UIRenderer.StencilStage--;
+                --UIRenderer.StencilStage;
 
                 if (UIRenderer.StencilStage < 0)
                 {
@@ -51,7 +53,6 @@ namespace InfinityUI.Components
                 }
 
                 IGL.Primary.StencilFunc((int)StencilFunction.Equal, UIRenderer.StencilStage, UIRenderer.StencilStage);
-                IGL.Primary.StencilMask(0x00);
             }
         }
 
@@ -59,11 +60,27 @@ namespace InfinityUI.Components
         {
             if (Parent == null) return;
             Parent.RaycastTarget = true;
+            Parent.MessageComplete += Parent_MessageComplete;
+        }
+
+        private void Parent_MessageComplete(UIObject arg1, object[] arg2)
+        {
+            if (arg2 == null || arg2.Length == 0) return;
+            if (!(arg2[0] is DrawEvent)) return;
+            AfterDraw(arg2[0] as DrawEvent);
+        }
+
+        protected virtual void AfterDraw(DrawEvent e)
+        {
+
         }
 
         public virtual void Dispose()
         {
-
+            if (Parent != null)
+            {
+                Parent.MessageComplete -= Parent_MessageComplete;
+            }
         }
 
         public virtual void Draw(DrawEvent e)

@@ -16,7 +16,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Normalize";
+            defaultName = Name = "Normalize";
      
             shaderId = "S" + Id.Split('-')[0];
 

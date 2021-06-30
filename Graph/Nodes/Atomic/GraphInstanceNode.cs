@@ -136,7 +136,7 @@ namespace Materia.Nodes.Atomic
 
             internalPixelType = p;
 
-            Name = "Graph Instance";
+            defaultName = Name = "Graph Instance";
 
             path = "";
         }
@@ -372,7 +372,7 @@ namespace Materia.Nodes.Atomic
 
             nameMap = new Dictionary<string, ParameterValue>();
 
-            GraphInst = new Image(Name, width, height);
+            GraphInst = new Image(Name, (ushort)width, (ushort)height);
 
             GraphInst.CurrentWorkingDirectory = CurrentWorkingDirectory;
             GraphInst.AssignParentNode(this);
@@ -694,29 +694,29 @@ namespace Materia.Nodes.Atomic
 
                     if (o.IsNumber())
                     {
-                        w.Write((int)NodeType.Float);
+                        w.Write((byte)InternalNodeType.Float);
                         w.Write(o.ToFloat());
                     }
                     else if(o.IsBool())
                     {
-                        w.Write((int)NodeType.Bool);
+                        w.Write((byte)InternalNodeType.Bool);
                         w.Write(o.ToBool());
                     }
                     else if(o.IsVector())
                     {
-                        w.Write((int)NodeType.Float4);
+                        w.Write((byte)InternalNodeType.Float4);
                         MVector mv = (MVector)o;
                         w.WriteObjectList(mv.ToArray());
                     }
                     else if(o.IsMatrix())
                     {
-                        w.Write((int)NodeType.Matrix);
+                        w.Write((byte)InternalNodeType.Matrix);
                         Matrix4 m = (Matrix4)o;
                         w.WriteObjectList(m.ToArray());
                     }
                     else
                     {
-                        w.Write((int)NodeType.Float);
+                        w.Write((byte)NodeType.Float);
                         w.Write((float)0);
                     }
                 }
@@ -725,34 +725,34 @@ namespace Materia.Nodes.Atomic
 
                 foreach(string k in customParameters.Keys)
                 {
-                    object o = parameters[k];
+                    object o = customParameters[k];
                     w.Write(k);
 
                     if (o.IsNumber())
                     {
-                        w.Write((int)NodeType.Float);
+                        w.Write((byte)InternalNodeType.Float);
                         w.Write(o.ToFloat());
                     }
                     else if (o.IsBool())
                     {
-                        w.Write((int)NodeType.Bool);
+                        w.Write((byte)InternalNodeType.Bool);
                         w.Write(o.ToBool());
                     }
                     else if (o.IsVector())
                     {
-                        w.Write((int)NodeType.Float4);
+                        w.Write((byte)InternalNodeType.Float4);
                         MVector mv = (MVector)o;
                         w.WriteObjectList(mv.ToArray());
                     }
                     else if (o.IsMatrix())
                     {
-                        w.Write((int)NodeType.Matrix);
+                        w.Write((byte)InternalNodeType.Matrix);
                         Matrix4 m = (Matrix4)o;
                         w.WriteObjectList(m.ToArray());
                     }
                     else
                     {
-                        w.Write((int)NodeType.Float);
+                        w.Write((byte)InternalNodeType.Float);
                         w.Write((float)0);
                     }
                 }
@@ -771,24 +771,22 @@ namespace Materia.Nodes.Atomic
                 for (int i = 0; i < pcount; ++i)
                 {
                     string k = r.NextString();
-                    NodeType type = (NodeType)r.NextInt();
+                    InternalNodeType type = (InternalNodeType)r.NextByte();
 
                     switch (type)
                     {
-                        case NodeType.Bool:
+                        case InternalNodeType.Bool:
                             parameters[k] = r.NextBool();
                             break;
-                        case NodeType.Float:
+                        case InternalNodeType.Float:
                             parameters[k] = r.NextFloat();
                             break;
-                        case NodeType.Float2:
-                        case NodeType.Float3:
-                        case NodeType.Float4:
-                        case NodeType.Gray:
-                        case NodeType.Color:
+                        case InternalNodeType.Float2:
+                        case InternalNodeType.Float3:
+                        case InternalNodeType.Float4:
                             parameters[k] = MVector.FromArray(r.NextList<float>());
                             break;
-                        case NodeType.Matrix:
+                        case InternalNodeType.Matrix:
                             Matrix4 mv = Matrix4.Identity;
                             float[] values = r.NextList<float>();
                             mv.FromArray(values);
@@ -801,24 +799,22 @@ namespace Materia.Nodes.Atomic
                 for (int i = 0; i < pcount; ++i)
                 {
                     string k = r.NextString();
-                    NodeType type = (NodeType)r.NextInt();
+                    InternalNodeType type = (InternalNodeType)r.NextByte();
 
                     switch (type)
                     {
-                        case NodeType.Bool:
+                        case InternalNodeType.Bool:
                             customParameters[k] = r.NextBool();
                             break;
-                        case NodeType.Float:
+                        case InternalNodeType.Float:
                             customParameters[k] = r.NextFloat();
                             break;
-                        case NodeType.Float2:
-                        case NodeType.Float3:
-                        case NodeType.Float4:
-                        case NodeType.Gray:
-                        case NodeType.Color:
+                        case InternalNodeType.Float2:
+                        case InternalNodeType.Float3:
+                        case InternalNodeType.Float4:
                             customParameters[k] = MVector.FromArray(r.NextList<float>());
                             break;
-                        case NodeType.Matrix:
+                        case InternalNodeType.Matrix:
                             Matrix4 mv = Matrix4.Identity;
                             float[] values = r.NextList<float>();
                             mv.FromArray(values);
@@ -834,7 +830,13 @@ namespace Materia.Nodes.Atomic
             if (!string.IsNullOrEmpty(path) 
                 && !string.IsNullOrEmpty(relativePath) && File.Exists(path))
             {
+                //this is only copying mtg / mtga file of the GraphInst
+                //it is not copying any instances within the instance
                 CopyResourceTo(CWD, relativePath, path);
+
+                //Now have the instance, if available,
+                //copy instances within instances 
+                GraphInst?.CopyResources(CWD, CWD != CurrentWorkingDirectory);
             }
         }
 
@@ -881,6 +883,34 @@ namespace Materia.Nodes.Atomic
         {
             archive = arch;
             FromBinary(r);
+        }
+
+        //special for graph instance nodes
+        //other nodes can just rely on FromBinary as usual
+        public virtual void Restore(Reader r, Archive arch = null)
+        {
+            archive = arch;
+            GraphInstanceNodeData d = new GraphInstanceNodeData();
+            d.Parse(r);
+            SetBaseNodeDate(d);
+            path = d.path;
+            randomSeed = d.randomSeed;
+            jsonParameters = d.parameters;
+            jsonCustomParameters = d.customParameters;
+
+            ValidatePixelType();
+
+            if (GraphInst == null)
+            {
+                Load(path);
+                return;
+            }
+
+            GraphInst.AssignParameters(jsonParameters);
+            GraphInst.AssignCustomParameters(jsonCustomParameters);
+            GraphInst.AssignSeed(randomSeed);
+
+            isDirty = true;
         }
 
         public override void FromBinary(Reader r)

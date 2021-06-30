@@ -24,7 +24,7 @@ namespace Materia.Nodes.Atomic
         int rays = 4;
 
         [Promote(NodeType.Float)]
-        [Editable(ParameterInputType.IntSlider, "Rays", "Default", 1, 128)]
+        [Editable(ParameterInputType.IntSlider, "Rays", "Default", 1, 255)]
         public int Rays
         {
             get
@@ -44,7 +44,7 @@ namespace Materia.Nodes.Atomic
             //also it allows us to load on another thread if needed
             //and not worry about GL calls
 
-            Name = "AO";
+            defaultName = Name = "AO";
 
             width = w;
             height = h;
@@ -63,7 +63,7 @@ namespace Materia.Nodes.Atomic
 
         public class AOData : NodeData
         {
-            public int rays;
+            public byte rays;
 
             public override void Write(Writer w)
             {
@@ -74,7 +74,7 @@ namespace Materia.Nodes.Atomic
             public override void Parse(Reader r)
             {
                 base.Parse(r);
-                rays = r.NextInt();
+                rays = r.NextByte();
             }
         }
 
@@ -98,7 +98,7 @@ namespace Materia.Nodes.Atomic
         {
             AOData d = new AOData();
             FillBaseNodeData(d);
-            d.rays = rays;
+            d.rays = (byte)rays;
             d.Write(w);
         }
 
@@ -106,7 +106,7 @@ namespace Materia.Nodes.Atomic
         {
             AOData d = new AOData();
             FillBaseNodeData(d);
-            d.rays = rays;
+            d.rays = (byte)rays;
 
             return JsonConvert.SerializeObject(d);
         }

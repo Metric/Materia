@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Pow";
+            defaultName = Name = "Pow";
    
             shaderId = "S" + Id.Split('-')[0];
 

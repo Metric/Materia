@@ -36,7 +36,7 @@ namespace Materia.Nodes.Atomic
 
         public LevelsNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Levels";
+            defaultName = Name = "Levels";
 
             width = w;
             height = h;

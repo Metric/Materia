@@ -202,8 +202,7 @@ namespace Materia.Nodes.Atomic
 
         public MeshNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Mesh";
-
+            defaultName = Name = "Mesh";
 
             width = w;
             height = h;

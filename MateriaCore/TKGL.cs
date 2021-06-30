@@ -597,5 +597,15 @@ namespace MateriaCore
         {
             GL.LineWidth(width);
         }
+
+        //masking
+        public override void ColorMask(bool red, bool green, bool blue, bool alpha) 
+        {
+            GL.ColorMask(red, green, blue, alpha);
+        }
+        public override void DepthMask(bool depth) 
+        {
+            GL.DepthMask(depth);
+        }
     }
 }

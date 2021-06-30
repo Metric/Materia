@@ -21,7 +21,7 @@ namespace Materia.Nodes.Atomic
         BlurProcessor processor;
 
         [Promote(NodeType.Float)]
-        [Editable(ParameterInputType.IntSlider, "Intensity", "Default", 1, 128)]
+        [Editable(ParameterInputType.IntSlider, "Intensity", "Default", 1, 255)]
         public int Intensity
         {
             get
@@ -37,7 +37,7 @@ namespace Materia.Nodes.Atomic
 
         public BlurNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Blur";
+            defaultName = Name = "Blur";
 
             width = w;
             height = h;
@@ -71,7 +71,7 @@ namespace Materia.Nodes.Atomic
             processor ??= new BlurProcessor();
 
             processor.Tiling = GetTiling();
-            processor.Intensity = GetParameter("Intensity", intensity);
+            processor.Intensity = GetParameter("Intensity", intensity).Max(1);
 
             processor.PrepareView(buffer);
             processor.Process(i1);
@@ -93,7 +93,7 @@ namespace Materia.Nodes.Atomic
 
         public class BlurData : NodeData
         {
-            public int intensity;
+            public byte intensity;
 
             public override void Write(Writer w)
             {
@@ -104,7 +104,7 @@ namespace Materia.Nodes.Atomic
             public override void Parse(Reader r)
             {
                 base.Parse(r);
-                intensity = r.NextInt();
+                intensity = r.NextByte();
             }
         }
 
@@ -112,7 +112,7 @@ namespace Materia.Nodes.Atomic
         {
             BlurData d = new BlurData();
             FillBaseNodeData(d);
-            d.intensity = intensity;
+            d.intensity = (byte)intensity;
             d.Write(w);
         }
 
@@ -128,7 +128,7 @@ namespace Materia.Nodes.Atomic
         {
             BlurData d = new BlurData();
             FillBaseNodeData(d);
-            d.intensity = intensity;
+            d.intensity = (byte)intensity;
 
             return JsonConvert.SerializeObject(d);
         }

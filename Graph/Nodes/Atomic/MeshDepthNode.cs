@@ -121,7 +121,7 @@ namespace Materia.Nodes.Atomic
 
         public MeshDepthNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Mesh Depth";
+            defaultName = Name = "Mesh Depth";
 
             width = w;
             height = h;

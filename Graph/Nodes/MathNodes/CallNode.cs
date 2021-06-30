@@ -119,7 +119,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Call";
+            defaultName = Name = "Call";
  
             shaderId = "S" + Id.Split('-')[0];
 

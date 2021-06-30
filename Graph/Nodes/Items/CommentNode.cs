@@ -7,7 +7,7 @@ namespace Materia.Nodes.Items
     {
         public CommentNode()
         {
-            name = "Comment";
+            defaultName = name = "Comment";
             content = "Comment...";
         }
     }

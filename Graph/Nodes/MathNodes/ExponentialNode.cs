@@ -20,7 +20,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Exponential";
+            defaultName = Name = "Exponential";
  
             shaderId = "S" + Id.Split('-')[0];
 

@@ -16,6 +16,7 @@ namespace Materia.Nodes
         public int height;
         public bool absoluteSize;
         public string type;
+        public NodeDataType dataType; //for binary not json
         public List<NodeConnection> outputs;
         public float tileX;
         public float tileY;
@@ -26,25 +27,30 @@ namespace Materia.Nodes
         public float viewOriginX;
         public float viewOriginY;
 
+        //minimum 56 byte size for a node
+        //not terrible
         public virtual void Write(Writer w)
         {
             //these are read before Parse()
-            w.Write(type);
-            w.Write(width);
-            w.Write(height);
-            w.Write(id);
+            w.Write((ushort)dataType); //2 bytes
+            w.Write((ushort)width); //2 bytes
+            w.Write((ushort)height); //2 bytes
+            w.Write(id); //Guid Length
 
             //these are handled in Parse()
-            w.Write(name);
-            w.Write(absoluteSize);
-            w.Write(tileX);
-            w.Write(tileY);
-            w.Write((int)internalPixelType);
-            w.Write(inputCount);
-            w.Write(outputCount);
-            w.Write(viewOriginX);
-            w.Write(viewOriginY);
-            w.WriteObjectList(outputs.ToArray());
+            w.Write(name); //minimum 4 bytes, max 4 + string length
+            w.Write(absoluteSize); //1 byte
+            w.Write(tileX); //4 bytes
+            w.Write(tileY); //4 bytes
+
+            InternalGraphPixelType internalType = Enum.Parse<InternalGraphPixelType>(internalPixelType.ToString());
+            w.Write((byte)internalType); //1 byte
+            
+            w.Write(inputCount); //4 bytes
+            w.Write(outputCount); //4 bytes
+            w.Write(viewOriginX); //4 bytes
+            w.Write(viewOriginY); //4 bytes
+            w.WriteObjectList(outputs.ToArray()); //minimum 4 bytes, max 4 + outputs.Count * 4 * 3 
         }
 
         public virtual void Parse(Reader r)
@@ -53,7 +59,10 @@ namespace Materia.Nodes
             absoluteSize = r.NextBool();
             tileX = r.NextFloat();
             tileY = r.NextFloat();
-            internalPixelType = (GraphPixelType)r.NextInt();
+
+            InternalGraphPixelType internalType = (InternalGraphPixelType)r.NextByte();
+            internalPixelType = Enum.Parse<GraphPixelType>(internalType.ToString());
+            
             inputCount = r.NextInt();
             outputCount = r.NextInt();
             viewOriginX = r.NextFloat();

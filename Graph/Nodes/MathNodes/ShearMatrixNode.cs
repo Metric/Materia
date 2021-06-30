@@ -8,7 +8,7 @@ namespace Materia.Nodes.MathNodes
     {
         public ShearMatrixNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base(w, h, p)
         {
-            name = "Shear Matrix";
+            defaultName = name = "Shear Matrix";
             input.Type = NodeType.Float2;
             input.Name = "Shear";
         }

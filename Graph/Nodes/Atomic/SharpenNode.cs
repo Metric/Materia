@@ -35,7 +35,7 @@ namespace Materia.Nodes.Atomic
 
         public SharpenNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Sharpen";
+            defaultName = Name = "Sharpen";
 
             width = w;
             height = h;

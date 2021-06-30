@@ -32,10 +32,10 @@ namespace Materia.Nodes.Atomic
             }
         }
 
-        protected float angle = 0;
+        protected int angle = 0;
         [Promote(NodeType.Float)]
         [Editable(ParameterInputType.IntSlider, "Angle", "Default", 0, 360)]
-        public float Angle
+        public int Angle
         {
             get
             {
@@ -69,7 +69,7 @@ namespace Materia.Nodes.Atomic
 
         public TransformNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Transform";
+            defaultName = Name = "Transform";
 
             width = w;
             height = h;
@@ -137,7 +137,7 @@ namespace Materia.Nodes.Atomic
         {
             public float xOffset;
             public float yOffset;
-            public float angle;
+            public ushort angle;
             public float scaleX;
             public float scaleY;
 
@@ -156,7 +156,7 @@ namespace Materia.Nodes.Atomic
                 base.Parse(r);
                 xOffset = r.NextFloat();
                 yOffset = r.NextFloat();
-                angle = r.NextFloat();
+                angle = r.NextUShort();
                 scaleX = r.NextFloat();
                 scaleY = r.NextFloat();
             }
@@ -166,7 +166,7 @@ namespace Materia.Nodes.Atomic
         {
             d.xOffset = offset.X;
             d.yOffset = offset.Y;
-            d.angle = angle;
+            d.angle = (ushort)angle;
             d.scaleX = scale.X;
             d.scaleY = scale.Y;
         }

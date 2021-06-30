@@ -67,7 +67,7 @@ namespace Materia.Nodes.Atomic
 
         public HSLNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "HSL";
+            defaultName = Name = "HSL";
 
             width = w;
             height = h;

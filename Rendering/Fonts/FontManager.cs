@@ -128,6 +128,9 @@ namespace Materia.Rendering.Fonts
         /// <returns></returns>
         public static CharAtlas GetAtlas(string fontFamily, float fontSize, FontStyle style)
         {
+            //clamp font size to 1-128
+            fontSize = fontSize.Clamp(1, 128);
+
             FontFamily family;
             if (!fonts.TryGetValue(fontFamily, out family))
             {

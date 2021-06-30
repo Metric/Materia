@@ -11,15 +11,11 @@ namespace Materia.Nodes
         public int index;
         public int outIndex;
 
-        [JsonIgnore]
-        public int order;
-
-        public NodeConnection(string n, int oi, int i, int ord)
+        public NodeConnection(string n, int oi, int i)
         {
             node = n;
             outIndex = oi;
             index = i;
-            order = ord;
         }
     }
 

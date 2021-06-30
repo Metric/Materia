@@ -7,7 +7,7 @@ namespace Materia.Nodes.MathNodes
     {
         public GetBoolVarNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base(w, h, p)
         {
-            Name = "Get Bool Var";
+            defaultName = Name = "Get Bool Var";
             output.Type = NodeType.Bool;
         }
     }

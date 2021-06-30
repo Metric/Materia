@@ -20,7 +20,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Cosine";
+            defaultName = Name = "Cosine";
      
             shaderId = "S" + Id.Split('-')[0];
 

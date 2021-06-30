@@ -78,7 +78,7 @@ namespace Materia.Nodes.Atomic
         {
             CanPreview = false;
 
-            Name = "Sequence";
+            defaultName = Name = "Sequence";
 
             input = new NodeInput(NodeType.Bool | NodeType.Color | NodeType.Gray | NodeType.Float | NodeType.Float2 | NodeType.Float3 | NodeType.Float4, this, "Any Input");
 

@@ -99,7 +99,7 @@ namespace Materia.Nodes.Atomic
 
         public BitmapNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Bitmap";
+            defaultName = Name = "Bitmap";
 
             AbsoluteSize = true;
 

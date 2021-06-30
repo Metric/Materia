@@ -29,17 +29,13 @@ void main()
     mat3 normalMatrix = mat3(modelMatrix);
 
     vec3 T = normalMatrix * tangent.xyz;
-    vec3 N = normalMatrix * normal; //normalMatrix * normal;
+    vec3 N = normalMatrix * normal;
     vec3 B = normalMatrix * (cross(N, T) * tangent.w);
 
     o.TBN = mat3(normalize(T),normalize(B),normalize(N));
 	o.WorldPos = (modelMatrix * vec4(pos, 1)).xyz;
-   
-    //flip y for opengl textures
+  
     o.UV = uv0;
-
-    o.UV.y = 1.0 - o.UV.y;
-
     o.UV *= tiling;
     
     o.ObjectPos = pos;

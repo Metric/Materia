@@ -52,7 +52,7 @@ namespace Materia.Nodes.Atomic
 
         public CircleNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Circle";
+            defaultName = Name = "Circle";
 
             internalPixelType = p;
 

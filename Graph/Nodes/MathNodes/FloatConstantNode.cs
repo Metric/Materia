@@ -33,7 +33,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Float Constant";
+            defaultName = Name = "Float Constant";
 
             shaderId = "S" + Id.Split('-')[0];
 

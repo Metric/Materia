@@ -162,5 +162,8 @@ namespace Materia.Rendering.Interfaces
         //line stuff
         public abstract void LineWidth(float width);
 
+        //masking
+        public abstract void ColorMask(bool red, bool green, bool blue, bool alpha);
+        public abstract void DepthMask(bool depth);
     }
 }

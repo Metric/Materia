@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Multiply";
+            defaultName = Name = "Multiply";
  
             shaderId = "S" + Id.Split('-')[0];
      

@@ -112,9 +112,10 @@ namespace MateriaCore.Components.GL
                                 DEFAULT_PADDING, 
                                 DEFAULT_PADDING, 
                                 DEFAULT_PADDING);
+
         }
 
-        public UINodePoint(UINode n, INodePoint point)
+        public UINodePoint(UINode n, INodePoint point) : base()
         {
             Name = "NodePoint" + nodeCount++;
             Node = n;
@@ -150,8 +151,6 @@ namespace MateriaCore.Components.GL
 
         protected void InitializeComponents()
         {
-            //todo: assign background image from embedded resource
-
             Background = AddComponent<UIImage>();
             Background.Texture = UI.GetEmbeddedImage(Icons.CIRCLE, typeof(UINodePoint));
             selectable = AddComponent<UISelectable>();
@@ -205,6 +204,9 @@ namespace MateriaCore.Components.GL
                 {
                     Connect(SelectedOrigin, this, true);
                     SelectedOrigin = null;
+
+                    //save connection snapshot of graph
+                    Node?.Graph?.Current?.Snapshot();
                 }
                 else
                 {
@@ -214,6 +216,9 @@ namespace MateriaCore.Components.GL
             else if(e.Button.HasFlag(InfinityUI.Interfaces.MouseButton.Left) && UI.IsAltPressed)
             {
                 Disconnect();
+
+                //save connection snapshot of graph
+                Node?.Graph?.Current?.Snapshot();
             }
         }
 

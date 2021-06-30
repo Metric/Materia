@@ -179,7 +179,7 @@ namespace Materia.Graph
             randomSeed = seed;
         }
 
-        public new int Width
+        public new ushort Width
         {
             get
             {
@@ -191,7 +191,7 @@ namespace Materia.Graph
             }
         }
 
-        public new int Height
+        public new ushort Height
         {
             get
             {
@@ -205,7 +205,7 @@ namespace Materia.Graph
         
         protected Dictionary<string, object> uniforms = new Dictionary<string, object>(); 
 
-        public Function(string name, int w = 256, int h = 256) : base(name, w, h)
+        public Function(string name, ushort w = 256, ushort h = 256) : base(name, w, h)
         {
             Name = name;
             isDirty = true;
@@ -1892,8 +1892,8 @@ namespace Materia.Graph
 
             d.name = Name;
             d.nodes = data;
-            d.outputs = new List<string>();
-            d.inputs = new List<string>();
+            //d.outputs = new List<string>();
+            //d.inputs = new List<string>();
 
             d.outputNode = OutputNode != null ? OutputNode.Id : null;
 

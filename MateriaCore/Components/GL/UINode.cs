@@ -97,7 +97,6 @@ namespace MateriaCore.Components.GL
                 f.OnOutputSet += F_OnOutputSet;        
             }
 
-            //todo: add in output / input icons
             if (Node is OutputNode)
             {
                 inputOutputIcon.Scale = Vector2.One;
@@ -194,7 +193,11 @@ namespace MateriaCore.Components.GL
 
         private void F_OnOutputSet(Node n)
         {
-            //todo: add in output icon
+            if (inputOutputIcon != null)
+            {
+                inputOutputIcon.Visible = true;
+                inputOutputIcon.Scale = Vector2.One;
+            }
         }
 
         private void N_OnOutputRemovedFromNode(Node n, NodeOutput inp, NodeOutput previous = null)
@@ -310,7 +313,6 @@ namespace MateriaCore.Components.GL
 
             N_OnValueUpdated(Node);
             N_OnNameChanged(Node);
-            N_OnTextureChanged(Node);
 
             Restored?.Invoke(this);
         }
@@ -387,6 +389,7 @@ namespace MateriaCore.Components.GL
 
             titleArea = new UIObject
             {
+                Name = "NodeTitle",
                 RelativeTo = Anchor.Top
             };
             title = titleArea.AddComponent<UIText>();
@@ -394,6 +397,7 @@ namespace MateriaCore.Components.GL
 
             descArea = new UIObject
             {
+                Name = "DescArea",
                 Margin = new Box2(nodePointSizePadding, 26, nodePointSizePadding, nodePointSizePadding - 4),
                 Visible = false,
                 RelativeTo = Anchor.Fill
@@ -403,6 +407,7 @@ namespace MateriaCore.Components.GL
 
             previewArea = new UIObject
             {
+                Name = "PreviewArea",
                 Margin = new Box2(nodePointSizePadding, 26, nodePointSizePadding, nodePointSizePadding - 4),
                 RelativeTo = Anchor.Fill,
             };
@@ -411,6 +416,7 @@ namespace MateriaCore.Components.GL
 
             previewTransparency = new UIObject
             {
+                Name = "PreviewTransparency",
                 Margin = new Box2(nodePointSizePadding, 26, nodePointSizePadding, nodePointSizePadding - 4),
                 RelativeTo = Anchor.Fill
             };
@@ -421,6 +427,7 @@ namespace MateriaCore.Components.GL
 
             outputsArea = new UIObject
             {
+                Name = "NodeOutputs",
                 RaycastTarget = true,
                 RelativeTo = Anchor.Right,
             };
@@ -429,6 +436,7 @@ namespace MateriaCore.Components.GL
 
             inputsArea = new UIObject
             {
+                Name = "NodeInputs",
                 RaycastTarget = true,
                 RelativeTo = Anchor.Left,
             };
@@ -437,6 +445,7 @@ namespace MateriaCore.Components.GL
 
             iconsArea = new UIObject
             {
+                Name = "NodeIcons",
                 Size = new Vector2(128,32),
                 Position = new Vector2(0,-32),
                 RaycastTarget = false,
@@ -446,6 +455,7 @@ namespace MateriaCore.Components.GL
 
             inputOutputIcon = new UIObject
             {
+                Name = "InputOutputIcon",
                 Size = new Vector2(32, 32),
                 RaycastTarget = false
             };
@@ -491,6 +501,9 @@ namespace MateriaCore.Components.GL
 
         private void UINode_DoubleClick(MovablePane obj)
         {
+            //set parameter view
+            GlobalEvents.Emit(GlobalEvent.ViewParameters, this, Node);
+
             //set 2d preview node
             GlobalEvents.Emit(GlobalEvent.Preview2D, this, Node);
         }
@@ -532,8 +545,6 @@ namespace MateriaCore.Components.GL
 
             //toggle graph select this
             Graph.Select(this);
-
-            GlobalEvents.Emit(GlobalEvent.ViewParameters, this, Node);
         }
 
         protected void ShowContextMenu()

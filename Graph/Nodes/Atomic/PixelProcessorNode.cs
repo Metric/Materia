@@ -35,12 +35,12 @@ namespace Materia.Nodes.Atomic
 
         public PixelProcessorNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Pixel Processor";
+            defaultName = Name = "Pixel Processor";
 
             width = w;
             height = h;
 
-            function = new Function("Pixel Processor Function", w, h);
+            function = new Function("Pixel Processor Function", (ushort)w, (ushort)h);
             function.AssignParentNode(this);
 
             function.ExpectedOutput = NodeType.Float4 | NodeType.Float;

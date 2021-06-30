@@ -52,7 +52,7 @@ namespace Materia.Nodes.Atomic
 
         public EmbossNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
-            Name = "Emboss";
+            defaultName = Name = "Emboss";
 
             width = w;
             height = h;
@@ -68,8 +68,8 @@ namespace Materia.Nodes.Atomic
 
         public class EmbossNodeData : NodeData
         {
-            public int angle;
-            public int elevation;
+            public ushort angle;
+            public byte elevation;
 
             public override void Write(Writer w)
             {
@@ -81,8 +81,8 @@ namespace Materia.Nodes.Atomic
             public override void Parse(Reader r)
             {
                 base.Parse(r);
-                angle = r.NextInt();
-                elevation = r.NextInt();
+                angle = r.NextUShort();
+                elevation = r.NextByte();
             }
         }
 
@@ -90,8 +90,8 @@ namespace Materia.Nodes.Atomic
         {
             EmbossNodeData d = new EmbossNodeData();
             FillBaseNodeData(d);
-            d.angle = angle;
-            d.elevation = elevation;
+            d.angle = (ushort)angle;
+            d.elevation = (byte)elevation;
             d.Write(w);
         }
 
@@ -117,8 +117,8 @@ namespace Materia.Nodes.Atomic
             EmbossNodeData d = new EmbossNodeData();
 
             FillBaseNodeData(d);
-            d.angle = angle;
-            d.elevation = elevation;
+            d.angle = (ushort)angle;
+            d.elevation = (byte)elevation;
 
             return JsonConvert.SerializeObject(d);
         }

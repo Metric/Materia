@@ -276,6 +276,8 @@ namespace InfinityUI.Components
 
         public override void Draw(DrawEvent e)
         {
+            StencilStage = UIRenderer.StencilStage;
+
             if (Parent == null) return;
             if (Shader == null) return;
             if (renderer == null) return;
@@ -326,18 +328,19 @@ namespace InfinityUI.Components
             }
 
             UIRenderer.StencilStage++;
+
             //wrap stencil stage as max is 255 for stencil
             UIRenderer.StencilStage %= 255;
+
+            StencilStage = UIRenderer.StencilStage;
 
             IGL.Primary.StencilOp((int)StencilOp.Keep, (int)StencilOp.Keep, (int)StencilOp.Replace);
 
             IGL.Primary.StencilFunc((int)StencilFunction.Always, UIRenderer.StencilStage, UIRenderer.StencilStage);
-            IGL.Primary.StencilMask(0xFF);
 
             renderer?.Draw();
 
             IGL.Primary.StencilFunc((int)StencilFunction.Equal, UIRenderer.StencilStage, UIRenderer.StencilStage);
-            IGL.Primary.StencilMask(0x00);
 
             UIRenderer.Bind();
         }
@@ -352,6 +355,7 @@ namespace InfinityUI.Components
 
         public override void Dispose()
         {
+            base.Dispose();
             renderer?.Dispose();
             renderer = null;
         }

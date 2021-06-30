@@ -17,7 +17,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Floor";
+            defaultName = Name = "Floor";
 
             shaderId = "S" + Id.Split('-')[0];
 

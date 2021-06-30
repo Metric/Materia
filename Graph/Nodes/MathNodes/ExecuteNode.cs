@@ -13,7 +13,7 @@ namespace Materia.Nodes.MathNodes
             shaderId = "S" + Id.Split('-')[0];
 
             CanPreview = false;
-            Name = "Execute";
+            defaultName = Name = "Execute";
 
             //remove execute input nodes
             Inputs.Clear();

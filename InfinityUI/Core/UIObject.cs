@@ -19,6 +19,8 @@ namespace InfinityUI.Core
         public event Action<UIObject> ChildRemoved;
         public event Action Reorder;
 
+        public event Action<UIObject, object[]> MessageComplete;
+
         public string ID { get; protected set; } = Guid.NewGuid().ToString();
 
         public string Name { get; set; }
@@ -124,6 +126,7 @@ namespace InfinityUI.Core
             }
         }
 
+        public Vector2 MaxSize { get; set; } = Vector2.Zero;
         public Vector2 MinSize { get; set; } = Vector2.Zero;
 
         private Vector2 origin = Vector2.Zero;
@@ -162,7 +165,23 @@ namespace InfinityUI.Core
             set
             {
                 Vector2 prevSize = size;
-                size = Vector2.MagnitudeMax(MinSize, value);
+                Vector2 minSize = MinSize;
+
+                size = value;
+
+                size.X = MathF.Max(minSize.X, size.X);
+                size.Y = MathF.Max(minSize.Y, size.Y);
+
+                Vector2 maxSize = MaxSize;
+                if (maxSize.X > 0)
+                {
+                    size.X = MathF.Min(maxSize.X, size.X);
+                }
+                if (maxSize.Y > 0)
+                {
+                    size.Y = MathF.Min(maxSize.Y, size.Y);
+                }
+
                 if (prevSize != size)
                 {
                     IsDirty = true;
@@ -548,7 +567,9 @@ namespace InfinityUI.Core
             Children.Sort(Compare);
             e.Reorder += E_Reorder;
             ChildAdded?.Invoke(e);
+            e.IsDirty = true;
             IsDirty = true;
+            e.UpdateMatrix();
         }
 
         public virtual void AddChild(UIObject e)
@@ -564,7 +585,9 @@ namespace InfinityUI.Core
             Children.Sort(Compare);
             e.Reorder += E_Reorder;
             ChildAdded?.Invoke(e);
+            e.IsDirty = true;
             IsDirty = true;
+            e.UpdateMatrix();
         }
 
         public virtual void ClearChildren()
@@ -638,7 +661,8 @@ namespace InfinityUI.Core
         {
             try
             {
-                for (int i = 0; i < componentList.Count; ++i)
+                //go from top to bottom on this
+                for (int i = componentList.Count - 1; i >= 0; --i)
                 {
                     var c = componentList[i];
                     TryAndSendMessage(c, fn, args);
@@ -653,6 +677,7 @@ namespace InfinityUI.Core
                 {
                     if ((arg as UIEventArgs).IsHandled)
                     {
+                        MessageComplete?.Invoke(this, args);
                         return;
                     }
                 }
@@ -671,6 +696,7 @@ namespace InfinityUI.Core
                     {
                         if ((arg as UIEventArgs).IsHandled)
                         {
+                            MessageComplete?.Invoke(this, args);
                             return;
                         }
                     }
@@ -679,13 +705,16 @@ namespace InfinityUI.Core
                 parent.SendMessage(fn, false, args);
                 parent = parent.parent;
             }
+
+            MessageComplete?.Invoke(this, args);
         }
 
         public virtual void SendMessage(string fn, bool toChildren, params object[] args)
         {
             try
             {
-                for (int i = 0; i < componentList.Count; ++i)
+                //go from top to bottom on this
+                for (int i = componentList.Count - 1; i >= 0; --i)
                 {
                     var c = componentList[i];
                     TryAndSendMessage(c, fn, args);
@@ -700,6 +729,7 @@ namespace InfinityUI.Core
                 {
                     if ((arg as UIEventArgs).IsHandled)
                     {
+                        MessageComplete?.Invoke(this, args);
                         return;
                     }
                 }
@@ -707,7 +737,11 @@ namespace InfinityUI.Core
 
             TryAndSendMessage(this, fn, args);
 
-            if (!toChildren) return;
+            if (!toChildren)
+            {
+                MessageComplete?.Invoke(this, args);
+                return;
+            }
 
             //Stack<UIObject> stack = new Stack<UIObject>();
 
@@ -735,6 +769,8 @@ namespace InfinityUI.Core
 
                 previous = c;
             }
+
+            MessageComplete?.Invoke(this, args);
         }
 
         private void UpdateMatrix(bool updateChildren = true)

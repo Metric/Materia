@@ -1,4 +1,5 @@
 ﻿using InfinityUI.Components;
+using InfinityUI.Components.Layout;
 using InfinityUI.Controls;
 using InfinityUI.Core;
 using InfinityUI.Interfaces;
@@ -48,6 +49,8 @@ namespace MateriaCore.Components.GL
 
         private void InitializeComponents()
         {
+            AddComponent<UIResizable>();
+
             titleArea = new UIObject
             {
                 RaycastTarget = false,
@@ -80,7 +83,6 @@ namespace MateriaCore.Components.GL
                 RelativeTo = Anchor.TopRight
             };
 
-            //todo: load close button icon here
             closeButton.Background.Texture = UI.GetEmbeddedImage(Icons.CLOSE, typeof(UIWindow));
             closeButton.Submit += CloseButton_Submit;
 

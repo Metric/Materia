@@ -20,7 +20,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Dot Product";
+            defaultName = Name = "Dot Product";
         
             shaderId = "S" + Id.Split('-')[0];
 

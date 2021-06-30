@@ -219,7 +219,7 @@ namespace Materia.Graph.IO
 
         public int NextInt() => (int)NextUInt();
 
-        public bool NextBool() => NextUInt() == 1;
+        public bool NextBool() => NextByte() > 0;
 
         public byte NextByte()
         {

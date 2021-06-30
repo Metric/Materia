@@ -19,7 +19,7 @@ namespace Materia.Nodes.MathNodes
 
             CanPreview = false;
 
-            Name = "Divide";
+            defaultName = Name = "Divide";
      
             shaderId = "S" + Id.Split('-')[0];
 

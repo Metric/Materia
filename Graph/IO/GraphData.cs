@@ -10,17 +10,17 @@ namespace Materia.Graph
     public class GraphData
     {
         public string name;
+        public string id;
+
         public List<string> nodes;
-        public List<string> outputs;
-        public List<string> inputs;
         public GraphPixelType defaultTextureType;
 
         public float shiftX;
         public float shiftY;
         public float zoom;
 
-        public int width;
-        public int height;
+        public ushort width;
+        public ushort height;
         public bool absoluteSize;
 
         public Dictionary<string, string> parameters;
@@ -33,15 +33,25 @@ namespace Materia.Graph
         {
             w.Write(version.Value);
             w.Write(name);
-            w.Write((int)defaultTextureType);
+            w.Write(id);
+
+            InternalGraphPixelType internalType = Enum.Parse<InternalGraphPixelType>(defaultTextureType.ToString());
+            w.Write((byte)internalType); //1 byte
+            
             w.Write(shiftX);
             w.Write(shiftY);
+
             w.Write(zoom);
             w.Write(absoluteSize);
 
+            w.Write(width);
+            w.Write(height);
+
             //these are just string ids
-            w.WriteStringList(outputs.ToArray());
-            w.WriteStringList(inputs.ToArray());
+            //why are we storing these?
+            //we can rebuild on load
+            //w.WriteStringList(outputs.ToArray());
+            //w.WriteStringList(inputs.ToArray());
         }
 
         public virtual void WriteNodes(Writer w, List<Node> nodes)
@@ -58,7 +68,7 @@ namespace Materia.Graph
         public virtual void WriteParameters(Writer w, Dictionary<string, ParameterValue> parameters)
         {
             w.Write(parameters.Count);
-            //now write parameters
+      
             foreach (string k in parameters.Keys)
             {
                 w.Write(k);
@@ -85,7 +95,7 @@ namespace Materia.Graph
             for (int i = 0; i < customFunctions.Count; ++i)
             {
                 var v = customFunctions[i];
-                //v.GetBinary(w);
+                v.GetBinary(w);
             }
         }
 
@@ -93,14 +103,22 @@ namespace Materia.Graph
         {
             version = r.NextFloat();
             name = r.NextString();
-            defaultTextureType = (GraphPixelType)r.NextInt();
+            id = r.NextString();
+
+            InternalGraphPixelType internalType = (InternalGraphPixelType)r.NextByte();
+            defaultTextureType = Enum.Parse<GraphPixelType>(internalType.ToString());
+            
             shiftX = r.NextFloat();
             shiftY = r.NextFloat();
+
             zoom = r.NextFloat();
             absoluteSize = r.NextBool();
 
-            outputs = new List<string>(r.NextStringList());
-            inputs = new List<string>(r.NextStringList());
+            width = r.NextUShort();
+            height = r.NextUShort();
+
+            //outputs = new List<string>(r.NextStringList());
+            //inputs = new List<string>(r.NextStringList());
         }
     }
 }

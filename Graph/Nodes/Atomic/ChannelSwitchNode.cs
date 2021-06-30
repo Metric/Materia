@@ -92,7 +92,7 @@ namespace Materia.Nodes.Atomic
 
         public ChannelSwitchNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA) : base()
         {
-            Name = "Channel Switch";
+            defaultName = Name = "Channel Switch";
 
             width = w;
             height = h;
@@ -144,10 +144,10 @@ namespace Materia.Nodes.Atomic
 
         public class ChannelSwitchData : NodeData
         {
-            public int red;
-            public int green;
-            public int blue;
-            public int alpha;
+            public byte red;
+            public byte green;
+            public byte blue;
+            public byte alpha;
 
             public override void Write(Writer w)
             {
@@ -161,10 +161,10 @@ namespace Materia.Nodes.Atomic
             public override void Parse(Reader r)
             {
                 base.Parse(r);
-                red = r.NextInt();
-                green = r.NextInt();
-                blue = r.NextInt();
-                alpha = r.NextInt();
+                red = r.NextByte();
+                green = r.NextByte();
+                blue = r.NextByte();
+                alpha = r.NextByte();
             }
         }
 
@@ -172,10 +172,10 @@ namespace Materia.Nodes.Atomic
         {
             ChannelSwitchData d = new ChannelSwitchData();
             FillBaseNodeData(d);
-            d.red = redChannel;
-            d.green = greenChannel;
-            d.blue = blueChannel;
-            d.alpha = alphaChannel;
+            d.red = (byte)redChannel;
+            d.green = (byte)greenChannel;
+            d.blue = (byte)blueChannel;
+            d.alpha = (byte)alphaChannel;
             d.Write(w);
         }
 
@@ -194,10 +194,10 @@ namespace Materia.Nodes.Atomic
         {
             ChannelSwitchData d = new ChannelSwitchData();
             FillBaseNodeData(d);
-            d.red = redChannel;
-            d.green = greenChannel;
-            d.blue = blueChannel;
-            d.alpha = alphaChannel;
+            d.red = (byte)redChannel;
+            d.green = (byte)greenChannel;
+            d.blue = (byte)blueChannel;
+            d.alpha = (byte)alphaChannel;
 
             return JsonConvert.SerializeObject(d);
         }

@@ -37,7 +37,7 @@ namespace Materia.Nodes.Atomic
 
         public GammaNode(int w, int h, GraphPixelType p = GraphPixelType.RGBA)
         {
-            Name = "Gamma";
+            defaultName = Name = "Gamma";
 
             width = w;
             height = h;
