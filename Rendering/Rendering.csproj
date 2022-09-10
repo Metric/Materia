@@ -171,7 +171,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MLog\MLog.csproj" />
-    <ProjectReference Include="..\tinyexrclr\tinyexrclr.vcxproj" />
   </ItemGroup>
 
 </Project>

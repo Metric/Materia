@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using tinyexrclr;
 
 namespace Materia.Rendering.Hdr
 {
@@ -51,7 +50,7 @@ namespace Materia.Rendering.Hdr
             float[] pixels = null;
             if (!System.IO.File.Exists(filePath)) return false;
 
-            unsafe {
+            /* unsafe {
                 fixed (float* rgba = buffer)
                 {
                     sbyte** err = null;
@@ -77,7 +76,7 @@ namespace Materia.Rendering.Hdr
                     Marshal.Copy((IntPtr)rgba, pixels, 0, pixels.Length);
                     TinyExr.FreeData(rgba);
                 }
-            }
+            }*/
 
             Pixels = pixels;
             Width = w;

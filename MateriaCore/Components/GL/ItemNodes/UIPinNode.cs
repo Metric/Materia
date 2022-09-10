@@ -73,8 +73,10 @@ namespace MateriaCore.Components.GL.ItemNodes
 
         protected void UpdateColor(MVector v)
         {
-            if (selectable == null) return;
             color = v.ToVector4();
+            (Node as PinNode)?.SetColor(color);
+
+            if (selectable == null) return;
             selectable.NormalColor = color;
         }
 
