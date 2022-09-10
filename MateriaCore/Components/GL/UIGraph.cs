@@ -10,6 +10,7 @@ using Materia.Nodes.Items;
 using Materia.Rendering.Geometry;
 using Materia.Rendering.Mathematics;
 using Materia.Rendering.Spatial;
+using MateriaCore.Components.GL.ItemNodes;
 using MateriaCore.Utils;
 using Newtonsoft.Json;
 using System;
@@ -991,7 +992,7 @@ namespace MateriaCore.Components.GL
             }
             else if (n is PinNode)
             {
-
+                unode = new UIPinNode(this, n as PinNode);
             }
             else
             {
@@ -1036,7 +1037,7 @@ namespace MateriaCore.Components.GL
             }
             else if (n is PinNode)
             {
-
+                unode = new UIPinNode(this, n as PinNode);
             }
             else
             {

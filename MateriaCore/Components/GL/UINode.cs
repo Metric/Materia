@@ -21,11 +21,8 @@ using Materia.Graph.Exporters;
 
 namespace MateriaCore.Components.GL
 {
-    public class UINode : MovablePane, IGraphNode
+    public class UINode :  UINodeBase
     {
-        public event Action<UINode> Restored;
-        public event Action<UINode> PreviewUpdated;
-
         public const int DEFAULT_HEIGHT = 128;
         public const int DEFAULT_WIDTH = 128;
 
@@ -49,23 +46,8 @@ namespace MateriaCore.Components.GL
         protected UIObject iconsArea;
         protected UIObject inputOutputIcon;
 
+        protected UIObject fitterArea;
         protected UIContentFitter fitter;
-        #endregion
-
-        #region Graph Details
-        public Node Node { get; protected set; }
-
-        public UIGraph Graph { get; protected set; }
-
-        public string Id { get; protected set; } = Guid.NewGuid().ToString(); //assign a default guid to it
-
-        //note add back in Input Output Nodes here
-        protected List<UINodePoint> inputs = new List<UINodePoint>();
-        protected List<UINodePoint> outputs = new List<UINodePoint>();
-        #endregion
-
-        #region States
-        protected bool isMoving = false;
         #endregion
 
         public UINode() : base(new Vector2(DEFAULT_WIDTH, DEFAULT_HEIGHT))
@@ -111,19 +93,6 @@ namespace MateriaCore.Components.GL
             }
         }
 
-        public Box2 GetViewSpaceRect()
-        {
-            Box2 world = AnchoredRect;
-            if (Canvas == null || Graph == null) return world;
-            Vector2 pos = Position * Graph.InverseZoom - Canvas.Cam.LocalPosition.Xy;
-            return new Box2(pos, Size.X * Graph.InverseZoom, Size.Y * Graph.InverseZoom);
-        }
-
-        public GLTexture2D GetActiveBuffer()
-        {
-            return Node?.GetActiveBuffer();
-        }
-
         #region Events
         private void AddNodeEvents()
         {
@@ -156,13 +125,13 @@ namespace MateriaCore.Components.GL
         private void N_OnTextureRebuilt(Node n)
         {
             preview.Texture = n.GetActiveBuffer();
-            PreviewUpdated?.Invoke(this);
+            OnPreviewUpdated();
         }
 
         private void N_OnTextureChanged(Node n)
         {
             preview.Texture = n.GetActiveBuffer();
-            PreviewUpdated?.Invoke(this);
+            OnPreviewUpdated();
         }
 
         private void N_OnNameChanged(Node n)
@@ -265,7 +234,7 @@ namespace MateriaCore.Components.GL
         #endregion
 
         #region Connection Handling
-        public void LoadConnection(UINodePoint output, NodeInput inp)
+        public override void LoadConnection(UINodePoint output, NodeInput inp)
         {
             var unode = Graph?.GetNode(inp.Node.Id);
             UINode uinode = unode as UINode;
@@ -275,7 +244,7 @@ namespace MateriaCore.Components.GL
             UINodePoint.Connect(output, input);
         }
 
-        public void LoadConnections()
+        public override void LoadConnections()
         {
             for (int i = 0; i < outputs.Count; ++i)
             {
@@ -290,31 +259,19 @@ namespace MateriaCore.Components.GL
         }
         #endregion
 
-        /// <summary>
-        /// Restores this instance from underlying graph data
-        /// that may been updated for the specified node id
-        /// </summary>
-        public void Restore()
+        protected override void OnBeforeRestored()
         {
-            if (Graph == null) return;
-            if (Graph.Current == null) return;
-            if (!Graph.Current.NodeLookup.TryGetValue(Node.Id, out Node n))
-            {
-                return;
-            }
-
             RemoveNodePoints();
             RemoveNodeEvents();
+        }
 
-            Node = n;
-
+        protected override void OnRestored()
+        {
             AddNodeEvents();
             AddNodePoints();
 
             N_OnValueUpdated(Node);
             N_OnNameChanged(Node);
-
-            Restored?.Invoke(this);
         }
 
         #region Node Point Setup, Removal, Updates
@@ -377,15 +334,16 @@ namespace MateriaCore.Components.GL
             Moved += UINode_Moved;
             MovedTo += UINode_MovedTo;
 
-            //todo: make a container area for the center part
-            //the container area will hold the following
-            //preview, desc, inputs, outputs
-            //the container area will be a contentSizeFitter
-            //the node itself will become a stackpanel
-            //with the title area first
-            //followed by the container
-
             float nodePointSizePadding = UINodePoint.DEFAULT_SIZE + UINodePoint.DEFAULT_PADDING + UINodePoint.DEFAULT_PADDING;
+
+            fitterArea = new UIObject()
+            {
+                Name = "NodeContentFitter",
+                RelativeTo = Anchor.TopLeft,
+                RaycastTarget = true,
+            };
+            fitter = fitterArea.AddComponent<UIContentFitter>();
+
 
             titleArea = new UIObject
             {
@@ -420,6 +378,8 @@ namespace MateriaCore.Components.GL
                 Margin = new Box2(nodePointSizePadding, 26, nodePointSizePadding, nodePointSizePadding - 4),
                 RelativeTo = Anchor.Fill
             };
+
+
             var transparencyBG = previewTransparency.AddComponent<UIImage>();
             transparencyBG.Texture = GridGenerator.CreateTransparent(32, 32);
             transparencyBG.Tiling = new Vector2(4, 4);
@@ -447,7 +407,6 @@ namespace MateriaCore.Components.GL
             {
                 Name = "NodeIcons",
                 Size = new Vector2(128,32),
-                Position = new Vector2(0,-32),
                 RaycastTarget = false,
             };
             var iconStack = iconsArea.AddComponent<UIStackPanel>();
@@ -464,110 +423,20 @@ namespace MateriaCore.Components.GL
 
             iconsArea.AddChild(inputOutputIcon);
 
-            AddChild(previewTransparency);
-            AddChild(previewArea);
-            AddChild(descArea);
-            AddChild(titleArea);
-            AddChild(outputsArea);
-            AddChild(inputsArea);
+            previewTransparency.AddChild(previewArea);
+
+            fitterArea.AddChild(previewTransparency);
+            fitterArea.AddChild(descArea);
+            fitterArea.AddChild(outputsArea);
+            fitterArea.AddChild(inputsArea);
+
+            stack = AddComponent<UIStackPanel>();
+            stack.Direction = Orientation.Vertical;
+
             AddChild(iconsArea);
+            AddChild(titleArea);
+            AddChild(fitterArea);
         }
-
-        #region User Input Events
-        private void Selectable_PointerDown(UISelectable arg1, MouseEventArgs e)
-        {
-            if (e.Button.HasFlag(MouseButton.Left))
-            {
-                TryAndSelect();
-            }
-        }
-
-        private void Selectable_PointerUp(UISelectable arg1, MouseEventArgs e)
-        {
-            if (isMoving)
-            {
-                GlobalEvents.Emit(GlobalEvent.MoveComplete, this, this);
-                isMoving = false;
-            }
-        }
-
-        private void Selectable_Click(UISelectable arg1, MouseEventArgs e)
-        {
-            if (e.Button.HasFlag(MouseButton.Right))
-            {
-                ShowContextMenu();
-            }
-        }
-
-        private void UINode_DoubleClick(MovablePane obj)
-        {
-            //set parameter view
-            GlobalEvents.Emit(GlobalEvent.ViewParameters, this, Node);
-
-            //set 2d preview node
-            GlobalEvents.Emit(GlobalEvent.Preview2D, this, Node);
-        }
-        private void UINode_Moved(MovablePane obj, Vector2 delta, MouseEventArgs e)
-        {
-            isMoving = true;
-
-            Node.ViewOriginX = Position.X;
-            Node.ViewOriginY = Position.Y;
-
-            //send event to other node that are multiselected for delta move
-            GlobalEvents.Emit(GlobalEvent.MoveSelected, this, delta);
-        }
-        private void UINode_MovedTo(MovablePane arg1, Vector2 pos)
-        {
-            Node.ViewOriginX = Position.X;
-            Node.ViewOriginY = Position.Y;
-        }
-
-        protected void TryAndSelect()
-        {
-            if (Graph == null) return;
-
-            if (UI.IsCtrlPressed)
-            {
-                //add node or remove from multi select
-                Graph.ToggleSelect(this);
-                return;
-            }
-
-            bool selected = Graph.IsSelected(Id);
-            if (selected && Graph.Selected.Count > 1)
-            {
-                return;
-            }
-
-            //clear multiselect
-            Graph.ClearSelection();
-
-            //toggle graph select this
-            Graph.Select(this);
-        }
-
-        protected void ShowContextMenu()
-        {
-            //setup context menu and show it
-            if (Node is PixelProcessorNode)
-            {
-
-            }
-            else if (Node is GraphInstanceNode)
-            {
-
-            }
-            else if (Node is ImageNode)
-            {
-
-            }
-            else if (Node is MathNode)
-            {
-
-            }
-        }
-        #endregion;
 
         protected void Export()
         {

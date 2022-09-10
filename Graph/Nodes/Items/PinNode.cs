@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
+using Materia.Rendering.Mathematics;
 
 namespace Materia.Nodes.Items
 {
@@ -13,17 +13,17 @@ namespace Materia.Nodes.Items
             content = "255,255,255,255";
         }
 
-        public void SetSystemColor(System.Drawing.Color c)
+        public void SetColor(Vector4 c)
         {
-            int a = c.A;
-            int r = c.R;
-            int g = c.G;
-            int b = c.B;
+            int a = (int)(c.w * 255) & 255;
+            int r = (int)(c.x * 255) & 255;
+            int g = (int)(c.y * 255) & 255;
+            int b = (int)(c.z * 255) & 255;
 
             content = string.Format("{0},{1},{2},{3}", a, r, g, b);
         }
 
-        public System.Drawing.Color GetSystemColor()
+        public Vector4 GetColor()
         {
             var split = content.Split(',');
             int a = int.Parse(split[0]);
@@ -31,7 +31,7 @@ namespace Materia.Nodes.Items
             int g = int.Parse(split[2]);
             int b = int.Parse(split[3]);
 
-            return System.Drawing.Color.FromArgb(a, r, g, b);
+            return new Vector4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
         }
     }
 }

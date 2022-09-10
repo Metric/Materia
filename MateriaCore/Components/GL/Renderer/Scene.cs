@@ -389,14 +389,14 @@ namespace MateriaCore.Components.GL.Renderer
             }
         }
 
-        private void N_PreviewUpdated(UINode obj)
+        private void N_PreviewUpdated(UINodeBase obj)
         {
-            TryAndUpdatePreview(obj);
+            TryAndUpdatePreview(obj as UINode);
         }
 
-        private void N_Restored(UINode obj)
+        private void N_Restored(UINodeBase obj)
         {
-            TryAndUpdatePreview(obj);
+            TryAndUpdatePreview(obj as UINode);
         }
 
         #endregion
