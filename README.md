@@ -1,10 +1,6 @@
 Materia
 ===================
-An open source alternative to Substance Designer written in C#. 
-
-Want to ask a question, found a bug, need help, or have a suggestion?
-===========================================================
-Then feel free to drop into the official discord channel: https://discord.gg/VEW5cP7
+An open source alternative to Substance Designer written in C#.
 
 
 Alpha RC 0.0.2 - Eye Example
